@@ -1,6 +1,6 @@
 # Contributing to Kirino Rendering
 
-Kirino Engine is an ECS-based Rendering (general purpose) Engine ([See proposal](https://github.com/CleanroomMC/Cleanroom/discussions/405)/[See engine overview](https://github.com/CleanroomMC/Cleanroom/blob/proposal/render-system/ENGINE_OVERVIEW.md)).<br>
+Kirino Engine is an ECS-based Rendering (general purpose) Engine ([See proposal](https://github.com/CleanroomMC/Cleanroom/discussions/405)/[See engine overview](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)).<br>
 Thanks for your interest! We welcome **all kinds of contributions** – code, documentation, bug reports, and ideas.
 
 ***
@@ -17,11 +17,11 @@ Thanks for your interest! We welcome **all kinds of contributions** – code, do
 
 ## Ways to Contribute
 
-- Report bugs via [Issue](https://github.com/CleanroomMC/Cleanroom/issues) (Mention Kirino Engine in title)
+- Report bugs via [Issue](https://github.com/CleanroomMC/Kirino-Engine/issues)
 - Improve / add more java docs (typos, explanations, tutorials).
 - Add unit tests / coverage tests (`Cleanroom/src/test/java/com/cleanroom/test/kirino/`).
 - Implement features. (Check Upcoming Features / Future Features / Propose your own). Contact me, tttsaurus, if you want to implement something but find it confusing.
-- Propose features you want to have / implement via [Proposal](https://github.com/CleanroomMC/Cleanroom/discussions/405).
+- Propose features you want to have / implement via a PR.
 - Propose general ideas about Kirino Engine via [Proposal](https://github.com/CleanroomMC/Cleanroom/discussions/405).
 
 ## Code Style Convention
@@ -121,5 +121,5 @@ Thanks for your interest! We welcome **all kinds of contributions** – code, do
 
 ## Future Features & What's Done
 
-- Check MVP Goals in [Read Me](https://github.com/CleanroomMC/Cleanroom/tree/proposal/render-system?tab=readme-ov-file)
+- Check MVP Goals in [Read Me](https://github.com/CleanroomMC/Kirino-Engine?tab=readme-ov-file)
 - Check [Project Board](https://github.com/orgs/CleanroomMC/projects/13)

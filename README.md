@@ -4,10 +4,10 @@
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
 
 ## How It Works?
-If you are curious about the tech/code details, check out [Engine Overview Page](https://github.com/CleanroomMC/Cleanroom/blob/proposal/render-system/ENGINE_OVERVIEW.md)!
+If you are curious about the tech/code details, check out [Engine Overview Page](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)!
 
 ## Contributing
-If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Cleanroom/tree/proposal/render-system?tab=contributing-ov-file)!
+If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file)!
 
 ## MVP Goals
 
@@ -97,7 +97,8 @@ Kirino Engine is made possible thanks to the efforts of all contributors!
 
 - [tttsaurus](https://github.com/tttsaurus) - Core maintainer
 - [Eerie](https://github.com/Kuba663) - Feature & algorithm contributions
+- [ChaosStrikez](https://github.com/jchung01) - Algorithm fixes
 
 ## License
 
-This project (Kirino Engine not Cleanroom) is licensed under [Mod Permissions License](https://github.com/CleanroomMC/Cleanroom/tree/proposal/render-system/kirino-engine/LICENSE) published by Jbredwards.
+This project is licensed under [Mod Permissions License](https://github.com/CleanroomMC/Kirino-Engine?tab=License-1-ov-file) published by Jbredwards.
