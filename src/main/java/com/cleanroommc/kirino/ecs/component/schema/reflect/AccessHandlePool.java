@@ -6,15 +6,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
+import java.lang.invoke.VarHandle;
 import java.util.HashMap;
 import java.util.Map;
 
 public class AccessHandlePool {
-    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
-
     private final Map<Class<?>, MemberLayout> memberLayoutMap = new HashMap<>();
     private final Map<Class<?>, MethodHandle> constructorHandleMap = new HashMap<>();
     private final Map<Class<?>, Map<String, MethodHandle>> setterHandleMap = new HashMap<>();
@@ -22,19 +18,16 @@ public class AccessHandlePool {
 
     public void register(@NonNull Class<?> clazz, @NonNull MemberLayout memberLayout) {
         try {
-            Constructor<?> ctor = clazz.getDeclaredConstructor();
-            ctor.setAccessible(true);
-            MethodHandle ctorHandle = LOOKUP.unreflectConstructor(ctor);
+            MethodHandle ctorHandle = ReflectionUtils.getConstructor(clazz);
             constructorHandleMap.put(clazz, ctorHandle);
 
             Map<String, MethodHandle> setters = setterHandleMap.computeIfAbsent(clazz, (key) -> new HashMap<>());
             Map<String, MethodHandle> getters = getterHandleMap.computeIfAbsent(clazz, (key) -> new HashMap<>());
             for (String fieldName: memberLayout.fieldNames) {
-                Field field = ReflectionUtils.getFieldByNameIncludingSuperclasses(clazz, fieldName);
-                field.setAccessible(true);
-                MethodHandle setterHandle = LOOKUP.unreflectSetter(field);
+                VarHandle fieldHandle = ReflectionUtils.getFieldHandleByNameIncludingSuperclasses(clazz, fieldName);
+                MethodHandle setterHandle = fieldHandle.toMethodHandle(VarHandle.AccessMode.SET);
                 setters.put(fieldName, setterHandle);
-                MethodHandle getterHandle = LOOKUP.unreflectGetter(field);
+                MethodHandle getterHandle = fieldHandle.toMethodHandle(VarHandle.AccessMode.GET);
                 getters.put(fieldName, getterHandle);
             }
         } catch (Exception e) {

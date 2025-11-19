@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -85,11 +86,15 @@ public final class ReflectionUtils {
                 .map(Modifier::isStatic);
     }
 
-    public static Field getFieldByNameIncludingSuperclasses(Class<?> clazz, String fieldName) throws NoSuchFieldException {
+    public static VarHandle getFieldHandleByNameIncludingSuperclasses(Class<?> clazz, String fieldName) throws NoSuchFieldException, IllegalAccessException {
+        Optional<MethodHandles.Lookup> lookupResult = getPrivateLookup(clazz);
+        Preconditions.checkState(lookupResult.isPresent());
+
+        MethodHandles.Lookup lookup = lookupResult.get();
         List<Field> fields = getAllFieldsIncludingSuperclasses(clazz);
         for (Field field : fields) {
             if (field.getName().equals(fieldName)) {
-                return field;
+                return lookup.unreflectVarHandle(field);
             }
         }
         throw new NoSuchFieldException("Cannot find " + fieldName + " from " + clazz.getName() + " including its superclasses.");
@@ -104,24 +109,6 @@ public final class ReflectionUtils {
             current = current.getSuperclass();
         }
         return fields;
-    }
-
-    public static void setFieldValue(Field field, Object owner, Object value) {
-        field.setAccessible(true);
-        try {
-            field.set(owner, value);
-        } catch (Throwable ignored) {
-        }
-    }
-
-    @Nullable
-    public static Object getFieldValue(Field field, Object owner) {
-        field.setAccessible(true);
-        try {
-            return field.get(owner);
-        } catch (Throwable ignored) {
-        }
-        return null;
     }
 
     //<editor-fold desc="find field">
