@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.minecraft;
+package com.cleanroommc.kirino.engine.render.minecraft.patch;
 
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.renderer.culling.ICamera;

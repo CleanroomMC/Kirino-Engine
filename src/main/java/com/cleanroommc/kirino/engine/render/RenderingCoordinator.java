@@ -3,9 +3,9 @@ package com.cleanroommc.kirino.engine.render;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
-import com.cleanroommc.kirino.engine.render.minecraft.MinecraftCulling;
-import com.cleanroommc.kirino.engine.render.minecraft.MinecraftEntityRendering;
-import com.cleanroommc.kirino.engine.render.minecraft.MinecraftTESRRendering;
+import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftCulling;
+import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRendering;
+import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;
 import com.cleanroommc.kirino.engine.render.pipeline.*;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.subpasses.*;
@@ -65,8 +65,8 @@ public class RenderingCoordinator {
     private final GLStateBackup stateBackup;
 
     // ---------- Logic ----------
-    public final MinecraftScene scene;
     public final MinecraftCamera camera;
+    public final MinecraftScene scene;
 
     // ---------- Patches ----------
     public final MinecraftCulling cullingPatch;
@@ -123,8 +123,8 @@ public class RenderingCoordinator {
 
         gizmosManager = new GizmosManager(graphicResourceManager);
 
-        scene = new MinecraftScene(ecsRuntime.entityManager, ecsRuntime.jobScheduler, gizmosManager);
         camera = new MinecraftCamera();
+        scene = new MinecraftScene(ecsRuntime.entityManager, ecsRuntime.jobScheduler, gizmosManager, camera);
 
 //        stagingBufferManager.genPersistentBuffers("default", 256, 256);
 

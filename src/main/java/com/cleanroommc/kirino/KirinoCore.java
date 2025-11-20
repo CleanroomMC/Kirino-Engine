@@ -51,6 +51,7 @@ public final class KirinoCore {
     private static CleanECSRuntime ECS_RUNTIME;
     private static KirinoEngine KIRINO_ENGINE;
     private static boolean UNSUPPORTED = false;
+    private static boolean FULLY_INITIALIZED = false;
 
     public static boolean isEnableRenderDelegate() {
         return KIRINO_CONFIG.enableRenderDelegate && !UNSUPPORTED;
@@ -70,7 +71,11 @@ public final class KirinoCore {
      * </code>
      */
     public static void RenderGlobal$notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
-//        LOGGER.info("block update: " + x + ", " + y + ", " + z + "; " + oldState.getBlock() + ", " + newState.getBlock());
+        if (!FULLY_INITIALIZED) {
+            return;
+        }
+
+        KIRINO_ENGINE.renderingCoordinator.scene.notifyBlockUpdate(x, y, z, oldState, newState);
     }
 
     /**
@@ -87,7 +92,11 @@ public final class KirinoCore {
      * </code>
      */
     public static void RenderGlobal$notifyLightUpdate(int x, int y, int z) {
-//        LOGGER.info("light update: " + x + ", " + y + ", " + z);
+        if (!FULLY_INITIALIZED) {
+            return;
+        }
+
+        KIRINO_ENGINE.renderingCoordinator.scene.notifyLightUpdate(x, y, z);
     }
 
     private static MethodHandle setupCameraTransform;
@@ -127,6 +136,10 @@ public final class KirinoCore {
      * </code>
      */
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
+        if (!FULLY_INITIALIZED) {
+            return;
+        }
+
         KIRINO_ENGINE.renderingCoordinator.preUpdate();
 
         //<editor-fold desc="vanilla logic">
@@ -439,6 +452,8 @@ public final class KirinoCore {
             return;
         }
 
+        LOGGER.info("KirinoCore Initialization Stage");
+
         //<editor-fold desc="gl version check">
         String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
         int majorGLVersion = -1;
@@ -586,6 +601,8 @@ public final class KirinoCore {
             return;
         }
 
+        LOGGER.info("KirinoCore Post-Initialization Stage");
+
         //<editor-fold desc="kirino engine">
         LOGGER.info("---------------");
         LOGGER.info("Post-Initializing Kirino Engine.");
@@ -597,6 +614,8 @@ public final class KirinoCore {
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: " + stopWatch.getTime(TimeUnit.MILLISECONDS) + " ms");
         LOGGER.info("---------------");
         //</editor-fold>
+
+        FULLY_INITIALIZED = true;
     }
 
     @SubscribeEvent

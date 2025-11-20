@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.minecraft;
+package com.cleanroommc.kirino.engine.render.minecraft.patch;
 
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.FontRenderer;

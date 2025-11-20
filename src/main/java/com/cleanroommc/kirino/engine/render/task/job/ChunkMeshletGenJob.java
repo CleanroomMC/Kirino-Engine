@@ -104,7 +104,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         boolean[][][] visited = new boolean[16][16][16];
 
         buildFaceMask(faceMask, chunkCluster);
-        regionGrowing(faceMask, visited);
+        regionGrowing(faceMask, visited, entityManager);
     }
 
     /**
@@ -236,7 +236,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         return (new Vector3f(x, y, z)).normalize();
     }
 
-    void regionGrowing(int[][][] faceMask, boolean[][][] visited) {
+    void regionGrowing(int[][][] faceMask, boolean[][][] visited, EntityManager entityManager) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {

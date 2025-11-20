@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 
 import java.util.function.BiConsumer;
 
-public class ResolutionContainer {
+public final class ResolutionContainer {
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
     private int width;

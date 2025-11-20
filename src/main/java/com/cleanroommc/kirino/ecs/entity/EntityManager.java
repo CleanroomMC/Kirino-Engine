@@ -166,7 +166,7 @@ public class EntityManager {
      * @return An entity handle
      */
     @NonNull
-    public synchronized CleanEntityHandle createEntity(@NonNull ICleanComponent... components) {
+    public synchronized CleanEntityHandle createEntity(@NonNull ICleanComponent @NonNull ... components) {
         int index;
         if (freeIndexes.isEmpty()) {
             index = indexCounter++;
