@@ -483,8 +483,6 @@ public final class KirinoCore {
         LOGGER.info("Kirino Engine Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         LOGGER.info("---------------");
         //</editor-fold>
-
-        MethodHolder.init();
     }
 
     public static void postInit() {
@@ -571,11 +569,6 @@ public final class KirinoCore {
             Preconditions.checkNotNull(DELEGATE.farPlaneDistance);
             Preconditions.checkNotNull(DELEGATE.debugView);
             Preconditions.checkNotNull(DELEGATE.isRenderHand);
-        }
-
-        // Just used to trigger <clinit>
-        static void init() {
-            // NO-OP
         }
 
         /**

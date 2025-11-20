@@ -33,6 +33,7 @@ public final class ReflectionUtils {
 
     /**
      * Get a lookup allowing private access.
+     *
      * @param clazz The class to allow private access in
      * @return A {@link java.lang.invoke.MethodHandles.Lookup} with private access to the target class
      */
@@ -50,6 +51,7 @@ public final class ReflectionUtils {
 
     /**
      * Check if the target field is static.
+     *
      * @param clazz The declaring class of the field
      * @param fieldName The field name
      * @param obfFieldName The obfuscated field name, possibly null
@@ -67,6 +69,7 @@ public final class ReflectionUtils {
 
     /**
      * Check if the target method is static.
+     *
      * @param clazz The declaring class of the method
      * @param methodName The method name
      * @param obfMethodName The obfuscated method name, possibly null
@@ -83,6 +86,16 @@ public final class ReflectionUtils {
                 .map(Modifier::isStatic);
     }
 
+    //<editor-fold desc="get field(s)">
+    /**
+     * The target field will be found solely by its name, searching this class and its superclasses.
+     *
+     * @param clazz The declaring class of the field
+     * @param fieldName The field name
+     * @return A {@link VarHandle} of the field
+     * @throws NoSuchFieldException if the field was not found, including from superclasses
+     * @throws IllegalAccessException if access checking by the lookup failed
+     */
     public static VarHandle getFieldHandleByNameIncludingSuperclasses(Class<?> clazz, String fieldName) throws NoSuchFieldException, IllegalAccessException {
         Optional<MethodHandles.Lookup> lookupResult = getPrivateLookup(clazz);
         Preconditions.checkState(lookupResult.isPresent());
@@ -97,6 +110,12 @@ public final class ReflectionUtils {
         throw new NoSuchFieldException("Cannot find " + fieldName + " from " + clazz.getName() + " including its superclasses.");
     }
 
+    /**
+     * All fields from the target class and its superclasses will be returned
+     *
+     * @param clazz The target class
+     * @return The list of {@link Field}s, including from superclasses
+     */
     public static List<Field> getAllFieldsIncludingSuperclasses(Class<?> clazz) {
         List<Field> fields = new ArrayList<>();
         Class<?> current = clazz;
@@ -107,6 +126,70 @@ public final class ReflectionUtils {
         }
         return fields;
     }
+
+    /**
+     * The target field will be looked up and returned.
+     *
+     * @param clazz The declaring class of the field
+     * @param fieldName The field name
+     * @param obfFieldName The obfuscated field name possibly null
+     * @param fieldClass The actual class of the field
+     * @return A {@link VarHandle} of the field
+     */
+    @Nullable
+    public static VarHandle getField(Class<?> clazz, String fieldName, @Nullable String obfFieldName, Class<?> fieldClass) {
+        Optional<MethodHandles.Lookup> lookupResult = getPrivateLookup(clazz);
+        Preconditions.checkState(lookupResult.isPresent());
+
+        MethodHandles.Lookup lookup = lookupResult.get();
+        Optional<Boolean> isStaticResult = isStaticField(clazz, fieldName, obfFieldName);
+        // Didn't find the field
+        if (isStaticResult.isEmpty()) {
+            return null;
+        }
+        boolean isStatic = isStaticResult.get();
+
+        boolean hasObfName = obfFieldName != null && !obfFieldName.isEmpty() && !isDeobf;
+        VarHandle handle = null;
+        try {
+            String name = hasObfName ? obfFieldName : fieldName;
+            if (isStatic) {
+                handle = lookup.findStaticVarHandle(clazz, name, fieldClass);
+            } else {
+                handle = lookup.findVarHandle(clazz, name, fieldClass);
+            }
+        } catch (NoSuchFieldException e) {
+            try {
+                // Tried obf name, now try deobf name
+                if (hasObfName) {
+                    if (isStatic) {
+                        handle = lookup.findStaticVarHandle(clazz, fieldName, fieldClass);
+                    } else {
+                        handle = lookup.findVarHandle(clazz, fieldName, fieldClass);
+                    }
+                }
+            } catch (NoSuchFieldException | IllegalAccessException ex) {
+                return null;
+            }
+        } catch (IllegalAccessException e) {
+            return null;
+        }
+        return handle;
+    }
+
+    /**
+     * The target field will be looked up and returned. Non-obfuscated version.
+     *
+     * @param clazz The declaring class of the field
+     * @param fieldName The field name
+     * @param fieldClass The actual class of the field
+     * @return A {@link VarHandle} of the field
+     */
+    @Nullable
+    public static VarHandle getField(Class<?> clazz, String fieldName, Class<?> fieldClass) {
+        return getField(clazz, fieldName, null, fieldClass);
+    }
+    //</editor-fold>
 
     //<editor-fold desc="find field">
     @Nullable
@@ -390,6 +473,17 @@ public final class ReflectionUtils {
         return handle;
     }
 
+    /**
+     * The target method will be looked up and returned. Non-obfuscated version.
+     * <br><br>
+     * This method does not find any method outlined by {@link java.lang.invoke.MethodHandles.Lookup#findSpecial(Class, String, MethodType, Class)}.
+     *
+     * @param clazz The declaring class of the method
+     * @param methodName The method name
+     * @param returnClass The class of the return value of the method
+     * @param params The class(es) of the parameters of the method
+     * @return A {@link MethodHandle} representing the method
+     */
     @Nullable
     public static MethodHandle getMethod(Class<?> clazz, String methodName,
                                          Class<?> returnClass, Class<?>... params) {

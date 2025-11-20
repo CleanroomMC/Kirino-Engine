@@ -19,10 +19,6 @@ public class ShaderRegistry {
     // key: rl
     private final Map<String, Shader> shaders = new HashMap<>();
 
-    public ShaderRegistry() {
-        MethodHolder.init();
-    }
-
     public Shader register(ResourceLocation rl) {
         String rawRl = rl.toString();
         int lastDot = rawRl.lastIndexOf('.');
@@ -93,11 +89,6 @@ public class ShaderRegistry {
             Preconditions.checkNotNull(DELEGATE.shaderCtor());
             Preconditions.checkNotNull(DELEGATE.shaderProgramCtor());
         }
-
-        static void init() {
-            // NO-OP
-        }
-
         /**
          * @see Shader#Shader(String, String, ShaderType)
          */

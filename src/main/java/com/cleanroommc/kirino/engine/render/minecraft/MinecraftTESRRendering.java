@@ -25,7 +25,6 @@ public class MinecraftTESRRendering {
 
     public MinecraftTESRRendering(MinecraftCulling cullingPatch) {
         this.cullingPatch = cullingPatch;
-        MethodHolder.init();
     }
 
     private int renderEntitiesStartupCounter = 2;
@@ -135,10 +134,6 @@ public class MinecraftTESRRendering {
             DAMAGED_BLOCKS_GETTER = ReflectionUtils.getFieldGetter(RenderGlobal.class, "damagedBlocks", "field_72738_E", Map.class);
 
             Preconditions.checkNotNull(DAMAGED_BLOCKS_GETTER);
-        }
-
-        static void init() {
-            // NO-OP
         }
 
         /**

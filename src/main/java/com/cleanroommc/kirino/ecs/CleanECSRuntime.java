@@ -40,7 +40,7 @@ public class CleanECSRuntime {
     public final JobRegistry jobRegistry;
     public final JobScheduler jobScheduler;
 
-    @SuppressWarnings({"DataFlowIssue", "unchecked"})
+    @SuppressWarnings({"DataFlowIssue"})
     private CleanECSRuntime(EventBus eventBus, Logger logger) {
         structRegistry = new StructRegistry();
         fieldRegistry = new FieldRegistry(structRegistry);
@@ -133,15 +133,7 @@ public class CleanECSRuntime {
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
-        MethodHandle parallelJobClassesGetter = ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class);
-        Preconditions.checkNotNull(parallelJobClassesGetter);
-
-        List<Class<? extends IParallelJob>> parallelJobs;
-        try {
-            parallelJobs = (List<Class<? extends IParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+        List<Class<? extends IParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
         for (Class<? extends IParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
             logger.info("Parallel job " + clazz.getName() + " registered. Data queries are as follows:" +
@@ -153,5 +145,19 @@ public class CleanECSRuntime {
                 logger.info("  - External query: " +  fieldName);
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Class<? extends IParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
+        MethodHandle parallelJobClassesGetter = ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class);
+        Preconditions.checkNotNull(parallelJobClassesGetter);
+
+        List<Class<? extends IParallelJob>> parallelJobs;
+        try {
+            parallelJobs = (List<Class<? extends IParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return parallelJobs;
     }
 }

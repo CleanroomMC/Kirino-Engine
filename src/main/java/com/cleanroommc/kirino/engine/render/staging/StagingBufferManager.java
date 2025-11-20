@@ -23,14 +23,6 @@ import java.util.List;
 import java.util.Map;
 
 public class StagingBufferManager {
-    static final MethodHandle VAO_GETTER;
-
-    static {
-        VAO_GETTER = ReflectionUtils.getFieldGetter(TemporaryVAOHandle.class, "vao", VAO.class);
-
-        Preconditions.checkNotNull(VAO_GETTER);
-    }
-
     // todo: ring buffer double/triple/n buffering & non-coherent persistent buffer with manual flush
     private final Map<String, Triple<Integer, VBOView, ByteBuffer>> persistentVbos = new HashMap<>();
     private final Map<String, Triple<Integer, EBOView, ByteBuffer>> persistentEbos = new HashMap<>();
@@ -151,7 +143,7 @@ public class StagingBufferManager {
      */
     private static VAO getVAO(TemporaryVAOHandle instance) {
         try {
-            return (VAO) VAO_GETTER.invokeExact(instance);
+            return MethodHolder.getVAO(instance);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -181,5 +173,23 @@ public class StagingBufferManager {
         eboView.bind(0);
         temporaryEbos.add(eboView);
         return new TemporaryEBOHandle(this, temporaryHandleGeneration, size, eboView);
+    }
+
+    private static class MethodHolder {
+        static final MethodHandle VAO_GETTER;
+
+        static {
+            VAO_GETTER = ReflectionUtils.getFieldGetter(TemporaryVAOHandle.class, "vao", VAO.class);
+
+            Preconditions.checkNotNull(VAO_GETTER);
+        }
+
+        static VAO getVAO(TemporaryVAOHandle instance) {
+            try {
+                return (VAO) VAO_GETTER.invokeExact(instance);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

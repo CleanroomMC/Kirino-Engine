@@ -12,10 +12,6 @@ import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
 
 public class MinecraftCamera implements ICamera {
-    public MinecraftCamera() {
-        MethodHolder.init();
-    }
-
     public double getPartialTicks() {
         Minecraft minecraft = Minecraft.getMinecraft();
         return minecraft.isGamePaused() ? MethodHolder.getPartialTicksPaused(minecraft) : minecraft.getRenderPartialTicks();
@@ -66,10 +62,6 @@ public class MinecraftCamera implements ICamera {
             Preconditions.checkNotNull(DELEGATE.projectionBuffer());
             Preconditions.checkNotNull(DELEGATE.viewRotationBuffer());
             Preconditions.checkNotNull(DELEGATE.partialTicksPaused());
-        }
-
-        static void init() {
-            // NO-OP
         }
 
         /**

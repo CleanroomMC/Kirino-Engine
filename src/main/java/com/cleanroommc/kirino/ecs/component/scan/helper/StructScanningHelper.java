@@ -114,17 +114,8 @@ public final class StructScanningHelper {
      * @param fieldRegistry The field registry
      * @return A list of struct register plans
      */
-    @SuppressWarnings({"unchecked"})
     public static List<StructRegisterPlan> scanStructClasses(StructScanningEvent event, FieldRegistry fieldRegistry) {
-        MethodHandle scanPackageNamesGetter = ReflectionUtils.getFieldGetter(StructScanningEvent.class, "scanPackageNames", List.class);
-        Preconditions.checkNotNull(scanPackageNamesGetter);
-
-        List<String> scanPackageNames;
-        try {
-            scanPackageNames = (List<String>) scanPackageNamesGetter.invokeExact(event);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+        List<String> scanPackageNames = getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
                 scanPackageNames,
                 "com.cleanroommc.kirino.ecs.component.scan.CleanStruct");
@@ -140,5 +131,19 @@ public final class StructScanningHelper {
         }
 
         return generatePlans(structs, fieldRegistry);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> getScanPackageNames(StructScanningEvent event) {
+        MethodHandle scanPackageNamesGetter = ReflectionUtils.getFieldGetter(StructScanningEvent.class, "scanPackageNames", List.class);
+        Preconditions.checkNotNull(scanPackageNamesGetter);
+
+        List<String> scanPackageNames;
+        try {
+            scanPackageNames = (List<String>) scanPackageNamesGetter.invokeExact(event);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return scanPackageNames;
     }
 }

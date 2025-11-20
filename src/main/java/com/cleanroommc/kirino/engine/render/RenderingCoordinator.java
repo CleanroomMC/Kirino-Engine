@@ -89,7 +89,6 @@ public class RenderingCoordinator {
     private final RenderPass gizmosPass;
     public final PostProcessingPass postProcessingPass;
 
-    @SuppressWarnings({"DataFlowIssue", "unchecked"})
     public RenderingCoordinator(EventBus eventBus, Logger logger, CleanECSRuntime ecsRuntime, boolean enableHDR, boolean enablePostProcessing) {
         this.enableHDR = enableHDR;
         this.enablePostProcessing = enablePostProcessing;
@@ -106,15 +105,7 @@ public class RenderingCoordinator {
         shaderRegistry = new ShaderRegistry();
         ShaderRegistrationEvent shaderRegistrationEvent = new ShaderRegistrationEvent();
         eventBus.post(shaderRegistrationEvent);
-        MethodHandle shaderResourceLocationsGetter = ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "shaderResourceLocations", List.class);
-        Preconditions.checkNotNull(shaderResourceLocationsGetter);
-
-        List<ResourceLocation> shaderResourceLocations;
-        try {
-            shaderResourceLocations = (List<ResourceLocation>) shaderResourceLocationsGetter.invokeExact(shaderRegistrationEvent);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
+        List<ResourceLocation> shaderResourceLocations = getShaderResourceLocations(shaderRegistrationEvent);
         for (ResourceLocation rl : shaderResourceLocations) {
             Shader shader = shaderRegistry.register(rl);
             logger.info("Registered " + shader.getShaderType().toString() + " shader " + rl + ".");
@@ -160,15 +151,7 @@ public class RenderingCoordinator {
         if (enablePostProcessing) {
             PostProcessingRegistrationEvent postProcessingRegistrationEvent = new PostProcessingRegistrationEvent(shaderRegistry);
             eventBus.post(postProcessingRegistrationEvent);
-            MethodHandle postProcessingEntriesGetter = ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class);
-            Preconditions.checkNotNull(postProcessingEntriesGetter);
-
-            List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> postProcessingEntries;
-            try {
-                postProcessingEntries = (List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>>) postProcessingEntriesGetter.invokeExact(postProcessingRegistrationEvent);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
+            List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> postProcessingEntries = getPostProcessingEntries(postProcessingRegistrationEvent);
             if (postProcessingEntries.isEmpty()) {
                 ShaderProgram defaultShaderProgram = shaderRegistry.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag");
                 postProcessingPass.addSubpass("Default Pass", defaultShaderProgram, DefaultPostProcessingPass::new);
@@ -205,6 +188,34 @@ public class RenderingCoordinator {
                 PSOPresets.createScreenOverwritePSO(shaderProgram)));
 
         frameFinalizer = new FrameFinalizer(logger, postProcessingPass, toneMappingPass, upscalingPass, downscalingPass, enableHDR, enablePostProcessing);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<ResourceLocation> getShaderResourceLocations(ShaderRegistrationEvent shaderRegistrationEvent) {
+        MethodHandle shaderResourceLocationsGetter = ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "shaderResourceLocations", List.class);
+        Preconditions.checkNotNull(shaderResourceLocationsGetter);
+
+        List<ResourceLocation> shaderResourceLocations;
+        try {
+            shaderResourceLocations = (List<ResourceLocation>) shaderResourceLocationsGetter.invokeExact(shaderRegistrationEvent);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return shaderResourceLocations;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> getPostProcessingEntries(PostProcessingRegistrationEvent postProcessingRegistrationEvent) {
+        MethodHandle postProcessingEntriesGetter = ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class);
+        Preconditions.checkNotNull(postProcessingEntriesGetter);
+
+        List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> postProcessingEntries;
+        try {
+            postProcessingEntries = (List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>>) postProcessingEntriesGetter.invokeExact(postProcessingRegistrationEvent);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        return postProcessingEntries;
     }
 
     /**
