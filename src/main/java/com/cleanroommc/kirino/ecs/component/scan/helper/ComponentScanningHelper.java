@@ -5,9 +5,11 @@ import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.FieldInfo;
 
+import java.lang.invoke.MethodHandle;
 import java.util.*;
 
 /**
@@ -79,10 +81,19 @@ public final class ComponentScanningHelper {
      * @param fieldRegistry The field registry
      * @return A list of component register plans
      */
-    @SuppressWarnings({"DataFlowIssue", "unchecked"})
+    @SuppressWarnings({"unchecked"})
     public static List<ComponentRegisterPlan> scanComponentClasses(ComponentScanningEvent event, FieldRegistry fieldRegistry) {
+        MethodHandle scanPackageNamesGetter = ReflectionUtils.getFieldGetter(ComponentScanningEvent.class, "scanPackageNames", List.class);
+        Preconditions.checkNotNull(scanPackageNamesGetter);
+
+        List<String> scanPackageNames;
+        try {
+            scanPackageNames = (List<String>) scanPackageNamesGetter.invokeExact(event);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
-                (List<String>) ReflectionUtils.getFieldValue(ReflectionUtils.findDeclaredField(ComponentScanningEvent.class, "scanPackageNames"), event),
+                scanPackageNames,
                 "com.cleanroommc.kirino.ecs.component.scan.CleanComponent");
 
         Map<String, List<FieldInfo>> components = new TreeMap<>();

@@ -1,56 +1,44 @@
 package com.cleanroommc.kirino.engine.render.camera;
 
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.entity.Entity;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
-import java.util.Objects;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class MinecraftCamera implements ICamera {
-    private final Supplier<FloatBuffer> projectionBuffer;
-    private final Supplier<FloatBuffer> viewRotationBuffer;
-    private final Function<Minecraft, Float> partialTicksPaused;
-
-    @SuppressWarnings("unchecked")
     public MinecraftCamera() {
-        projectionBuffer = (Supplier<FloatBuffer>) ReflectionUtils.getDeclaredFieldGetter(ActiveRenderInfo.class, "PROJECTION", "field_178813_c");
-        viewRotationBuffer = (Supplier<FloatBuffer>) ReflectionUtils.getDeclaredFieldGetter(ActiveRenderInfo.class, "MODELVIEW", "field_178812_b");
-        partialTicksPaused = (Function<Minecraft, Float>) ReflectionUtils.getDeclaredFieldGetter(Minecraft.class, "renderPartialTicksPaused", "field_193996_ah");
-
-        Objects.requireNonNull(projectionBuffer);
-        Objects.requireNonNull(viewRotationBuffer);
-        Objects.requireNonNull(partialTicksPaused);
+        MethodHolder.init();
     }
 
     public double getPartialTicks() {
         Minecraft minecraft = Minecraft.getMinecraft();
-        return minecraft.isGamePaused() ? partialTicksPaused.apply(minecraft) : minecraft.getRenderPartialTicks();
+        return minecraft.isGamePaused() ? MethodHolder.getPartialTicksPaused(minecraft) : minecraft.getRenderPartialTicks();
     }
 
     @Override
     public Matrix4f getProjectionMatrix() {
-        return new Matrix4f(projectionBuffer.get());
+        return new Matrix4f(MethodHolder.getProjectionBuffer());
     }
 
     @Override
     public FloatBuffer getProjectionBuffer() {
-        return projectionBuffer.get();
+        return MethodHolder.getProjectionBuffer();
     }
 
     @Override
     public Matrix4f getViewRotationMatrix() {
-        return new Matrix4f(viewRotationBuffer.get());
+        return new Matrix4f(MethodHolder.getViewRotationBuffer());
     }
 
     @Override
     public FloatBuffer getViewRotationBuffer() {
-        return viewRotationBuffer.get();
+        return MethodHolder.getViewRotationBuffer();
     }
 
     @Override
@@ -64,5 +52,62 @@ public class MinecraftCamera implements ICamera {
         double camY = camera.lastTickPosY + (camera.posY - camera.lastTickPosY) * partialTicks;
         double camZ = camera.lastTickPosZ + (camera.posZ - camera.lastTickPosZ) * partialTicks;
         return new Vector3f((float)camX, (float)camY, (float)camZ);
+    }
+
+    private static class MethodHolder {
+        static final CameraInfoDelegate DELEGATE;
+
+        static {
+            DELEGATE = new CameraInfoDelegate(
+                    ReflectionUtils.getFieldGetter(ActiveRenderInfo.class, "PROJECTION", "field_178813_c", FloatBuffer.class),
+                    ReflectionUtils.getFieldGetter(ActiveRenderInfo.class, "MODELVIEW", "field_178812_b", FloatBuffer.class),
+                    ReflectionUtils.getFieldGetter(Minecraft.class, "renderPartialTicksPaused", "field_193996_ah", float.class));
+
+            Preconditions.checkNotNull(DELEGATE.projectionBuffer());
+            Preconditions.checkNotNull(DELEGATE.viewRotationBuffer());
+            Preconditions.checkNotNull(DELEGATE.partialTicksPaused());
+        }
+
+        static void init() {
+            // NO-OP
+        }
+
+        /**
+         * @see ActiveRenderInfo#PROJECTION
+         */
+        static FloatBuffer getProjectionBuffer() {
+            try {
+                return (FloatBuffer) DELEGATE.projectionBuffer().invokeExact();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * @see ActiveRenderInfo#MODELVIEW
+         */
+        static FloatBuffer getViewRotationBuffer() {
+            try {
+                return (FloatBuffer) DELEGATE.viewRotationBuffer().invokeExact();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * @see Minecraft#renderPartialTicksPaused
+         */
+        static float getPartialTicksPaused(Minecraft instance) {
+            try {
+                return (float) DELEGATE.partialTicksPaused().invokeExact(instance);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record CameraInfoDelegate(
+                MethodHandle projectionBuffer,
+                MethodHandle viewRotationBuffer,
+                MethodHandle partialTicksPaused) {}
     }
 }

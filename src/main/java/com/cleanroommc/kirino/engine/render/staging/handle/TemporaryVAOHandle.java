@@ -16,7 +16,7 @@ public class TemporaryVAOHandle extends StagingBufferHandle<TemporaryVAOHandle> 
     /**
      * Access via reflection.
      *
-     * @see StagingBufferManager#TEMPORARY_VAO_HANDLE_VAO_GETTER
+     * @see StagingBufferManager.MethodHolder#getVAO(TemporaryVAOHandle)
      */
     private final VAO vao;
 

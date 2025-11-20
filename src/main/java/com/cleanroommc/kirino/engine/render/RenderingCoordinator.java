@@ -48,6 +48,7 @@ import org.apache.logging.log4j.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,7 +106,16 @@ public class RenderingCoordinator {
         shaderRegistry = new ShaderRegistry();
         ShaderRegistrationEvent shaderRegistrationEvent = new ShaderRegistrationEvent();
         eventBus.post(shaderRegistrationEvent);
-        for (ResourceLocation rl : (List<ResourceLocation>) ReflectionUtils.getFieldValue(ReflectionUtils.findDeclaredField(ShaderRegistrationEvent.class, "shaderResourceLocations"), shaderRegistrationEvent)) {
+        MethodHandle shaderResourceLocationsGetter = ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "shaderResourceLocations", List.class);
+        Preconditions.checkNotNull(shaderResourceLocationsGetter);
+
+        List<ResourceLocation> shaderResourceLocations;
+        try {
+            shaderResourceLocations = (List<ResourceLocation>) shaderResourceLocationsGetter.invokeExact(shaderRegistrationEvent);
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+        for (ResourceLocation rl : shaderResourceLocations) {
             Shader shader = shaderRegistry.register(rl);
             logger.info("Registered " + shader.getShaderType().toString() + " shader " + rl + ".");
             if (shader.getShaderSource().isEmpty()) {
@@ -150,8 +160,15 @@ public class RenderingCoordinator {
         if (enablePostProcessing) {
             PostProcessingRegistrationEvent postProcessingRegistrationEvent = new PostProcessingRegistrationEvent(shaderRegistry);
             eventBus.post(postProcessingRegistrationEvent);
-            List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> postProcessingEntries =
-                    (List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>>) ReflectionUtils.getFieldValue(ReflectionUtils.findDeclaredField(PostProcessingRegistrationEvent.class, "postProcessingEntries"), postProcessingRegistrationEvent);
+            MethodHandle postProcessingEntriesGetter = ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class);
+            Preconditions.checkNotNull(postProcessingEntriesGetter);
+
+            List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>> postProcessingEntries;
+            try {
+                postProcessingEntries = (List<Triple<String, ShaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass>>>) postProcessingEntriesGetter.invokeExact(postProcessingRegistrationEvent);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
             if (postProcessingEntries.isEmpty()) {
                 ShaderProgram defaultShaderProgram = shaderRegistry.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag");
                 postProcessingPass.addSubpass("Default Pass", defaultShaderProgram, DefaultPostProcessingPass::new);
