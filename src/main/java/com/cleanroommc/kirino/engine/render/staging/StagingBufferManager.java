@@ -134,19 +134,8 @@ public class StagingBufferManager {
         }
 
         TemporaryVAOHandle vaoHandle = new TemporaryVAOHandle(this, temporaryHandleGeneration, attributeLayout, eboHandle, vboHandles);
-        temporaryVaos.add(getVAO(vaoHandle));
+        temporaryVaos.add(MethodHolder.getVAO(vaoHandle));
         return vaoHandle;
-    }
-
-    /**
-     * @see TemporaryVAOHandle#vao
-     */
-    private static VAO getVAO(TemporaryVAOHandle instance) {
-        try {
-            return MethodHolder.getVAO(instance);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
     }
 
     protected TemporaryVBOHandle getTemporaryVBOHandle(int size) {
@@ -184,6 +173,9 @@ public class StagingBufferManager {
             Preconditions.checkNotNull(VAO_GETTER);
         }
 
+        /**
+         * @see TemporaryVAOHandle#vao
+         */
         static VAO getVAO(TemporaryVAOHandle instance) {
             try {
                 return (VAO) VAO_GETTER.invokeExact(instance);
