@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.ecs.storage.HeapPool;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,13 +20,46 @@ public class EntityManager {
         this.componentRegistry = componentRegistry;
     }
 
+    /**
+     * Every entity's component info.
+     *
+     * <hr>
+     * <p><code>entityComponents</code>, <code>{@link #entityArchetypeLocations}</code>, <code>{@link #entityGenerations}</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * share the same length. index is the identifier of an entity.</p>
+     */
+    private final List<List<Class<? extends ICleanComponent>>> entityComponents = new ArrayList<>();
+
+    /**
+     * Every entity's archetype info.
+     *
+     * <hr>
+     * <p><code>{@link #entityComponents}</code>, <code>entityArchetypeLocations</code>, <code>{@link #entityGenerations}</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * share the same length. index is the identifier of an entity.</p>
+     */
+    private final List<ArchetypeKey> entityArchetypeLocations = new ArrayList<>();
+
+    /**
+     * Every entity's generation info.
+     *
+     * <hr>
+     * <p><code>{@link #entityComponents}</code>, <code>{@link #entityArchetypeLocations}</code>, <code>entityGenerations</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * share the same length. index is the identifier of an entity.</p>
+     */
+    private final List<Integer> entityGenerations = new ArrayList<>();
+
+    /**
+     * Every entity's destroy callback.
+     *
+     * <hr>
+     * <p><code>{@link #entityComponents}</code>, <code>{@link #entityArchetypeLocations}</code>, <code>{@link #entityGenerations}</code>, and <code>entityDestroyCallbacks</code>
+     * share the same length. index is the identifier of an entity.</p>
+     */
+    private final List<@Nullable IEntityDestroyCallback> entityDestroyCallbacks = new ArrayList<>();
+
+    private final EntityDestroyContext destroyContext = new EntityDestroyContext();
+
     private final List<Integer> freeIndexes = new ArrayList<>();
     private int indexCounter = 0;
-
-    // they share the same length
-    private final List<List<Class<? extends ICleanComponent>>> entityComponents = new ArrayList<>();
-    private final List<ArchetypeKey> entityArchetypeLocations = new ArrayList<>();
-    private final List<Integer> entityGenerations = new ArrayList<>();
 
     private final Map<ArchetypeKey, ArchetypeDataPool> archetypes = new HashMap<>();
 
@@ -67,13 +101,6 @@ public class EntityManager {
         return result;
     }
 
-    // test only for now
-    public synchronized void abort() {
-        synchronized (commandBuffer) {
-            commandBuffer.clear();
-        }
-    }
-
     /**
      * Consume all buffered commands.
      * </br></br>
@@ -93,6 +120,11 @@ public class EntityManager {
                     case DESTROY -> {
                         ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
                         ArchetypeDataPool pool = archetypes.get(archetypeKey);
+                        IEntityDestroyCallback destroyCallback = entityDestroyCallbacks.get(command.index);
+                        if (destroyCallback != null) {
+                            destroyContext.set(command.index, entityComponents.get(command.index), pool);
+                            destroyCallback.beforeDestroy(destroyContext);
+                        }
                         pool.removeEntity(command.index);
                     }
                     case SET_COM -> {
@@ -167,6 +199,33 @@ public class EntityManager {
      */
     @NonNull
     public synchronized CleanEntityHandle createEntity(@NonNull ICleanComponent @NonNull ... components) {
+        return createEntity(null, components);
+    }
+
+    /**
+     * <p>Prerequisite include:</p>
+     * <ul>
+     *     <li>All component types are valid and registered in the component registry</li>
+     *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
+     * </ul>
+     * </br>
+     * This method will allocate an entity handle and generate a command for all side effects.
+     * Buffered commands will be consumed at {@link #flush()}.
+     * </br></br>
+     * Thread safety is guaranteed.
+     *
+     * @see #flush()
+     *
+     * @param components The component types this entity has
+     * @return An entity handle
+     */
+    @NonNull
+    public synchronized CleanEntityHandle createEntity(@Nullable IEntityDestroyCallback destroyCallback, @NonNull ICleanComponent @NonNull ... components) {
+        Preconditions.checkNotNull(components);
+        for (ICleanComponent component : components) {
+            Preconditions.checkNotNull(component);
+        }
+
         int index;
         if (freeIndexes.isEmpty()) {
             index = indexCounter++;
@@ -198,6 +257,13 @@ public class EntityManager {
             generation = entityGenerations.get(index);
         }
 
+        // update destroy callback
+        if (index > entityDestroyCallbacks.size() - 1) {
+            entityDestroyCallbacks.add(destroyCallback);
+        } else {
+            entityDestroyCallbacks.set(index, destroyCallback);
+        }
+
         synchronized (commandBuffer) {
             EntityCommand command = new EntityCommand(index, EntityCommand.Type.CREATE);
             command.newComponents = Arrays.asList(components);
@@ -209,7 +275,7 @@ public class EntityManager {
 
     /**
      * This method will destroy an entity and generate a command for all side effects.
-     * Buffered commands will be consumed at {@link #flush()}.
+     * Buffered commands will be consumed at {@link #flush()}, so the destroy callback will be executed during {@link #flush()}.
      * </br></br>
      * Thread safety is guaranteed.
      *
