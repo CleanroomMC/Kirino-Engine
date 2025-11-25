@@ -26,8 +26,9 @@ import java.util.Map;
  * To illustrate, clients are only allowed to access <code>StagingBufferManager</code> and upload data during {@link #runStaging(IStagingCallback)}.
  */
 public class StagingBufferManager {
-    private final Map<AttributeLayout, BufferStorage<VBOView>> persistentVbos = new HashMap<>();
-    private final Map<AttributeLayout, BufferStorage<EBOView>> persistentEbos = new HashMap<>();
+    private final Map<AttributeLayout, Map<Long, VAO>> persistentVaos = new HashMap<>();
+    private final Map<String, BufferStorage<VBOView>> persistentVbos = new HashMap<>();
+    private final Map<String, BufferStorage<EBOView>> persistentEbos = new HashMap<>();
 
     private final List<VAO> temporaryVaos = new ArrayList<>();
     private final List<VBOView> temporaryVbos = new ArrayList<>();
@@ -78,7 +79,7 @@ public class StagingBufferManager {
     }
     //</editor-fold>
 
-    public void genPersistentBuffers(AttributeLayout key) {
+    public void genPersistentBuffers(String key) {
         Preconditions.checkArgument(!persistentVbos.containsKey(key), "The \"key\" already exists.");
 
         BufferStorage<VBOView> vboStorage = new BufferStorage<>(() -> new VBOView(new GLBuffer()));
@@ -88,11 +89,39 @@ public class StagingBufferManager {
         persistentEbos.put(key, eboStorage);
     }
 
+    protected PersistentVAOHandle getPersistentVAOHandle(AttributeLayout attributeLayout, String eboStorageKey, String[] vboStorageKeys, int eboStoragePageIndex, int[] vboStoragePageIndices) {
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
+        Preconditions.checkArgument(vboStorageKeys.length == vboStoragePageIndices.length, "Argument \"vboStorageKeys.length\" must match \"vboStoragePageIndices.length\".");
+        Preconditions.checkArgument(persistentEbos.containsKey(eboStorageKey), "Argument \"eboStorageKey\" doesn't have a corresponding storage.");
+        for (String vboStorageKey : vboStorageKeys) {
+            Preconditions.checkArgument(persistentVbos.containsKey(vboStorageKey), "One of \"vboStorageKeys\" doesn't have a corresponding storage.");
+        }
+
+        BufferStorage<EBOView> eboStorage = persistentEbos.get(eboStorageKey);
+        Preconditions.checkNotNull(eboStorage);
+        Preconditions.checkPositionIndex(eboStoragePageIndex, eboStorage.getPageCount());
+
+        List<BufferStorage<VBOView>> vboStorages = new ArrayList<>();
+        for (String vboStorageKey : vboStorageKeys) {
+            BufferStorage<VBOView> vboStorage = persistentVbos.get(vboStorageKey);
+            Preconditions.checkNotNull(vboStorage);
+            vboStorages.add(vboStorage);
+        }
+
+        for (int i = 0; i < vboStoragePageIndices.length; i++)
+            Preconditions.checkPositionIndex(vboStoragePageIndices[i], vboStorages.get(i).getPageCount());
+        }
+
+        // todo
+
+        return null;
+    }
+
     /**
      * <p>This method guarantees no GL buffer binding changes. No potential <code>buffer.bind(0)</code> usage here.</p>
      */
-    protected PersistentVBOHandle getPersistentVBOHandle(AttributeLayout key, int size) {
-        Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
+    protected PersistentVBOHandle getPersistentVBOHandle(String key, int size) {
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
 
         BufferStorage<VBOView> storage = persistentVbos.get(key);
         Preconditions.checkNotNull(storage);
@@ -109,8 +138,8 @@ public class StagingBufferManager {
     /**
      * <p>This method guarantees no GL buffer binding changes. No potential <code>buffer.bind(0)</code> usage here.</p>
      */
-    protected PersistentEBOHandle getPersistentEBOHandle(AttributeLayout key, int size) {
-        Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
+    protected PersistentEBOHandle getPersistentEBOHandle(String key, int size) {
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
 
         BufferStorage<EBOView> storage = persistentEbos.get(key);
         Preconditions.checkNotNull(storage);
@@ -131,7 +160,7 @@ public class StagingBufferManager {
      * There're hidden <code>bind(0)</code>s inside {@link TemporaryVAOHandle} and {@link VAO}.
      */
     protected TemporaryVAOHandle getTemporaryVAOHandle(AttributeLayout attributeLayout, TemporaryEBOHandle eboHandle, TemporaryVBOHandle... vboHandles) {
-        Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
         Preconditions.checkArgument(eboHandle.generation == handleGeneration, "The temporary EBO handle is expired.");
         for (TemporaryVBOHandle vboHandle : vboHandles) {
             Preconditions.checkArgument(vboHandle.generation == handleGeneration, "The temporary VBO handle is expired.");
@@ -149,7 +178,7 @@ public class StagingBufferManager {
      * There're hidden <code>bind(0)</code>s inside {@link TemporaryVBOHandle}.
      */
     protected TemporaryVBOHandle getTemporaryVBOHandle(int size) {
-        Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
         Preconditions.checkArgument(size >= 0, "Cannot have a negative \"size\".");
 
         VBOView vboView = new VBOView(new GLBuffer());
@@ -168,7 +197,7 @@ public class StagingBufferManager {
      * There're hidden <code>bind(0)</code>s inside {@link TemporaryEBOHandle}.
      */
     protected TemporaryEBOHandle getTemporaryEBOHandle(int size) {
-        Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
+        Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
         Preconditions.checkArgument(size >= 0, "Cannot have a negative \"size\".");
 
         EBOView eboView = new EBOView(new GLBuffer());

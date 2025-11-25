@@ -299,7 +299,7 @@ public class RenderingCoordinator {
         //</editor-fold>
 
         //<editor-fold desc="staging buffer initialization">
-        stagingBufferManager.genPersistentBuffers(GizmosManager.ATTRIBUTE_LAYOUT);
+        stagingBufferManager.genPersistentBuffers("default");
         //</editor-fold>
     }
 

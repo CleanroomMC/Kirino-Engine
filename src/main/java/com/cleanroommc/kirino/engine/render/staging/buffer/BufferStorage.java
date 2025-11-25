@@ -103,6 +103,12 @@ public class BufferStorage<T extends BufferView> {
         }
     }
 
+    public synchronized T getPage(int index) {
+        Preconditions.checkPositionIndex(index, pages.size());
+
+        return pages.get(index);
+    }
+
     public synchronized int getPageCount() {
         return pageCount;
     }
