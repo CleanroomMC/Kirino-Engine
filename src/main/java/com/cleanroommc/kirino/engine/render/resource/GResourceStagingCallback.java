@@ -5,9 +5,7 @@ import com.cleanroommc.kirino.engine.render.resource.payload.MeshPayload;
 import com.cleanroommc.kirino.engine.render.resource.receipt.MeshReceipt;
 import com.cleanroommc.kirino.engine.render.staging.IStagingCallback;
 import com.cleanroommc.kirino.engine.render.staging.StagingContext;
-import com.cleanroommc.kirino.engine.render.staging.handle.TemporaryEBOHandle;
-import com.cleanroommc.kirino.engine.render.staging.handle.TemporaryVAOHandle;
-import com.cleanroommc.kirino.engine.render.staging.handle.TemporaryVBOHandle;
+import com.cleanroommc.kirino.engine.render.staging.handle.*;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItem;
 
@@ -21,13 +19,15 @@ public final class GResourceStagingCallback implements IStagingCallback {
         this.graphicResourceManager = graphicResourceManager;
     }
 
+    private final Map<GResourceTicket<MeshPayload, MeshReceipt>, Runnable> persistentMeshTicketReleaseCallbacks = new HashMap<>();
+
     @SuppressWarnings("unchecked")
     private void handleMeshTickets(StagingContext context, Map<GResourceType, Map<String, GResourceTicket<?, ?>>> resourceTickets) {
         Map<String, GResourceTicket<?, ?>> map = resourceTickets.computeIfAbsent(GResourceType.MESH, k -> new HashMap<>());
 
         // group by AttributeLayout; combine vbo and ebo to bulk upload
         Map<AttributeLayout, List<GResourceTicket<MeshPayload, MeshReceipt>>> temporaryTicketsToUpload = new HashMap<>();
-        Map<AttributeLayout, List<GResourceTicket<MeshPayload, MeshReceipt>>> persistentTicketsToUpload = new HashMap<>();
+        List<GResourceTicket<MeshPayload, MeshReceipt>> persistentTicketsToUpload = new ArrayList<>();
 
         List<String> entriesToRemove = new ArrayList<>();
 
@@ -38,7 +38,10 @@ public final class GResourceStagingCallback implements IStagingCallback {
                 entriesToRemove.add(entry.getKey());
                 ticket.payload.release();
                 if (ticket.uploadStrategy == UploadStrategy.PERSISTENT) {
-                    // todo: notify staging buffer manager ?
+                    Runnable callback = persistentMeshTicketReleaseCallbacks.get(ticket);
+                    if (callback != null) {
+                        callback.run();
+                    }
                 }
                 continue;
             }
@@ -52,17 +55,11 @@ public final class GResourceStagingCallback implements IStagingCallback {
 
             if (ticket.status == GResourceStatus.CPU_ONLY) {
                 if (ticket.uploadStrategy == UploadStrategy.PERSISTENT) {
-                    persistentTicketsToUpload.computeIfAbsent(
-                            ticket.payload.getPayload().attributeLayout, k -> new ArrayList<>()).add(ticket);
-
-                    ticket.status = GResourceStatus.UPLOADING;
+                    persistentTicketsToUpload.add(ticket);
+                    ticket.status = GResourceStatus.GPU_READY;
                 } else if (ticket.uploadStrategy == UploadStrategy.TEMPORARY) {
-
-                    // dont release payloads here
-
                     temporaryTicketsToUpload.computeIfAbsent(
                             ticket.payload.getPayload().attributeLayout, k -> new ArrayList<>()).add(ticket);
-
                     ticket.status = GResourceStatus.GPU_READY;
                 }
             }
@@ -74,10 +71,21 @@ public final class GResourceStagingCallback implements IStagingCallback {
         entriesToRemove.forEach(map::remove);
 
         // upload persistent tickets
-        for (Map.Entry<AttributeLayout, List<GResourceTicket<MeshPayload, MeshReceipt>>> entry : persistentTicketsToUpload.entrySet()) {
-            // todo: combine vbo ebo if possible (same attribute) + make use of Obj2BufMorphism to compute indices automatically
+        for (GResourceTicket<MeshPayload, MeshReceipt> ticket : persistentTicketsToUpload) {
+            MeshPayload meshPayload = ticket.payload.getPayload();
+            MeshReceipt meshReceipt = ticket.receipt.getReceipt();
 
-            // todo: double buffering results in a deferred ticket status change
+            PersistentVBOHandle vboHandle = context.getPersistentVBO(meshPayload.attributeLayout, meshPayload.vboByteBuffer.remaining()).write(0, meshPayload.vboByteBuffer);
+            PersistentEBOHandle eboHandle = context.getPersistentEBO(meshPayload.attributeLayout, meshPayload.eboByteBuffer.remaining()).write(0, meshPayload.eboByteBuffer);
+
+            final Runnable vboRelease = vboHandle.getReleaseSlotAction();
+            final Runnable eboRelease = eboHandle.getReleaseSlotAction();
+            persistentMeshTicketReleaseCallbacks.put(ticket, () -> {
+                vboRelease.run();
+                eboRelease.run();
+            });
+
+            // todo: vao
         }
 
         // upload temporary tickets

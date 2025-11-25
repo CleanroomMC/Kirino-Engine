@@ -32,10 +32,11 @@ public class StagingBufferManager {
     private final List<VAO> temporaryVaos = new ArrayList<>();
     private final List<VBOView> temporaryVbos = new ArrayList<>();
     private final List<EBOView> temporaryEbos = new ArrayList<>();
-    private long temporaryHandleGeneration = 0;
 
-    public long getTemporaryHandleGeneration() {
-        return temporaryHandleGeneration;
+    private long handleGeneration = 0;
+
+    public long getHandleGeneration() {
+        return handleGeneration;
     }
 
     //<editor-fold desc="staging">
@@ -47,7 +48,7 @@ public class StagingBufferManager {
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        temporaryHandleGeneration++;
+        handleGeneration++;
         for (VAO vao : temporaryVaos) {
             GLResourceManager.disposeEarly(vao);
         }
@@ -102,7 +103,7 @@ public class StagingBufferManager {
 
         BufferStorage.SlotHandle<VBOView> handle = storage.allocate(size);
 
-        return new PersistentVBOHandle(this, handle.getOffset(), handle.getSize(), handle);
+        return new PersistentVBOHandle(this, handleGeneration, handle.getOffset(), handle.getSize(), handle);
     }
 
     /**
@@ -120,7 +121,7 @@ public class StagingBufferManager {
 
         BufferStorage.SlotHandle<EBOView> handle = storage.allocate(size);
 
-        return new PersistentEBOHandle(this, handle.getOffset(), handle.getSize(), handle);
+        return new PersistentEBOHandle(this, handleGeneration, handle.getOffset(), handle.getSize(), handle);
     }
 
     /**
@@ -131,12 +132,12 @@ public class StagingBufferManager {
      */
     protected TemporaryVAOHandle getTemporaryVAOHandle(AttributeLayout attributeLayout, TemporaryEBOHandle eboHandle, TemporaryVBOHandle... vboHandles) {
         Preconditions.checkState(active, "Must not access buffers from StagingBufferManager when the manager is inactive.");
-        Preconditions.checkArgument(eboHandle.generation == temporaryHandleGeneration, "The temporary EBO handle is expired.");
+        Preconditions.checkArgument(eboHandle.generation == handleGeneration, "The temporary EBO handle is expired.");
         for (TemporaryVBOHandle vboHandle : vboHandles) {
-            Preconditions.checkArgument(vboHandle.generation == temporaryHandleGeneration, "The temporary VBO handle is expired.");
+            Preconditions.checkArgument(vboHandle.generation == handleGeneration, "The temporary VBO handle is expired.");
         }
 
-        TemporaryVAOHandle vaoHandle = new TemporaryVAOHandle(this, temporaryHandleGeneration, attributeLayout, eboHandle, vboHandles);
+        TemporaryVAOHandle vaoHandle = new TemporaryVAOHandle(this, handleGeneration, attributeLayout, eboHandle, vboHandles);
         temporaryVaos.add(MethodHolder.getVAO(vaoHandle));
         return vaoHandle;
     }
@@ -157,7 +158,7 @@ public class StagingBufferManager {
         vboView.alloc(size, BufferUploadHint.STATIC_DRAW);
         vboView.bind(0);
         temporaryVbos.add(vboView);
-        return new TemporaryVBOHandle(this, temporaryHandleGeneration, size, vboView);
+        return new TemporaryVBOHandle(this, handleGeneration, size, vboView);
     }
 
     /**
@@ -176,7 +177,7 @@ public class StagingBufferManager {
         eboView.alloc(size, BufferUploadHint.STATIC_DRAW);
         eboView.bind(0);
         temporaryEbos.add(eboView);
-        return new TemporaryEBOHandle(this, temporaryHandleGeneration, size, eboView);
+        return new TemporaryEBOHandle(this, handleGeneration, size, eboView);
     }
 
     private static class MethodHolder {

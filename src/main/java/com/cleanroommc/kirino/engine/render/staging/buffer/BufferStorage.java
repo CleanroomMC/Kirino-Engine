@@ -123,11 +123,11 @@ public class BufferStorage<T extends BufferView> {
         return null;
     }
 
-    public void registerReleaseListener(long slotId, Consumer<SlotHandle<T>> listener) {
+    protected void registerReleaseListener(long slotId, Consumer<SlotHandle<T>> listener) {
         releaseListeners.put(slotId, listener);
     }
 
-    public void unregisterReleaseListener(long slotId) {
+    protected void unregisterReleaseListener(long slotId) {
         releaseListeners.remove(slotId);
     }
 
@@ -230,7 +230,7 @@ public class BufferStorage<T extends BufferView> {
             Preconditions.checkArgument(offset >= 0,
                     "Argument \"offset\" must be greater than or equal to zero.");
             Preconditions.checkArgument(length >= 0,
-                    "Argument \"offset\" must be greater than or equal to zero.");
+                    "Argument \"length\" must be greater than or equal to zero.");
 
             int start = offset;
             int end = offset + length;

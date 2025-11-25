@@ -27,7 +27,7 @@ public class TemporaryVAOHandle extends StagingBufferHandle<TemporaryVAOHandle> 
     }
 
     public int getVaoID() {
-        Preconditions.checkState(generation == stagingBufferManager.getTemporaryHandleGeneration(), "This temporary handle is expired.");
+        Preconditions.checkState(generation == stagingBufferManager.getHandleGeneration(), "This temporary handle is expired.");
 
         return vao.vaoID;
     }
