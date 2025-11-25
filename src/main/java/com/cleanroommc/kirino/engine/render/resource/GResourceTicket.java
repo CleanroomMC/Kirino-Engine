@@ -7,6 +7,10 @@ import com.cleanroommc.kirino.engine.render.resource.receipt.IResourceReceipt;
 import com.cleanroommc.kirino.engine.render.resource.receipt.MeshReceipt;
 import com.cleanroommc.kirino.engine.render.resource.receipt.TextureReceipt;
 import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Optional;
 
 public class GResourceTicket<TP extends IResourcePayload<TP>, TR extends IResourceReceipt<TR>> {
     public final GResourceType type;
@@ -18,6 +22,24 @@ public class GResourceTicket<TP extends IResourcePayload<TP>, TR extends IResour
     private static final int DEFAULT_LIFE = 2;
     protected int lifeFrame = DEFAULT_LIFE;
 
+    private @Nullable Runnable expireCallback = null;
+
+    protected final void setExpireCallback(@Nullable Runnable expireCallback) {
+        this.expireCallback = expireCallback;
+    }
+
+    @NonNull
+    protected final Optional<Runnable> getExpireCallback() {
+        return Optional.ofNullable(expireCallback);
+    }
+
+    protected final void expire() {
+        payload.release();
+        getExpireCallback().ifPresent(Runnable::run);
+        setExpireCallback(null);
+    }
+
+    @NonNull
     public final TR getReceipt() {
         return receipt.getReceipt();
     }
@@ -44,7 +66,12 @@ public class GResourceTicket<TP extends IResourcePayload<TP>, TR extends IResour
         lifeFrame = DEFAULT_LIFE;
     }
 
-    public GResourceTicket(UploadStrategy uploadStrategy, Class<TP> payloadClass, Class<TR> receiptClass, TP payload, TR receipt) {
+    public GResourceTicket(@NonNull UploadStrategy uploadStrategy, @NonNull Class<TP> payloadClass, @NonNull Class<TR> receiptClass, @NonNull TP payload, @NonNull TR receipt) {
+        Preconditions.checkNotNull(uploadStrategy);
+        Preconditions.checkNotNull(payloadClass);
+        Preconditions.checkNotNull(receiptClass);
+        Preconditions.checkNotNull(payload);
+        Preconditions.checkNotNull(receipt);
         Preconditions.checkArgument(payloadClass == MeshPayload.class || payloadClass == TexturePayload.class,
                 "Argument payloadClass " + payloadClass.getName() + " is invalid. Must use a built-in payload class.");
         Preconditions.checkArgument(receiptClass == MeshReceipt.class || receiptClass == TextureReceipt.class,

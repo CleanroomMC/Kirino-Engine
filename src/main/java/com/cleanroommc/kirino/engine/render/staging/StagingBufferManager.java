@@ -15,10 +15,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
 import java.lang.invoke.MethodHandle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <code>StagingBufferManager</code> is where we upload data to GPU. {@link #runStaging(IStagingCallback)} to be exact.
@@ -26,7 +23,40 @@ import java.util.Map;
  * To illustrate, clients are only allowed to access <code>StagingBufferManager</code> and upload data during {@link #runStaging(IStagingCallback)}.
  */
 public class StagingBufferManager {
-    private final Map<AttributeLayout, Map<Long, VAO>> persistentVaos = new HashMap<>();
+
+    record PersistentVAOKey(
+            AttributeLayout attributeLayout,
+            String eboStorageKey,
+            String[] vboStorageKeys,
+            int eboStoragePageIndex,
+            int[] vboStoragePageIndices
+    ) {
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof PersistentVAOKey other)) {
+                return false;
+            }
+
+            return eboStoragePageIndex == other.eboStoragePageIndex
+                    && Objects.equals(attributeLayout, other.attributeLayout)
+                    && Objects.equals(eboStorageKey, other.eboStorageKey)
+                    && Arrays.equals(vboStorageKeys, other.vboStorageKeys)
+                    && Arrays.equals(vboStoragePageIndices, other.vboStoragePageIndices);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Objects.hash(attributeLayout, eboStorageKey, eboStoragePageIndex);
+            result = 31 * result + Arrays.hashCode(vboStorageKeys);
+            result = 31 * result + Arrays.hashCode(vboStoragePageIndices);
+            return result;
+        }
+    }
+
+    private final Map<PersistentVAOKey, VAO> persistentVaos = new HashMap<>();
     private final Map<String, BufferStorage<VBOView>> persistentVbos = new HashMap<>();
     private final Map<String, BufferStorage<EBOView>> persistentEbos = new HashMap<>();
 
@@ -79,22 +109,30 @@ public class StagingBufferManager {
     }
     //</editor-fold>
 
-    public void genPersistentBuffers(String key) {
-        Preconditions.checkArgument(!persistentVbos.containsKey(key), "The \"key\" already exists.");
+    public void genPersistentBuffers(String storageKey) {
+        Preconditions.checkArgument(!persistentVbos.containsKey(storageKey), "The \"storageKey\" already exists.");
 
         BufferStorage<VBOView> vboStorage = new BufferStorage<>(() -> new VBOView(new GLBuffer()));
         BufferStorage<EBOView> eboStorage = new BufferStorage<>(() -> new EBOView(new GLBuffer()));
 
-        persistentVbos.put(key, vboStorage);
-        persistentEbos.put(key, eboStorage);
+        persistentVbos.put(storageKey, vboStorage);
+        persistentEbos.put(storageKey, eboStorage);
     }
 
+    /**
+     * <p>This method potentially changes GL buffer binding.</p>
+     * However, it'll only be called during the window period (no GL state restrictions on this period) so <code>buffer.bind(0)</code> is fine.
+     * <hr>
+     * There're hidden <code>bind(0)</code>s inside {@link VAO}.
+     */
     protected PersistentVAOHandle getPersistentVAOHandle(AttributeLayout attributeLayout, String eboStorageKey, String[] vboStorageKeys, int eboStoragePageIndex, int[] vboStoragePageIndices) {
         Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
         Preconditions.checkArgument(vboStorageKeys.length == vboStoragePageIndices.length, "Argument \"vboStorageKeys.length\" must match \"vboStoragePageIndices.length\".");
-        Preconditions.checkArgument(persistentEbos.containsKey(eboStorageKey), "Argument \"eboStorageKey\" doesn't have a corresponding storage.");
+        Preconditions.checkArgument(persistentEbos.containsKey(eboStorageKey),
+                "Argument \"eboStorageKey\", %s, doesn't have a corresponding storage.", eboStorageKey);
         for (String vboStorageKey : vboStorageKeys) {
-            Preconditions.checkArgument(persistentVbos.containsKey(vboStorageKey), "One of \"vboStorageKeys\" doesn't have a corresponding storage.");
+            Preconditions.checkArgument(persistentVbos.containsKey(vboStorageKey),
+                    "One of \"vboStorageKeys\", %s, doesn't have a corresponding storage.", vboStorageKey);
         }
 
         BufferStorage<EBOView> eboStorage = persistentEbos.get(eboStorageKey);
@@ -108,23 +146,37 @@ public class StagingBufferManager {
             vboStorages.add(vboStorage);
         }
 
-        for (int i = 0; i < vboStoragePageIndices.length; i++)
+        for (int i = 0; i < vboStoragePageIndices.length; i++) {
             Preconditions.checkPositionIndex(vboStoragePageIndices[i], vboStorages.get(i).getPageCount());
         }
 
-        // todo
+        // finished precondition checks
 
-        return null;
+        PersistentVAOKey key = new PersistentVAOKey(attributeLayout, eboStorageKey, vboStorageKeys, eboStoragePageIndex, vboStoragePageIndices);
+        VAO vao = persistentVaos.get(key);
+        if (vao != null) {
+            return new PersistentVAOHandle(this, handleGeneration, vao);
+        }
+
+        VBOView[] vboViews = new VBOView[vboStorages.size()];
+        for (int i = 0; i < vboViews.length; i++) {
+            vboViews[i] = vboStorages.get(i).getPage(vboStoragePageIndices[i]);
+        }
+        vao = new VAO(attributeLayout, eboStorage.getPage(eboStoragePageIndex), vboViews);
+        persistentVaos.put(key, vao);
+
+        return new PersistentVAOHandle(this, handleGeneration, vao);
     }
 
     /**
      * <p>This method guarantees no GL buffer binding changes. No potential <code>buffer.bind(0)</code> usage here.</p>
      */
-    protected PersistentVBOHandle getPersistentVBOHandle(String key, int size) {
+    protected PersistentVBOHandle getPersistentVBOHandle(String storageKey, int size) {
         Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
 
-        BufferStorage<VBOView> storage = persistentVbos.get(key);
-        Preconditions.checkNotNull(storage);
+        BufferStorage<VBOView> storage = persistentVbos.get(storageKey);
+        Preconditions.checkNotNull(storage,
+                "Argument \"storageKey\", %s, doesn't have a corresponding storage.", storageKey);
 
         Preconditions.checkArgument(size >= 0, "Cannot have a negative \"size\".");
         Preconditions.checkArgument(size <= storage.getPageSize(),
@@ -138,11 +190,12 @@ public class StagingBufferManager {
     /**
      * <p>This method guarantees no GL buffer binding changes. No potential <code>buffer.bind(0)</code> usage here.</p>
      */
-    protected PersistentEBOHandle getPersistentEBOHandle(String key, int size) {
+    protected PersistentEBOHandle getPersistentEBOHandle(String storageKey, int size) {
         Preconditions.checkState(active, "Must not access StagingBufferManager when the manager is inactive.");
 
-        BufferStorage<EBOView> storage = persistentEbos.get(key);
-        Preconditions.checkNotNull(storage);
+        BufferStorage<EBOView> storage = persistentEbos.get(storageKey);
+        Preconditions.checkNotNull(storage,
+                "Argument \"storageKey\", %s, doesn't have a corresponding storage.", storageKey);
 
         Preconditions.checkArgument(size >= 0, "Cannot have a negative \"size\".");
         Preconditions.checkArgument(size <= storage.getPageSize(),
@@ -154,7 +207,7 @@ public class StagingBufferManager {
     }
 
     /**
-     * <p>This method (directly OR potentially) changes GL buffer binding.</p>
+     * <p>This method potentially changes GL buffer binding.</p>
      * However, it'll only be called during the window period (no GL state restrictions on this period) so <code>buffer.bind(0)</code> is fine.
      * <hr>
      * There're hidden <code>bind(0)</code>s inside {@link TemporaryVAOHandle} and {@link VAO}.

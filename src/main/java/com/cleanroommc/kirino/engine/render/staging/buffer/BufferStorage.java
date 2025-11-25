@@ -179,6 +179,9 @@ public class BufferStorage<T extends BufferView> {
             owner.registerReleaseListener(slotId, callback);
         }
 
+        /**
+         * Thread-safety is guaranteed.
+         */
         public void release() {
             if (released) {
                 return;

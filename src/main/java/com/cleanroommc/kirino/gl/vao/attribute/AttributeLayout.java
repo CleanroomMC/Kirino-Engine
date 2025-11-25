@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
 
@@ -19,10 +20,15 @@ public class AttributeLayout {
         return strideStack.size();
     }
 
+    /**
+     * There is at least one stride as required.
+     */
+    @NonNull
     public Stride getFirstStride() {
         return strideStack.descendingIterator().next();
     }
 
+    @NonNull
     public AttributeLayout push(Stride stride) {
         strideStack.push(stride);
         return this;

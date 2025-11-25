@@ -245,7 +245,7 @@ public class GizmosManager {
             BlockSurface blockSurface = iterator.next();
             String id = "block_surface_mesh_" + Objects.hash(index, blockSurface);
 
-            graphicResourceManager.requestMeshTicket(id, UploadStrategy.TEMPORARY).ifPresent(builder -> {
+            graphicResourceManager.requestMeshTicket(id, UploadStrategy.PERSISTENT).ifPresent(builder -> {
                 buildBlockFaces(builder, blockSurface.x, blockSurface.y, blockSurface.z, blockSurface.faceMask, blockSurface.color);
                 graphicResourceManager.submitMeshTicket(builder);
             });

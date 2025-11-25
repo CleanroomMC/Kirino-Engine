@@ -9,13 +9,11 @@ import com.google.common.base.Preconditions;
 import java.nio.ByteBuffer;
 
 public class PersistentVBOHandle extends StagingBufferHandle<PersistentVBOHandle> {
-    public final long generation;
     private final BufferStorage.SlotHandle<VBOView> handle;
     private boolean expired = false;
 
     public PersistentVBOHandle(StagingBufferManager stagingBufferManager, long generation, int offset, int maxLength, BufferStorage.SlotHandle<VBOView> handle) {
-        super(stagingBufferManager, offset, maxLength);
-        this.generation = generation;
+        super(stagingBufferManager, generation, offset, maxLength);
         this.handle = handle;
 
         this.handle.setReleaseCallback(handle1 -> {
@@ -25,8 +23,7 @@ public class PersistentVBOHandle extends StagingBufferHandle<PersistentVBOHandle
 
     @Override
     protected void writeInternal(int offset, ByteBuffer byteBuffer) {
-        Preconditions.checkState(!expired, "This temporary handle is expired.");
-        Preconditions.checkState(generation == stagingBufferManager.getHandleGeneration(), "This temporary handle is expired.");
+        Preconditions.checkState(!expired, "This handle is expired.");
         Preconditions.checkArgument(offset >= 0, "Cannot have a negative buffer offset.");
         Preconditions.checkArgument(offset + byteBuffer.remaining() <= maxLength,
                 "Buffer slice size must be greater than or equal to \"offset + byteBuffer.remaining()\".");
@@ -38,10 +35,31 @@ public class PersistentVBOHandle extends StagingBufferHandle<PersistentVBOHandle
         byteBuffer0.position(oldPos);
     }
 
-    public Runnable getReleaseSlotAction() {
-        Preconditions.checkState(!expired, "This temporary handle is expired.");
-        Preconditions.checkState(generation == stagingBufferManager.getHandleGeneration(), "This temporary handle is expired.");
+    public Runnable getSlotReleaseAction() {
+        getterPreconditionsCheck();
+        Preconditions.checkState(!expired, "This handle is expired.");
 
         return handle::release;
+    }
+
+    public int getSlotPageIndex() {
+        getterPreconditionsCheck();
+        Preconditions.checkState(!expired, "This handle is expired.");
+
+        return handle.getPageIndex();
+    }
+
+    public int getSlotOffset() {
+        getterPreconditionsCheck();
+        Preconditions.checkState(!expired, "This handle is expired.");
+
+        return handle.getOffset();
+    }
+
+    public int getSlotSize() {
+        getterPreconditionsCheck();
+        Preconditions.checkState(!expired, "This handle is expired.");
+
+        return handle.getSize();
     }
 }

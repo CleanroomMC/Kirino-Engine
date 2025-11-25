@@ -2,15 +2,22 @@ package com.cleanroommc.kirino.engine.render.staging.handle;
 
 import com.cleanroommc.kirino.engine.render.staging.StagingBufferHandle;
 import com.cleanroommc.kirino.engine.render.staging.StagingBufferManager;
+import com.cleanroommc.kirino.gl.vao.VAO;
 
 import java.nio.ByteBuffer;
 
 public class PersistentVAOHandle extends StagingBufferHandle<PersistentVAOHandle> {
-    public final long generation;
+    private final VAO vao;
 
-    public PersistentVAOHandle(StagingBufferManager stagingBufferManager, long generation) {
-        super(stagingBufferManager, 0, 0);
-        this.generation = generation;
+    public PersistentVAOHandle(StagingBufferManager stagingBufferManager, long generation, VAO vao) {
+        super(stagingBufferManager, generation, 0, 0);
+        this.vao = vao;
+    }
+
+    public int getVaoID() {
+        getterPreconditionsCheck();
+
+        return vao.vaoID;
     }
 
     @Override

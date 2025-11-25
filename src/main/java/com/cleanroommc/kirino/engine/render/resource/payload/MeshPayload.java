@@ -10,6 +10,8 @@ public class MeshPayload implements IResourcePayload<MeshPayload> {
     public MeshPayload() {
     }
 
+    public boolean isVboByteBufferFromLwjgl = false;
+    public boolean isEboByteBufferFromLwjgl = false;
     public ByteBuffer vboByteBuffer;
     public ByteBuffer eboByteBuffer;
     public AttributeLayout attributeLayout;
@@ -25,16 +27,16 @@ public class MeshPayload implements IResourcePayload<MeshPayload> {
     @Override
     public void release() {
         if (!released) {
-            if (vboByteBuffer != null && vboByteBuffer.isDirect() && MemoryUtil.memAddressSafe(vboByteBuffer) != 0) {
-                MemoryUtil.memFree(vboByteBuffer);
-                vboByteBuffer = null;
-            }
-            if (eboByteBuffer != null && eboByteBuffer.isDirect() && MemoryUtil.memAddressSafe(eboByteBuffer) != 0) {
-                MemoryUtil.memFree(eboByteBuffer);
-                eboByteBuffer = null;
-            }
-            attributeLayout = null;
             released = true;
+            attributeLayout = null;
+            if (vboByteBuffer != null && vboByteBuffer.isDirect() && MemoryUtil.memAddressSafe(vboByteBuffer) != 0 && isVboByteBufferFromLwjgl) {
+                MemoryUtil.memFree(vboByteBuffer);
+            }
+            vboByteBuffer = null;
+            if (eboByteBuffer != null && eboByteBuffer.isDirect() && MemoryUtil.memAddressSafe(eboByteBuffer) != 0 && isEboByteBufferFromLwjgl) {
+                MemoryUtil.memFree(eboByteBuffer);
+            }
+            eboByteBuffer = null;
         }
     }
 }

@@ -5,14 +5,11 @@ import com.cleanroommc.kirino.engine.render.staging.StagingBufferManager;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
-import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class TemporaryVAOHandle extends StagingBufferHandle<TemporaryVAOHandle> {
-    public final long generation;
-
     /**
      * Access via reflection.
      *
@@ -21,13 +18,12 @@ public class TemporaryVAOHandle extends StagingBufferHandle<TemporaryVAOHandle> 
     private final VAO vao;
 
     public TemporaryVAOHandle(StagingBufferManager stagingBufferManager, long generation, AttributeLayout attributeLayout, TemporaryEBOHandle eboHandle, TemporaryVBOHandle... vboHandles) {
-        super(stagingBufferManager, 0, 0);
-        this.generation = generation;
+        super(stagingBufferManager, generation, 0, 0);
         vao = new VAO(attributeLayout, eboHandle.eboView, Arrays.stream(vboHandles).map(handle -> handle.vboView).toArray(VBOView[]::new));
     }
 
     public int getVaoID() {
-        Preconditions.checkState(generation == stagingBufferManager.getHandleGeneration(), "This temporary handle is expired.");
+        getterPreconditionsCheck();
 
         return vao.vaoID;
     }

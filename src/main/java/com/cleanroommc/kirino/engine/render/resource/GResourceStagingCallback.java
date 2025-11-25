@@ -19,8 +19,6 @@ public final class GResourceStagingCallback implements IStagingCallback {
         this.graphicResourceManager = graphicResourceManager;
     }
 
-    private final Map<GResourceTicket<MeshPayload, MeshReceipt>, Runnable> persistentMeshTicketReleaseCallbacks = new HashMap<>();
-
     @SuppressWarnings("unchecked")
     private void handleMeshTickets(StagingContext context, Map<GResourceType, Map<String, GResourceTicket<?, ?>>> resourceTickets) {
         Map<String, GResourceTicket<?, ?>> map = resourceTickets.computeIfAbsent(GResourceType.MESH, k -> new HashMap<>());
@@ -36,13 +34,7 @@ public final class GResourceStagingCallback implements IStagingCallback {
 
             if (ticket.isExpired()) {
                 entriesToRemove.add(entry.getKey());
-                ticket.payload.release();
-                if (ticket.uploadStrategy == UploadStrategy.PERSISTENT) {
-                    Runnable callback = persistentMeshTicketReleaseCallbacks.get(ticket);
-                    if (callback != null) {
-                        callback.run();
-                    }
-                }
+                ticket.expire();
                 continue;
             }
 
@@ -75,17 +67,30 @@ public final class GResourceStagingCallback implements IStagingCallback {
             MeshPayload meshPayload = ticket.payload.getPayload();
             MeshReceipt meshReceipt = ticket.receipt.getReceipt();
 
-            PersistentVBOHandle vboHandle = context.getPersistentVBO(meshPayload.attributeLayout, meshPayload.vboByteBuffer.remaining()).write(0, meshPayload.vboByteBuffer);
-            PersistentEBOHandle eboHandle = context.getPersistentEBO(meshPayload.attributeLayout, meshPayload.eboByteBuffer.remaining()).write(0, meshPayload.eboByteBuffer);
+            PersistentVBOHandle vboHandle = context.getPersistentVBO("default", meshPayload.vboByteBuffer.remaining()).write(0, meshPayload.vboByteBuffer);
+            PersistentEBOHandle eboHandle = context.getPersistentEBO("default", meshPayload.eboByteBuffer.remaining()).write(0, meshPayload.eboByteBuffer);
+            PersistentVAOHandle vaoHandle = context.getPersistentVAO(
+                    meshPayload.attributeLayout,
+                    "default",
+                    "default",
+                    eboHandle.getSlotPageIndex(),
+                    vboHandle.getSlotPageIndex());
 
-            final Runnable vboRelease = vboHandle.getReleaseSlotAction();
-            final Runnable eboRelease = eboHandle.getReleaseSlotAction();
-            persistentMeshTicketReleaseCallbacks.put(ticket, () -> {
+            final Runnable vboRelease = vboHandle.getSlotReleaseAction();
+            final Runnable eboRelease = eboHandle.getSlotReleaseAction();
+
+            ticket.setExpireCallback(() -> {
                 vboRelease.run();
                 eboRelease.run();
             });
 
-            // todo: vao
+            meshReceipt.vao = vaoHandle.getVaoID();
+            meshReceipt.eboOffset = eboHandle.getSlotOffset();
+            meshReceipt.eboLength = eboHandle.getSlotSize();
+            meshReceipt.baseVertex = vboHandle.getSlotOffset() / meshPayload.attributeLayout.getFirstStride().getSize();
+
+            // unlike temporary tickets; release payload immediately
+            meshPayload.release();
         }
 
         // upload temporary tickets
