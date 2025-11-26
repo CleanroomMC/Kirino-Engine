@@ -13,7 +13,7 @@ import org.lwjgl.opengl.GL11;
 import java.util.*;
 
 public class DrawQueue {
-    private final Deque<IDrawCommand> deque = new ArrayDeque<>();
+    private Deque<IDrawCommand> deque = new ArrayDeque<>();
 
     public DrawQueue() {
     }
@@ -57,9 +57,6 @@ public class DrawQueue {
 
                 MeshReceipt meshReceipt = optional.get().getReceipt();
 
-                LowLevelDC.MultiElementIndirectUnitBuilder builder = LowLevelDC.multiElementIndirectUnit().vao(meshReceipt.vao);
-                builder.mode(highLevelDC.mode).elementType(highLevelDC.elementType);
-
                 int elementSize = 0;
                 if (highLevelDC.elementType == GL11.GL_UNSIGNED_BYTE) {
                     elementSize = 1;
@@ -69,18 +66,21 @@ public class DrawQueue {
                     elementSize = 4;
                 }
 
-                builder.indicesCount(meshReceipt.eboLength / elementSize);
-                builder.instanceCount(1);
-                builder.eboFirstIndex(meshReceipt.eboOffset / elementSize);
-                builder.baseVertex(meshReceipt.baseVertex);
-                builder.baseInstance(0);
+                baked.add(LowLevelDC.get().fillMultiElementIndirectUnit(
+                        meshReceipt.vao,
+                        highLevelDC.mode,
+                        highLevelDC.elementType,
+                        meshReceipt.eboLength / elementSize,
+                        1,
+                        meshReceipt.eboOffset / elementSize,
+                        meshReceipt.baseVertex,
+                        0));
 
-                baked.add(builder.build());
+                highLevelDC.recycle();
             }
         }
 
-        deque.clear();
-        deque.addAll(baked);
+        deque = new ArrayDeque<>(baked);
         return this;
     }
 
@@ -112,7 +112,6 @@ public class DrawQueue {
             grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(lowLevelDC);
         }
 
-        deque.clear();
         idbGenerator.reset();
 
         List<IDrawCommand> baked = new ArrayList<>();
@@ -135,7 +134,7 @@ public class DrawQueue {
             baked.add(idbGenerator.generate(units, entry.getKey().vao, entry.getKey().mode, entry.getKey().elementType));
         }
 
-        deque.addAll(baked);
+        deque = new ArrayDeque<>(baked);
         return this;
     }
 

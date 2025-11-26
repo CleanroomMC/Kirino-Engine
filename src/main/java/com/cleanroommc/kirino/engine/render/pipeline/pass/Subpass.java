@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.pipeline.pass;
 import com.cleanroommc.kirino.engine.render.camera.ICamera;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
+import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.IDrawCommand;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.DrawQueue;
@@ -44,6 +45,11 @@ public abstract class Subpass {
         updateShaderProgram(pso.shaderProgram(), camera, payload);
 
         execute(dq, payload);
+
+        IDrawCommand drawCommand;
+        while ((drawCommand = dq.dequeue()) != null) {
+            drawCommand.recycle();
+        }
     }
 
     protected abstract void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable ICamera camera, @Nullable Object payload);

@@ -78,11 +78,11 @@ public abstract class AbstractPostProcessingPass extends Subpass {
 
     @Override
     public void collectCommands(DrawQueue drawQueue) {
-        drawQueue.enqueue(LowLevelDC.element()
-                .vao(fullscreenTriangleVao.get().vaoID)
-                .mode(GL11.GL_TRIANGLES)
-                .indicesCount(3)
-                .elementType(GL11.GL_UNSIGNED_BYTE)
-                .eboOffset(0).build());
+        drawQueue.enqueue(LowLevelDC.get().fillElement(
+                fullscreenTriangleVao.get().vaoID,
+                GL11.GL_TRIANGLES,
+                3,
+                GL11.GL_UNSIGNED_BYTE,
+                0));
     }
 }

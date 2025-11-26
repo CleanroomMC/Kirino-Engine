@@ -265,11 +265,7 @@ public class GizmosManager {
                 });
             }
 
-            list.add(HighLevelDC.passInternal()
-                    .meshTicketID(id)
-                    .mode(GL11.GL_TRIANGLES)
-                    .elementType(GL11.GL_UNSIGNED_BYTE)
-                    .build());
+            list.add(HighLevelDC.get().fillPassInternal(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_BYTE));
 
             index++;
         }

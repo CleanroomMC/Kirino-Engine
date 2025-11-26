@@ -42,6 +42,7 @@ public class IndirectDrawBufferGenerator {
      * </ul>
      *
      * Combines units and generates a <code>MULTI_ELEMENTS_INDIRECT</code> typed command, and this is an OpenGL operation free method call.
+     * By the way, <code>units</code> will be recycled automatically here.
      *
      * @param units Low-level <code>MULTI_ELEMENTS_INDIRECT_UNIT</code> typed commands
      * @return <code>MULTI_ELEMENTS_INDIRECT</code> typed command
@@ -96,14 +97,21 @@ public class IndirectDrawBufferGenerator {
             MemoryUtil.memFree(byteBuffer);
         }
 
-        LowLevelDC.MultiElementIndirectBuilder builder = LowLevelDC.multiElementIndirect().vao(vao).idb(idbView.bufferID);
-        builder.mode(mode).elementType(elementType);
-        builder.idbOffset(offset);
-        builder.idbStride(IndirectDrawBufferGenerator.IDB_STRIDE_BYTE);
-        builder.instanceCount(units.size());
+        LowLevelDC lowLevelDC = LowLevelDC.get().fillMultiElementIndirect(
+                vao,
+                idbView.bufferID,
+                mode,
+                elementType,
+                offset,
+                IndirectDrawBufferGenerator.IDB_STRIDE_BYTE,
+                units.size());
 
         offset += idbBufferSize;
 
-        return builder.build();
+        for (LowLevelDC unit : units) {
+            unit.recycle();
+        }
+
+        return lowLevelDC;
     }
 }

@@ -65,7 +65,8 @@ public final class Renderer {
 
     /**
      * Accepts a low-level draw command and submits the corresponding OpenGL command to GPU.
-     * Notice, {@link LowLevelDC} with type <code>MULTI_ELEMENTS_INDIRECT_UNIT</code> is an auxiliary command and will be ignored here.
+     * Notice, <code>command</code> with type <code>MULTI_ELEMENTS_INDIRECT_UNIT</code> is an auxiliary command and will be ignored here.
+     * By the way, <code>command</code> will be recycled automatically here.
      *
      * @param command The low-level draw command
      */
@@ -89,5 +90,7 @@ public final class Renderer {
                 }
             }
         }
+
+        command.recycle();
     }
 }
