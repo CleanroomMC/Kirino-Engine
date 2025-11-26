@@ -12,14 +12,8 @@ public final class HighLevelDC implements IDrawCommand {
     }
 
     private static final int POOL_CAPACITY = 8192;
-    private static final HighLevelDC[] POOL = new HighLevelDC[POOL_CAPACITY];
+    private static ObjectPoolArena POOL = new ObjectPoolArena(null);
     private static final AtomicInteger POOL_INDEX = new AtomicInteger(0);
-
-    static {
-        for (int i = 0; i < POOL_CAPACITY; i++) {
-            POOL[i] = new HighLevelDC();
-        }
-    }
 
     private HighLevelDC() {
     }
@@ -27,20 +21,32 @@ public final class HighLevelDC implements IDrawCommand {
     public static HighLevelDC get() {
         int index = POOL_INDEX.getAndIncrement();
         if (index >= POOL_CAPACITY) {
-            POOL_INDEX.set(POOL_CAPACITY - 1);
-            return new HighLevelDC();
+            if (POOL.next == null) {
+                POOL.next = new ObjectPoolArena(POOL);
+            }
+            POOL = POOL.next;
+            POOL_INDEX.set(0);
         }
-        return POOL[index];
+        return POOL.arena[0];
     }
 
     public void recycle() {
         reset();
         int index = POOL_INDEX.decrementAndGet();
         if (index < 0) {
-            POOL_INDEX.set(0);
-        } else {
-            POOL[index] = this;
+            if (POOL.prev == null) {
+                POOL_INDEX.set(0);
+            } else {
+                POOL = POOL.prev;
+                if (POOL.next.next != null) {
+                    POOL.next.next = null; // Should I call the GC after this?
+                    System.gc();
+                }
+                index = POOL_CAPACITY - 1;
+                POOL_INDEX.set(index);
+            }
         }
+        POOL.arena[index] = this;
     }
 
     public CommandSource source = null;
@@ -80,5 +86,19 @@ public final class HighLevelDC implements IDrawCommand {
 
     public HighLevelDC fillSceneSubmitted(PassHint passHint, String meshTicketID, int mode, int elementType) {
         return initHighLevelDC(CommandSource.SCENE_SUBMITTED, passHint, meshTicketID, mode, elementType);
+    }
+
+    private static class ObjectPoolArena {
+        ObjectPoolArena prev, next;
+        final HighLevelDC[] arena = new HighLevelDC[POOL_CAPACITY];
+
+        ObjectPoolArena(ObjectPoolArena prev) {
+            this.prev = prev;
+            this.next = null;
+
+            for (int i = 0; i < POOL_CAPACITY; i++) {
+                arena[i] = new HighLevelDC();
+            }
+        }
     }
 }
