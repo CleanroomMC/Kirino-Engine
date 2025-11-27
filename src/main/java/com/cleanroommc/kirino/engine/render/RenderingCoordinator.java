@@ -8,6 +8,8 @@ import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRende
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;
 import com.cleanroommc.kirino.engine.render.pipeline.*;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
+import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
+import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.subpasses.*;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.pipeline.post.FrameFinalizer;
@@ -338,6 +340,9 @@ public class RenderingCoordinator {
         GL30.glBindVertexArray(0);
         GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        HighLevelDC.nextGen();
+        LowLevelDC.nextGen();
     }
 
     // test

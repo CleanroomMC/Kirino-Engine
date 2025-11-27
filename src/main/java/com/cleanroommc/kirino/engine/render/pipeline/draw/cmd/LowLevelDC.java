@@ -1,6 +1,8 @@
 package com.cleanroommc.kirino.engine.render.pipeline.draw.cmd;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
+import org.jspecify.annotations.NonNull;
 
 public final class LowLevelDC implements IDrawCommand {
 
@@ -11,35 +13,32 @@ public final class LowLevelDC implements IDrawCommand {
         MULTI_ELEMENTS_INDIRECT_UNIT // indirectly drawable (components of MULTI_ELEMENTS_INDIRECT)
     }
 
-    private static final int POOL_CAPACITY = 8192;
-    private static final LowLevelDC[] POOL = new LowLevelDC[POOL_CAPACITY];
-    private static final AtomicInteger POOL_INDEX = new AtomicInteger(0);
-
-    static {
-        for (int i = 0; i < POOL_CAPACITY; i++) {
-            POOL[i] = new LowLevelDC();
+    private final static ThreadSafeGenPool<LowLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.lowLevelDrawCommandPoolSize) {
+        @NonNull
+        @Override
+        public LowLevelDC newObject(@NonNull Handle<LowLevelDC> handle) {
+            return new LowLevelDC(handle);
         }
+    };
+
+    public static void nextGen() {
+        POOL.nextGen();
     }
 
-    private LowLevelDC() {
+    private final ThreadSafeGenPool.Handle<LowLevelDC> handle;
+
+    private LowLevelDC(ThreadSafeGenPool.Handle<LowLevelDC> handle) {
+        this.handle = handle;
     }
 
     public static LowLevelDC get() {
-        int index = POOL_INDEX.getAndIncrement();
-        if (index >= POOL_CAPACITY) {
-            POOL_INDEX.set(POOL_CAPACITY - 1);
-            return new LowLevelDC();
-        }
-        return POOL[index];
+        return POOL.lend();
     }
 
     public void recycle() {
-        reset();
-        int index = POOL_INDEX.decrementAndGet();
-        if (index < 0) {
-            POOL_INDEX.set(0);
-        } else {
-            POOL[index] = this;
+        if (handle.isInPool()) {
+            reset();
+            handle.recycle();
         }
     }
 

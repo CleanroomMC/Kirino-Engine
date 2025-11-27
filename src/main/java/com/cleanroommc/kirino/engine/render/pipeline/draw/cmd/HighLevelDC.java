@@ -1,8 +1,9 @@
 package com.cleanroommc.kirino.engine.render.pipeline.draw.cmd;
 
+import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
-
-import java.util.concurrent.atomic.AtomicInteger;
+import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
+import org.jspecify.annotations.NonNull;
 
 public final class HighLevelDC implements IDrawCommand {
 
@@ -11,35 +12,32 @@ public final class HighLevelDC implements IDrawCommand {
         SCENE_SUBMITTED
     }
 
-    private static final int POOL_CAPACITY = 8192;
-    private static final HighLevelDC[] POOL = new HighLevelDC[POOL_CAPACITY];
-    private static final AtomicInteger POOL_INDEX = new AtomicInteger(0);
-
-    static {
-        for (int i = 0; i < POOL_CAPACITY; i++) {
-            POOL[i] = new HighLevelDC();
+    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.highLevelDrawCommandPoolSize) {
+        @NonNull
+        @Override
+        public HighLevelDC newObject(@NonNull Handle<HighLevelDC> handle) {
+            return new HighLevelDC(handle);
         }
+    };
+
+    public static void nextGen() {
+        POOL.nextGen();
     }
 
-    private HighLevelDC() {
+    private final ThreadSafeGenPool.Handle<HighLevelDC> handle;
+
+    private HighLevelDC(ThreadSafeGenPool.Handle<HighLevelDC> handle) {
+        this.handle = handle;
     }
 
     public static HighLevelDC get() {
-        int index = POOL_INDEX.getAndIncrement();
-        if (index >= POOL_CAPACITY) {
-            POOL_INDEX.set(POOL_CAPACITY - 1);
-            return new HighLevelDC();
-        }
-        return POOL[index];
+        return POOL.lend();
     }
 
     public void recycle() {
-        reset();
-        int index = POOL_INDEX.decrementAndGet();
-        if (index < 0) {
-            POOL_INDEX.set(0);
-        } else {
-            POOL[index] = this;
+        if (handle.isInPool()) {
+            reset();
+            handle.recycle();
         }
     }
 

@@ -14,4 +14,7 @@ public final class KirinoConfigHub {
     public int targetWorkloadPerThread = 5000;
 
     public int maxMultiDrawIndirectUnitCount = 5000;
+
+    public int highLevelDrawCommandPoolSize = 2000;
+    public int lowLevelDrawCommandPoolSize = 2000;
 }
