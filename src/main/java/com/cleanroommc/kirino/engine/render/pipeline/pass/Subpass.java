@@ -46,9 +46,10 @@ public abstract class Subpass {
 
         execute(dq, payload);
 
-        IDrawCommand drawCommand;
-        while ((drawCommand = dq.dequeue()) != null) {
-            drawCommand.recycle();
+        // ensure that everything is cleaned at the end
+        IDrawCommand item;
+        while ((item = dq.dequeue()) != null) {
+            item.recycle();
         }
     }
 

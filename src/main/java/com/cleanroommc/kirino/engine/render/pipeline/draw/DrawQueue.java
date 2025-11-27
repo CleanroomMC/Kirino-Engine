@@ -14,7 +14,15 @@ import org.lwjgl.opengl.GL11;
 import java.util.*;
 
 public class DrawQueue {
+    /**
+     * The queue we use for commands.
+     */
     private Deque<IDrawCommand> deque = new ArrayDeque<>();
+
+    /**
+     * Part of the double-buffered queue optimization.
+     */
+    private Deque<IDrawCommand> deque2 = new ArrayDeque<>();
 
     public DrawQueue() {
     }
@@ -32,6 +40,7 @@ public class DrawQueue {
         deque.clear();
     }
 
+    //<editor-fold desc="compile">
     /**
      * Compiles everything into {@link LowLevelDC}s.
      * After calling this method, every element in this draw queue is guaranteed to be a {@link LowLevelDC}.
@@ -41,13 +50,16 @@ public class DrawQueue {
      * @return The <code>DrawQueue</code> itself
      */
     public DrawQueue compile(GraphicResourceManager graphicResourceManager) {
-        List<IDrawCommand> baked = new ArrayList<>();
+        // deque2 should be empty to begin with
+        if (!deque2.isEmpty()) {
+            deque2.clear();
+        }
 
-        IDrawCommand drawCommand;
-        while ((drawCommand = dequeue()) != null) {
-            if (drawCommand instanceof LowLevelDC) {
-                baked.add(drawCommand);
-            } else if (drawCommand instanceof HighLevelDC highLevelDC) {
+        IDrawCommand item;
+        while ((item = deque.pollFirst()) != null) {
+            if (item instanceof LowLevelDC) {
+                deque2.offerLast(item);
+            } else if (item instanceof HighLevelDC highLevelDC) {
                 Optional<GResourceTicket<MeshPayload, MeshReceipt>> optional = graphicResourceManager.getMeshTicket(highLevelDC.meshTicketID);
                 if (optional.isEmpty()) {
                     continue;
@@ -67,7 +79,7 @@ public class DrawQueue {
                     elementSize = 4;
                 }
 
-                baked.add(LowLevelDC.get().fillMultiElementIndirectUnit(
+                deque2.offerLast(LowLevelDC.get().fillMultiElementIndirectUnit(
                         meshReceipt.vao,
                         highLevelDC.mode,
                         highLevelDC.elementType,
@@ -81,14 +93,22 @@ public class DrawQueue {
             }
         }
 
-        deque = new ArrayDeque<>(baked);
+        // deque is now empty and deque2 is filled; swap
+        Deque<IDrawCommand> swap = deque2;
+        deque2 = deque;
+        deque = swap;
         return this;
     }
+    //</editor-fold>
+
+    //<editor-fold desc="simplify">
+    private final Map<VAOKey, List<LowLevelDC>> groupedCommands = new HashMap<>();
+    private final List<LowLevelDC> mdiUnits = new ArrayList<>();
 
     /**
      * Only used by {@link #simplify(IndirectDrawBufferGenerator)}.
      */
-    private record VAOKey(int vao, int mode, int elementType) {
+    record VAOKey(int vao, int mode, int elementType) {
     }
 
     /**
@@ -97,54 +117,75 @@ public class DrawQueue {
      *     <li>Every element in this {@link DrawQueue} is a {@link LowLevelDC}</li>
      * </ul>
      *
-     * It combines and simplifies {@link LowLevelDC}s, especially combines commands into <code>MULTI_ELEMENTS_INDIRECT</code> command.
+     * It combines and simplifies {@link LowLevelDC}s, especially combines commands into <code>MULTI_ELEMENTS_INDIRECT</code> commands.
      * Usually it's called after {@link #compile(GraphicResourceManager)} which compiles everything into {@link LowLevelDC}s.
      *
      * @param idbGenerator The indirect draw buffer manager
      * @return The <code>DrawQueue</code> itself
      */
     public DrawQueue simplify(IndirectDrawBufferGenerator idbGenerator) {
-        Map<VAOKey, List<LowLevelDC>> grouped = new HashMap<>();
-
-        IDrawCommand drawCommand;
-        while ((drawCommand = dequeue()) != null) {
-            LowLevelDC lowLevelDC = (LowLevelDC) drawCommand;
-            VAOKey key = new VAOKey(lowLevelDC.vao, lowLevelDC.mode, lowLevelDC.elementType);
-            grouped.computeIfAbsent(key, k -> new ArrayList<>()).add(lowLevelDC);
+        // deque2 should be empty to begin with
+        if (!deque2.isEmpty()) {
+            deque2.clear();
         }
+
+        // clear groupedCommands
+        for (List<LowLevelDC> list : groupedCommands.values()) {
+            list.clear();
+        }
+
+        IDrawCommand item;
+        while ((item = deque.pollFirst()) != null) {
+            LowLevelDC lowLevelDC = (LowLevelDC) item;
+            VAOKey key = new VAOKey(lowLevelDC.vao, lowLevelDC.mode, lowLevelDC.elementType);
+            groupedCommands.computeIfAbsent(key, k -> new ArrayList<>()).add(lowLevelDC);
+        }
+
+        // deque is now empty
 
         idbGenerator.reset();
 
-        List<IDrawCommand> baked = new ArrayList<>();
+        for (Map.Entry<VAOKey, List<LowLevelDC>> entry : groupedCommands.entrySet()) {
+            if (entry.getValue().isEmpty()) {
+                continue;
+            }
 
-        for (Map.Entry<VAOKey, List<LowLevelDC>> entry : grouped.entrySet()) {
-            List<LowLevelDC> units = new ArrayList<>();
+            mdiUnits.clear();
             for (LowLevelDC lowLevelDC : entry.getValue()) {
                 if (lowLevelDC.type == LowLevelDC.DrawType.MULTI_ELEMENTS_INDIRECT_UNIT) {
-                    units.add(lowLevelDC);
+                    mdiUnits.add(lowLevelDC);
                 } else {
-                    baked.add(lowLevelDC);
+                    deque2.offerLast(lowLevelDC);
                 }
             }
 
             // combine units and upload to idb
-            if (units.isEmpty()) {
+            if (mdiUnits.isEmpty()) {
                 continue;
             }
 
             int start = 0;
-            while (start < units.size()) {
-                int end = Math.min(start + KirinoCore.KIRINO_CONFIG_HUB.maxMultiDrawIndirectUnitCount, units.size());
-                List<LowLevelDC> chunk = units.subList(start, end);
-                baked.add(idbGenerator.generate(chunk, entry.getKey().vao, entry.getKey().mode, entry.getKey().elementType));
+            while (start < mdiUnits.size()) {
+                int end = Math.min(start + KirinoCore.KIRINO_CONFIG_HUB.maxMultiDrawIndirectUnitCount, mdiUnits.size());
+                List<LowLevelDC> chunk = mdiUnits.subList(start, end);
+                deque2.offerLast(idbGenerator.generate(
+                        chunk,
+                        entry.getKey().vao,
+                        entry.getKey().mode,
+                        entry.getKey().elementType));
                 start = end;
             }
         }
 
-        deque = new ArrayDeque<>(baked);
+        // deque is empty and deque2 is filled; swap
+        Deque<IDrawCommand> swap = deque2;
+        deque2 = deque;
+        deque = swap;
         return this;
     }
+    //</editor-fold>
 
+    //<editor-fold desc="sort">
     /**
      * <p>Prerequisite include:</p>
      * <ul>
@@ -159,4 +200,5 @@ public class DrawQueue {
 
         return this;
     }
+    //</editor-fold>
 }
