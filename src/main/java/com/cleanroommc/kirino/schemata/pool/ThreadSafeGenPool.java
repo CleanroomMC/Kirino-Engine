@@ -4,6 +4,14 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ * <p>This fixed size object pool is designed for short-term high-frequency allocation and recycling to reduce GC pressure.
+ * For example, it's useful for excessive amount of draw command objects per frame.</p>
+ * <p>The generation mechanism is a defensive safety guard to prevent cross generation references.
+ * Old-generation objects won't be borrowed again and will be abandoned. Every object from this pool is guaranteed to be uncontaminated.</p>
+ * <p>Moreover, all unrecycled objects will be abandoned in the next generation, preventing dead pool.</p>
+ * <p><b>Usage: per-frame-object allocation, etc.</b></p>
+ */
 public abstract class ThreadSafeGenPool<T> {
     private final T[] slots;
     private final int[] freeIndices;
