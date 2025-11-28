@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.staging.buffer;
+package com.cleanroommc.kirino.gl.buffer;
 
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.BufferView;
@@ -11,12 +11,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <p>A buffer storage consists of several pages (a page is an individual coherent-persistently-mapped buffer).</p>
- * <p>Every page is huge in size (~10MB), and a new page will be allocated when this buffer storage is full.
+ * <p>A buffer storage consists of several pages (every page is an individual coherent-persistently-mapped buffer).</p>
+ * <p>Every page should be huge in size, and a new page will be allocated when this buffer storage is full.
  * Every page will be split into slots dynamically, and slots can be freed to upload new data.</p>
  */
 public class BufferStorage<T extends BufferView> {
-    private final static int PAGE_SIZE_IN_BYTE = 1024 * 1024 * 10; // 10MB
+    private final int pageSize;
 
     private final List<T> pages = new ArrayList<>();
     private final List<PageMeta> metas = new ArrayList<>();
@@ -30,7 +30,8 @@ public class BufferStorage<T extends BufferView> {
     private long nextSlotId = 1L;
     private int pageCount = 0;
 
-    public BufferStorage(Supplier<T> constructor) {
+    public BufferStorage(Supplier<T> constructor, int pageSize) {
+        this.pageSize = pageSize;
         this.constructor = constructor;
     }
 
@@ -41,12 +42,12 @@ public class BufferStorage<T extends BufferView> {
         T view = constructor.get();
         int currentBufferID = view.fetchCurrentBufferID();
         view.bind();
-        view.allocPersistent(PAGE_SIZE_IN_BYTE, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        view.mapPersistent(0, PAGE_SIZE_IN_BYTE, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        view.allocPersistent(pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        view.mapPersistent(0, pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
         view.bind(currentBufferID);
 
         pages.add(view);
-        metas.add(new PageMeta(PAGE_SIZE_IN_BYTE));
+        metas.add(new PageMeta(pageSize));
         pagesWithSpace.addLast(pageCount);
         pageCount++;
     }
@@ -114,7 +115,7 @@ public class BufferStorage<T extends BufferView> {
     }
 
     public int getPageSize() {
-        return PAGE_SIZE_IN_BYTE;
+        return pageSize;
     }
 
     private Integer findPageWithSpace(int size) {

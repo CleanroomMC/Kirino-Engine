@@ -7,7 +7,6 @@ import com.cleanroommc.kirino.engine.render.geometry.component.MeshletComponent;
  * It manages meshlet data storage and uploading, as well as meshlet cluster trees.
  */
 public class MeshletManager {
-    // todo: entity destroy callback
     public MeshletComponent addMeshlet() {
 
         return null;

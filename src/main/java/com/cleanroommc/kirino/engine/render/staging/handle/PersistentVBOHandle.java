@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.staging.handle;
 
 import com.cleanroommc.kirino.engine.render.staging.StagingBufferHandle;
 import com.cleanroommc.kirino.engine.render.staging.StagingBufferManager;
-import com.cleanroommc.kirino.engine.render.staging.buffer.BufferStorage;
+import com.cleanroommc.kirino.gl.buffer.BufferStorage;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.google.common.base.Preconditions;
 

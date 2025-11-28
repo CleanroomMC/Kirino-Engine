@@ -15,7 +15,7 @@ uniform vec3 offset;
 uniform mat4 modelView;
 uniform mat4 projection;
 
-void main(void)
+void main()
 {
     gl_Position = projection * modelView * vec4(position - camPos + offset, 1.0);
     TexCoord0 = texCoord0;

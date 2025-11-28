@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.staging;
 
-import com.cleanroommc.kirino.engine.render.staging.buffer.BufferStorage;
+import com.cleanroommc.kirino.gl.buffer.BufferStorage;
 import com.cleanroommc.kirino.engine.render.staging.handle.*;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
@@ -112,8 +112,8 @@ public class StagingBufferManager {
     public void genPersistentBuffers(String storageKey) {
         Preconditions.checkArgument(!persistentVbos.containsKey(storageKey), "The \"storageKey\" already exists.");
 
-        BufferStorage<VBOView> vboStorage = new BufferStorage<>(() -> new VBOView(new GLBuffer()));
-        BufferStorage<EBOView> eboStorage = new BufferStorage<>(() -> new EBOView(new GLBuffer()));
+        BufferStorage<VBOView> vboStorage = new BufferStorage<>(() -> new VBOView(new GLBuffer()), 1024 * 1024 * 10);
+        BufferStorage<EBOView> eboStorage = new BufferStorage<>(() -> new EBOView(new GLBuffer()), 1024 * 1024 * 10);
 
         persistentVbos.put(storageKey, vboStorage);
         persistentEbos.put(storageKey, eboStorage);

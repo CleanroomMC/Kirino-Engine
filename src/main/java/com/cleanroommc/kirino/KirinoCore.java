@@ -549,6 +549,7 @@ public final class KirinoCore {
         event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
         event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
         event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
+        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"));
     }
 
     @SubscribeEvent
