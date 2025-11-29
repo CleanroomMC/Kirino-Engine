@@ -6,9 +6,9 @@ import com.cleanroommc.kirino.ecs.job.IParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
 import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
-import com.cleanroommc.kirino.engine.render.geometry.Block;
-import com.cleanroommc.kirino.engine.render.meshlet.Meshlet;
-import com.cleanroommc.kirino.engine.render.geometry.component.ChunkComponent;
+import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
+import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;
@@ -36,7 +36,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
     public int pass = 0;
 
     @JobExternalDataQuery
-    public int priority;
+    public int lod;
 
     @JobExternalDataQuery
     public ChunkProviderClient chunkProvider;
@@ -56,8 +56,8 @@ public class ChunkMeshletGenJob implements IParallelJob {
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"isDirty"})
     public IPrimitiveArray isDirtyArray;
 
-    @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"priority"})
-    public IPrimitiveArray priorityArray;
+    @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"lod"})
+    public IPrimitiveArray lodArray;
 
     @Override
     public void query(@NonNull EntityQuery entityQuery) {
@@ -69,7 +69,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         if (!isDirtyArray.getBool(index)) {
             return 1;
         }
-        if (priorityArray.getInt(index) != priority) {
+        if (lodArray.getInt(index) != lod) {
             return 1;
         }
 
@@ -114,7 +114,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         if (!isDirtyArray.getBool(index)) {
             return;
         }
-        if (priorityArray.getInt(index) != priority) {
+        if (lodArray.getInt(index) != lod) {
             return;
         }
 
@@ -339,7 +339,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
                         }
                     }
 
-                    gizmosManager.addMeshlet(chunkCluster.chunkX * 16, chunkCluster.chunkY * 16, chunkCluster.chunkZ * 16, new Meshlet(cluster));
+                    gizmosManager.addMeshlet(chunkCluster.chunkX * 16, chunkCluster.chunkY * 16, chunkCluster.chunkZ * 16, new MeshletComponent(cluster));
                 }
             }
         }

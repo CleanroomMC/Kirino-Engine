@@ -21,15 +21,15 @@ public class ChunkMeshletGenSystem extends CleanSystem {
         externalData.put("gizmosManager", gizmosManager);
     }
 
-    private int priority = 0;
+    private int lod = 0;
 
-    public void setPriority(int priority) {
-        this.priority = priority;
+    public void setLod(int lod) {
+        this.lod = lod;
     }
 
     @Override
     public void update(@NonNull EntityManager entityManager, @NonNull JobScheduler jobScheduler) {
-        externalData.put("priority", priority);
+        externalData.put("lod", lod);
         JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(entityManager, ChunkMeshletGenJob.class, externalData, ForkJoinPool.commonPool());
         if (handle.async()) {
             handle.future().join();

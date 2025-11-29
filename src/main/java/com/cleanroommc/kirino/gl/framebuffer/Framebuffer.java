@@ -28,7 +28,7 @@ public class Framebuffer extends GLDisposable {
 
     @NonNull
     public IFramebufferAttachment getColorAttachment(int index) {
-        Preconditions.checkPositionIndex(index, colorAttachments.size());
+        Preconditions.checkElementIndex(index, colorAttachments.size());
 
         return colorAttachments.get(index);
     }

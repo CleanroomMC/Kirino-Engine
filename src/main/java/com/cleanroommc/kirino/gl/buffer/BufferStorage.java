@@ -88,7 +88,7 @@ public class BufferStorage<T extends BufferView> {
 
         synchronized (this) {
             int pageIndex = slot.pageIndex;
-            Preconditions.checkPositionIndex(pageIndex, metas.size());
+            Preconditions.checkElementIndex(pageIndex, metas.size());
 
             PageMeta meta = metas.get(pageIndex);
             meta.free(slot.offset, slot.size);
@@ -105,7 +105,7 @@ public class BufferStorage<T extends BufferView> {
     }
 
     public synchronized T getPage(int index) {
-        Preconditions.checkPositionIndex(index, pages.size());
+        Preconditions.checkElementIndex(index, pages.size());
 
         return pages.get(index);
     }

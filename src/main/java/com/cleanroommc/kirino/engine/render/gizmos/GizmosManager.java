@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.gizmos;
 
-import com.cleanroommc.kirino.engine.render.geometry.Block;
-import com.cleanroommc.kirino.engine.render.meshlet.Meshlet;
+import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.render.resource.UploadStrategy;
@@ -35,7 +35,7 @@ public class GizmosManager {
     private final ConcurrentLinkedQueue<BlockRecord> blocks = new ConcurrentLinkedQueue<>();
 
     // test
-    public void addMeshlet(int xOffset, int yOffset, int zOffset, Meshlet meshlet) {
+    public void addMeshlet(int xOffset, int yOffset, int zOffset, MeshletComponent meshlet) {
 //        if (blockSurfaces.size() > 3000) {
 //            return;
 //        }
@@ -43,7 +43,7 @@ public class GizmosManager {
 
         Random random = new Random();
         Color color = new Color(random.nextFloat(), random.nextFloat(), random.nextFloat(), 0.5f);
-        for (Block block : meshlet.blocks) {
+        for (Block block : meshlet) {
 //            StringBuilder face = new StringBuilder();
 //            face.append((block.faceMask & FACE_X_POS) != 0 ? "1" : "0")
 //                    .append((block.faceMask & FACE_X_NEG) != 0 ? "1" : "0")

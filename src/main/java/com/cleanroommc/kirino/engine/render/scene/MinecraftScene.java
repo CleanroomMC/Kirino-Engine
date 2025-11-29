@@ -8,21 +8,23 @@ import com.cleanroommc.kirino.ecs.entity.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
-import com.cleanroommc.kirino.engine.render.geometry.component.ChunkComponent;
+import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkMeshletGenSystem;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkPrioritizationSystem;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.util.math.ChunkPos;
-import org.apache.commons.lang3.time.StopWatch;
+import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class MinecraftScene extends CleanWorld {
+    private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
+
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
 
@@ -62,6 +64,7 @@ public class MinecraftScene extends CleanWorld {
                     chunkComponent.chunkPosZ = z;
                     chunkHandles.put(new ChunkPosKey(x, i, z), entityManager.createEntity(CHUNK_DESTROY_CALLBACK, chunkComponent));
                 }
+                newChunksAdded = true;
             };
             this.chunkProvider.unloadChunkCallback = (x, z) -> {
                 for (int i = 0; i < 16; i++) {
@@ -87,6 +90,13 @@ public class MinecraftScene extends CleanWorld {
     ChunkPrioritizationSystem chunkPrioritizationSystem = null;
     ChunkMeshletGenSystem chunkMeshletGenSystem = null;
 
+    private boolean newWorld = true;
+    private boolean newChunksAdded = false;
+    private float oldCamX = 0f, oldCamY = 0f, oldCamZ = 0f;
+    private int oldRenderDis = 0;
+    private boolean chunkMeshletGen = false;
+    private int lodLevelToBeWorkedOn = 0;
+
     @Override
     public void update() {
         if (rebuildWorld) {
@@ -104,20 +114,62 @@ public class MinecraftScene extends CleanWorld {
                     chunkHandles.put(new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ), entityManager.createEntity(CHUNK_DESTROY_CALLBACK, chunkComponent));
                 }
             }
-            // all changes are buffered and will be consumed at the end of this update
+            entityManager.flush();
+            newWorld = true;
+            return;
         }
 
-        // temp
         if (chunkPrioritizationSystem == null) {
             chunkPrioritizationSystem = new ChunkPrioritizationSystem(camera);
         }
-        chunkPrioritizationSystem.update(entityManager, jobScheduler);
-
         if (chunkMeshletGenSystem == null) {
             chunkMeshletGenSystem = new ChunkMeshletGenSystem(chunkProvider, gizmosManager);
         }
-        chunkMeshletGenSystem.setPriority(0);
-        chunkMeshletGenSystem.update(entityManager, jobScheduler);
+
+        Vector3f camPos = camera.getWorldOffset();
+        boolean cameraMoved = false;
+        if (camPos.x != oldCamX || camPos.y != oldCamY || camPos.z != oldCamZ) {
+            cameraMoved = true;
+            oldCamX = camPos.x;
+            oldCamY = camPos.y;
+            oldCamZ = camPos.z;
+        }
+
+        int renderDis = MINECRAFT.gameSettings.renderDistanceChunks;
+        boolean renderDisChanged = false;
+        if (oldRenderDis != renderDis) {
+            renderDisChanged = true;
+            oldRenderDis = renderDis;
+        }
+
+        if (cameraMoved || renderDisChanged || newWorld || newChunksAdded) {
+            chunkMeshletGen = true;
+            lodLevelToBeWorkedOn = 0;
+
+            if (newChunksAdded) {
+                newChunksAdded = false;
+            }
+
+            chunkPrioritizationSystem.update(entityManager, jobScheduler);
+        } else {
+            lodLevelToBeWorkedOn++;
+            // lod fallout distance: 16
+            if (lodLevelToBeWorkedOn >= renderDis) {
+                lodLevelToBeWorkedOn = 0;
+                chunkMeshletGen = false;
+            }
+        }
+
+        if (chunkMeshletGen) {
+            chunkMeshletGenSystem.setLod(lodLevelToBeWorkedOn);
+            chunkMeshletGenSystem.update(entityManager, jobScheduler);
+
+            KirinoCore.LOGGER.info("meshlets gen'd");
+        }
+
+        if (newWorld) {
+            newWorld = false;
+        }
 
         super.update();
     }

@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.geometry;
+package com.cleanroommc.kirino.engine.render.ecs.struct;
 
 import com.cleanroommc.kirino.ecs.component.scan.CleanStruct;
 

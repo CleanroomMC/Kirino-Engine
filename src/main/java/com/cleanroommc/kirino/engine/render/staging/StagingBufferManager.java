@@ -137,7 +137,7 @@ public class StagingBufferManager {
 
         BufferStorage<EBOView> eboStorage = persistentEbos.get(eboStorageKey);
         Preconditions.checkNotNull(eboStorage);
-        Preconditions.checkPositionIndex(eboStoragePageIndex, eboStorage.getPageCount());
+        Preconditions.checkElementIndex(eboStoragePageIndex, eboStorage.getPageCount());
 
         List<BufferStorage<VBOView>> vboStorages = new ArrayList<>();
         for (String vboStorageKey : vboStorageKeys) {
@@ -147,7 +147,7 @@ public class StagingBufferManager {
         }
 
         for (int i = 0; i < vboStoragePageIndices.length; i++) {
-            Preconditions.checkPositionIndex(vboStoragePageIndices[i], vboStorages.get(i).getPageCount());
+            Preconditions.checkElementIndex(vboStoragePageIndices[i], vboStorages.get(i).getPageCount());
         }
 
         // finished precondition checks

@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.geometry;
+package com.cleanroommc.kirino.engine.render.ecs.struct;
 
 import com.cleanroommc.kirino.ecs.component.scan.CleanStruct;
 import org.joml.Vector3i;
@@ -82,15 +82,18 @@ public class Block {
      *         <tr>
      *             <th>f</th>
      *             <th>A bitfield of the sides to be rendered. From the right in order:
-     *             Down, Up, North, South, West, East</th>
+     *             X+, X-, Y+, Y-, Z+, Z-</th>
      *         </tr>
      *     </table>
      * </p>
      * @return The integer as described above
      */
-    int compress() {
-        return (position.x & 0b1111) << 14
-                | (position.y & 0b1111) << 10
-                | (position.z & 0b1111) << 6;
+    public static int compress(int x, int y, int z, int faceMask) {
+        x = x & 0b1111; // 4 bits
+        y = y & 0b1111; // 4 bits
+        z = z & 0b1111; // 4 bits
+        faceMask = faceMask & 0b111111; // 6 bits
+
+        return (z << 14) | (y << 10) | (x << 6) | faceMask;
     }
 }

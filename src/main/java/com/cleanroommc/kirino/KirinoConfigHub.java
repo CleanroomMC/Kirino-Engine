@@ -9,8 +9,6 @@ public final class KirinoConfigHub {
     public boolean enableHDR = true;
     public boolean enablePostProcessing = true;
 
-    public float chunkPriorityFalloffDistance = 46f / 2f;
-
     public int targetWorkloadPerThread = 5000;
 
     public int maxMultiDrawIndirectUnitCount = 5000;

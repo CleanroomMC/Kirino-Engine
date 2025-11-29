@@ -1,10 +1,8 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field;
 
-import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
-import com.cleanroommc.kirino.engine.render.geometry.AABB;
 import com.cleanroommc.kirino.utils.TypeUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;

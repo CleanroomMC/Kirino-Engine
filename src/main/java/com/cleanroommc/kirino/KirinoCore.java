@@ -527,12 +527,12 @@ public final class KirinoCore {
 
     @SubscribeEvent
     public static void onStructScan(StructScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.geometry");
+        event.register("com.cleanroommc.kirino.engine.render.ecs.struct");
     }
 
     @SubscribeEvent
     public static void onComponentScan(ComponentScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.geometry.component");
+        event.register("com.cleanroommc.kirino.engine.render.ecs.component");
     }
 
     @SubscribeEvent

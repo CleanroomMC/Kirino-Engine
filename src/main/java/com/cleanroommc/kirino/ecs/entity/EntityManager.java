@@ -284,7 +284,7 @@ public class EntityManager {
      * @param index The index of the entity
      */
     protected synchronized void destroyEntity(int index) {
-        Preconditions.checkPositionIndex(index, entityGenerations.size());
+        Preconditions.checkElementIndex(index, entityGenerations.size());
 
         // update generation
         entityGenerations.set(index, entityGenerations.get(index) + 1);
@@ -297,13 +297,13 @@ public class EntityManager {
     }
 
     protected int getLatestGeneration(int index) {
-        Preconditions.checkPositionIndex(index, entityGenerations.size());
+        Preconditions.checkElementIndex(index, entityGenerations.size());
 
         return entityGenerations.get(index);
     }
 
     protected List<Class<? extends ICleanComponent>> getComponentTypes(int index) {
-        Preconditions.checkPositionIndex(index, entityGenerations.size());
+        Preconditions.checkElementIndex(index, entityGenerations.size());
 
         return entityComponents.get(index);
     }

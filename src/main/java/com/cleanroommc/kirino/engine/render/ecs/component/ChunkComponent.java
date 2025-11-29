@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.geometry.component;
+package com.cleanroommc.kirino.engine.render.ecs.component;
 
 import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.cleanroommc.kirino.ecs.component.scan.CleanComponent;
@@ -21,13 +21,13 @@ public class ChunkComponent implements ICleanComponent {
     public int chunkPosZ;
 
     /**
-     * Whether the meshlet-gen task has been ran on this chunk.
+     * Whether the chunk is modified so meshlet-gen task has to run on this chunk.
      */
     public boolean isDirty = true;
 
     /**
-     * The closer to the camera, the higher the priority and smaller the number.
-     * <p>Domain: [0, inf]; 0 is the highest priority.</p>
+     * The closer to the camera, smaller the number.
+     * <p>Domain: [0, inf]</p>
      */
-    public int priority = 0;
+    public int lod = 0x7fffffff;
 }
