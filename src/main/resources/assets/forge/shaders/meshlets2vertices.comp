@@ -11,7 +11,7 @@ struct Block
 // 2576
 struct Meshlet
 {
-    vec3 nomral; // 16
+    vec3 normal; // 16
     Block blocks[32]; // 32 * 80 = 2560
 };
 
@@ -30,5 +30,6 @@ layout(local_size_x = 1) in;
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
-    outMeshlets[index] = inMeshlets[index]; // test
+    outMeshlets[1] = inMeshlets[0]; // test
+    outMeshlets[1].normal.x = float(outMeshlets[1].blocks[0].faceMask);
 }
