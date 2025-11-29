@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.gizmos;
 
-import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.render.geometry.Block;
 import com.cleanroommc.kirino.engine.render.meshlet.Meshlet;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
@@ -269,8 +268,6 @@ public class GizmosManager {
 
             index++;
         }
-
-        KirinoCore.LOGGER.info("commands: " + list.size());
 
         return list;
     }

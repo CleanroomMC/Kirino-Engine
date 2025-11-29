@@ -15,9 +15,14 @@ struct Meshlet
     Block blocks[32]; // 32 * 80 = 2560
 };
 
-layout(std430, binding = 0) buffer Particles
+layout(std430, binding = 0) buffer InputMeshlets
 {
-    Meshlet meshlets[];
+    Meshlet inMeshlets[];
+};
+
+layout(std430, binding = 1) buffer OutputMeshlets
+{
+    Meshlet outMeshlets[];
 };
 
 layout(local_size_x = 1) in;
@@ -25,4 +30,5 @@ layout(local_size_x = 1) in;
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
+    outMeshlets[index] = inMeshlets[index]; // test
 }
