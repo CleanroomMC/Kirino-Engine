@@ -15,25 +15,29 @@ import java.util.concurrent.ForkJoinPool;
 public class ChunkMeshletGenSystem extends CleanSystem {
     private final Map<String, Object> externalData;
 
-    public ChunkMeshletGenSystem(ChunkProviderClient chunkClient, GizmosManager gizmosManager) {
+    public ChunkMeshletGenSystem(GizmosManager gizmosManager) {
         externalData = new HashMap<>();
-        externalData.put("chunkProvider", chunkClient);
         externalData.put("gizmosManager", gizmosManager);
     }
 
     private int lod = 0;
+    private ChunkProviderClient chunkProvider = null;
 
     public void setLod(int lod) {
         this.lod = lod;
     }
 
+    public void setChunkProvider(ChunkProviderClient chunkProvider) {
+        this.chunkProvider = chunkProvider;
+    }
+
     @Override
     public void update(@NonNull EntityManager entityManager, @NonNull JobScheduler jobScheduler) {
         externalData.put("lod", lod);
+        externalData.put("chunkProvider", chunkProvider);
         JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(entityManager, ChunkMeshletGenJob.class, externalData, ForkJoinPool.commonPool());
         if (handle.async()) {
             handle.future().join();
         }
-        execution.updateExecutions(handle);
     }
 }

@@ -70,7 +70,8 @@ public class EntityManager {
         return EntityQuery.query();
     }
 
-    public @NonNull List<@NonNull ArchetypeDataPool> startQuery(@NonNull EntityQuery query) {
+    @NonNull
+    public List<@NonNull ArchetypeDataPool> startQuery(@NonNull EntityQuery query) {
         Preconditions.checkNotNull(query);
 
         List<ArchetypeDataPool> result = new ArrayList<>();
@@ -275,36 +276,41 @@ public class EntityManager {
     }
 
     /**
+     * <p>Prerequisite include:</p>
+     * <ul>
+     *     <li><code>entityID</code> must be valid</li>
+     * </ul>
+     * </br>
      * This method will destroy an entity and generate a command for all side effects.
      * Buffered commands will be consumed at {@link #flush()}, and the destroy callback will be executed during {@link #flush()}.
      * </br></br>
      * Thread safety is guaranteed.
      *
      * @see #flush()
-     * @param index The index of the entity
+     * @param entityID The index of the entity
      */
-    protected synchronized void destroyEntity(int index) {
-        Preconditions.checkElementIndex(index, entityGenerations.size());
+    public synchronized void destroyEntity(int entityID) {
+        Preconditions.checkElementIndex(entityID, entityGenerations.size());
 
         // update generation
-        entityGenerations.set(index, entityGenerations.get(index) + 1);
-        freeIndexes.add(index);
+        entityGenerations.set(entityID, entityGenerations.get(entityID) + 1);
+        freeIndexes.add(entityID);
 
         synchronized (commandBuffer) {
-            EntityCommand command = new EntityCommand(index, EntityCommand.Type.DESTROY);
+            EntityCommand command = new EntityCommand(entityID, EntityCommand.Type.DESTROY);
             commandBuffer.add(command);
         }
     }
 
-    protected int getLatestGeneration(int index) {
-        Preconditions.checkElementIndex(index, entityGenerations.size());
+    protected int getLatestGeneration(int entityID) {
+        Preconditions.checkElementIndex(entityID, entityGenerations.size());
 
-        return entityGenerations.get(index);
+        return entityGenerations.get(entityID);
     }
 
-    protected List<Class<? extends ICleanComponent>> getComponentTypes(int index) {
-        Preconditions.checkElementIndex(index, entityGenerations.size());
+    protected List<Class<? extends ICleanComponent>> getComponentTypes(int entityID) {
+        Preconditions.checkElementIndex(entityID, entityGenerations.size());
 
-        return entityComponents.get(index);
+        return entityComponents.get(entityID);
     }
 }

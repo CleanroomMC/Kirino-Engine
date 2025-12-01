@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Besides the abstract methods, a pool must implement grow and shrink mechanism.
@@ -114,9 +115,14 @@ public abstract class ArchetypeDataPool {
      * @param fieldAccessChain A list of field names to identify a field
      * @return An array of field values
      */
+    @NonNull
     public abstract IPrimitiveArray getArray(Class<? extends ICleanComponent> component, String... fieldAccessChain);
 
+    @NonNull
     public abstract ArrayRange getArrayRange();
+
+    @NonNull
+    public abstract Optional<Integer> getEntityID(int index);
 
     public abstract String getSnapshot();
 }

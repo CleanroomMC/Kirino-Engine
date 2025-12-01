@@ -9,6 +9,8 @@ import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRe
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.task.job.ChunkMeshletGenJob;
 import com.cleanroommc.kirino.engine.render.task.job.ChunkPrioritizationJob;
+import com.cleanroommc.kirino.engine.render.task.job.MeshletDebugJob;
+import com.cleanroommc.kirino.engine.render.task.job.MeshletDestroyJob;
 import com.cleanroommc.kirino.gl.GLTest;
 import com.cleanroommc.kirino.gl.debug.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -539,6 +541,8 @@ public final class KirinoCore {
     public static void onJobRegister(JobRegistrationEvent event) {
         event.register(ChunkMeshletGenJob.class);
         event.register(ChunkPrioritizationJob.class);
+        event.register(MeshletDestroyJob.class);
+        event.register(MeshletDebugJob.class);
     }
 
     @SubscribeEvent

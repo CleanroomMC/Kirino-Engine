@@ -7,6 +7,7 @@ import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
 import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.engine.render.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
@@ -28,6 +29,7 @@ import java.util.Deque;
 import java.util.List;
 
 public class ChunkMeshletGenJob implements IParallelJob {
+    // todo
     /**
      * <p><b>0</b>: opaque</p>
      * <p><b>1</b>: transparent</p>
@@ -107,7 +109,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
     boolean[][][] visited = new boolean[16][16][16];
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int threadOrdinal) {
+    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
         Preconditions.checkState(pass == 0 || pass == 1 || pass == 2,
                 "Invalid pass number %d. Must be either 0 or 1 or 2.", pass);
 
@@ -339,9 +341,34 @@ public class ChunkMeshletGenJob implements IParallelJob {
                         }
                     }
 
-                    gizmosManager.addMeshlet(chunkCluster.chunkX * 16, chunkCluster.chunkY * 16, chunkCluster.chunkZ * 16, new MeshletComponent(cluster));
+                    MeshletComponent meshletComponent = new MeshletComponent(cluster);
+                    meshletComponent.aabb = getAabbFromCluster(cluster);
+                    meshletComponent.normal = meshletNormal;
+                    meshletComponent.pass = pass;
+                    meshletComponent.chunkPosX = chunkCluster.chunkX;
+                    meshletComponent.chunkPosY = chunkCluster.chunkY;
+                    meshletComponent.chunkPosZ = chunkCluster.chunkZ;
+
+                    entityManager.createEntity(meshletComponent);
                 }
             }
         }
+    }
+
+    AABB getAabbFromCluster(List<Block> cluster) {
+        int xMin = Integer.MAX_VALUE, yMin = Integer.MAX_VALUE, zMin = Integer.MAX_VALUE;
+        int xMax = Integer.MIN_VALUE, yMax = Integer.MIN_VALUE, zMax = Integer.MIN_VALUE;
+
+        for (Block block : cluster) {
+            Vector3i pos = block.position;
+            xMin = Math.min(xMin, pos.x);
+            yMin = Math.min(yMin, pos.y);
+            zMin = Math.min(zMin, pos.z);
+            xMax = Math.max(xMax, pos.x);
+            yMax = Math.max(yMax, pos.y);
+            zMax = Math.max(zMax, pos.z);
+        }
+
+        return new AABB(xMin, yMin, zMin, xMax + 1, yMax + 1, zMax + 1);
     }
 }

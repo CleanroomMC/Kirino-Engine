@@ -14,6 +14,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -85,7 +86,10 @@ public class JobScheduler {
                         continue;
                     }
 
-                    job.execute(entityManager, i, threadOrdinal);
+                    Optional<Integer> entityID = archetype.getEntityID(i);
+                    Preconditions.checkState(entityID.isPresent());
+
+                    job.execute(entityManager, i, entityID.get(), threadOrdinal);
                 }
                 threadOrdinal++;
             } else {
@@ -113,7 +117,10 @@ public class JobScheduler {
                                     continue;
                                 }
 
-                                jobPerThread.execute(entityManager, j, finalThreadOrdinal);
+                                Optional<Integer> entityID = archetype.getEntityID(j);
+                                Preconditions.checkState(entityID.isPresent());
+
+                                jobPerThread.execute(entityManager, j, entityID.get(), finalThreadOrdinal);
                             }
                         }, executor));
 
@@ -143,7 +150,10 @@ public class JobScheduler {
                                 continue;
                             }
 
-                            jobPerThread.execute(entityManager, j, finalThreadOrdinal);
+                            Optional<Integer> entityID = archetype.getEntityID(j);
+                            Preconditions.checkState(entityID.isPresent());
+
+                            jobPerThread.execute(entityManager, j, entityID.get(), finalThreadOrdinal);
                         }
                     }, executor));
 

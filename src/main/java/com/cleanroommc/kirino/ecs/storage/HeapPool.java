@@ -5,6 +5,8 @@ import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FlattenedField;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
 
@@ -42,7 +44,7 @@ public final class HeapPool extends ArchetypeDataPool{
 
     // key: entity id
     // value: array index
-    private final Map<Integer, Integer> entityDataIndexes = new HashMap<>();
+    private final BiMap<Integer, Integer> entityDataIndexes = HashBiMap.create();
 
     private final List<Integer> freeIndexes = new ArrayList<>();
     private int indexCounter = 0;
@@ -229,6 +231,7 @@ public final class HeapPool extends ArchetypeDataPool{
         }
     }
 
+    @NonNull
     @Override
     public IPrimitiveArray getArray(Class<? extends ICleanComponent> component, String... fieldAccessChain) {
         int ordinal = componentRegistry.getFieldOrdinal(componentRegistry.getComponentName(component), fieldAccessChain);
@@ -261,9 +264,16 @@ public final class HeapPool extends ArchetypeDataPool{
         throw new IllegalArgumentException("Unable to find such array.");
     }
 
+    @NonNull
     @Override
     public ArrayRange getArrayRange() {
         return new ArrayRange(0, indexCounter, new HashSet<>(freeIndexes));
+    }
+
+    @NonNull
+    @Override
+    public Optional<Integer> getEntityID(int index) {
+        return Optional.ofNullable(entityDataIndexes.inverse().get(index));
     }
 
     @Override

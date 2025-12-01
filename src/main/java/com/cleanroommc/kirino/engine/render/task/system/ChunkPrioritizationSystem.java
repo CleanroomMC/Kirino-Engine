@@ -34,6 +34,5 @@ public class ChunkPrioritizationSystem extends CleanSystem {
         if (handle.async()) {
             handle.future().join();
         }
-        execution.updateExecutions(handle);
     }
 }

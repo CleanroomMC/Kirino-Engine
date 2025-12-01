@@ -7,15 +7,18 @@ import org.joml.Vector3i;
 public class Block {
     public Vector3i position;
     public int faceMask;
+    public int positionAndFaceMask;
 
     public Block() {
         position = new Vector3i();
         faceMask = 0b111111;
+        compressPositionAndFaceMask();
     }
 
     public Block(int x, int y, int z, int faceMask) {
         position = new Vector3i(x, y, z);
         this.faceMask = faceMask;
+        compressPositionAndFaceMask();
     }
 
     /**
@@ -95,5 +98,18 @@ public class Block {
         faceMask = faceMask & 0b111111; // 6 bits
 
         return (z << 14) | (y << 10) | (x << 6) | faceMask;
+    }
+
+    public static int[] decompress(int data) {
+        int faceMask = data & 0b111111;
+        int x = (data >> 6) & 0b1111;
+        int y = (data >> 10) & 0b1111;
+        int z = (data >> 14) & 0b1111;
+
+        return new int[]{x, y, z, faceMask};
+    }
+
+    public void compressPositionAndFaceMask() {
+        positionAndFaceMask = compress(position.x, position.y, position.z, faceMask);
     }
 }

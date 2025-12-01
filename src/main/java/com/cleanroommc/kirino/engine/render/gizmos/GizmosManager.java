@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.gizmos;
 
-import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
@@ -19,7 +18,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class GizmosManager {
     private final GraphicResourceManager graphicResourceManager;
@@ -27,47 +25,41 @@ public class GizmosManager {
     private record BlockSurface(float x, float y, float z, int faceMask, int color) {
     }
 
-    private final ConcurrentLinkedQueue<BlockSurface> blockSurfaces = new ConcurrentLinkedQueue<>();
+    private record BlockRecord(float x, float y, float z, int faceMask) {
+    }
 
-    // test
-    private final AtomicInteger counter = new AtomicInteger(0);
-    private record BlockRecord(float x, float y, float z, int faceMask) { }
+    private final ConcurrentLinkedQueue<BlockSurface> blockSurfaces = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<BlockRecord> blocks = new ConcurrentLinkedQueue<>();
 
-    // test
-    public void addMeshlet(int xOffset, int yOffset, int zOffset, MeshletComponent meshlet) {
-//        if (blockSurfaces.size() > 3000) {
-//            return;
-//        }
-//        KirinoCore.LOGGER.info("Added a meshlet (" + meshlet.blocks.size() + " blocks). current meshlet count: " + counter.addAndGet(1) + ", current block count: " + blockSurfaces.size());
+    public void clearBlocks() {
+        blockSurfaces.clear();
+        blocks.clear();
+    }
 
-        Random random = new Random();
+    public void addMeshlet(int xWorldOffset, int yWorldOffset, int zWorldOffset, List<Integer> blocks) {
+        int hash = Arrays.hashCode(blocks.toArray(new Integer[0]));
+        hash = hash * 31 + Objects.hash(xWorldOffset, yWorldOffset, zWorldOffset);
+
+        Random random = new Random(hash);
         Color color = new Color(random.nextFloat(), random.nextFloat(), random.nextFloat(), 0.5f);
-        for (Block block : meshlet) {
-//            StringBuilder face = new StringBuilder();
-//            face.append((block.faceMask & FACE_X_POS) != 0 ? "1" : "0")
-//                    .append((block.faceMask & FACE_X_NEG) != 0 ? "1" : "0")
-//                    .append((block.faceMask & FACE_Y_POS) != 0 ? "1" : "0")
-//                    .append((block.faceMask & FACE_Y_NEG) != 0 ? "1" : "0")
-//                    .append((block.faceMask & FACE_Z_POS) != 0 ? "1" : "0")
-//                    .append((block.faceMask & FACE_Z_NEG) != 0 ? "1" : "0");
-//
-//            KirinoCore.LOGGER.info("    block pos: " + block.position.x + ", " + block.position.y + ", " + block.position.z + ", " + face);
 
-            int posX = block.position.x + xOffset;
-            int posY = block.position.y + yOffset;
-            int posZ = block.position.z + zOffset;
+        for (Integer block : blocks) {
+            int[] positionAndFaceMask = Block.decompress(block);
+            float x = xWorldOffset + positionAndFaceMask[0];
+            float y = yWorldOffset + positionAndFaceMask[1];
+            float z = zWorldOffset + positionAndFaceMask[2];
+            int faceMask = positionAndFaceMask[3];
 
-            if (blocks.contains(new BlockRecord(posX, posY, posZ, block.faceMask))) {
-                addBlockSurface(posX, posY, posZ, block.faceMask, Color.RED.getRGB());
+            if (this.blocks.contains(new BlockRecord(x, y, z, faceMask))) {
+                addBlock(x, y, z, faceMask, Color.RED.getRGB());
             } else {
-                blocks.add(new BlockRecord(posX, posY, posZ, block.faceMask));
-                addBlockSurface(posX, posY, posZ, block.faceMask, color.getRGB());
+                this.blocks.add(new BlockRecord(x, y, z, faceMask));
+                addBlock(x, y, z, faceMask, color.getRGB());
             }
         }
     }
 
-    public void addBlockSurface(float x, float y, float z, int faceMask, int color) {
+    public void addBlock(float x, float y, float z, int faceMask, int color) {
         blockSurfaces.add(new BlockSurface(x, y, z, faceMask, color));
     }
 
@@ -231,42 +223,18 @@ public class GizmosManager {
         builder.build(vboData, eboData, ATTRIBUTE_LAYOUT, true, true);
     }
 
-    private int uploadBatchCounter = 0;
-
     public List<HighLevelDC> getDrawCommands() {
         List<HighLevelDC> list = new ArrayList<>();
 
-        int total = blockSurfaces.size();
-        if (total == 0) {
-            return list;
-        }
-
-        int batchCount = Math.min(10, total / 100);
-        int batchSize = Math.ceilDivExact(total, batchCount);
-
-        if (uploadBatchCounter >= batchCount) {
-            uploadBatchCounter = 0;
-        }
-
-        int startIndex = uploadBatchCounter * batchSize;
-        int endIndex = Math.min(startIndex + batchSize, total);
-
-        uploadBatchCounter++;
-
-        int index = 0;
         for (BlockSurface blockSurface : blockSurfaces) {
-            String id = "block_surface_mesh_" + Objects.hash(index, blockSurface);
+            String id = "block_surface_mesh_" + Objects.hash(blockSurface);
 
-            if (index >= startIndex && index < endIndex) {
-                graphicResourceManager.requestMeshTicket(id, UploadStrategy.PERSISTENT, 20).ifPresent(builder -> {
-                    buildBlockFaces(builder, blockSurface.x, blockSurface.y, blockSurface.z, blockSurface.faceMask, blockSurface.color);
-                    graphicResourceManager.submitMeshTicket(builder);
-                });
-            }
+            graphicResourceManager.requestMeshTicket(id, UploadStrategy.PERSISTENT, 20).ifPresent(builder -> {
+                buildBlockFaces(builder, blockSurface.x, blockSurface.y, blockSurface.z, blockSurface.faceMask, blockSurface.color);
+                graphicResourceManager.submitMeshTicket(builder);
+            });
 
             list.add(HighLevelDC.get().fillPassInternal(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_BYTE));
-
-            index++;
         }
 
         return list;

@@ -16,7 +16,7 @@ public interface IParallelJob {
      * @param index The index
      * @param threadOrdinal The ordinal number of the current thread
      */
-    void execute(@NonNull EntityManager entityManager, int index, int threadOrdinal);
+    void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal);
 
     void query(@NonNull EntityQuery entityQuery);
 

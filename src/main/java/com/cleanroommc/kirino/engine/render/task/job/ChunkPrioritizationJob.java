@@ -35,7 +35,7 @@ public class ChunkPrioritizationJob implements IParallelJob {
     Vector3f worldOffset = null;
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int threadOrdinal) {
+    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
         float chunkWorldX = (float) chunkPosXArray.getInt(index) * 16 + 8f;
         float chunkWorldY = (float) chunkPosYArray.getInt(index) * 16 + 8f;
         float chunkWorldZ = (float) chunkPosZArray.getInt(index) * 16 + 8f;

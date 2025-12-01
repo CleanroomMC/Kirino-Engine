@@ -6,17 +6,17 @@ import com.cleanroommc.kirino.ecs.component.scan.CleanComponent;
 @CleanComponent
 public class ChunkComponent implements ICleanComponent {
     /**
-     * X-coordinate.
+     * X-coordinate under chunk coordinate system. (* 16 = world coordinate)
      */
     public int chunkPosX;
 
     /**
-     * Y-coordinate.
+     * Y-coordinate under chunk coordinate system. (* 16 = world coordinate)
      */
     public int chunkPosY;
 
     /**
-     * Z-coordinate.
+     * Z-coordinate under chunk coordinate system. (* 16 = world coordinate)
      */
     public int chunkPosZ;
 

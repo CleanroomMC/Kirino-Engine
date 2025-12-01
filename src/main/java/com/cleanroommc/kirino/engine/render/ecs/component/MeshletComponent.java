@@ -17,6 +17,8 @@ public class MeshletComponent implements ICleanComponent, Iterable<Block> {
     public AABB aabb = new AABB();
     public Vector3f normal = new Vector3f();
 
+    public boolean basicVisibility = true;
+
     /**
      * <p><b>0</b>: opaque</p>
      * <p><b>1</b>: transparent</p>
@@ -25,8 +27,20 @@ public class MeshletComponent implements ICleanComponent, Iterable<Block> {
     public int pass = 0;
 
     public boolean isConsumed = false;
+
+    /**
+     * X-coordinate under chunk coordinate system. (* 16 = world coordinate)
+     */
     public int chunkPosX;
+
+    /**
+     * Y-coordinate under chunk coordinate system. (* 16 = world coordinate)
+     */
     public int chunkPosY;
+
+    /**
+     * Z-coordinate under chunk coordinate system. (* 16 = world coordinate)
+     */
     public int chunkPosZ;
 
     public int blockCount = 0;

@@ -15,4 +15,7 @@ public final class KirinoConfigHub {
 
     public int highLevelDrawCommandPoolSize = 2000;
     public int lowLevelDrawCommandPoolSize = 2000;
+
+    public int worldInitFrames = 5;
+    public float chunkUpdateDisplacement = 8f;
 }
