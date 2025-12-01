@@ -18,7 +18,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.util.math.ChunkPos;
-import org.apache.commons.lang3.time.StopWatch;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
@@ -28,11 +27,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MinecraftScene extends CleanWorld {
 
-    record ChunkPosKey(int x, int y, int z) {
+    public record ChunkPosKey(int x, int y, int z) {
     }
 
     // will be executed at the end of the update
@@ -68,11 +67,12 @@ public class MinecraftScene extends CleanWorld {
         this.camera = camera;
         chunkPrioritizationSystem = new ChunkPrioritizationSystem(camera);
         chunkMeshletGenSystem = new ChunkMeshletGenSystem(gizmosManager);
-        meshletDestroySystem = new MeshletDestroySystem();
         meshletDebugSystem = new MeshletDebugSystem(gizmosManager);
 
-        chunksDestroyedLastFrame = new ArrayList<>();
+        chunksDestroyedLastFrame = new CopyOnWriteArrayList<>();
         chunkDestroyCallback = new ChunkDestroyCallback(chunksDestroyedLastFrame);
+
+        meshletDestroySystem = new MeshletDestroySystem(chunksDestroyedLastFrame);
     }
 
     private int newWorldFrameCounter = 0;
@@ -221,20 +221,11 @@ public class MinecraftScene extends CleanWorld {
         // debug
         if (++counter % 18 == 0) {
             gizmosManager.clearBlocks();
-
-            StopWatch stopWatch = StopWatch.createStarted();
             meshletDebugSystem.update(entityManager, jobScheduler);
-            stopWatch.stop();
-//            KirinoCore.LOGGER.info("stopwatch: " + stopWatch.getTime(TimeUnit.MILLISECONDS));
         }
 
         if (!chunksDestroyedLastFrame.isEmpty()) {
-            for (ChunkPosKey chunkPos : chunksDestroyedLastFrame) {
-                meshletDestroySystem.setTargetChunkPosX(chunkPos.x);
-                meshletDestroySystem.setTargetChunkPosY(chunkPos.y);
-                meshletDestroySystem.setTargetChunkPosZ(chunkPos.z);
-                meshletDestroySystem.update(entityManager, jobScheduler);
-            }
+            meshletDestroySystem.update(entityManager, jobScheduler);
             chunksDestroyedLastFrame.clear();
         }
 
