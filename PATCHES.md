@@ -50,3 +50,11 @@
       com.cleanroommc.kirino.KirinoCore.postInit();
   }
   ```
+- EntityRenderer
+  ```java
+  private void setupCameraTransform(float partialTicks, int pass)
+  {
+      this.farPlaneDistance = Math.max(16f, (float)((this.mc.gameSettings.renderDistanceChunks - 1) * 16));
+      ...
+  }
+  ```
