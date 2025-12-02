@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRendering;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;
+import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.pipeline.*;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
@@ -71,10 +72,11 @@ public class RenderingCoordinator {
     public final MinecraftCamera camera;
     public final MinecraftScene scene;
 
-    // ---------- Patches ----------
+    // ---------- Minecraft & Patches ----------
     public final MinecraftCulling cullingPatch;
     public final MinecraftEntityRendering entityRenderingPatch;
     public final MinecraftTESRRendering tesrRenderingPatch;
+    private final Reference<BlockMeshGenerator> blockMeshGenerator;
 
     // ---------- Shaders ----------
     private final ShaderRegistry shaderRegistry;
@@ -103,6 +105,7 @@ public class RenderingCoordinator {
         cullingPatch = new MinecraftCulling();
         entityRenderingPatch = new MinecraftEntityRendering(cullingPatch);
         tesrRenderingPatch = new MinecraftTESRRendering(cullingPatch);
+        blockMeshGenerator = new Reference<>();
 
         shaderRegistry = new ShaderRegistry();
         ShaderRegistrationEvent shaderRegistrationEvent = new ShaderRegistrationEvent();
@@ -127,7 +130,7 @@ public class RenderingCoordinator {
         gizmosManager = new GizmosManager(graphicResourceManager);
 
         camera = new MinecraftCamera();
-        scene = new MinecraftScene(ecsRuntime.entityManager, ecsRuntime.jobScheduler, gizmosManager, camera);
+        scene = new MinecraftScene(ecsRuntime.entityManager, ecsRuntime.jobScheduler, blockMeshGenerator, gizmosManager, camera);
 
         ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag");
 
@@ -191,7 +194,7 @@ public class RenderingCoordinator {
     }
 
     /**
-     * Defer all OpenGL related allocation.
+     * OpenGL related allocation must be deferred.
      */
     public void deferredInit() {
         //<editor-fold desc="post-processing runtime check">
@@ -274,6 +277,10 @@ public class RenderingCoordinator {
 
         //<editor-fold desc="staging buffer initialization">
         stagingBufferManager.genPersistentBuffers("default");
+        //</editor-fold>
+
+        //<editor-fold desc="block mesh generator">
+        blockMeshGenerator.set(new BlockMeshGenerator());
         //</editor-fold>
     }
 

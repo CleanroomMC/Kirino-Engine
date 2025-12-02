@@ -11,6 +11,7 @@ import com.cleanroommc.kirino.engine.render.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;
 import com.google.common.base.Preconditions;
@@ -209,6 +210,10 @@ public class ChunkMeshletGenJob implements IParallelJob {
         Preconditions.checkNotNull(Blocks.AIR);
 
         if (result == Blocks.AIR.getDefaultState()) {
+            return false;
+        }
+
+        if (BlockUnifier.getBlockModelType(result) != BlockModelType.FULL_BLOCK) {
             return false;
         }
 

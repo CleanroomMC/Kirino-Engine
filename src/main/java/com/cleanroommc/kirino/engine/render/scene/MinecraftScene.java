@@ -10,13 +10,16 @@ import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkMeshletGenSystem;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkPrioritizationSystem;
 import com.cleanroommc.kirino.engine.render.task.system.MeshletDebugSystem;
 import com.cleanroommc.kirino.engine.render.task.system.MeshletDestroySystem;
+import com.cleanroommc.kirino.utils.Reference;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
@@ -50,6 +53,7 @@ public class MinecraftScene extends CleanWorld {
 
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
+    private final Reference<BlockMeshGenerator> blockMeshGenerator;
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
     private final ChunkPrioritizationSystem chunkPrioritizationSystem;
@@ -60,8 +64,9 @@ public class MinecraftScene extends CleanWorld {
     private final ChunkDestroyCallback chunkDestroyCallback;
     private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
-    public MinecraftScene(EntityManager entityManager, JobScheduler jobScheduler, GizmosManager gizmosManager, MinecraftCamera camera) {
+    public MinecraftScene(EntityManager entityManager, JobScheduler jobScheduler, Reference<BlockMeshGenerator> blockMeshGenerator, GizmosManager gizmosManager, MinecraftCamera camera) {
         super(entityManager, jobScheduler);
+        this.blockMeshGenerator = blockMeshGenerator;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
         chunkPrioritizationSystem = new ChunkPrioritizationSystem(camera);
@@ -223,6 +228,12 @@ public class MinecraftScene extends CleanWorld {
             meshletDebugSystem.update(entityManager, jobScheduler);
         }
 
+        // debug
+        if (MINECRAFT.world != null && flag) {
+            flag = false;
+            blockMeshGenerator.get().getFullBlockTexCoords(0, 0, 0, MINECRAFT.world, MINECRAFT.world.getBlockState(new BlockPos(0, 0, 0)));
+        }
+
         if (!chunksDestroyedLastFrame.isEmpty()) {
             meshletDestroySystem.update(entityManager, jobScheduler);
             chunksDestroyedLastFrame.clear();
@@ -232,4 +243,5 @@ public class MinecraftScene extends CleanWorld {
     }
 
     static int counter = 0;
+    static boolean flag = true;
 }
