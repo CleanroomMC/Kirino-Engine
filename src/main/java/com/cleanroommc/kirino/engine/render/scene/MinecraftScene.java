@@ -19,6 +19,7 @@ import com.cleanroommc.kirino.utils.Reference;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
+import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import org.joml.Vector3f;
@@ -70,7 +71,7 @@ public class MinecraftScene extends CleanWorld {
         this.gizmosManager = gizmosManager;
         this.camera = camera;
         chunkPrioritizationSystem = new ChunkPrioritizationSystem(camera);
-        chunkMeshletGenSystem = new ChunkMeshletGenSystem(gizmosManager);
+        chunkMeshletGenSystem = new ChunkMeshletGenSystem(gizmosManager, blockMeshGenerator);
         meshletDebugSystem = new MeshletDebugSystem(gizmosManager);
 
         chunksDestroyedLastFrame = new CopyOnWriteArrayList<>();
@@ -83,14 +84,16 @@ public class MinecraftScene extends CleanWorld {
     private boolean newWorld = false;
     private boolean newChunksAdded = false;
     private boolean rebuildWorld = false;
-    private ChunkProviderClient chunkProvider = null;
+    private WorldClient minecraftWorld = null;
+    private ChunkProviderClient minecraftChunkProvider = null;
     private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
 
-    public void tryUpdateChunkProvider(ChunkProviderClient chunkProvider) {
-        if (this.chunkProvider != chunkProvider) {
+    public void tryUpdateWorld(WorldClient minecraftWorld) {
+        if (minecraftWorld != null && minecraftChunkProvider != minecraftWorld.getChunkProvider()) {
             rebuildWorld = true;
-            this.chunkProvider = chunkProvider;
-            this.chunkProvider.loadChunkCallback = (x, z) -> {
+            this.minecraftWorld = minecraftWorld;
+            minecraftChunkProvider = minecraftWorld.getChunkProvider();
+            minecraftChunkProvider.loadChunkCallback = (x, z) -> {
                 for (int i = 0; i < 16; i++) {
                     ChunkComponent chunkComponent = new ChunkComponent();
                     chunkComponent.chunkPosX = x;
@@ -100,7 +103,7 @@ public class MinecraftScene extends CleanWorld {
                 }
                 newChunksAdded = true;
             };
-            this.chunkProvider.unloadChunkCallback = (x, z) -> {
+            minecraftChunkProvider.unloadChunkCallback = (x, z) -> {
                 for (int i = 0; i < 16; i++) {
                     ChunkPosKey key = new ChunkPosKey(x, i, z);
                     CleanEntityHandle handle = chunkHandles.get(key);
@@ -110,7 +113,8 @@ public class MinecraftScene extends CleanWorld {
                     }
                 }
             };
-            chunkMeshletGenSystem.setChunkProvider(this.chunkProvider);
+            chunkMeshletGenSystem.setChunkProvider(minecraftChunkProvider);
+            chunkMeshletGenSystem.setWorld(minecraftWorld);
             // all changes are buffered and will be consumed at the end of this update
         }
     }
@@ -131,13 +135,16 @@ public class MinecraftScene extends CleanWorld {
 
     @Override
     public void update() {
+        if (minecraftWorld == null) {
+            return;
+        }
         if (rebuildWorld) {
             rebuildWorld = false;
             for (CleanEntityHandle handle : chunkHandles.values()) {
                 handle.tryDestroy();
             }
             chunkHandles.clear();
-            for (Long chunkKey : chunkProvider.getLoadedChunks().keySet()) {
+            for (Long chunkKey : minecraftChunkProvider.getLoadedChunks().keySet()) {
                 for (int i = 0; i < 16; i++) {
                     ChunkComponent chunkComponent = new ChunkComponent();
                     chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
@@ -228,12 +235,6 @@ public class MinecraftScene extends CleanWorld {
             meshletDebugSystem.update(entityManager, jobScheduler);
         }
 
-        // debug
-        if (MINECRAFT.world != null && flag) {
-            flag = false;
-            blockMeshGenerator.get().getFullBlockTexCoords(0, 0, 0, MINECRAFT.world, MINECRAFT.world.getBlockState(new BlockPos(0, 0, 0)));
-        }
-
         if (!chunksDestroyedLastFrame.isEmpty()) {
             meshletDestroySystem.update(entityManager, jobScheduler);
             chunksDestroyedLastFrame.clear();
@@ -243,5 +244,4 @@ public class MinecraftScene extends CleanWorld {
     }
 
     static int counter = 0;
-    static boolean flag = true;
 }

@@ -14,20 +14,22 @@ import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;
+import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
+import com.cleanroommc.kirino.utils.Reference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.chunk.Chunk;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 import org.jspecify.annotations.NonNull;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ChunkMeshletGenJob implements IParallelJob {
     // todo
@@ -39,10 +41,19 @@ public class ChunkMeshletGenJob implements IParallelJob {
     public int pass = 0;
 
     @JobExternalDataQuery
+    ConcurrentHashMap<Integer, BufferBuilder> tempBuffers;
+
+    @JobExternalDataQuery
     public int lod;
 
     @JobExternalDataQuery
     public ChunkProviderClient chunkProvider;
+
+    @JobExternalDataQuery
+    public WorldClient world;
+
+    @JobExternalDataQuery
+    public Reference<BlockMeshGenerator> blockMeshGenerator;
 
     @JobExternalDataQuery
     public GizmosManager gizmosManager;
@@ -145,7 +156,9 @@ public class ChunkMeshletGenJob implements IParallelJob {
             }
         }
 
-        regionGrowing(faceMask, visited, chunkCluster, entityManager);
+        BufferBuilder bufferBuilder = tempBuffers.computeIfAbsent(threadOrdinal, k -> new BufferBuilder(169));
+
+        regionGrowing(faceMask, visited, chunkCluster, entityManager, bufferBuilder);
     }
 
     /**
@@ -283,7 +296,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         return (new Vector3f(x, y, z)).normalize();
     }
 
-    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityManager entityManager) {
+    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityManager entityManager, BufferBuilder bufferBuilder) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -353,10 +366,22 @@ public class ChunkMeshletGenJob implements IParallelJob {
                     meshletComponent.chunkPosX = chunkCluster.chunkX;
                     meshletComponent.chunkPosY = chunkCluster.chunkY;
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
+                    fetchBlockInfo(chunkCluster, cluster, bufferBuilder);
 
                     entityManager.createEntity(meshletComponent);
                 }
             }
+        }
+    }
+
+    void fetchBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
+        for (Block block : cluster) {
+            block.blockInfo = blockMeshGenerator.get().getFullBlockInfo(
+                    block.position.x,
+                    block.position.y,
+                    block.position.z,
+                    world,
+                    chunkCluster.center.getBlockState(block.position.x, block.position.y, block.position.z), bufferBuilder);
         }
     }
 

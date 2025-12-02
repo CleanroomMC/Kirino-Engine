@@ -291,7 +291,7 @@ public class RenderingCoordinator {
     }
 
     public void updateWorld(WorldClient minecraftWorld) {
-        scene.tryUpdateChunkProvider(minecraftWorld.getChunkProvider());
+        scene.tryUpdateWorld(minecraftWorld);
         scene.update();
     }
 

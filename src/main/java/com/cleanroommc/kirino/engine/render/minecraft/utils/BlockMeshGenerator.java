@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.minecraft.utils;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.engine.render.ecs.struct.BlockInfo;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -13,9 +13,7 @@ import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 
 import java.lang.invoke.MethodHandle;
@@ -25,17 +23,41 @@ public class BlockMeshGenerator {
     private final BlockRendererDispatcher blockRendererDispatcher;
     private final BlockModelRenderer blockModelRenderer;
     private final BlockFluidRenderer blockFluidRenderer;
-    private final BufferBuilder bufferBuilder;
 
     public BlockMeshGenerator() {
         blockRendererDispatcher = MethodHolder.getBlockRendererDispatcher(Minecraft.getMinecraft());
         blockModelRenderer = MethodHolder.getBlockModelRenderer(blockRendererDispatcher);
         blockFluidRenderer = MethodHolder.getBlockFluidRenderer(blockRendererDispatcher);
-        bufferBuilder = new BufferBuilder(1024 * 64); // 64KB
     }
 
-    public int[] getFullBlockTexCoords(int worldX, int worldY, int worldZ, IBlockAccess blockAccess, IBlockState blockState) {
+    private static int encodeTexCoordsToInt32(float texCoordX, float texCoordY) {
+        Preconditions.checkArgument(texCoordX >= 0f && texCoordX <= 1f,
+                "Argument \"texCoordX\" must in [0, 1].");
+        Preconditions.checkArgument(texCoordY >= 0f && texCoordY <= 1f,
+                "Argument \"texCoordY\" must in [0, 1].");
+
+        int a = Math.round(texCoordX * 65535f);
+        int b = Math.round(texCoordY * 65535f);
+        a = Math.min(a, 0xFFFF);
+        b = Math.min(b, 0xFFFF);
+
+        return (b << 16) | a;
+    }
+
+    /**
+     * @param worldX X-coordinate
+     * @param worldY Y-coordinate
+     * @param worldZ Z-coordinate
+     * @param blockAccess A world
+     * @param blockState A block state
+     * @param bufferBuilder A buffer builder with the minimum size <code>112 * 6</code> bytes
+     * @return
+     */
+    @SuppressWarnings("all")
+    public BlockInfo getFullBlockInfo(int worldX, int worldY, int worldZ, IBlockAccess blockAccess, IBlockState blockState, BufferBuilder bufferBuilder) {
         Preconditions.checkState(BlockUnifier.getBlockModelType(blockState) == BlockModelType.FULL_BLOCK);
+        Preconditions.checkArgument(MethodHolder.getByteBuffer(bufferBuilder).capacity() >= 112 * 6,
+                "Size of argument \"bufferBuilder\" is %s bytes. Requires at least 672 bytes.", MethodHolder.getByteBuffer(bufferBuilder).capacity());
 
         BlockPos.PooledMutableBlockPos blockPos = BlockPos.PooledMutableBlockPos.retain(worldX, worldY, worldZ);
 
@@ -44,36 +66,82 @@ public class BlockMeshGenerator {
 
         bufferBuilder.reset();
         bufferBuilder.begin(7, DefaultVertexFormats.BLOCK);
-        blockModelRenderer.renderModel(blockAccess, model, extendedState, blockPos, bufferBuilder, true);
+        blockModelRenderer.renderModel(blockAccess, model, extendedState, blockPos, bufferBuilder, false);
         bufferBuilder.finishDrawing();
 
         blockPos.release();
-
-//                DOWN(0, 1, -1, "down", EnumFacing.AxisDirection.NEGATIVE, EnumFacing.Axis.Y, new Vec3i(0, -1, 0)),
-//                UP(1, 0, -1, "up", EnumFacing.AxisDirection.POSITIVE, EnumFacing.Axis.Y, new Vec3i(0, 1, 0)),
-//                NORTH(2, 3, 2, "north", EnumFacing.AxisDirection.NEGATIVE, EnumFacing.Axis.Z, new Vec3i(0, 0, -1)),
-//                SOUTH(3, 2, 0, "south", EnumFacing.AxisDirection.POSITIVE, EnumFacing.Axis.Z, new Vec3i(0, 0, 1)),
-//                WEST(4, 5, 1, "west", EnumFacing.AxisDirection.NEGATIVE, EnumFacing.Axis.X, new Vec3i(-1, 0, 0)),
-//                EAST(5, 4, 3, "east", EnumFacing.AxisDirection.POSITIVE, EnumFacing.Axis.X, new Vec3i(1, 0, 0));
 
         ByteBuffer byteBuffer = MethodHolder.getByteBuffer(bufferBuilder);
         int remaining = byteBuffer.remaining();
 
         // one stride == 28 bytes
         // one face == 112 bytes
-        Preconditions.checkState(remaining % 112 == 0);
+        // expecting 6 faces
+        Preconditions.checkState(remaining == 112 * 6);
 
-        int vertexCount = remaining / 28;
+        BlockInfo blockInfo = new BlockInfo();
 
-        for (int i = 0; i < vertexCount; i++) {
-            byteBuffer.position(28 * i);
-            KirinoCore.LOGGER.info("xyz: " + byteBuffer.getFloat() + ", " + byteBuffer.getFloat() + ", " + byteBuffer.getFloat());
-            byteBuffer.position(28 * i + 16);
-            KirinoCore.LOGGER.info("texcoords: " + byteBuffer.getFloat() + ", " + byteBuffer.getFloat());
-            KirinoCore.LOGGER.info("---------");
-        }
+        // face0 down -Y
+        byteBuffer.position(0 * 112 + 0 * 28 + 16);
+        blockInfo.yMinusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(0 * 112 + 1 * 28 + 16);
+        blockInfo.yMinusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(0 * 112 + 2 * 28 + 16);
+        blockInfo.yMinusFaceTexCoord2 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(0 * 112 + 3 * 28 + 16);
+        blockInfo.yMinusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
 
-        return null;
+        // face1 up +Y
+        byteBuffer.position(1 * 112 + 0 * 28 + 16);
+        blockInfo.yPlusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(1 * 112 + 1 * 28 + 16);
+        blockInfo.yPlusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(1 * 112 + 2 * 28 + 16);
+        blockInfo.yPlusFaceTexCoord2 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(1 * 112 + 3 * 28 + 16);
+        blockInfo.yPlusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+
+        // face2 north -Z
+        byteBuffer.position(2 * 112 + 0 * 28 + 16);
+        blockInfo.zMinusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(2 * 112 + 1 * 28 + 16);
+        blockInfo.zMinusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(2 * 112 + 2 * 28 + 16);
+        blockInfo.zMinusFaceTexCoord2= encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(2 * 112 + 3 * 28 + 16);
+        blockInfo.zMinusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+
+        // face3 south +Z
+        byteBuffer.position(3 * 112 + 0 * 28 + 16);
+        blockInfo.zPlusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(3 * 112 + 1 * 28 + 16);
+        blockInfo.zPlusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(3 * 112 + 2 * 28 + 16);
+        blockInfo.zPlusFaceTexCoord2= encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(3 * 112 + 3 * 28 + 16);
+        blockInfo.zPlusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+
+        // face4 west -X
+        byteBuffer.position(4 * 112 + 0 * 28 + 16);
+        blockInfo.xMinusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(4 * 112 + 1 * 28 + 16);
+        blockInfo.xMinusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(4 * 112 + 2 * 28 + 16);
+        blockInfo.xMinusFaceTexCoord2= encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(4 * 112 + 3 * 28 + 16);
+        blockInfo.xMinusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+
+        // face5 east +X
+        byteBuffer.position(5 * 112 + 0 * 28 + 16);
+        blockInfo.xPlusFaceTexCoord0 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(5 * 112 + 1 * 28 + 16);
+        blockInfo.xPlusFaceTexCoord1 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(5 * 112 + 2 * 28 + 16);
+        blockInfo.xPlusFaceTexCoord2= encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+        byteBuffer.position(5 * 112 + 3 * 28 + 16);
+        blockInfo.xPlusFaceTexCoord3 = encodeTexCoordsToInt32(byteBuffer.getFloat(), byteBuffer.getFloat());
+
+        return blockInfo;
     }
 
     private static class MethodHolder {

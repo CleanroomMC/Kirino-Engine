@@ -9,6 +9,8 @@ public class Block {
     public int faceMask;
     public int positionAndFaceMask;
 
+    public BlockInfo blockInfo = new BlockInfo();
+
     public Block() {
         position = new Vector3i();
         faceMask = 0b111111;
@@ -100,6 +102,9 @@ public class Block {
         return (z << 14) | (y << 10) | (x << 6) | faceMask;
     }
 
+    /**
+     * @see #compress(int, int, int, int)
+     */
     public static int[] decompress(int data) {
         int faceMask = data & 0b111111;
         int x = (data >> 6) & 0b1111;
