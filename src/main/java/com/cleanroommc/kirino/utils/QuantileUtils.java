@@ -8,7 +8,7 @@ import java.util.Comparator;
 
 public final class QuantileUtils {
 
-    public static float median(Integer @NonNull [] array) {
+    public static float median(@NonNull Integer @NonNull [] array) {
         Preconditions.checkNotNull(array);
         Preconditions.checkState(array.length > 0);
 
@@ -18,7 +18,7 @@ public final class QuantileUtils {
         } else {
             return (float) (array[QuantileUtils.<Integer>select(array, 0, array.length - 1, (array.length >> 1) - 1, Integer::compareTo)] +
                     array[QuantileUtils.<Integer>select(array, 0, array.length - 1, array.length >> 1, Integer::compareTo)])
-                    / 2;
+                    / 2f;
         }
     }
 
@@ -39,9 +39,9 @@ public final class QuantileUtils {
 
     private static <T> int select(@NonNull T @NonNull [] array, int left, int right, int n, Comparator<T> comparator) {
         Preconditions.checkState(right > left);
-        Preconditions.checkPositionIndex(left, array.length);
-        Preconditions.checkPositionIndex(right, array.length);
-        Preconditions.checkPositionIndex(n, right);
+        Preconditions.checkElementIndex(left, array.length);
+        Preconditions.checkElementIndex(right, array.length);
+        Preconditions.checkElementIndex(n, right);
 
         while (true) {
             if (left == right) {
@@ -63,8 +63,8 @@ public final class QuantileUtils {
     private static <T> int pivot(@NonNull T @NonNull [] array,
                                                        int left, int right, Comparator<T> comparator) {
         Preconditions.checkState(right > left);
-        Preconditions.checkPositionIndex(left, array.length);
-        Preconditions.checkPositionIndex(right, array.length);
+        Preconditions.checkElementIndex(left, array.length);
+        Preconditions.checkElementIndex(right, array.length);
 
         if (right - left < 5) {
             return partition5(array, left, right, comparator);
@@ -87,8 +87,8 @@ public final class QuantileUtils {
                                                            int left, int right,
                                                            int pivotIdx, int n, Comparator<T> comparator) {
         Preconditions.checkState(right > left);
-        Preconditions.checkPositionIndex(left, array.length);
-        Preconditions.checkPositionIndex(right, array.length);
+        Preconditions.checkElementIndex(left, array.length);
+        Preconditions.checkElementIndex(right, array.length);
 
         T pivotValue = array[pivotIdx];
         swap(array, pivotIdx, right);
@@ -123,10 +123,9 @@ public final class QuantileUtils {
 
     private static <T> int partition5(@NonNull T @NonNull [] array,
                                                             int left, int right, Comparator<T> comparator) {
-        Preconditions.checkState(right >= left, "%s is less than %s", right, left);
-        Preconditions.checkPositionIndex(left, array.length);
-        Preconditions.checkPositionIndex(right, array.length);
-
+        Preconditions.checkState(right >= left, "%s is less than %s.", right, left);
+        Preconditions.checkElementIndex(left, array.length);
+        Preconditions.checkElementIndex(right, array.length);
 
         switch (right-left) {
             case 0:
@@ -173,8 +172,8 @@ public final class QuantileUtils {
     }
 
     public static <T> void swap(@NonNull T @NonNull [] array, int left, int right) {
-        Preconditions.checkPositionIndex(left, array.length);
-        Preconditions.checkPositionIndex(right, array.length);
+        Preconditions.checkElementIndex(left, array.length);
+        Preconditions.checkElementIndex(right, array.length);
 
         T tmp = array[left];
         array[left] = array[right];
