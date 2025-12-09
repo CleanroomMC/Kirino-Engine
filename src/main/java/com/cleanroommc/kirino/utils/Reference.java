@@ -6,6 +6,10 @@ public class Reference<T> {
     public Reference() {
     }
 
+    public Reference(T value) {
+        set(value);
+    }
+
     public void set(T value) {
         this.value = value;
     }

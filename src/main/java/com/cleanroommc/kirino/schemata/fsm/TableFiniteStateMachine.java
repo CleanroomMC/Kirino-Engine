@@ -216,7 +216,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
                 if (!reachable.contains(state)) {
                     reachable.add(state);
                     for (I input : table.rowKeySet()) {
-                        if (table.contains(input,state)) {
+                        if (table.contains(input, state)) {
                             stack.push(table.get(input,state));
                         }
                     }

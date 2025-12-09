@@ -183,7 +183,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
                 if (!reachable.get(state.ordinal())) {
                     reachable.set(state.ordinal());
                     for (I input : inputs) {
-                        int next = transitionMap[index(input,state)];
+                        int next = transitionMap[index(input, state)];
                         if (!(next == -1 || next == state.ordinal())) {
                             stack.push(states[next]);
                         }

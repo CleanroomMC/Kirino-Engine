@@ -185,7 +185,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @Override
         public boolean validate() {
-            final int size = upperStateBound-lowerStateBound+1;
+            final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();
             stack.push(initialState);
@@ -194,7 +194,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                 if (!reachable.get(state)) {
                     reachable.set(state);
                     for (I input : inputs) {
-                        int next = transitionMap[index(input,state)];
+                        int next = transitionMap[index(input, state)];
                         if (!(next == -1 || next == state)) {
                             stack.push(next);
                         }

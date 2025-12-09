@@ -3,13 +3,12 @@ package com.cleanroommc.kirino.ecs.world;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
-import com.cleanroommc.kirino.ecs.system.graph.SystemExeGraph;
 
 public class CleanWorld {
     protected final EntityManager entityManager;
     protected final JobScheduler jobScheduler;
 
-    private final SystemExeGraph systemExeGraph = new SystemExeGraph();
+//    private final ISystemExeGraph systemExeGraph = new ISystemExeGraph();
 
     // need more params to indicate dep
     public final void addSystem(CleanSystem system) {
@@ -22,7 +21,7 @@ public class CleanWorld {
     }
 
     public void update() {
-        systemExeGraph.execute();
+//        systemExeGraph.execute();
         entityManager.flush();
     }
 }

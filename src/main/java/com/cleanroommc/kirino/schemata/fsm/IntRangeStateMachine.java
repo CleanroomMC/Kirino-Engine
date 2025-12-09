@@ -195,7 +195,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @Override
         public boolean validate() {
-            final int size = upperStateBound-lowerStateBound+1;
+            final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();
             stack.push(initialState);
@@ -204,7 +204,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
                 if (!reachable.get(state)) {
                     reachable.set(state);
                     for (int input = lowerInputBound; input <= upperInputBound; input++) {
-                        int next = transitionMap[index(input,state)];
+                        int next = transitionMap[index(input, state)];
                         if (!(next == -1 || next == state)) {
                             stack.push(next);
                         }

@@ -189,7 +189,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
                 if (!reachable.get(state.ordinal())) {
                     reachable.set(state.ordinal());
                     for (int input = lowerInputBound; input <= upperInputBound; input++) {
-                        int next = transitionMap[index(input,state)];
+                        int next = transitionMap[index(input, state)];
                         if (!(next == -1 || next == state.ordinal())) {
                             stack.push(states[next]);
                         }
