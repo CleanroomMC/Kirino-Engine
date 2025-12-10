@@ -30,7 +30,8 @@ public interface ISystemExeFlowGraph {
      * Thread safety is guaranteed.
      *
      * @implNote Guarantee the thread safety and check the precondition (directly throw if needed) that the last execution is finished.
-     *           Must call {@link #executeSystem} on every transition edge to actually generate the completable futures from the systems.
+     *           Must call {@link #executeSystem(CleanWorld, CleanSystem)} and {@link #joinSystem(CleanSystem)} on every transition edge
+     *           to actually generate and join the completable futures from a system.
      * @see #isExecuting()
      */
     void execute();

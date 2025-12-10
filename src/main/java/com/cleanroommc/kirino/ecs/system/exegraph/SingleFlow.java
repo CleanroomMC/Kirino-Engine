@@ -91,9 +91,11 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             for (BarrierNode node : nodes.values()) {
                 node.inDegree = 0;
                 node.outgoing.clear();
+                node.incoming.clear();
             }
             for (Transition edge : edges) {
                 edge.from.outgoing.add(edge);
+                edge.to.incoming.add(edge);
                 edge.to.inDegree++;
             }
 

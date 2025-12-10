@@ -14,6 +14,7 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
     public static final class BarrierNode {
         final String id;
         final List<Transition> outgoing = new ArrayList<>();
+        final List<Transition> incoming = new ArrayList<>();
 
         @Nullable Runnable callback;
         int inDegree = 0;
@@ -55,17 +56,20 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
         executing = true;
         try {
             for (BarrierNode node : topo) {
+                for (Transition edge : node.incoming) {
+                    if (edge.system != null) {
+                        ISystemExeFlowGraph.joinSystem(edge.system);
+                    }
+                }
+
                 if (node.callback != null) {
                     node.callback.run();
                 }
 
                 for (Transition edge : node.outgoing) {
-                    if (edge.system == null) {
-                        continue;
+                    if (edge.system != null) {
+                        ISystemExeFlowGraph.executeSystem(world, edge.system);
                     }
-
-                    ISystemExeFlowGraph.executeSystem(world, edge.system);
-                    ISystemExeFlowGraph.joinSystem(edge.system);
                 }
             }
         } finally {
