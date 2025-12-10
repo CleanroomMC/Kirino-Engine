@@ -26,5 +26,6 @@ public class MeshletDestroySystem extends CleanSystem {
         if (handle.async()) {
             handle.future().join();
         }
+        execution.updateExecutions(handle);
     }
 }

@@ -19,8 +19,9 @@ public abstract class CleanSystem {
      * <br>
      * <p><code>execution.updateExecutions()</code> must be called during this update so we can keep track of the async tasks started here.</p>
      * <code>execution.updateExecutions()</code> assigns the async futures to this update;
-     * <code>execution.noExecutions()</code> clears all futures, which assumes that you didn't start any async task.
-     * You're supposed to call either <code>execution.updateExecutions()</code> OR <code>execution.noExecutions()</code>.
+     * <code>execution.noExecutions()</code> clears all futures, which assumes that you didn't start any async tasks.
+     * You're supposed to call <code>execution.updateExecutions()</code> if you started any async tasks and <code>execution.noExecutions()</code> will be
+     * called automatically by the {@link ISystemExeFlowGraph} before the update.
      * <p>{@link ISystemExeFlowGraph} relies on {@link ExecutionContainer} to work properly.</p>
      *
      * <br>

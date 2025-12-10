@@ -65,7 +65,7 @@ public class JobScheduler {
 
                 int jobWorkload = job.estimateWorkload(i);
                 Preconditions.checkState(jobWorkload >= 1,
-                        "The estimated workload at index=%d must be greater than or equal to 1. (Parallel job class: %s)",
+                        "The estimated workload at index=%s must be greater than or equal to 1. (Parallel job class: %s)",
                         i, clazz.getName());
 
                 workload += jobWorkload;

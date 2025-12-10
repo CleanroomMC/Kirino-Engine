@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ecs.system.exegraph;
 
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -38,13 +39,15 @@ public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph
 
     //<editor-fold desc="builder">
     public static class Builder<TSys extends CleanSystem> implements IBuilder<SingleFlow<TSys>> {
+        private final CleanWorld world;
         private final Class<TSys> clazz;
         private final Map<String, BarrierNode> nodes = new HashMap<>();
         private final List<Transition> edges = new ArrayList<>();
 
         private TSys system = null;
 
-        Builder(Class<TSys> clazz) {
+        Builder(CleanWorld world, Class<TSys> clazz) {
+            this.world = world;
             this.clazz = clazz;
             nodes.put(START_NODE, new BarrierNode(START_NODE, null));
             nodes.put(END_NODE, new BarrierNode(END_NODE, null));
@@ -169,11 +172,12 @@ public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph
             Preconditions.checkState(reachable.size() == nodes.size(),
                     "Some nodes are not reachable from the START node.");
 
-            return new SingleFlow<>(system, topo);
+            return new SingleFlow<>(world, system, topo);
         }
     }
     //</editor-fold>
 
+    private final CleanWorld world;
     private final TSys system;
     private final List<BarrierNode> topo;
     private volatile boolean executing = false;
@@ -182,13 +186,14 @@ public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph
         return system;
     }
 
-    private SingleFlow(@NonNull TSys system, @NonNull List<@NonNull BarrierNode> topo) {
+    private SingleFlow(@NonNull CleanWorld world, @NonNull TSys system, @NonNull List<@NonNull BarrierNode> topo) {
+        this.world = world;
         this.system = system;
         this.topo = topo;
     }
 
-    public static <T extends CleanSystem> Builder<T> newBuilder(Class<T> clazz) {
-        return new Builder<>(clazz);
+    public static <T extends CleanSystem> Builder<T> newBuilder(CleanWorld world, Class<T> clazz) {
+        return new Builder<>(world, clazz);
     }
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -211,7 +216,8 @@ public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph
                         continue;
                     }
 
-                    ISystemExeFlowGraph.join(edge.system);
+                    ISystemExeFlowGraph.executeSystem(world, edge.system);
+                    ISystemExeFlowGraph.joinSystem(edge.system);
                 }
             }
         } finally {

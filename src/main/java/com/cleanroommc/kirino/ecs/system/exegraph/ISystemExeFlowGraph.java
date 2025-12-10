@@ -1,8 +1,10 @@
 package com.cleanroommc.kirino.ecs.system.exegraph;
 
+import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
 import com.cleanroommc.kirino.ecs.system.ExecutionContainer;
+import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
@@ -27,7 +29,8 @@ public interface ISystemExeFlowGraph {
      * Must not execute again before finishing the last execution.
      * Thread safety is guaranteed.
      *
-     * @implNote Guarantee the thread safety and check the precondition that the last execution is finished
+     * @implNote Guarantee the thread safety and check the precondition (directly throw if needed) that the last execution is finished.
+     *           Must call {@link #executeSystem} on every transition edge to actually generate the completable futures from the systems.
      * @see #isExecuting()
      */
     void execute();
@@ -112,11 +115,15 @@ public interface ISystemExeFlowGraph {
             DELEGATE = new Delegate(
                     ReflectionUtils.getFieldGetter(CleanSystem.class, "execution", ExecutionContainer.class),
                     ReflectionUtils.getFieldGetter(ExecutionContainer.class, "handles", List.class),
-                    ReflectionUtils.getFieldGetter(ExecutionContainer.class, "futures", List.class));
+                    ReflectionUtils.getFieldGetter(ExecutionContainer.class, "futures", List.class),
+                    ReflectionUtils.getFieldGetter(CleanWorld.class, "entityManager", EntityManager.class),
+                    ReflectionUtils.getFieldGetter(CleanWorld.class, "jobScheduler", JobScheduler.class));
 
             Preconditions.checkNotNull(DELEGATE.executionContainerGetter);
             Preconditions.checkNotNull(DELEGATE.handlesGetter);
             Preconditions.checkNotNull(DELEGATE.futuresGetter);
+            Preconditions.checkNotNull(DELEGATE.entityManagerGetter);
+            Preconditions.checkNotNull(DELEGATE.jobSchedulerGetter);
         }
 
         static ExecutionContainer getExecutionContainer(CleanSystem cleanSystem) {
@@ -151,15 +158,37 @@ public interface ISystemExeFlowGraph {
             return result;
         }
 
+        static EntityManager getEntityManager(CleanWorld cleanWorld) {
+            EntityManager result;
+            try {
+                result = (EntityManager) DELEGATE.entityManagerGetter.invokeExact(cleanWorld);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
+        static JobScheduler getJobScheduler(CleanWorld cleanWorld) {
+            JobScheduler result;
+            try {
+                result = (JobScheduler) DELEGATE.jobSchedulerGetter.invokeExact(cleanWorld);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
         record Delegate(
                 MethodHandle executionContainerGetter,
                 MethodHandle handlesGetter,
-                MethodHandle futuresGetter) {
+                MethodHandle futuresGetter,
+                MethodHandle entityManagerGetter,
+                MethodHandle jobSchedulerGetter) {
         }
     }
 
-    static void join(CleanSystem cleanSystem) {
-        ExecutionContainer executionContainer = MethodHolder.getExecutionContainer(cleanSystem);
+    static void joinSystem(CleanSystem system) {
+        ExecutionContainer executionContainer = MethodHolder.getExecutionContainer(system);
         List<JobScheduler.ExecutionHandle> handles = MethodHolder.getHandles(executionContainer);
         List<CompletableFuture<Void>> futures = MethodHolder.getFutures(executionContainer);
 
@@ -172,5 +201,14 @@ public interface ISystemExeFlowGraph {
         allFutures.addAll(futures);
 
         CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
+    }
+
+    static void executeSystem(CleanWorld world, CleanSystem system) {
+        EntityManager entityManager = MethodHolder.getEntityManager(world);
+        JobScheduler jobScheduler = MethodHolder.getJobScheduler(world);
+        ExecutionContainer executionContainer = MethodHolder.getExecutionContainer(system);
+
+        executionContainer.noExecutions();
+        system.update(entityManager, jobScheduler);
     }
 }

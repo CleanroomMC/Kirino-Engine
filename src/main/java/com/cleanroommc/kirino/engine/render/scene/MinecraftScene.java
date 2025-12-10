@@ -6,7 +6,6 @@ import com.cleanroommc.kirino.ecs.entity.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
@@ -76,11 +75,6 @@ public class MinecraftScene extends CleanWorld {
         chunkDestroyCallback = new ChunkDestroyCallback(chunksDestroyedLastFrame);
 
         meshletDestroySystem = new MeshletDestroySystem(chunksDestroyedLastFrame);
-
-        // test
-        SingleFlow<ChunkPrioritizationSystem> flow = SingleFlow.newBuilder(ChunkPrioritizationSystem.class)
-                .addTransition(chunkPrioritizationSystem, SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .build();
     }
 
     private int newWorldFrameCounter = 0;
