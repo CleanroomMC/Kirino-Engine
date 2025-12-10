@@ -9,44 +9,70 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
-public interface ISystemExeGraph {
+/**
+ * It guides the execution flow of ecs-systems.
+ * You're supposed to instantiate one instance to help you manage the system execution.
+ */
+public interface ISystemExeFlowGraph {
+    String START_NODE = "__START__";
+    String END_NODE = "__END__";
+
     /**
+     * This method is blocking.
      * Must not execute again before finishing the last execution.
+     * Thread safety is guaranteed.
      *
-     * @implNote Check the precondition that the last execution is finished
+     * @implNote Guarantee the thread safety and check the precondition that the last execution is finished
      * @see #isExecuting()
      */
     void execute();
 
     /**
+     * Async version of {@link #execute()}.
+     */
+    default CompletableFuture<Void> executeAsync(Executor executor) {
+        return CompletableFuture.runAsync(this::execute, executor);
+    }
+
+    /**
      * @return Whether the execution is ongoing
+     * @implNote The flag should be volatile or guarded by the synchronization
      */
     boolean isExecuting();
 
-    interface IBuilder {
+    /**
+     * The builder of an execution flow graph.
+     * The execution graph must be a DAG and everything must start from {@link #START_NODE} and ends in {@link #END_NODE}
+     */
+    interface IBuilder<TFlowGraph extends ISystemExeFlowGraph> {
         /**
-         * <p>Must not input <code>START</code> or <code>END</code>.</p>
+         * <p>Must not input {@link #START_NODE} or {@link #END_NODE}.</p>
          * <p>Inputting the same <code>nodeID</code> again overrides the old node.</p>
          * <br>
          *
-         * <code>START</code> and <code>END</code> are built-in node IDs.
-         * Moreover, <code>START</code> and <code>END</code> are not barrier nodes.
-         * They will not force the execution to be synchronized.
+         * {@link #START_NODE} and {@link #END_NODE} are built-in node IDs.
+         * Moreover, everything must start from {@link #START_NODE} and end in {@link #END_NODE}.
          *
-         * @implNote Check the precondition that <code>nodeID</code> isn't <code>START</code> or <code>END</code>
+         * @implNote Check the precondition that <code>nodeID</code> isn't {@link #START_NODE} or {@link #END_NODE}
          * @param nodeID The node ID
          */
         @NonNull
-        IBuilder addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback);
-
-        @NonNull
-        IBuilder addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID);
+        IBuilder<TFlowGraph> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback);
 
         /**
-         * Must not input the nodes that don't exist. <code>START</code> and <code>END</code> are allowed as built-in nodes.
+         * A dummy version of {@link #addTransition(CleanSystem, String, String)}.
+         * No system will be executed but you can still have callbacks.
+         */
+        @NonNull
+        IBuilder<TFlowGraph> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID);
+
+        /**
+         * Must not input the nodes that don't exist. {@link #START_NODE} and {@link #END_NODE} are allowed as built-in nodes.
          *
          * @implNote Check the precondition that <code>fromNodeID</code> and <code>toNodeID</code> are valid
          * @param task The ecs-system instance
@@ -54,27 +80,29 @@ public interface ISystemExeGraph {
          * @param toNodeID To
          */
         @NonNull
-        IBuilder addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID);
+        IBuilder<TFlowGraph> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID);
 
         /**
+         * Set the callback of the {@link #START_NODE}.
          * A <code>null</code> callback clears the callback.
          */
         @NonNull
-        IBuilder setStartCallback(@Nullable Runnable callback);
+        IBuilder<TFlowGraph> setStartCallback(@Nullable Runnable callback);
 
         /**
+         * Set the callback of the {@link #END_NODE}.
          * A <code>null</code> callback clears the callback.
          */
         @NonNull
-        IBuilder setEndCallback(@Nullable Runnable callback);
+        IBuilder<TFlowGraph> setEndCallback(@Nullable Runnable callback);
 
         /**
          * @implNote Check the precondition that the execution graph is a DAG and
-         *           everything starts from the <code>START</code> node and ends in the <code>END</code> node
+         *           everything starts from {@link #START_NODE} and ends in {@link #END_NODE}
          * @return The building result
          */
         @NonNull
-        ISystemExeGraph build();
+        TFlowGraph build();
     }
 
     class MethodHolder {
@@ -113,10 +141,10 @@ public interface ISystemExeGraph {
         }
 
         @SuppressWarnings("unchecked")
-        static List<CompletableFuture<?>> getFutures(ExecutionContainer executionContainer) {
-            List<CompletableFuture<?>> result;
+        static List<CompletableFuture<Void>> getFutures(ExecutionContainer executionContainer) {
+            List<CompletableFuture<Void>> result;
             try {
-                result = (List<CompletableFuture<?>>) DELEGATE.futuresGetter.invokeExact(executionContainer);
+                result = (List<CompletableFuture<Void>>) DELEGATE.futuresGetter.invokeExact(executionContainer);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -128,5 +156,21 @@ public interface ISystemExeGraph {
                 MethodHandle handlesGetter,
                 MethodHandle futuresGetter) {
         }
+    }
+
+    static void join(CleanSystem cleanSystem) {
+        ExecutionContainer executionContainer = MethodHolder.getExecutionContainer(cleanSystem);
+        List<JobScheduler.ExecutionHandle> handles = MethodHolder.getHandles(executionContainer);
+        List<CompletableFuture<Void>> futures = MethodHolder.getFutures(executionContainer);
+
+        List<CompletableFuture<Void>> allFutures = new ArrayList<>();
+        for (JobScheduler.ExecutionHandle handle : handles) {
+            if (handle.async()) {
+                allFutures.add(handle.future());
+            }
+        }
+        allFutures.addAll(futures);
+
+        CompletableFuture.allOf(allFutures.toArray(new CompletableFuture[0])).join();
     }
 }

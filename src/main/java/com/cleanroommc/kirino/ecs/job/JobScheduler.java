@@ -25,7 +25,7 @@ public class JobScheduler {
         this.jobRegistry = jobRegistry;
     }
 
-    public record ExecutionHandle(@NonNull CompletableFuture<?> future, int totalThreadCount, boolean async) {
+    public record ExecutionHandle(@NonNull CompletableFuture<Void> future, int totalThreadCount, boolean async) {
     }
 
     public ExecutionHandle executeParallelJob(EntityManager entityManager, Class<? extends IParallelJob> clazz, @Nullable Map<String, Object> externalData, Executor executor) {
@@ -49,7 +49,7 @@ public class JobScheduler {
         ((IParallelJob) instantiator.instantiate()).query(query);
         List<ArchetypeDataPool> archetypes = entityManager.startQuery(query);
 
-        List<CompletableFuture<?>> futures = new ArrayList<>();
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         int threadOrdinal = 0;
         for (ArchetypeDataPool archetype : archetypes) {

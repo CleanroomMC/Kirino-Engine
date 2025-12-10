@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.ecs.entity.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
@@ -20,7 +21,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
@@ -54,7 +54,6 @@ public class MinecraftScene extends CleanWorld {
 
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
-    private final Reference<BlockMeshGenerator> blockMeshGenerator;
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
     private final ChunkPrioritizationSystem chunkPrioritizationSystem;
@@ -67,7 +66,6 @@ public class MinecraftScene extends CleanWorld {
 
     public MinecraftScene(EntityManager entityManager, JobScheduler jobScheduler, Reference<BlockMeshGenerator> blockMeshGenerator, GizmosManager gizmosManager, MinecraftCamera camera) {
         super(entityManager, jobScheduler);
-        this.blockMeshGenerator = blockMeshGenerator;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
         chunkPrioritizationSystem = new ChunkPrioritizationSystem(camera);
@@ -78,6 +76,11 @@ public class MinecraftScene extends CleanWorld {
         chunkDestroyCallback = new ChunkDestroyCallback(chunksDestroyedLastFrame);
 
         meshletDestroySystem = new MeshletDestroySystem(chunksDestroyedLastFrame);
+
+        // test
+        SingleFlow<ChunkPrioritizationSystem> flow = SingleFlow.newBuilder(ChunkPrioritizationSystem.class)
+                .addTransition(chunkPrioritizationSystem, SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .build();
     }
 
     private int newWorldFrameCounter = 0;
