@@ -7,35 +7,8 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
-public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph {
-    //<editor-fold desc="node & edge definition">
-    static final class BarrierNode {
-        final String id;
-        final List<Transition> outgoing = new ArrayList<>();
-
-        @Nullable Runnable callback;
-        int inDegree = 0;
-
-        BarrierNode(String id, @Nullable Runnable callback) {
-            this.id = id;
-            this.callback = callback;
-        }
-    }
-
-    static final class Transition {
-        final @Nullable CleanSystem system; // null = dummy
-        final BarrierNode from;
-        final BarrierNode to;
-
-        Transition(@Nullable CleanSystem system, @NonNull BarrierNode from, @NonNull BarrierNode to) {
-            this.system = system;
-            this.from = from;
-            this.to = to;
-        }
-    }
-    //</editor-fold>
+public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
 
     //<editor-fold desc="builder">
     public static class Builder<TSys extends CleanSystem> implements IBuilder<SingleFlow<TSys>> {
@@ -177,57 +150,18 @@ public class SingleFlow<TSys extends CleanSystem> implements ISystemExeFlowGraph
     }
     //</editor-fold>
 
-    private final CleanWorld world;
     private final TSys system;
-    private final List<BarrierNode> topo;
-    private volatile boolean executing = false;
 
     public TSys getSystem() {
         return system;
     }
 
     private SingleFlow(@NonNull CleanWorld world, @NonNull TSys system, @NonNull List<@NonNull BarrierNode> topo) {
-        this.world = world;
+        super(world, topo);
         this.system = system;
-        this.topo = topo;
     }
 
     public static <T extends CleanSystem> Builder<T> newBuilder(CleanWorld world, Class<T> clazz) {
         return new Builder<>(world, clazz);
-    }
-
-    private final ReentrantLock lock = new ReentrantLock();
-
-    @Override
-    public void execute() {
-        if (!lock.tryLock()) {
-            throw new IllegalStateException("Must not execute while executing!");
-        }
-
-        executing = true;
-        try {
-            for (BarrierNode node : topo) {
-                if (node.callback != null) {
-                    node.callback.run();
-                }
-
-                for (Transition edge : node.outgoing) {
-                    if (edge.system == null) {
-                        continue;
-                    }
-
-                    ISystemExeFlowGraph.executeSystem(world, edge.system);
-                    ISystemExeFlowGraph.joinSystem(edge.system);
-                }
-            }
-        } finally {
-            executing = false;
-            lock.unlock();
-        }
-    }
-
-    @Override
-    public boolean isExecuting() {
-        return executing;
     }
 }
