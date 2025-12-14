@@ -124,6 +124,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return ((upperStateBound - lowerStateBound + 1) * input.ordinal()) + (state - lowerStateBound);
         }
 
+        @NonNull
         @Override
         public IBuilder<Integer, I> addTransition(@NonNull Integer state, @NonNull I input, @NonNull Integer nextState,
                                                   @Nullable OnEnterStateCallback<Integer, I> onEnterStateCallback,
@@ -131,7 +132,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                                                   @Nullable Rollback<Integer, I> rollbackCallback) {
             Preconditions.checkNotNull(input, "Parameter \"input\" must not be null.");
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound || nextState < lowerStateBound || nextState > upperStateBound),
-                    "State %d out of range [%d, %d].",
+                    "State %s out of range [%s, %s].",
                     initialState, lowerStateBound, upperStateBound);
 
             int index = index(input,state);
@@ -146,26 +147,29 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<Integer, I> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, I> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
-                    "State %d out of range [%d, %d].",
+                    "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
             entryCallbacks[state] = callback;
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<Integer, I> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, I> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
-                    "State %d out of range [%d, %d].",
+                    "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
             exitCallbacks[state] = callback;
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<Integer, I> initialState(@NonNull Integer initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
@@ -174,6 +178,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<Integer, I> error(@NonNull ErrorCallback<Integer, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
@@ -183,8 +188,9 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @NonNull
         @Override
-        public boolean validate() {
+        public IBuilder<Integer, I> validate() {
             final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();
@@ -201,9 +207,14 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                     }
                 }
             }
-            return reachable.cardinality() == size;
+
+            Preconditions.checkState(reachable.cardinality() == size,
+                    "Some state not reachable.");
+
+            return this;
         }
 
+        @NonNull
         @Override
         public FiniteStateMachine<Integer, I> build() {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");

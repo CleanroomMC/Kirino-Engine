@@ -366,7 +366,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
                     meshletComponent.chunkPosX = chunkCluster.chunkX;
                     meshletComponent.chunkPosY = chunkCluster.chunkY;
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
-                    fetchBlockInfo(chunkCluster, cluster, bufferBuilder);
+                    fillBlockInfo(chunkCluster, cluster, bufferBuilder);
 
                     entityManager.createEntity(meshletComponent);
                 }
@@ -374,7 +374,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         }
     }
 
-    void fetchBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
+    void fillBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
         for (Block block : cluster) {
             block.blockInfo = blockMeshGenerator.get().getFullBlockInfo(
                     block.position.x,

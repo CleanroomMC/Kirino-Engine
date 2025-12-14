@@ -48,7 +48,7 @@ public class ChunkPrioritizationJob implements IParallelJob {
                 (chunkWorldY - worldOffset.y) * (chunkWorldY - worldOffset.y) +
                 (chunkWorldZ - worldOffset.z) * (chunkWorldZ - worldOffset.z));
 
-        // lod fallout distance: 16
+        // lod fallout distance = 16
         int lod = (int) (dis / 16f);
 
         lodArray.setInt(index, lod);

@@ -17,7 +17,15 @@ public class MeshletComponent implements ICleanComponent, Iterable<Block> {
     public AABB aabb = new AABB();
     public Vector3f normal = new Vector3f();
 
-    public boolean basicVisibility = true;
+    /**
+     * Low 32 bits of the <code>id</code>.
+     */
+    public int id0;
+
+    /**
+     * High 32 bits of the <code>id</code>.
+     */
+    public int id1;
 
     /**
      * <p><b>0</b>: opaque</p>

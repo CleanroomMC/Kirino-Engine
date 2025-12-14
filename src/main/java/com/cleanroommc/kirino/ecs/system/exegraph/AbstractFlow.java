@@ -37,12 +37,14 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
         }
     }
 
+    private final @Nullable Runnable finishCallback;
     private final CleanWorld world;
     private final List<BarrierNode> topo;
     private volatile boolean executing = false;
     private final ReentrantLock lock = new ReentrantLock();
 
-    protected AbstractFlow(@NonNull CleanWorld world, @NonNull List<@NonNull BarrierNode> topo) {
+    protected AbstractFlow(@NonNull CleanWorld world, @NonNull List<@NonNull BarrierNode> topo, @Nullable Runnable finishCallback) {
+        this.finishCallback = finishCallback;
         this.world = world;
         this.topo = topo;
     }
@@ -75,6 +77,9 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
         } finally {
             executing = false;
             lock.unlock();
+            if (finishCallback != null) {
+                finishCallback.run();
+            }
         }
     }
 

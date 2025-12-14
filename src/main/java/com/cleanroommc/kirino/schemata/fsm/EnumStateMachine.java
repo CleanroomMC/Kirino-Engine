@@ -119,6 +119,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return (states.length * input.ordinal()) + state.ordinal();
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
@@ -140,6 +141,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
@@ -148,6 +150,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
@@ -156,6 +159,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Parameter \"initialState\" must not be null.");
@@ -164,6 +168,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
@@ -173,8 +178,9 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @NonNull
         @Override
-        public boolean validate() {
+        public IBuilder<S, I> validate() {
             BitSet reachable = new BitSet(states.length);
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
@@ -190,9 +196,14 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
                     }
                 }
             }
-            return reachable.cardinality() == states.length;
+
+            Preconditions.checkState(reachable.cardinality() == states.length,
+                    "Some state not reachable.");
+
+            return this;
         }
 
+        @NonNull
         @Override
         public FiniteStateMachine<S, I> build() {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");

@@ -107,6 +107,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         Builder() {
         }
 
+        @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S currentState, @NonNull I input, @NonNull S nextState,
                                            @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
@@ -140,6 +141,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
+        @NonNull
         @Override
         public IBuilder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
@@ -169,6 +171,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
+        @NonNull
         @Override
         public IBuilder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
@@ -188,6 +191,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
@@ -196,6 +200,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @NonNull
         @Override
         public IBuilder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
@@ -205,8 +210,9 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @NonNull
         @Override
-        public boolean validate() {
+        public IBuilder<S, I> validate() {
             Table<I, S, S> table = builder.build();
             Set<S> reachable = new HashSet<>();
             Deque<S> stack = new ArrayDeque<>();
@@ -222,9 +228,14 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
                     }
                 }
             }
-            return reachable.size() == table.columnKeySet().size();
+
+            Preconditions.checkState(reachable.size() == table.columnKeySet().size(),
+                    "Some state not reachable.");
+
+            return this;
         }
 
+        @NonNull
         @Override
         public FiniteStateMachine<S, I> build() {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");

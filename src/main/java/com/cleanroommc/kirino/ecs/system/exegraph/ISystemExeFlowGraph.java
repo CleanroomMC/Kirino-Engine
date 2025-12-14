@@ -18,7 +18,10 @@ import java.util.concurrent.Executor;
 
 /**
  * It guides the execution flow of ecs-systems.
- * You're supposed to instantiate one instance to help you manage the system execution.
+ * You're supposed to instantiate an instance in {@link CleanWorld} to help you manage the system execution.
+ *
+ * @implNote The flow graphs should be immutable once constructed, and
+ *           the builder pattern ({@link IBuilder}) should be utilized to help constructing the flow graphs
  */
 public interface ISystemExeFlowGraph {
     String START_NODE = "__START__";
@@ -31,7 +34,7 @@ public interface ISystemExeFlowGraph {
      *
      * @implNote Guarantee the thread safety and check the precondition (directly throw if needed) that the last execution is finished.
      *           Must call {@link #executeSystem(CleanWorld, CleanSystem)} and {@link #joinSystem(CleanSystem)} on every transition edge
-     *           to actually generate and join the completable futures from a system.
+     *           to actually generate and join the completable futures from a system
      * @see #isExecuting()
      */
     void execute();
@@ -51,7 +54,7 @@ public interface ISystemExeFlowGraph {
 
     /**
      * The builder of an execution flow graph.
-     * The execution graph must be a DAG and everything must start from {@link #START_NODE} and ends in {@link #END_NODE}
+     * The execution graph must be a DAG and everything must start from {@link #START_NODE} and ends in {@link #END_NODE}.
      */
     interface IBuilder<TFlowGraph extends ISystemExeFlowGraph> {
         /**
@@ -88,17 +91,31 @@ public interface ISystemExeFlowGraph {
 
         /**
          * Set the callback of the {@link #START_NODE}.
-         * A <code>null</code> callback clears the callback.
+         *
+         * <p>A <code>null</code> callback clears the current callback.</p>
          */
         @NonNull
-        IBuilder<TFlowGraph> setStartCallback(@Nullable Runnable callback);
+        IBuilder<TFlowGraph> setStartNodeCallback(@Nullable Runnable callback);
 
         /**
          * Set the callback of the {@link #END_NODE}.
-         * A <code>null</code> callback clears the callback.
+         *
+         * <p>A <code>null</code> callback clears the current callback.</p>
          */
         @NonNull
-        IBuilder<TFlowGraph> setEndCallback(@Nullable Runnable callback);
+        IBuilder<TFlowGraph> setEndNodeCallback(@Nullable Runnable callback);
+
+        /**
+         * Set the callback of the method <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>.
+         * It's different from {@link #setEndNodeCallback(Runnable)} since the end node callback will be ran
+         * during the execution (i.e. <code>{@link ISystemExeFlowGraph#isExecuting()} == true</code>)
+         * while the finish callback is guaranteed to be ran right after <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>
+         * (i.e. <code>{@link ISystemExeFlowGraph#isExecuting()} == false</code>).
+         *
+         * <p>A <code>null</code> callback clears the current callback.</p>
+         */
+        @NonNull
+        IBuilder<TFlowGraph> setFinishCallback(@Nullable Runnable callback);
 
         /**
          * @implNote Check the precondition that the execution graph is a DAG and

@@ -22,10 +22,11 @@ public class MeshletDestroySystem extends CleanSystem {
 
     @Override
     public void update(@NonNull EntityManager entityManager, @NonNull JobScheduler jobScheduler) {
-        JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(entityManager, MeshletDestroyJob.class, externalData, ForkJoinPool.commonPool());
-        if (handle.async()) {
-            handle.future().join();
-        }
+        JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(
+                entityManager,
+                MeshletDestroyJob.class,
+                externalData,
+                ForkJoinPool.commonPool());
         execution.updateExecutions(handle);
     }
 }

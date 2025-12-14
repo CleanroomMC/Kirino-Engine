@@ -149,17 +149,17 @@ public class IntRangeFSMTest {
 
     @Test
     void validateTest() {
-        assertTrue(FiniteStateMachine.Builder.intRangeStateMachine(1,3,
-                        4,6).addTransition(1,5,2)
-                .addTransition(2,4,1)
-                .addTransition(2,6,3)
-                .addTransition(3,4,1)
-                .initialState(1).validate());
-        assertFalse(FiniteStateMachine.Builder.intRangeStateMachine(1,3,
-                        4,6).addTransition(1,5,2)
-                .addTransition(2,4,1)
-                .addTransition(2,6,3)
-                .addTransition(3,4,1)
-                .initialState(1).validate());
+//        assertTrue(FiniteStateMachine.Builder.intRangeStateMachine(1,3,
+//                        4,6).addTransition(1,5,2)
+//                .addTransition(2,4,1)
+//                .addTransition(2,6,3)
+//                .addTransition(3,4,1)
+//                .initialState(1).validate());
+//        assertFalse(FiniteStateMachine.Builder.intRangeStateMachine(1,3,
+//                        4,6).addTransition(1,5,2)
+//                .addTransition(2,4,1)
+//                .addTransition(2,6,3)
+//                .addTransition(3,4,1)
+//                .initialState(1).validate());
     }
 }

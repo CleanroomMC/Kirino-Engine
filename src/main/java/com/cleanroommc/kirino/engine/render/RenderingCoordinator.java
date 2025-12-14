@@ -55,6 +55,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 
 public class RenderingCoordinator {
     public final boolean enableHDR;
@@ -130,7 +131,13 @@ public class RenderingCoordinator {
         gizmosManager = new GizmosManager(graphicResourceManager);
 
         camera = new MinecraftCamera();
-        scene = new MinecraftScene(ecsRuntime.entityManager, ecsRuntime.jobScheduler, blockMeshGenerator, gizmosManager, camera);
+        scene = new MinecraftScene(
+                ecsRuntime.entityManager,
+                ecsRuntime.jobScheduler,
+                blockMeshGenerator,
+                gizmosManager,
+                camera,
+                ForkJoinPool.commonPool());
 
         ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag");
 

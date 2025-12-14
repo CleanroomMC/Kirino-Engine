@@ -24,7 +24,10 @@ public class EntityManager {
      * Every entity's component info.
      *
      * <hr>
-     * <p><code>entityComponents</code>, <code>{@link #entityArchetypeLocations}</code>, <code>{@link #entityGenerations}</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * <p><code>entityComponents</code>,
+     * <code>{@link #entityArchetypeLocations}</code>,
+     * <code>{@link #entityGenerations}</code>, and
+     * <code>{@link #entityDestroyCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<List<Class<? extends ICleanComponent>>> entityComponents = new ArrayList<>();
@@ -33,7 +36,10 @@ public class EntityManager {
      * Every entity's archetype info.
      *
      * <hr>
-     * <p><code>{@link #entityComponents}</code>, <code>entityArchetypeLocations</code>, <code>{@link #entityGenerations}</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * <p><code>{@link #entityComponents}</code>,
+     * <code>entityArchetypeLocations</code>,
+     * <code>{@link #entityGenerations}</code>, and
+     * <code>{@link #entityDestroyCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<ArchetypeKey> entityArchetypeLocations = new ArrayList<>();
@@ -42,7 +48,10 @@ public class EntityManager {
      * Every entity's generation info.
      *
      * <hr>
-     * <p><code>{@link #entityComponents}</code>, <code>{@link #entityArchetypeLocations}</code>, <code>entityGenerations</code>, and <code>{@link #entityDestroyCallbacks}</code>
+     * <p><code>{@link #entityComponents}</code>,
+     * <code>{@link #entityArchetypeLocations}</code>,
+     * <code>entityGenerations</code>, and
+     * <code>{@link #entityDestroyCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<Integer> entityGenerations = new ArrayList<>();
@@ -51,7 +60,10 @@ public class EntityManager {
      * Every entity's destroy callback.
      *
      * <hr>
-     * <p><code>{@link #entityComponents}</code>, <code>{@link #entityArchetypeLocations}</code>, <code>{@link #entityGenerations}</code>, and <code>entityDestroyCallbacks</code>
+     * <p><code>{@link #entityComponents}</code>,
+     * <code>{@link #entityArchetypeLocations}</code>,
+     * <code>{@link #entityGenerations}</code>, and
+     * <code>entityDestroyCallbacks</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<@Nullable IEntityDestroyCallback> entityDestroyCallbacks = new ArrayList<>();

@@ -48,10 +48,11 @@ public class ChunkMeshletGenSystem extends CleanSystem {
         externalData.put("lod", lod);
         externalData.put("chunkProvider", chunkProvider);
         externalData.put("world", world);
-        JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(entityManager, ChunkMeshletGenJob.class, externalData, ForkJoinPool.commonPool());
-        if (handle.async()) {
-            handle.future().join();
-        }
+        JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(
+                entityManager,
+                ChunkMeshletGenJob.class,
+                externalData,
+                ForkJoinPool.commonPool());
         execution.updateExecutions(handle);
     }
 }

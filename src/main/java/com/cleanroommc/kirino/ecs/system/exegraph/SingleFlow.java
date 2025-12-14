@@ -18,6 +18,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         private final List<Transition> edges = new ArrayList<>();
 
         private TSys system = null;
+        private @Nullable Runnable finishCallback;
 
         Builder(CleanWorld world, Class<TSys> clazz) {
             this.world = world;
@@ -72,14 +73,20 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> setStartCallback(@Nullable Runnable callback) {
+        public @NonNull IBuilder<SingleFlow<TSys>> setStartNodeCallback(@Nullable Runnable callback) {
             nodes.get(START_NODE).callback = callback;
             return this;
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> setEndCallback(@Nullable Runnable callback) {
+        public @NonNull IBuilder<SingleFlow<TSys>> setEndNodeCallback(@Nullable Runnable callback) {
             nodes.get(END_NODE).callback = callback;
+            return this;
+        }
+
+        @Override
+        public @NonNull IBuilder<SingleFlow<TSys>> setFinishCallback(@Nullable Runnable callback) {
+            finishCallback = callback;
             return this;
         }
 
@@ -147,7 +154,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkState(reachable.size() == nodes.size(),
                     "Some nodes are not reachable from the START node.");
 
-            return new SingleFlow<>(world, system, topo);
+            return new SingleFlow<>(world, system, topo, finishCallback);
         }
     }
     //</editor-fold>
@@ -158,8 +165,8 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         return system;
     }
 
-    private SingleFlow(@NonNull CleanWorld world, @NonNull TSys system, @NonNull List<@NonNull BarrierNode> topo) {
-        super(world, topo);
+    private SingleFlow(@NonNull CleanWorld world, @NonNull TSys system, @NonNull List<@NonNull BarrierNode> topo, @Nullable Runnable finishCallback) {
+        super(world, topo, finishCallback);
         this.system = system;
     }
 
