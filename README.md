@@ -7,24 +7,28 @@ Its primary goal is to overhaul most of the Minecraft's rendering in a future-pr
 
 ## Q&A
 
-- Why is Kirino-Engine different compared to OptiFine / Sodium / Iris / Canvas?
-  - Because Kirino-Engine is fundamentally GPU-driven and ECS-driven, unlike traditional optimizers or shader mods
-  - Kirino-Engine reimagines the entire rendering pipeline
+<details>
+<summary>Click to Expand</summary>
+
+- Why is Kirino-Engine different compared to OptiFine / Sodium / Iris?
+  - Because Kirino-Engine reimagines the entire rendering pipeline without patching things in an unmaintainable way
+  - Kirino-Engine is fundamentally GPU-driven and ECS-driven, unlike traditional optimizers or shader mods
   - Kirino-Engine pays a huge attention to its architecture
-  - Kirino-Engine isn't simply an optimizer or shader mod
+  - Kirino-Engine isn't merely an optimizer or shader mod — it's an rendering engine
 
 - What's the most exciting features in dev?
   - GPU-Driven Meshlet Rendering & Virtual Geometry
-  - Vulkan-like / Modern paradigms (like Multi-Draw Indirect, Pipeline State Objects, etc.)
+  - Modern Rendering Paradigms (like Multi-Draw Indirect, Pipeline State Objects, etc.)
   - Semi-Static Global Illumination Driven by Surface Cards & Temporal Accumulation
-  - ECS & Parallel Job System
+  - ECS, Parallel Job, and Execution Graph (a Multithread-Friendly Architecture)
   - Async GPU Resource System
   - Multi-resolution & HDR & Post-processing Pipeline
 
 - What can I expect as a player?
-  - Performance wise: smoother performance and FPS improvements
+  - Performance wise: smoother performance and FPS improvements; Higher CPU & GPU utilization
   - Shader wise: modern lighting techniques and better global illumination
   - Configurability: optional HDR, optional resolution up-scaling or down-scaling, optional post-processing, etc.
+  - Ecosystem: easily extendable rendering pipeline for community shaders
 
 - What can I expect as a mod developer?
   - Clean rendering APIs that hide OpenGL completely
@@ -32,14 +36,16 @@ Its primary goal is to overhaul most of the Minecraft's rendering in a future-pr
   - Will be able to create emissive blocks, PBR, fogs, decals, any post-processing effects
   - Future-proof architecture
 
+</details>
+
 ## Roadmap & Todos
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
 
 ## How It Works?
-If you are curious about the tech/code details, check out [Engine Overview Page](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)!
+A player-friendly version of engine overview is work-in-progress.
 
 ## Contributing
-If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file)!
+If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file) and [Engine Overview Page](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)!
 
 ## MVP Goals
 
