@@ -9,18 +9,21 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChunkPrioritizationSystem extends CleanSystem {
     private final Map<String, Object> externalData;
     private final AtomicInteger maxLodCounter;
 
-    public ChunkPrioritizationSystem(ICamera camera) {
+    private final Executor executor;
+
+    public ChunkPrioritizationSystem(ICamera camera, Executor executor) {
         externalData = new HashMap<>();
         externalData.put("camera", camera);
         maxLodCounter = new AtomicInteger(-1);
         externalData.put("maxLodCounter", maxLodCounter);
+        this.executor = executor;
     }
 
     public int getCurrentMaxLod() {
@@ -34,7 +37,7 @@ public class ChunkPrioritizationSystem extends CleanSystem {
                 entityManager,
                 ChunkPrioritizationJob.class,
                 externalData,
-                ForkJoinPool.commonPool());
+                executor);
         execution.updateExecutions(handle);
     }
 }

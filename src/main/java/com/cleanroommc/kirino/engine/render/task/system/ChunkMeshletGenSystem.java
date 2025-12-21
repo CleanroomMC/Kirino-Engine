@@ -15,16 +15,19 @@ import org.jspecify.annotations.NonNull;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 
 public class ChunkMeshletGenSystem extends CleanSystem {
     private final Map<String, Object> externalData;
 
-    public ChunkMeshletGenSystem(GizmosManager gizmosManager, Reference<BlockMeshGenerator> blockMeshGenerator) {
+    private final Executor executor;
+
+    public ChunkMeshletGenSystem(GizmosManager gizmosManager, Reference<BlockMeshGenerator> blockMeshGenerator, Executor executor) {
         externalData = new HashMap<>();
         externalData.put("gizmosManager", gizmosManager);
         externalData.put("blockMeshGenerator", blockMeshGenerator);
         externalData.put("tempBuffers", new ConcurrentHashMap<Integer, BufferBuilder>());
+        this.executor = executor;
     }
 
     private int lod = 0;
@@ -52,7 +55,7 @@ public class ChunkMeshletGenSystem extends CleanSystem {
                 entityManager,
                 ChunkMeshletGenJob.class,
                 externalData,
-                ForkJoinPool.commonPool());
+                executor);
         execution.updateExecutions(handle);
     }
 }

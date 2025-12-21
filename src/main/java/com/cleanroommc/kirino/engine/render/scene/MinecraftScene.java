@@ -2,9 +2,11 @@ package com.cleanroommc.kirino.engine.render.scene;
 
 import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.ecs.entity.CleanEntityHandle;
-import com.cleanroommc.kirino.ecs.entity.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.IEntityDestroyCallback;
+import com.cleanroommc.kirino.ecs.entity.callback.IEntityCreateCallback;
+import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
@@ -32,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MinecraftScene extends CleanWorld {
 
@@ -40,6 +43,7 @@ public class MinecraftScene extends CleanWorld {
 
     // will be executed at the end of the update - EntityManager.flush() to be exact
     static class ChunkDestroyCallback implements IEntityDestroyCallback {
+
         private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
         public ChunkDestroyCallback(List<ChunkPosKey> chunksDestroyedLastFrame) {
@@ -53,6 +57,21 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
+    // will be executed at the end of the update - EntityManager.flush() to be exact
+    static class ChunkCreateCallback implements IEntityCreateCallback {
+
+        private final AtomicBoolean newChunksAdded;
+
+        public ChunkCreateCallback(AtomicBoolean newChunksAdded) {
+            this.newChunksAdded = newChunksAdded;
+        }
+
+        @Override
+        public void beforeCreate(@NonNull EntityCreateContext createContext) {
+            newChunksAdded.set(true);
+        }
+    }
+
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
     private final Executor systemFlowExecutor;
@@ -60,7 +79,7 @@ public class MinecraftScene extends CleanWorld {
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
 
-    private final TerrainFSM terrainFSM;
+    private final TerrainFSM terrainFsm;
 
     private final SingleFlow<ChunkPrioritizationSystem> chunkPrioritizationSystem;
     private final SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem;
@@ -68,7 +87,17 @@ public class MinecraftScene extends CleanWorld {
     private final SingleFlow<MeshletDebugSystem> meshletDebugSystem;
 
     private final ChunkDestroyCallback chunkDestroyCallback;
+    private final ChunkCreateCallback chunkCreateCallback;
+
     private final List<ChunkPosKey> chunksDestroyedLastFrame;
+
+    private int newWorldFrameCounter = 0;
+    private AtomicBoolean newChunksAdded = new AtomicBoolean(false);
+    private boolean newWorld = false;
+    private boolean rebuildWorld = false;
+    private WorldClient minecraftWorld = null;
+    private ChunkProviderClient minecraftChunkProvider = null;
+    private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
 
     public MinecraftScene(
             EntityManager entityManager,
@@ -76,48 +105,42 @@ public class MinecraftScene extends CleanWorld {
             Reference<BlockMeshGenerator> blockMeshGenerator,
             GizmosManager gizmosManager,
             MinecraftCamera camera,
-            Executor systemFlowExecutor) {
+            Executor systemFlowExecutor,
+            Executor systemExecutor) {
 
         super(entityManager, jobScheduler);
         this.systemFlowExecutor = systemFlowExecutor;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
 
-        terrainFSM = new TerrainFSM();
+        terrainFsm = new TerrainFSM();
 
         chunkPrioritizationSystem = SingleFlow.newBuilder(this, ChunkPrioritizationSystem.class)
-                .addTransition(new ChunkPrioritizationSystem(camera), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(terrainFSM::next)
+                .addTransition(new ChunkPrioritizationSystem(camera, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .setFinishCallback(terrainFsm::next)
                 .build();
 
         chunkMeshletGenSystem = SingleFlow.newBuilder(this, ChunkMeshletGenSystem.class)
-                .addTransition(new ChunkMeshletGenSystem(gizmosManager, blockMeshGenerator), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(terrainFSM::next)
+                .addTransition(new ChunkMeshletGenSystem(gizmosManager, blockMeshGenerator, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .setFinishCallback(terrainFsm::next)
                 .build();
 
         chunksDestroyedLastFrame = new CopyOnWriteArrayList<>();
         chunkDestroyCallback = new ChunkDestroyCallback(chunksDestroyedLastFrame);
+        chunkCreateCallback = new ChunkCreateCallback(newChunksAdded);
 
         meshletDestroySystem = SingleFlow.newBuilder(this, MeshletDestroySystem.class)
-                .addTransition(new MeshletDestroySystem(chunksDestroyedLastFrame), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .addTransition(new MeshletDestroySystem(chunksDestroyedLastFrame, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
                 .setFinishCallback(() -> {
                     chunksDestroyedLastFrame.clear();
-                    terrainFSM.next();
+                    terrainFsm.next();
                 })
                 .build();
 
         meshletDebugSystem = SingleFlow.newBuilder(this, MeshletDebugSystem.class)
-                .addTransition(new MeshletDebugSystem(gizmosManager), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .addTransition(new MeshletDebugSystem(gizmosManager, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
                 .build();
     }
-
-    private int newWorldFrameCounter = 0;
-    private boolean newWorld = false;
-    private boolean newChunksAdded = false;
-    private boolean rebuildWorld = false;
-    private WorldClient minecraftWorld = null;
-    private ChunkProviderClient minecraftChunkProvider = null;
-    private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
 
     public void tryUpdateWorld(WorldClient minecraftWorld) {
         if (minecraftWorld != null && minecraftChunkProvider != minecraftWorld.getChunkProvider()) {
@@ -130,11 +153,8 @@ public class MinecraftScene extends CleanWorld {
                     chunkComponent.chunkPosX = x;
                     chunkComponent.chunkPosY = i;
                     chunkComponent.chunkPosZ = z;
-                    chunkHandles.put(new ChunkPosKey(x, i, z), entityManager.createEntity(chunkDestroyCallback, chunkComponent));
+                    chunkHandles.put(new ChunkPosKey(x, i, z), entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
                 }
-
-                // todo: move it to ecs EntityManager add callback
-                newChunksAdded = true;
             };
             minecraftChunkProvider.unloadChunkCallback = (x, z) -> {
                 for (int i = 0; i < 16; i++) {
@@ -182,7 +202,7 @@ public class MinecraftScene extends CleanWorld {
                     chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
                     chunkComponent.chunkPosY = i;
                     chunkComponent.chunkPosZ = ChunkPos.getZ(chunkKey);
-                    chunkHandles.put(new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ), entityManager.createEntity(chunkDestroyCallback, chunkComponent));
+                    chunkHandles.put(new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ), entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
                 }
             }
             entityManager.flush();
@@ -228,26 +248,24 @@ public class MinecraftScene extends CleanWorld {
             oldProjection.position(0).put(projection).flip();
         }
 
-        boolean chunkPopulationChange = cameraMoved || renderDisChanged || newWorld || newChunksAdded;
+        boolean chunkPopulationChange = cameraMoved || renderDisChanged || newWorld || newChunksAdded.get();
 
-        if (terrainFSM.getState() == TerrainFSM.State.IDLE && chunkPopulationChange) {
+        if (terrainFsm.getState() == TerrainFSM.State.IDLE && chunkPopulationChange) {
             // consume new chunks
-            if (newChunksAdded) {
-                newChunksAdded = false;
-            }
+            newChunksAdded.compareAndSet(true, false);
 
             // lod fallout distance = 16
             // so the counter target is also renderDis
-            terrainFSM.setMeshletGenCounter(renderDis);
-            terrainFSM.prioritizeChunks();
+            terrainFsm.setMeshletGenCounter(renderDis);
+            terrainFsm.prioritizeChunks();
 
             // compute the lod of every loaded chunk
             // callback: terrainFSM.next()
             chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
         }
 
-        if (terrainFSM.getState() == TerrainFSM.State.MESHLET_GEN_TASK) {
-            chunkMeshletGenSystem.getSystem().setLod(terrainFSM.getMeshletGenCounter());
+        if (terrainFsm.getState() == TerrainFSM.State.MESHLET_GEN_TASK) {
+            chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
             // callback: terrainFSM.next()
             chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
         }
@@ -262,20 +280,12 @@ public class MinecraftScene extends CleanWorld {
             newWorld = false;
         }
 
-        // debug
-        if (++counter % 18 == 0) {
-            gizmosManager.clearBlocks();
-            meshletDebugSystem.execute();
-        }
-
-        if (terrainFSM.getState() == TerrainFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
-            terrainFSM.destroyMeshlets();
+        if (terrainFsm.getState() == TerrainFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
+            terrainFsm.destroyMeshlets();
             // callback: terrainFSM.next()
             meshletDestroySystem.executeAsync(systemFlowExecutor);
         }
 
         super.update();
     }
-
-    static int counter = 0;
 }

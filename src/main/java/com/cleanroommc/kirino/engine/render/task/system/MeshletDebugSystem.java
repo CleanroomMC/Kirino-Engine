@@ -9,14 +9,17 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 
 public class MeshletDebugSystem extends CleanSystem {
     private final Map<String, Object> externalData;
 
-    public MeshletDebugSystem(GizmosManager gizmosManager) {
+    private final Executor executor;
+
+    public MeshletDebugSystem(GizmosManager gizmosManager, Executor executor) {
         externalData = new HashMap<>();
         externalData.put("gizmosManager", gizmosManager);
+        this.executor = executor;
     }
 
     @Override
@@ -25,7 +28,7 @@ public class MeshletDebugSystem extends CleanSystem {
                 entityManager,
                 MeshletDebugJob.class,
                 externalData,
-                ForkJoinPool.commonPool());
+                executor);
         execution.updateExecutions(handle);
     }
 }

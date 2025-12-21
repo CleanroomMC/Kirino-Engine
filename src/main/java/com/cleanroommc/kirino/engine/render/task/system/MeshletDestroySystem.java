@@ -10,14 +10,17 @@ import org.jspecify.annotations.NonNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Executor;
 
 public class MeshletDestroySystem extends CleanSystem {
     private final Map<String, Object> externalData;
 
-    public MeshletDestroySystem(List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame) {
+    private final Executor executor;
+
+    public MeshletDestroySystem(List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame, Executor executor) {
         externalData = new HashMap<>();
         externalData.put("chunksDestroyedLastFrame", chunksDestroyedLastFrame);
+        this.executor = executor;
     }
 
     @Override
@@ -26,7 +29,7 @@ public class MeshletDestroySystem extends CleanSystem {
                 entityManager,
                 MeshletDestroyJob.class,
                 externalData,
-                ForkJoinPool.commonPool());
+                executor);
         execution.updateExecutions(handle);
     }
 }

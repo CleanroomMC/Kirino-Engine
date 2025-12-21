@@ -137,6 +137,7 @@ public class RenderingCoordinator {
                 blockMeshGenerator,
                 gizmosManager,
                 camera,
+                ForkJoinPool.commonPool(),
                 ForkJoinPool.commonPool());
 
         ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag");
