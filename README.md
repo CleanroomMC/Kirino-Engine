@@ -1,20 +1,24 @@
-<div style="position: relative;">
-  <img
-    src="logo.png"
-    alt="logo"
-    width="160"
-    style="float: right; margin: 0 0 16px 16px;"
-  />
 
-  <h1>Kirino Engine</h1>
-
-  <p>
-    Kirino-Engine is a CPU-GPU dual pipeline rendering engine that combines ECS paradigm and modern rendering techniques.
-  </p>
-  <p>
-    Its primary goal is to overhaul most of the Minecraft's rendering in a future-proof and elegant manner <i><b>and</b></i> provide a set of clean rendering APIs to mod devs.
-  </p>
+<div style="display: flex; align-items: flex-start;">
+  <div style="flex: 2;">
+    <h1>Kirino Engine</h1>
+    <p>
+      Kirino-Engine is a CPU-GPU dual pipeline rendering engine that combines ECS paradigm and modern rendering techniques.
+    </p>
+  </div>
+  <div style="flex: 1;">
+    <img
+      src="logo.png"
+      alt="logo"
+      width="160"
+      style="margin-left: 16px;"
+    />
+  </div>
 </div>
+
+<p>
+  Its primary goal is to overhaul most of the Minecraft's rendering in a future-proof and elegant manner <i><b>and</b></i> provide a set of clean rendering APIs to mod devs.
+</p>
 
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
