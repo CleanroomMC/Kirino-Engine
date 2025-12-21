@@ -1,5 +1,6 @@
-package com.cleanroommc.kirino.ecs.entity;
+package com.cleanroommc.kirino.ecs.entity.callback;
 
+import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import org.jspecify.annotations.NonNull;
 
 public interface IEntityDestroyCallback {

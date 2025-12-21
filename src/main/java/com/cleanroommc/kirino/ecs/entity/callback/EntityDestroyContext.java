@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.ecs.entity;
+package com.cleanroommc.kirino.ecs.entity.callback;
 
 import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
@@ -12,10 +12,13 @@ public class EntityDestroyContext {
     private List<Class<? extends ICleanComponent>> components;
     private ArchetypeDataPool archetype;
 
-    EntityDestroyContext() {
+    public EntityDestroyContext() {
     }
 
-    void set(int entityID, List<Class<? extends ICleanComponent>> components, ArchetypeDataPool archetype) {
+    /**
+     * Must not be accessed by clients.
+     */
+    public void setInternal(int entityID, List<Class<? extends ICleanComponent>> components, ArchetypeDataPool archetype) {
         this.entityID = entityID;
         this.components = components;
         this.archetype = archetype;

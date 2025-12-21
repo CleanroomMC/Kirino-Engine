@@ -2,6 +2,10 @@ package com.cleanroommc.kirino.ecs.entity;
 
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.entity.callback.IEntityCreateCallback;
+import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeKey;
 import com.cleanroommc.kirino.ecs.storage.HeapPool;
@@ -26,8 +30,9 @@ public class EntityManager {
      * <hr>
      * <p><code>entityComponents</code>,
      * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>{@link #entityGenerations}</code>, and
-     * <code>{@link #entityDestroyCallbacks}</code>
+     * <code>{@link #entityGenerations}</code>,
+     * <code>{@link #entityDestroyCallbacks}</code>, and
+     * <code>{@link #entityCreateCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<List<Class<? extends ICleanComponent>>> entityComponents = new ArrayList<>();
@@ -38,8 +43,9 @@ public class EntityManager {
      * <hr>
      * <p><code>{@link #entityComponents}</code>,
      * <code>entityArchetypeLocations</code>,
-     * <code>{@link #entityGenerations}</code>, and
-     * <code>{@link #entityDestroyCallbacks}</code>
+     * <code>{@link #entityGenerations}</code>,
+     * <code>{@link #entityDestroyCallbacks}</code>, and
+     * <code>{@link #entityCreateCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<ArchetypeKey> entityArchetypeLocations = new ArrayList<>();
@@ -50,8 +56,9 @@ public class EntityManager {
      * <hr>
      * <p><code>{@link #entityComponents}</code>,
      * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>entityGenerations</code>, and
-     * <code>{@link #entityDestroyCallbacks}</code>
+     * <code>entityGenerations</code>,
+     * <code>{@link #entityDestroyCallbacks}</code>, and
+     * <code>{@link #entityCreateCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<Integer> entityGenerations = new ArrayList<>();
@@ -62,13 +69,28 @@ public class EntityManager {
      * <hr>
      * <p><code>{@link #entityComponents}</code>,
      * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>{@link #entityGenerations}</code>, and
-     * <code>entityDestroyCallbacks</code>
+     * <code>{@link #entityGenerations}</code>,
+     * <code>entityDestroyCallbacks</code>, and
+     * <code>{@link #entityCreateCallbacks}</code>
      * share the same length. index is the identifier of an entity.</p>
      */
     private final List<@Nullable IEntityDestroyCallback> entityDestroyCallbacks = new ArrayList<>();
 
+    /**
+     * Every entity's create callback.
+     *
+     * <hr>
+     * <p><code>{@link #entityComponents}</code>,
+     * <code>{@link #entityArchetypeLocations}</code>,
+     * <code>{@link #entityGenerations}</code>,
+     * <code>{@link #entityDestroyCallbacks}</code>, and
+     * <code>entityCreateCallbacks</code>
+     * share the same length. index is the identifier of an entity.</p>
+     */
+    private final List<@Nullable IEntityCreateCallback> entityCreateCallbacks = new ArrayList<>();
+
     private final EntityDestroyContext destroyContext = new EntityDestroyContext();
+    private final EntityCreateContext createContext = new EntityCreateContext();
 
     private final List<Integer> freeIndexes = new ArrayList<>();
     private int indexCounter = 0;
@@ -128,6 +150,11 @@ public class EntityManager {
                         List<Class<? extends ICleanComponent>> components = entityComponents.get(command.index);
                         ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
                         ArchetypeDataPool pool = archetypes.computeIfAbsent(archetypeKey, k -> new HeapPool(componentRegistry, components, 100, 50, 50));
+                        IEntityCreateCallback createCallback = entityCreateCallbacks.get(command.index);
+                        if (createCallback != null) {
+                            createContext.setInternal(components, command.newComponents);
+                            createCallback.beforeCreate(createContext);
+                        }
                         pool.addEntity(command.index, command.newComponents);
                     }
                     case DESTROY -> {
@@ -135,7 +162,7 @@ public class EntityManager {
                         ArchetypeDataPool pool = archetypes.get(archetypeKey);
                         IEntityDestroyCallback destroyCallback = entityDestroyCallbacks.get(command.index);
                         if (destroyCallback != null) {
-                            destroyContext.set(command.index, entityComponents.get(command.index), pool);
+                            destroyContext.setInternal(command.index, entityComponents.get(command.index), pool);
                             destroyCallback.beforeDestroy(destroyContext);
                         }
                         pool.removeEntity(command.index);
@@ -211,8 +238,8 @@ public class EntityManager {
      * @return An entity handle
      */
     @NonNull
-    public synchronized CleanEntityHandle createEntity(@NonNull ICleanComponent @NonNull ... components) {
-        return createEntity(null, components);
+    public CleanEntityHandle createEntity(@NonNull ICleanComponent @NonNull ... components) {
+        return createEntity(null, null, components);
     }
 
     /**
@@ -230,11 +257,12 @@ public class EntityManager {
      * @see #flush()
      *
      * @param destroyCallback The entity destroy callback
+     * @param createCallback The entity create callback
      * @param components The component types this entity has
      * @return An entity handle
      */
     @NonNull
-    public synchronized CleanEntityHandle createEntity(@Nullable IEntityDestroyCallback destroyCallback, @NonNull ICleanComponent @NonNull ... components) {
+    public synchronized CleanEntityHandle createEntity(@Nullable IEntityDestroyCallback destroyCallback, @Nullable IEntityCreateCallback createCallback, @NonNull ICleanComponent @NonNull ... components) {
         Preconditions.checkNotNull(components);
         for (ICleanComponent component : components) {
             Preconditions.checkNotNull(component);
@@ -276,6 +304,13 @@ public class EntityManager {
             entityDestroyCallbacks.add(destroyCallback);
         } else {
             entityDestroyCallbacks.set(index, destroyCallback);
+        }
+
+        // update create callback
+        if (index > entityCreateCallbacks.size() - 1) {
+            entityCreateCallbacks.add(createCallback);
+        } else {
+            entityCreateCallbacks.set(index, createCallback);
         }
 
         synchronized (commandBuffer) {
