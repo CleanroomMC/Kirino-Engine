@@ -1,5 +1,5 @@
 
-# Kirino Engine <img src="logo.png" alt="logo" width="160" style="margin-left: 16px; vertical-align: middle;"/>
+# Kirino Engine <img src="logo.png" alt="logo" width="160" align="right" style="margin-left: 16px; vertical-align: middle;"/>
 
 Kirino-Engine is a CPU-GPU dual pipeline rendering engine that combines ECS paradigm and modern rendering techniques.
 
