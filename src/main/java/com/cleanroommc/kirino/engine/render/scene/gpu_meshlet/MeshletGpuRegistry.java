@@ -1,14 +1,14 @@
-package com.cleanroommc.kirino.engine.render.scene.meshlet;
+package com.cleanroommc.kirino.engine.render.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class MeshletManager {
-    private AtomicLong idCounter;
+public class MeshletGpuRegistry {
+    private final AtomicLong meshletIdCounter;
 
     private long nextMeshletID() {
-        return idCounter.getAndIncrement();
+        return meshletIdCounter.getAndIncrement();
     }
 
     /**
@@ -29,5 +29,16 @@ public class MeshletManager {
         long id = nextMeshletID();
         meshletComponent.id0 = splitLongLow(id);
         meshletComponent.id1 = splitLongHigh(id);
+    }
+
+    private final MeshletInputDoubleBuffer meshletInput;
+
+    public MeshletGpuRegistry() {
+        meshletIdCounter = new AtomicLong();
+        meshletInput = new MeshletInputDoubleBuffer();
+    }
+
+    public void lateInit() {
+        meshletInput.lateInit();
     }
 }

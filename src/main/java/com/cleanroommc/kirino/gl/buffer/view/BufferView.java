@@ -43,7 +43,7 @@ public abstract class BufferView {
         bind(bufferID);
     }
 
-    public int fetchCurrentBufferID() {
+    public int fetchCurrentBoundBufferID() {
         return GL11.glGetInteger(bindingTarget());
     }
 

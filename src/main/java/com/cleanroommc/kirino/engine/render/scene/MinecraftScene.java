@@ -14,6 +14,7 @@ import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
+import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkMeshletGenSystem;
 import com.cleanroommc.kirino.engine.render.task.system.ChunkPrioritizationSystem;
 import com.cleanroommc.kirino.engine.render.task.system.MeshletDebugSystem;
@@ -79,6 +80,8 @@ public class MinecraftScene extends CleanWorld {
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
 
+    private final MeshletGpuRegistry meshletGpuRegistry;
+
     private final TerrainFSM terrainFsm;
 
     private final SingleFlow<ChunkPrioritizationSystem> chunkPrioritizationSystem;
@@ -105,6 +108,7 @@ public class MinecraftScene extends CleanWorld {
             Reference<BlockMeshGenerator> blockMeshGenerator,
             GizmosManager gizmosManager,
             MinecraftCamera camera,
+            MeshletGpuRegistry meshletGpuRegistry,
             Executor systemFlowExecutor,
             Executor systemExecutor) {
 
@@ -112,6 +116,7 @@ public class MinecraftScene extends CleanWorld {
         this.systemFlowExecutor = systemFlowExecutor;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
+        this.meshletGpuRegistry = meshletGpuRegistry;
 
         terrainFsm = new TerrainFSM();
 

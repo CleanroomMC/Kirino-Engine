@@ -24,17 +24,20 @@ public class BlockMeshGenerator {
     private final BlockModelRenderer blockModelRenderer;
     private final BlockFluidRenderer blockFluidRenderer;
 
-    public BlockMeshGenerator() {
-        blockRendererDispatcher = MethodHolder.getBlockRendererDispatcher(Minecraft.getMinecraft());
+    /**
+     * Must be called when Minecraft is initialized.
+     */
+    public BlockMeshGenerator(Minecraft minecraft) {
+        blockRendererDispatcher = MethodHolder.getBlockRendererDispatcher(minecraft);
         blockModelRenderer = MethodHolder.getBlockModelRenderer(blockRendererDispatcher);
         blockFluidRenderer = MethodHolder.getBlockFluidRenderer(blockRendererDispatcher);
     }
 
     private static int encodeTexCoordsToInt32(float texCoordX, float texCoordY) {
         Preconditions.checkArgument(texCoordX >= 0f && texCoordX <= 1f,
-                "Argument \"texCoordX\" must in [0, 1].");
+                "Argument \"texCoordX\"=%s must in [0, 1].", texCoordX);
         Preconditions.checkArgument(texCoordY >= 0f && texCoordY <= 1f,
-                "Argument \"texCoordY\" must in [0, 1].");
+                "Argument \"texCoordY\"=%s must in [0, 1].", texCoordY);
 
         int a = Math.round(texCoordX * 65535f);
         int b = Math.round(texCoordY * 65535f);

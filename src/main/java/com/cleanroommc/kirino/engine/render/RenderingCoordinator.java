@@ -23,6 +23,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.post.subpasses.UpscalingPas
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.render.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.staging.StagingBufferManager;
@@ -72,6 +73,7 @@ public class RenderingCoordinator {
     // ---------- Logic ----------
     public final MinecraftCamera camera;
     public final MinecraftScene scene;
+    public final MeshletGpuRegistry meshletGpuRegistry;
 
     // ---------- Minecraft & Patches ----------
     public final MinecraftCulling cullingPatch;
@@ -84,7 +86,7 @@ public class RenderingCoordinator {
     private final GLSLRegistry glslRegistry;
     private final DefaultShaderAnalyzer defaultShaderAnalyzer;
 
-    // ---------- Managers ----------
+    // ---------- Low-level Managers ----------
     private final StagingBufferManager stagingBufferManager;
     private final GraphicResourceManager graphicResourceManager;
     public final GizmosManager gizmosManager;
@@ -130,6 +132,7 @@ public class RenderingCoordinator {
 
         gizmosManager = new GizmosManager(graphicResourceManager);
 
+        meshletGpuRegistry = new MeshletGpuRegistry();
         camera = new MinecraftCamera();
         scene = new MinecraftScene(
                 ecsRuntime.entityManager,
@@ -137,6 +140,7 @@ public class RenderingCoordinator {
                 blockMeshGenerator,
                 gizmosManager,
                 camera,
+                meshletGpuRegistry,
                 ForkJoinPool.commonPool(),
                 ForkJoinPool.commonPool());
 
@@ -288,7 +292,11 @@ public class RenderingCoordinator {
         //</editor-fold>
 
         //<editor-fold desc="block mesh generator">
-        blockMeshGenerator.set(new BlockMeshGenerator());
+        blockMeshGenerator.set(new BlockMeshGenerator(Minecraft.getMinecraft()));
+        //</editor-fold>
+
+        //<editor-fold desc="meshlet gpu registry late initialization">
+        meshletGpuRegistry.lateInit();
         //</editor-fold>
     }
 

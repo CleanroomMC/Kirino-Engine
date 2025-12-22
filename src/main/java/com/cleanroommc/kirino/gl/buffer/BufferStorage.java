@@ -40,7 +40,7 @@ public class BufferStorage<T extends BufferView> {
      */
     public synchronized void allocPage() {
         T view = constructor.get();
-        int currentBufferID = view.fetchCurrentBufferID();
+        int currentBufferID = view.fetchCurrentBoundBufferID();
         view.bind();
         view.allocPersistent(pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
         view.mapPersistent(0, pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
