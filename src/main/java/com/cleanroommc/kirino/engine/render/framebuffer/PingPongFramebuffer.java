@@ -34,14 +34,14 @@ public final class PingPongFramebuffer {
 
     public int width() {
         Preconditions.checkState(framebufferA.width() == framebufferB.width(),
-                "The width of framebuffer A (%d) must equal to that of framebuffer B (%d).", framebufferA.width(), framebufferB.width());
+                "The width of framebuffer A (%s) must equal to that of framebuffer B (%s).", framebufferA.width(), framebufferB.width());
 
         return framebufferA.width();
     }
 
     public int height() {
         Preconditions.checkState(framebufferA.height() == framebufferB.height(),
-                "The height of framebuffer A (%d) must equal to that of framebuffer B (%d).", framebufferA.height(), framebufferB.height());
+                "The height of framebuffer A (%s) must equal to that of framebuffer B (%s).", framebufferA.height(), framebufferB.height());
 
         return framebufferA.height();
     }

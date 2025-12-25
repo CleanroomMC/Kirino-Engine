@@ -57,9 +57,8 @@ public class TerrainFSM {
         if (fsm.state() == State.MESHLET_GEN_TASK) {
             if (++meshletGenCounter >= meshletGenTarget) {
                 fsm.accept(0);
-            } else {
-                return;
             }
+            return;
         }
 
         fsm.accept(0);

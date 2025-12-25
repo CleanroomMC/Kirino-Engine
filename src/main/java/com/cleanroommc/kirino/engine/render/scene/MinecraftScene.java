@@ -12,6 +12,7 @@ import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
+import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
@@ -30,10 +31,10 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,12 +43,13 @@ public class MinecraftScene extends CleanWorld {
     public record ChunkPosKey(int x, int y, int z) {
     }
 
-    // will be executed at the end of the update - EntityManager.flush() to be exact
+    // callbacks will be executed at the end of the update - EntityManager.flush() to be exact
+
     static class ChunkDestroyCallback implements IEntityDestroyCallback {
 
         private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
-        public ChunkDestroyCallback(List<ChunkPosKey> chunksDestroyedLastFrame) {
+        ChunkDestroyCallback(List<ChunkPosKey> chunksDestroyedLastFrame) {
             this.chunksDestroyedLastFrame = chunksDestroyedLastFrame;
         }
 
@@ -58,12 +60,11 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    // will be executed at the end of the update - EntityManager.flush() to be exact
     static class ChunkCreateCallback implements IEntityCreateCallback {
 
         private final AtomicBoolean newChunksAdded;
 
-        public ChunkCreateCallback(AtomicBoolean newChunksAdded) {
+        ChunkCreateCallback(AtomicBoolean newChunksAdded) {
             this.newChunksAdded = newChunksAdded;
         }
 
@@ -73,14 +74,29 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
+    public static class MeshletDestroyCallback implements IEntityDestroyCallback {
+
+        private final MeshletGpuRegistry meshletGpuRegistry;
+
+        MeshletDestroyCallback(MeshletGpuRegistry meshletGpuRegistry) {
+            this.meshletGpuRegistry = meshletGpuRegistry;
+        }
+
+        @Override
+        public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
+            MeshletComponent meshletComponent = (MeshletComponent) destroyContext.getComponent(MeshletComponent.class);
+            meshletGpuRegistry.disposeMeshletID(meshletComponent.gpuId);
+        }
+    }
+
+    // ----------------------------------------
+
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
     private final Executor systemFlowExecutor;
 
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
-
-    private final MeshletGpuRegistry meshletGpuRegistry;
 
     private final TerrainFSM terrainFsm;
 
@@ -95,7 +111,7 @@ public class MinecraftScene extends CleanWorld {
     private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
     private int newWorldFrameCounter = 0;
-    private AtomicBoolean newChunksAdded = new AtomicBoolean(false);
+    private final AtomicBoolean newChunksAdded = new AtomicBoolean(false); // not necessarily thread-safe, but must be a reference
     private boolean newWorld = false;
     private boolean rebuildWorld = false;
     private WorldClient minecraftWorld = null;
@@ -116,7 +132,6 @@ public class MinecraftScene extends CleanWorld {
         this.systemFlowExecutor = systemFlowExecutor;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
-        this.meshletGpuRegistry = meshletGpuRegistry;
 
         terrainFsm = new TerrainFSM();
 
@@ -126,11 +141,11 @@ public class MinecraftScene extends CleanWorld {
                 .build();
 
         chunkMeshletGenSystem = SingleFlow.newBuilder(this, ChunkMeshletGenSystem.class)
-                .addTransition(new ChunkMeshletGenSystem(gizmosManager, blockMeshGenerator, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .addTransition(new ChunkMeshletGenSystem(gizmosManager, blockMeshGenerator, meshletGpuRegistry, new MeshletDestroyCallback(meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
                 .setFinishCallback(terrainFsm::next)
                 .build();
 
-        chunksDestroyedLastFrame = new CopyOnWriteArrayList<>();
+        chunksDestroyedLastFrame = new ArrayList<>();
         chunkDestroyCallback = new ChunkDestroyCallback(chunksDestroyedLastFrame);
         chunkCreateCallback = new ChunkCreateCallback(newChunksAdded);
 
@@ -288,7 +303,8 @@ public class MinecraftScene extends CleanWorld {
         if (terrainFsm.getState() == TerrainFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
             terrainFsm.destroyMeshlets();
             // callback: terrainFSM.next()
-            meshletDestroySystem.executeAsync(systemFlowExecutor);
+            // must be blocking to prevent chunksDestroyedLastFrame from being modified (race)
+            meshletDestroySystem.execute();
         }
 
         super.update();

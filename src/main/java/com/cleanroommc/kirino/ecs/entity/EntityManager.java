@@ -250,7 +250,7 @@ public class EntityManager {
      * </ul>
      * </br>
      * This method will allocate an entity handle and generate a command for all side effects.
-     * Buffered commands will be consumed at {@link #flush()}, and the destroy callback will be executed during {@link #flush()}.
+     * Buffered commands will be consumed at {@link #flush()}, and the destroy/create callback will be executed during {@link #flush()}.
      * </br></br>
      * Thread safety is guaranteed.
      *

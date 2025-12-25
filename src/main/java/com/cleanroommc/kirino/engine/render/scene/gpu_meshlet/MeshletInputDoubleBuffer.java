@@ -12,7 +12,7 @@ public class MeshletInputDoubleBuffer {
     private int ssboSize1;
 
     private final static int INITIAL_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
-    private final static int MAX_SSBO_SIZE = 1024 * 1024 * 1024; // 1GB
+    private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
 
     public MeshletInputDoubleBuffer() {
         ssboSize0 = INITIAL_SSBO_SIZE;
@@ -88,5 +88,22 @@ public class MeshletInputDoubleBuffer {
         ssbo1.mapPersistent(0, ssboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         ssbo1.bind(0);
+    }
+
+    private int index = 0;
+
+    public void swap() {
+        index = index == 0 ? 1 : 0;
+    }
+
+    public int getSize() {
+        if (index == 0) {
+            return ssboSize0;
+        }
+        if (index == 1) {
+            return ssboSize1;
+        }
+
+        return -1; // impossible
     }
 }

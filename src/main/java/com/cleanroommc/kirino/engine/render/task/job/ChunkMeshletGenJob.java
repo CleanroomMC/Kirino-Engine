@@ -15,6 +15,8 @@ import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
+import com.cleanroommc.kirino.engine.render.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.utils.Reference;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -45,6 +47,12 @@ public class ChunkMeshletGenJob implements IParallelJob {
 
     @JobExternalDataQuery
     public int lod;
+
+    @JobExternalDataQuery
+    public MeshletGpuRegistry meshletGpuRegistry;
+
+    @JobExternalDataQuery
+    public MinecraftScene.MeshletDestroyCallback meshletDestroyCallback;
 
     @JobExternalDataQuery
     public ChunkProviderClient chunkProvider;
@@ -180,11 +188,11 @@ public class ChunkMeshletGenJob implements IParallelJob {
      */
     boolean blockExists(ChunkCluster chunkCluster, int x, int y, int z) {
         Preconditions.checkArgument(x >= -1 && x <= 16,
-                "Argument x=%d must be between [-1, 16].", x);
+                "Argument \"x\"=%d must be between [-1, 16].", x);
         Preconditions.checkArgument(y >= -1 && y <= 16,
-                "Argument y=%d must be between [-1, 16].", y);
+                "Argument \"y\"=%d must be between [-1, 16].", y);
         Preconditions.checkArgument(z >= -1 && z <= 16,
-                "Argument z=%d must be between [-1, 16].", z);
+                "Argument \"z\"=%d must be between [-1, 16].", z);
 
         if ((x == -1 || x == 16) && (y == -1 || y == 16) && (z == -1 || z == 16)) {
             return false;
@@ -220,7 +228,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
         }
 
         Preconditions.checkNotNull(result); // impossible to be null
-        Preconditions.checkNotNull(Blocks.AIR);
+        Preconditions.checkNotNull(Blocks.AIR); // impossible to be null
 
         if (result == Blocks.AIR.getDefaultState()) {
             return false;
@@ -367,8 +375,9 @@ public class ChunkMeshletGenJob implements IParallelJob {
                     meshletComponent.chunkPosY = chunkCluster.chunkY;
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
                     fillBlockInfo(chunkCluster, cluster, bufferBuilder);
+                    meshletGpuRegistry.fillMeshletID(meshletComponent);
 
-                    entityManager.createEntity(meshletComponent);
+                    entityManager.createEntity(meshletDestroyCallback, null, meshletComponent);
                 }
             }
         }
@@ -376,7 +385,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
 
     void fillBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
         for (Block block : cluster) {
-            block.blockInfo = blockMeshGenerator.get().getFullBlockInfo(
+            block.blockInfo = blockMeshGenerator.get().genFullBlockInfo(
                     block.position.x,
                     block.position.y,
                     block.position.z,

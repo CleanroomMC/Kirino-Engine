@@ -1,44 +1,56 @@
 package com.cleanroommc.kirino.engine.render.scene.gpu_meshlet;
 
+import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MeshletGpuRegistry {
-    private final AtomicLong meshletIdCounter;
 
-    private long nextMeshletID() {
-        return meshletIdCounter.getAndIncrement();
-    }
+    private final static int MESHLET_STRIDE_BYTE = 3600;
 
-    /**
-     * Returns low 32 bits.
-     */
-    private static int splitLongLow(long value) {
-        return (int) value;
-    }
+    private int meshletIdCounter;
+    private final List<Integer> freeMeshletIds = new ArrayList<>();
 
-    /**
-     * Returns high 32 bits.
-     */
-    private static int splitLongHigh(long value) {
-        return (int) (value >>> 32);
-    }
-
-    public void fillMeshletID(MeshletComponent meshletComponent) {
-        long id = nextMeshletID();
-        meshletComponent.id0 = splitLongLow(id);
-        meshletComponent.id1 = splitLongHigh(id);
-    }
-
-    private final MeshletInputDoubleBuffer meshletInput;
+    // key: meshletId, value: buffer slot ordinal
+    private final Map<Integer, Integer> meshletId2BufSlotMapping = new HashMap<>();
+    private final MeshletInputDoubleBuffer meshletInputBuffer;
 
     public MeshletGpuRegistry() {
-        meshletIdCounter = new AtomicLong();
-        meshletInput = new MeshletInputDoubleBuffer();
+        meshletInputBuffer = new MeshletInputDoubleBuffer();
     }
 
     public void lateInit() {
-        meshletInput.lateInit();
+        meshletInputBuffer.lateInit();
+    }
+
+    private int getMaxMeshletInputCount() {
+        return Math.ceilDivExact(meshletInputBuffer.getSize(), MESHLET_STRIDE_BYTE);
+    }
+
+    private synchronized int newMeshletID() {
+        int meshletId;
+        if (freeMeshletIds.isEmpty()) {
+            meshletId = meshletIdCounter++;
+        } else {
+            meshletId = freeMeshletIds.removeLast();
+        }
+
+        KirinoCore.LOGGER.info("new meshlet ID");
+
+        return meshletId;
+    }
+
+    public synchronized void disposeMeshletID(int meshletId) {
+        freeMeshletIds.add(meshletId);
+
+        KirinoCore.LOGGER.info("dispose meshlet ID");
+    }
+
+    public void fillMeshletID(MeshletComponent meshletComponent) {
+        meshletComponent.gpuId = newMeshletID();
     }
 }
