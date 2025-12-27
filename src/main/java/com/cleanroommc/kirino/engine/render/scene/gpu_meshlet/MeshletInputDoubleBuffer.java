@@ -6,6 +6,8 @@ import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 
 public class MeshletInputDoubleBuffer {
+    public final static int MESHLET_STRIDE_BYTE = 3600;
+
     private SSBOView ssbo0 = null;
     private SSBOView ssbo1 = null;
     private int ssboSize0;
@@ -17,62 +19,6 @@ public class MeshletInputDoubleBuffer {
     public MeshletInputDoubleBuffer() {
         ssboSize0 = INITIAL_SSBO_SIZE;
         ssboSize1 = INITIAL_SSBO_SIZE;
-    }
-
-    /**
-     * Make sure that ssbo0 isn't being used at the moment.
-     */
-    private boolean growSsbo0() {
-        int oldSize0 = ssboSize0;
-        ssboSize0 = Math.min(MAX_SSBO_SIZE, ssboSize0 * 2);
-
-        if (oldSize0 == ssboSize0) {
-            return false;
-        }
-
-        int prevID = ssbo0.fetchCurrentBoundBufferID();
-
-        ssbo0.bind();
-        ssbo0.unmapPersistent();
-        GLResourceManager.disposeEarly(ssbo0.buffer);
-
-        ssbo0 = new SSBOView(new GLBuffer());
-
-        ssbo0.bind();
-        ssbo0.allocPersistent(ssboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        ssbo0.mapPersistent(0, ssboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-
-        ssbo0.bind(prevID);
-
-        return true;
-    }
-
-    /**
-     * Make sure that ssbo1 isn't being used at the moment.
-     */
-    private boolean growSsbo1() {
-        int oldSize1 = ssboSize1;
-        ssboSize1 = Math.min(MAX_SSBO_SIZE, ssboSize1 * 2);
-
-        if (oldSize1 == ssboSize1) {
-            return false;
-        }
-
-        int prevID = ssbo1.fetchCurrentBoundBufferID();
-
-        ssbo1.bind();
-        ssbo1.unmapPersistent();
-        GLResourceManager.disposeEarly(ssbo1.buffer);
-
-        ssbo1 = new SSBOView(new GLBuffer());
-
-        ssbo1.bind();
-        ssbo1.allocPersistent(ssboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        ssbo1.mapPersistent(0, ssboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-
-        ssbo1.bind(prevID);
-
-        return true;
     }
 
     public void lateInit() {
@@ -90,13 +36,113 @@ public class MeshletInputDoubleBuffer {
         ssbo1.bind(0);
     }
 
+    /**
+     * Make sure that ssbo0 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growSsbo0() {
+        int oldSize0 = ssboSize0;
+        ssboSize0 = Math.min(MAX_SSBO_SIZE, ssboSize0 * 2);
+
+        if (oldSize0 == ssboSize0) {
+            return false;
+        }
+
+        resizeSsbo0(ssboSize0);
+
+        return true;
+    }
+
+    /**
+     * Make sure that ssbo1 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growSsbo1() {
+        int oldSize1 = ssboSize1;
+        ssboSize1 = Math.min(MAX_SSBO_SIZE, ssboSize1 * 2);
+
+        if (oldSize1 == ssboSize1) {
+            return false;
+        }
+
+        resizeSsbo1(ssboSize1);
+
+        return true;
+    }
+
+    /**
+     * Make sure that ssbo0 isn't being used by gpu at the moment.
+     * Must only resize the current write target.
+     */
+    private void resizeSsbo0(int size) {
+        int prevID = ssbo0.fetchCurrentBoundBufferID();
+
+        ssbo0.bind();
+        ssbo0.unmapPersistent();
+        GLResourceManager.disposeEarly(ssbo0.buffer);
+
+        ssbo0 = new SSBOView(new GLBuffer());
+
+        ssbo0.bind();
+        ssbo0.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo0.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+
+        ssbo0.bind(prevID);
+    }
+
+    /**
+     * Make sure that ssbo1 isn't being used by gpu at the moment.
+     * Must only resize the current write target.
+     */
+    private void resizeSsbo1(int size) {
+        int prevID = ssbo1.fetchCurrentBoundBufferID();
+
+        ssbo1.bind();
+        ssbo1.unmapPersistent();
+        GLResourceManager.disposeEarly(ssbo1.buffer);
+
+        ssbo1 = new SSBOView(new GLBuffer());
+
+        ssbo1.bind();
+        ssbo1.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo1.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+
+        ssbo1.bind(prevID);
+    }
+
+    public int getMaxMeshletInputCount() {
+        return getSize() / MESHLET_STRIDE_BYTE;
+    }
+
     private int index = 0;
 
     public void swap() {
+        int oldSize = getSize();
         index = index == 0 ? 1 : 0;
+        if (getSize() < oldSize) {
+            if (index == 0) {
+                resizeSsbo0(oldSize);
+            } else if (index == 1) {
+                resizeSsbo1(oldSize);
+            }
+        }
     }
 
-    public int getSize() {
+    // inactive one (not being used by gpu)
+    public SSBOView getWriteTarget() {
+        return index == 0 ? ssbo0 : ssbo1;
+    }
+
+    // active one (to be used by gpu)
+    public SSBOView getConsumeTarget() {
+        return index == 0 ? ssbo1 : ssbo0;
+    }
+
+    private int getSize() {
         if (index == 0) {
             return ssboSize0;
         }
@@ -105,5 +151,21 @@ public class MeshletInputDoubleBuffer {
         }
 
         return -1; // impossible
+    }
+
+    /**
+     * Grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    public boolean grow() {
+        if (index == 0) {
+            return growSsbo0();
+        }
+        if (index == 1) {
+            return growSsbo1();
+        }
+
+        return false; // impossible
     }
 }

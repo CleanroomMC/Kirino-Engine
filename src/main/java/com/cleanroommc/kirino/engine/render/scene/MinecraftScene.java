@@ -85,7 +85,7 @@ public class MinecraftScene extends CleanWorld {
         @Override
         public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
             MeshletComponent meshletComponent = (MeshletComponent) destroyContext.getComponent(MeshletComponent.class);
-            meshletGpuRegistry.disposeMeshletID(meshletComponent.gpuId);
+            meshletGpuRegistry.disposeMeshletID(meshletComponent.meshletId);
         }
     }
 

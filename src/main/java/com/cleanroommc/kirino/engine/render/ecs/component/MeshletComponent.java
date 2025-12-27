@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.ecs.component;
 
+import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.cleanroommc.kirino.ecs.component.scan.CleanComponent;
 import com.cleanroommc.kirino.engine.render.ecs.struct.AABB;
@@ -17,7 +18,10 @@ public class MeshletComponent implements ICleanComponent, Iterable<Block> {
     public AABB aabb = new AABB();
     public Vector3f normal = new Vector3f();
 
-    public int gpuId;
+    /**
+     * Used by {@link MeshletGpuRegistry}. <code>-1</code> stands for invalid.
+     */
+    public int meshletId = -1;
 
     /**
      * <p><b>0</b>: opaque</p>

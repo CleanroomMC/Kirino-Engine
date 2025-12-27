@@ -375,7 +375,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
                     meshletComponent.chunkPosY = chunkCluster.chunkY;
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
                     fillBlockInfo(chunkCluster, cluster, bufferBuilder);
-                    meshletGpuRegistry.fillMeshletID(meshletComponent);
+                    meshletGpuRegistry.allocateMeshletID(meshletComponent);
 
                     entityManager.createEntity(meshletDestroyCallback, null, meshletComponent);
                 }
