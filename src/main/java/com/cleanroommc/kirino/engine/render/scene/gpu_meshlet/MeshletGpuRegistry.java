@@ -17,7 +17,8 @@ public class MeshletGpuRegistry {
     private final List<Integer> meshletIdAddedSinceLastBegin = new ArrayList<>();
     private final List<Integer> meshletIdRemovedSinceLastBegin = new ArrayList<>();
 
-    private boolean isWriting = false;
+    private boolean writing = false;
+    private boolean finishedWritingOnce = false;
 
     public MeshletGpuRegistry() {
         meshletInputBuffer = new MeshletInputDoubleBuffer();
@@ -71,6 +72,14 @@ public class MeshletGpuRegistry {
     }
     //</editor-fold>
 
+    public synchronized boolean isWriting() {
+        return writing;
+    }
+
+    public synchronized boolean isFinishedWritingOnce() {
+        return finishedWritingOnce;
+    }
+
     public synchronized boolean hasMeshletChanges() {
         return !meshletIdAddedSinceLastBegin.isEmpty() || !meshletIdRemovedSinceLastBegin.isEmpty();
     }
@@ -81,7 +90,7 @@ public class MeshletGpuRegistry {
      * Should be called before an independent async writing task.
      */
     public synchronized void beginWriting() {
-        Preconditions.checkState(!isWriting, "Must not be writing already.");
+        Preconditions.checkState(!writing, "Must not be writing already.");
 
         // handle side effects, modify id -> slot mapping to be exact
         meshletBufferSlotAllocator.syncMeshletIdAddition(meshletIdAddedSinceLastBegin);
@@ -89,7 +98,9 @@ public class MeshletGpuRegistry {
         meshletIdAddedSinceLastBegin.clear();
         meshletIdRemovedSinceLastBegin.clear();
 
-        isWriting = true;
+        meshletBufferSlotAllocator.growBufferIfNeeded();
+
+        writing = true;
     }
 
     /**
@@ -98,11 +109,16 @@ public class MeshletGpuRegistry {
      * Should be called after an independent async writing task.
      */
     public synchronized void finishWriting() {
-        Preconditions.checkState(isWriting, "Must be writing already.");
+        Preconditions.checkState(writing, "Must be writing already.");
 
         freeMeshletIds.addAll(pendingMeshletIdRemoval);
         pendingMeshletIdRemoval.clear();
 
-        isWriting = false;
+        meshletInputBuffer.swap();
+
+        writing = false;
+        if (!finishedWritingOnce) {
+            finishedWritingOnce = true;
+        }
     }
 }

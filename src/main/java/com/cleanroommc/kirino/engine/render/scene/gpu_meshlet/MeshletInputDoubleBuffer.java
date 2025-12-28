@@ -16,7 +16,7 @@ public class MeshletInputDoubleBuffer {
     private final static int INITIAL_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
     private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
 
-    public MeshletInputDoubleBuffer() {
+    MeshletInputDoubleBuffer() {
         ssboSize0 = INITIAL_SSBO_SIZE;
         ssboSize1 = INITIAL_SSBO_SIZE;
     }
@@ -114,22 +114,20 @@ public class MeshletInputDoubleBuffer {
         ssbo1.bind(prevID);
     }
 
+    private int index = 0;
+
+    /**
+     * @return The max meshlet input count of the current write target
+     */
     public int getMaxMeshletInputCount() {
         return getSize() / MESHLET_STRIDE_BYTE;
     }
 
-    private int index = 0;
-
+    /**
+     * Swap the current write target and consume target.
+     */
     public void swap() {
-        int oldSize = getSize();
         index = index == 0 ? 1 : 0;
-        if (getSize() < oldSize) {
-            if (index == 0) {
-                resizeSsbo0(oldSize);
-            } else if (index == 1) {
-                resizeSsbo1(oldSize);
-            }
-        }
     }
 
     // inactive one (not being used by gpu)
@@ -142,7 +140,10 @@ public class MeshletInputDoubleBuffer {
         return index == 0 ? ssbo1 : ssbo0;
     }
 
-    private int getSize() {
+    /**
+     * @return The size of the current write target
+     */
+    public int getSize() {
         if (index == 0) {
             return ssboSize0;
         }
@@ -167,5 +168,19 @@ public class MeshletInputDoubleBuffer {
         }
 
         return false; // impossible
+    }
+
+    /**
+     * Grow the current write target if it's smaller than the consume target.
+     */
+    public void growToMatchSize() {
+        int consumeSize = index == 0 ? ssboSize1 : ssboSize0;
+        if (getSize() < consumeSize) {
+            if (index == 0) {
+                resizeSsbo0(consumeSize);
+            } else if (index == 1) {
+                resizeSsbo1(consumeSize);
+            }
+        }
     }
 }
