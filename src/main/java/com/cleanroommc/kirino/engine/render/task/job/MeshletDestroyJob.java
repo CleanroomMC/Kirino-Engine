@@ -14,16 +14,16 @@ import java.util.List;
 
 public class MeshletDestroyJob implements IParallelJob {
     @JobExternalDataQuery
-    public List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame;
+    List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    IPrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosY"})
-    public IPrimitiveArray chunkPosYArray;
+    IPrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    IPrimitiveArray chunkPosZArray;
 
     @Override
     public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {

@@ -15,115 +15,115 @@ import java.util.List;
 
 public class MeshletDebugJob implements IParallelJob {
     @JobExternalDataQuery
-    public GizmosManager gizmosManager;
+    GizmosManager gizmosManager;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"blockCount"})
-    public IPrimitiveArray blockCountArray;
+    IPrimitiveArray blockCountArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    IPrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosY"})
-    public IPrimitiveArray chunkPosYArray;
+    IPrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    IPrimitiveArray chunkPosZArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "positionAndFaceMask"})
-    public IPrimitiveArray block0Array;
+    IPrimitiveArray block0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "positionAndFaceMask"})
-    public IPrimitiveArray block1Array;
+    IPrimitiveArray block1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "positionAndFaceMask"})
-    public IPrimitiveArray block2Array;
+    IPrimitiveArray block2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "positionAndFaceMask"})
-    public IPrimitiveArray block3Array;
+    IPrimitiveArray block3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "positionAndFaceMask"})
-    public IPrimitiveArray block4Array;
+    IPrimitiveArray block4Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "positionAndFaceMask"})
-    public IPrimitiveArray block5Array;
+    IPrimitiveArray block5Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "positionAndFaceMask"})
-    public IPrimitiveArray block6Array;
+    IPrimitiveArray block6Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "positionAndFaceMask"})
-    public IPrimitiveArray block7Array;
+    IPrimitiveArray block7Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "positionAndFaceMask"})
-    public IPrimitiveArray block8Array;
+    IPrimitiveArray block8Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "positionAndFaceMask"})
-    public IPrimitiveArray block9Array;
+    IPrimitiveArray block9Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "positionAndFaceMask"})
-    public IPrimitiveArray block10Array;
+    IPrimitiveArray block10Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "positionAndFaceMask"})
-    public IPrimitiveArray block11Array;
+    IPrimitiveArray block11Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "positionAndFaceMask"})
-    public IPrimitiveArray block12Array;
+    IPrimitiveArray block12Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "positionAndFaceMask"})
-    public IPrimitiveArray block13Array;
+    IPrimitiveArray block13Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "positionAndFaceMask"})
-    public IPrimitiveArray block14Array;
+    IPrimitiveArray block14Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "positionAndFaceMask"})
-    public IPrimitiveArray block15Array;
+    IPrimitiveArray block15Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "positionAndFaceMask"})
-    public IPrimitiveArray block16Array;
+    IPrimitiveArray block16Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "positionAndFaceMask"})
-    public IPrimitiveArray block17Array;
+    IPrimitiveArray block17Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "positionAndFaceMask"})
-    public IPrimitiveArray block18Array;
+    IPrimitiveArray block18Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "positionAndFaceMask"})
-    public IPrimitiveArray block19Array;
+    IPrimitiveArray block19Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "positionAndFaceMask"})
-    public IPrimitiveArray block20Array;
+    IPrimitiveArray block20Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "positionAndFaceMask"})
-    public IPrimitiveArray block21Array;
+    IPrimitiveArray block21Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "positionAndFaceMask"})
-    public IPrimitiveArray block22Array;
+    IPrimitiveArray block22Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "positionAndFaceMask"})
-    public IPrimitiveArray block23Array;
+    IPrimitiveArray block23Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "positionAndFaceMask"})
-    public IPrimitiveArray block24Array;
+    IPrimitiveArray block24Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "positionAndFaceMask"})
-    public IPrimitiveArray block25Array;
+    IPrimitiveArray block25Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "positionAndFaceMask"})
-    public IPrimitiveArray block26Array;
+    IPrimitiveArray block26Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "positionAndFaceMask"})
-    public IPrimitiveArray block27Array;
+    IPrimitiveArray block27Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "positionAndFaceMask"})
-    public IPrimitiveArray block28Array;
+    IPrimitiveArray block28Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "positionAndFaceMask"})
-    public IPrimitiveArray block29Array;
+    IPrimitiveArray block29Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "positionAndFaceMask"})
-    public IPrimitiveArray block30Array;
+    IPrimitiveArray block30Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "positionAndFaceMask"})
-    public IPrimitiveArray block31Array;
+    IPrimitiveArray block31Array;
 
     @Override
     public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {

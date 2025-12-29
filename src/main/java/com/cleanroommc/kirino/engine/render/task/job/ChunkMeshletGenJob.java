@@ -40,46 +40,46 @@ public class ChunkMeshletGenJob implements IParallelJob {
      * <p><b>1</b>: transparent</p>
      * <p><b>2</b>: cutout</p>
      */
-    public int pass = 0;
+    int pass = 0;
 
     @JobExternalDataQuery
     ConcurrentHashMap<Integer, BufferBuilder> tempBuffers;
 
     @JobExternalDataQuery
-    public int lod;
+    int lod;
 
     @JobExternalDataQuery
-    public MeshletGpuRegistry meshletGpuRegistry;
+    MeshletGpuRegistry meshletGpuRegistry;
 
     @JobExternalDataQuery
-    public MinecraftScene.MeshletDestroyCallback meshletDestroyCallback;
+    MinecraftScene.MeshletDestroyCallback meshletDestroyCallback;
 
     @JobExternalDataQuery
-    public ChunkProviderClient chunkProvider;
+    ChunkProviderClient chunkProvider;
 
     @JobExternalDataQuery
-    public WorldClient world;
+    WorldClient world;
 
     @JobExternalDataQuery
-    public Reference<BlockMeshGenerator> blockMeshGenerator;
+    Reference<BlockMeshGenerator> blockMeshGenerator;
 
     @JobExternalDataQuery
-    public GizmosManager gizmosManager;
+    GizmosManager gizmosManager;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    IPrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosY"})
-    public IPrimitiveArray chunkPosYArray;
+    IPrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    IPrimitiveArray chunkPosZArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"isDirty"})
-    public IPrimitiveArray isDirtyArray;
+    IPrimitiveArray isDirtyArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"lod"})
-    public IPrimitiveArray lodArray;
+    IPrimitiveArray lodArray;
 
     @Override
     public void query(@NonNull EntityQuery entityQuery) {

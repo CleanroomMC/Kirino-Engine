@@ -18,19 +18,19 @@ public class ChunkPrioritizationJob implements IParallelJob {
     AtomicInteger maxLodCounter;
 
     @JobExternalDataQuery
-    public ICamera camera;
+    ICamera camera;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    IPrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosY"})
-    public IPrimitiveArray chunkPosYArray;
+    IPrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    IPrimitiveArray chunkPosZArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"lod"})
-    public IPrimitiveArray lodArray;
+    IPrimitiveArray lodArray;
 
     Vector3f worldOffset = null;
 
