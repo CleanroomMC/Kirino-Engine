@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 import org.joml.*;
 
 import java.lang.invoke.MethodHandle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -138,11 +139,23 @@ public class CleanECSRuntime {
             jobRegistry.registerParallelJob(clazz);
             logger.info("Parallel job " + clazz.getName() + " registered. Data queries are as follows:" +
                     (jobRegistry.getParallelJobDataQueries(clazz).keySet().isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).keySet().isEmpty() ? " (Empty)" : ""));
+
+            List<String> arrayQueries = new ArrayList<>();
+            List<String> externalQueries = new ArrayList<>();
             for (JobDataQuery jobDataQuery : jobRegistry.getParallelJobDataQueries(clazz).keySet()) {
-                logger.info("  - Array query: " + componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(ICleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
+                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(ICleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
             }
             for (String fieldName : jobRegistry.getParallelJobExternalDataQueries(clazz).keySet()) {
-                logger.info("  - External query: " +  fieldName);
+                externalQueries.add(fieldName);
+            }
+            arrayQueries = arrayQueries.stream().sorted().toList();
+            externalQueries = externalQueries.stream().sorted().toList();
+
+            for (String query : arrayQueries) {
+                logger.info("  - Array query: " + query);
+            }
+            for (String query : externalQueries) {
+                logger.info("  - External query: " +  query);
             }
         }
     }

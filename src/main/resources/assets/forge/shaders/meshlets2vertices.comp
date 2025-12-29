@@ -7,10 +7,11 @@ struct Block
     int positionAndFaceMask; // 4
 };
 
-// 3600
+// 3616
 struct Meshlet
 {
     vec3 normal; // 16
+    ivec3 chunkPos; // 16
     Block blocks[32]; // 32 * 112 = 3584
 };
 

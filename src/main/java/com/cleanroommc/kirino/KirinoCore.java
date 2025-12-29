@@ -7,10 +7,7 @@ import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.task.job.ChunkMeshletGenJob;
-import com.cleanroommc.kirino.engine.render.task.job.ChunkPrioritizationJob;
-import com.cleanroommc.kirino.engine.render.task.job.MeshletDebugJob;
-import com.cleanroommc.kirino.engine.render.task.job.MeshletDestroyJob;
+import com.cleanroommc.kirino.engine.render.task.job.*;
 import com.cleanroommc.kirino.gl.GLTest;
 import com.cleanroommc.kirino.gl.debug.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -543,6 +540,7 @@ public final class KirinoCore {
         event.register(ChunkPrioritizationJob.class);
         event.register(MeshletDestroyJob.class);
         event.register(MeshletDebugJob.class);
+        event.register(MeshletBufferWriteJob.class);
     }
 
     @SubscribeEvent

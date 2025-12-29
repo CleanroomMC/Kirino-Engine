@@ -30,8 +30,6 @@ public class MeshletComponent implements ICleanComponent, Iterable<Block> {
      */
     public int pass = 0;
 
-    public boolean isConsumed = false;
-
     /**
      * X-coordinate under chunk coordinate system. (* 16 = world coordinate)
      */

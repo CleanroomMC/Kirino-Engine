@@ -6,7 +6,7 @@ import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 
 public class MeshletInputDoubleBuffer {
-    public final static int MESHLET_STRIDE_BYTE = 3600;
+    public final static int MESHLET_STRIDE_BYTE = 3616;
 
     private SSBOView ssbo0 = null;
     private SSBOView ssbo1 = null;
