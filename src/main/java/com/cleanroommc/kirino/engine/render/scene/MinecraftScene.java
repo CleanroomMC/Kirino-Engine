@@ -16,10 +16,11 @@ import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
-import com.cleanroommc.kirino.engine.render.task.system.ChunkMeshletGenSystem;
-import com.cleanroommc.kirino.engine.render.task.system.ChunkPrioritizationSystem;
-import com.cleanroommc.kirino.engine.render.task.system.MeshletDebugSystem;
-import com.cleanroommc.kirino.engine.render.task.system.MeshletDestroySystem;
+import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuWriterContext;
+import com.cleanroommc.kirino.engine.render.task.system.*;
+import com.cleanroommc.kirino.gl.buffer.GLBuffer;
+import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
+import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.utils.Reference;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -29,7 +30,9 @@ import net.minecraft.util.math.ChunkPos;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.*;
 
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -97,6 +100,7 @@ public class MinecraftScene extends CleanWorld {
 
     private final GizmosManager gizmosManager;
     private final MinecraftCamera camera;
+    private final MeshletGpuRegistry meshletGpuRegistry;
 
     private final TerrainFSM terrainFsm;
 
@@ -104,6 +108,7 @@ public class MinecraftScene extends CleanWorld {
     private final SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem;
     private final SingleFlow<MeshletDestroySystem> meshletDestroySystem;
     private final SingleFlow<MeshletDebugSystem> meshletDebugSystem;
+    private final SingleFlow<MeshletBufferWriteSystem> meshletBufferWriteSystem;
 
     private final ChunkDestroyCallback chunkDestroyCallback;
     private final ChunkCreateCallback chunkCreateCallback;
@@ -132,6 +137,7 @@ public class MinecraftScene extends CleanWorld {
         this.systemFlowExecutor = systemFlowExecutor;
         this.gizmosManager = gizmosManager;
         this.camera = camera;
+        this.meshletGpuRegistry = meshletGpuRegistry;
 
         terrainFsm = new TerrainFSM();
 
@@ -159,6 +165,14 @@ public class MinecraftScene extends CleanWorld {
 
         meshletDebugSystem = SingleFlow.newBuilder(this, MeshletDebugSystem.class)
                 .addTransition(new MeshletDebugSystem(gizmosManager, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .build();
+
+        meshletBufferWriteSystem = SingleFlow.newBuilder(this, MeshletBufferWriteSystem.class)
+                .addTransition(new MeshletBufferWriteSystem(new MeshletGpuWriterContext(meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .setFinishCallback(() -> {
+                    meshletGpuRegistry.finishWriting(); // may not finish immediately, wait for compute result
+                    computeReady = true;
+                })
                 .build();
     }
 
@@ -280,13 +294,13 @@ public class MinecraftScene extends CleanWorld {
             terrainFsm.prioritizeChunks();
 
             // compute the lod of every loaded chunk
-            // callback: terrainFSM.next()
+            // callback: terrainFsm.next() (MESHLET_GEN_TASK)
             chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
         }
 
-        if (terrainFsm.getState() == TerrainFSM.State.MESHLET_GEN_TASK) {
+        if (terrainFsm.getState() == TerrainFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
             chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
-            // callback: terrainFSM.next()
+            // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE)
             chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
         }
 
@@ -302,11 +316,63 @@ public class MinecraftScene extends CleanWorld {
 
         if (terrainFsm.getState() == TerrainFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
             terrainFsm.destroyMeshlets();
-            // callback: terrainFSM.next()
+            // callback: terrainFsm.next() (IDLE)
             // must be blocking to prevent chunksDestroyedLastFrame from being modified (race)
             meshletDestroySystem.execute();
         }
 
+        // test
+        if (terrainFsm.getState() == TerrainFSM.State.IDLE) {
+            if (debug) {
+                debug = false;
+
+                meshletGpuRegistry.beginWriting();
+                // callback: meshletGpuRegistry.finishWriting(); computeReady = true
+                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+            }
+        }
+
+        if (computeReady) {
+            if (compute) {
+                compute = false;
+
+                KirinoCore.LOGGER.info("start compute");
+                if (ssboOut == null) {
+                    ssboOut = new SSBOView(new GLBuffer());
+                    ByteBuffer byteBufferOut = BufferUtils.createByteBuffer(3616 * 2);
+
+                    ssboOut.bind();
+                    ssboOut.uploadDirectly(byteBufferOut);
+                    GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
+                    GL30.glBindBufferBase(ssboOut.target(), 1, ssboOut.bufferID);
+                    computeShaderProgram.use();
+                    GL43.glDispatchCompute(1, 1, 1);
+                    GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+
+                    long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+                    // block
+                    int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
+                    if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
+                        ssboOut.bind();
+                        ByteBuffer result = BufferUtils.createByteBuffer(3616);
+                        GL15.glGetBufferSubData(ssboOut.target(), 3616, result);
+                        KirinoCore.LOGGER.info("finished compute");
+                        KirinoCore.LOGGER.info("normal: " + result.getFloat() + ", " + result.getFloat() + ", " + result.getFloat());
+                        result.getFloat(); // padding
+                        KirinoCore.LOGGER.info("chunk pos: " + result.getInt() + ", " + result.getInt() + ", " + result.getInt());
+                        KirinoCore.LOGGER.info("block count: " + result.getInt());
+                    }
+                    GL32C.glDeleteSync(fence);
+                }
+            }
+        }
+
         super.update();
     }
+
+    static boolean debug = true;
+    static boolean computeReady = false;
+    static boolean compute = true;
+    static SSBOView ssboOut = null;
+    public static ShaderProgram computeShaderProgram;
 }

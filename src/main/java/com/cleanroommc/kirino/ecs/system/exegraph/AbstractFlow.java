@@ -75,10 +75,13 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
                 }
             }
         } finally {
-            executing = false;
-            lock.unlock();
-            if (finishCallback != null) {
-                finishCallback.run();
+            try {
+                if (finishCallback != null) {
+                    finishCallback.run();
+                }
+            } finally {
+                executing = false;
+                lock.unlock();
             }
         }
     }

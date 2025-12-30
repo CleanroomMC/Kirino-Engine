@@ -11,7 +11,7 @@ struct Block
 struct Meshlet
 {
     vec3 normal; // 16
-    ivec3 chunkPos; // 16
+    ivec4 chunkPosAndBlockCount; // 16
     Block blocks[32]; // 32 * 112 = 3584
 };
 
@@ -30,4 +30,8 @@ layout(local_size_x = 1) in;
 void main()
 {
     uint index = gl_GlobalInvocationID.x;
+
+    outMeshlets[1].normal = inMeshlets[0].normal;
+    outMeshlets[1].chunkPosAndBlockCount = inMeshlets[0].chunkPosAndBlockCount;
+    outMeshlets[1].blocks = inMeshlets[0].blocks;
 }

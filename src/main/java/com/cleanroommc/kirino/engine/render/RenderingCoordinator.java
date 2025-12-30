@@ -203,6 +203,9 @@ public class RenderingCoordinator {
                 PSOPresets.createScreenOverwritePSO(shaderProgram)));
 
         frameFinalizer = new FrameFinalizer(logger, postProcessingPass, toneMappingPass, upscalingPass, downscalingPass, enableHDR, enablePostProcessing);
+
+        // test
+        scene.computeShaderProgram = shaderRegistry.newShaderProgram("forge:shaders/meshlets2vertices.comp");
     }
 
     /**
@@ -360,44 +363,6 @@ public class RenderingCoordinator {
         // test
         glStateBackup.storeStates();
         int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-
-//        if (ssboIn == null) {
-//            ssboIn = new SSBOView(new GLBuffer());
-//            ssboOut = new SSBOView(new GLBuffer());
-//            ByteBuffer byteBufferIn = BufferUtils.createByteBuffer(2576);
-//            byteBufferIn.putFloat(7).putFloat(8).putFloat(9).putFloat(0);
-//            byteBufferIn.putInt(4).putInt(5).putInt(6).putInt(0);
-//            byteBufferIn
-//                    .putInt(11).putInt(1)
-//                    .putInt(1).putInt(1)
-//                    .putInt(1).putInt(1)
-//                    .putInt(1).putInt(1)
-//                    .putInt(1).putInt(1)
-//                    .putInt(1).putInt(111);
-//            byteBufferIn.putInt(123);
-//            byteBufferIn.position(0).limit(2576);
-//            ByteBuffer byteBufferOut = BufferUtils.createByteBuffer(2576 * 2);
-//            ssboIn.bind();
-//            ssboIn.uploadDirectly(byteBufferIn);
-//            ssboOut.bind();
-//            ssboOut.uploadDirectly(byteBufferOut);
-//            GL30.glBindBufferBase(ssboIn.target(), 0, ssboIn.bufferID);
-//            GL30.glBindBufferBase(ssboOut.target(), 1, ssboOut.bufferID);
-//            computeShaderProgram.use();
-//            GL43.glDispatchCompute(1, 1, 1);
-//            GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
-//
-//            long fence = GL32C.glFenceSync(GL32.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-//            // block
-//            int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
-//            if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
-//                ssboOut.bind();
-//                ByteBuffer result = BufferUtils.createByteBuffer(2576);
-//                GL15.glGetBufferSubData(ssboOut.target(), 2576, result); // block
-//                KirinoCore.LOGGER.info("compute debug: " + result.getFloat()); // 123
-//            }
-//            GL32C.glDeleteSync(fence);
-//        }
 
         gizmosPass.render(camera);
 

@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
@@ -120,5 +121,16 @@ public class MeshletGpuRegistry {
         if (!finishedWritingOnce) {
             finishedWritingOnce = true;
         }
+    }
+
+    /**
+     * Must only retrieve the ssbo after {@link #finishWriting()} and before next {@link #finishWriting()}.
+     *
+     * @return The the ssbo to be consumed by compute shaders
+     */
+    public synchronized SSBOView getConsumeTarget() {
+        Preconditions.checkState(finishedWritingOnce, "Must finished writing once.");
+
+        return meshletInputBuffer.getConsumeTarget();
     }
 }

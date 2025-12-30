@@ -108,9 +108,7 @@ public interface ISystemExeFlowGraph {
         /**
          * Set the callback of the method <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>.
          * It's different from {@link #setEndNodeCallback(Runnable)} since the end node callback will be ran
-         * during the execution (i.e. <code>{@link ISystemExeFlowGraph#isExecuting()} == true</code>)
-         * while the finish callback is guaranteed to be ran right after <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>
-         * (i.e. <code>{@link ISystemExeFlowGraph#isExecuting()} == false</code>).
+         * before the finish callback.
          *
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
