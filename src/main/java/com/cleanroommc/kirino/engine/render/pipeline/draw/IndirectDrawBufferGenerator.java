@@ -10,6 +10,7 @@ import org.lwjgl.BufferUtils;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.List;
+import java.util.Optional;
 
 public class IndirectDrawBufferGenerator {
     private final ByteBuffer buildingAreaByteBuffer;
@@ -66,7 +67,10 @@ public class IndirectDrawBufferGenerator {
         buildingAreaByteBuffer.position(0);
         buildingAreaByteBuffer.limit(idbBufferSize);
 
-        ByteBuffer persistent = idbView.getPersistentMappedBuffer();
+        Optional<ByteBuffer> optional = idbView.getPersistentMappedBuffer();
+        Preconditions.checkState(optional.isPresent()); // impossible to throw
+
+        ByteBuffer persistent = optional.get();
         persistent.position(offset);
         persistent.limit(offset + idbBufferSize);
         persistent.put(buildingAreaByteBuffer);

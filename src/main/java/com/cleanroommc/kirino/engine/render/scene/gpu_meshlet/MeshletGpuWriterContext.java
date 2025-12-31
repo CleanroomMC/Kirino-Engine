@@ -5,6 +5,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Optional;
 
 /**
  * Only valid during the {@link MeshletGpuRegistry#beginWriting()} to {@link MeshletGpuRegistry#finishWriting()} period.
@@ -23,12 +24,11 @@ public class MeshletGpuWriterContext {
      */
     @NonNull
     public ByteBuffer getNewByteBufferView() {
-        ByteBuffer byteBuffer = meshletGpuRegistry.meshletInputBuffer.getWriteTarget().getPersistentMappedBuffer();
-        Preconditions.checkState(byteBuffer != null,
-                "The persistently mapped buffer is null.");
+        Optional<ByteBuffer> optional = meshletGpuRegistry.meshletInputBuffer.getWriteTarget().getPersistentMappedBuffer();
+        Preconditions.checkState(optional.isPresent()); // impossible to throw
 
+        ByteBuffer byteBuffer = optional.get();
         ByteOrder oldOrder = byteBuffer.order();
-
         return byteBuffer.duplicate().order(oldOrder);
     }
 

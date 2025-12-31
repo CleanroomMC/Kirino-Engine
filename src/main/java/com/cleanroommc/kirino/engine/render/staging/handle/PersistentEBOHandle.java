@@ -7,6 +7,7 @@ import com.cleanroommc.kirino.gl.buffer.view.EBOView;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 public class PersistentEBOHandle extends StagingBufferHandle<PersistentEBOHandle> {
     private final BufferStorage.SlotHandle<EBOView> handle;
@@ -28,7 +29,10 @@ public class PersistentEBOHandle extends StagingBufferHandle<PersistentEBOHandle
         Preconditions.checkArgument(offset + byteBuffer.remaining() <= maxLength,
                 "Buffer slice size must be greater than or equal to \"offset + byteBuffer.remaining()\".");
 
-        ByteBuffer byteBuffer0 = handle.getView().getPersistentMappedBuffer();
+        Optional<ByteBuffer> optional = handle.getView().getPersistentMappedBuffer();
+        Preconditions.checkState(optional.isPresent()); // impossible to throw
+
+        ByteBuffer byteBuffer0 = optional.get();
         int oldPos = byteBuffer0.position();
         byteBuffer0.position(this.offset + offset);
         byteBuffer0.put(byteBuffer);

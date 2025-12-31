@@ -4,18 +4,33 @@ import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
+import java.util.Optional;
 
+/**
+ * Note: this API performs <i><b>no validation or protection against illegal
+ * OpenGL and driver-level behavior</b></i>. Clients are fully responsible for ensuring correctness.
+ */
 public abstract class BufferView {
     private boolean validation = false;
 
+    /**
+     * Enables validation for basic argument precondition checks.
+     * <p>Note: You should not turn on validation for hot paths.</p>
+     */
     public final void turnOnValidation() {
         validation = true;
     }
 
+    /**
+     * Disables validation for basic argument precondition checks.
+     * <p>Note: You should not turn on validation for hot paths.</p>
+     */
     public final void turnOffValidation() {
         validation = false;
     }
@@ -43,14 +58,24 @@ public abstract class BufferView {
         bind(bufferID);
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
     public int fetchCurrentBoundBufferID() {
         return GL11.glGetInteger(bindingTarget());
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
     public int fetchBufferSize() {
         return GL15.glGetBufferParameteri(target(), GL15.GL_BUFFER_SIZE);
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
+    @NonNull
     public BufferUploadHint fetchBufferUploadHint() {
         int usage = GL15.glGetBufferParameteri(target(), GL15.GL_BUFFER_USAGE);
         if (usage == BufferUploadHint.STATIC_DRAW.glValue) {
@@ -63,21 +88,33 @@ public abstract class BufferView {
         throw new RuntimeException("Unknown GL_BUFFER_USAGE fetched.");
     }
 
-    public MapBufferAccessBit[] fetchMapBufferAccessBits() {
+    /**
+     * Note: this is a OpenGL query.
+     */
+    public @NonNull MapBufferAccessBit @NonNull [] fetchMapBufferAccessBits() {
         int flags = GL15.glGetBufferParameteri(target(), GL30.GL_BUFFER_ACCESS_FLAGS);
         return Arrays.stream(MapBufferAccessBit.values())
                 .filter(bit -> (flags & bit.glValue) != 0)
                 .toArray(MapBufferAccessBit[]::new);
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
     public boolean fetchIsBufferMapped() {
         return GL15.glGetBufferParameteri(target(), GL15.GL_BUFFER_MAPPED) == GL11.GL_TRUE;
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
     public int fetchMapBufferOffset() {
         return GL15.glGetBufferParameteri(target(), GL30.GL_BUFFER_MAP_OFFSET);
     }
 
+    /**
+     * Note: this is a OpenGL query.
+     */
     public int fetchMapBufferLength() {
         return GL15.glGetBufferParameteri(target(), GL30.GL_BUFFER_MAP_LENGTH);
     }
@@ -88,9 +125,10 @@ public abstract class BufferView {
      * @param size The byte size of the buffer
      * @param hint The upload hint
      */
-    public void alloc(int size, BufferUploadHint hint) {
+    public void alloc(int size, @NonNull BufferUploadHint hint) {
         if (validation) {
             Preconditions.checkArgument(size >= 0, "Cannot have a negative buffer size.");
+            Preconditions.checkNotNull(hint);
         }
 
         GL15.glBufferData(target(), size, hint.glValue);
@@ -98,11 +136,15 @@ public abstract class BufferView {
 
     /**
      * The data that corresponds to <code>byteBuffer.remaining()</code> will be uploaded using the {@link BufferUploadHint#STATIC_DRAW} hint.
-     * By the way, it will set the upload hint to {@link BufferUploadHint#STATIC_DRAW}.
+     * By the way, it will reset the current upload hint to {@link BufferUploadHint#STATIC_DRAW}.
      *
      * @param byteBuffer The data
      */
-    public void uploadDirectly(ByteBuffer byteBuffer) {
+    public void uploadDirectly(@NonNull ByteBuffer byteBuffer) {
+        if (validation) {
+            Preconditions.checkNotNull(byteBuffer);
+        }
+
         GL15.glBufferData(target(), byteBuffer, GL15.GL_STATIC_DRAW);
     }
 
@@ -112,11 +154,12 @@ public abstract class BufferView {
      * @param offset The byte offset in the target buffer where the data will be uploaded
      * @param byteBuffer The data
      */
-    public void uploadBySubData(int offset, ByteBuffer byteBuffer) {
+    public void uploadBySubData(int offset, @NonNull ByteBuffer byteBuffer) {
         if (validation) {
             Preconditions.checkArgument(offset >= 0, "Cannot have a negative buffer offset.");
             Preconditions.checkArgument(offset + byteBuffer.remaining() <= fetchBufferSize(),
                     "Allocated buffer size must be greater than or equal to \"offset + byteBuffer.remaining()\".");
+            Preconditions.checkNotNull(byteBuffer);
         }
 
         GL15.glBufferSubData(target(), offset, byteBuffer);
@@ -131,7 +174,7 @@ public abstract class BufferView {
      * @param byteBuffer The data
      * @param accessBits The access bits
      */
-    public void uploadByMapBuffer(int mappingOffset, int mappingSize, int offset, ByteBuffer byteBuffer, MapBufferAccessBit... accessBits) {
+    public void uploadByMapBuffer(int mappingOffset, int mappingSize, int offset, @NonNull ByteBuffer byteBuffer, @NonNull MapBufferAccessBit @NonNull ... accessBits) {
         if (validation) {
             Preconditions.checkArgument(mappingSize >= 0, "Cannot have a negative buffer size.");
             Preconditions.checkArgument(!(mappingOffset < 0 || offset < 0), "Cannot have a negative offset.");
@@ -139,6 +182,11 @@ public abstract class BufferView {
                     "Allocated buffer size must be greater than or equal to \"mappingOffset + mappingSize\".");
             Preconditions.checkArgument(offset + byteBuffer.remaining() <= mappingSize,
                     "Argument \"mappingSize\" must be greater than or equal to \"offset + byteBuffer.remaining()\".");
+            Preconditions.checkNotNull(byteBuffer);
+            Preconditions.checkNotNull(accessBits);
+            for (MapBufferAccessBit bit : accessBits) {
+                Preconditions.checkNotNull(bit);
+            }
         }
 
         int access = 0;
@@ -154,6 +202,10 @@ public abstract class BufferView {
                 null);
 
         if (mappedBuffer != null) {
+            // key assumption (valid for all supported LWJGL/OpenGL desktop platforms):
+            // CPU and GPU use the same native endianness (little endian in practice)
+            mappedBuffer.order(ByteOrder.nativeOrder());
+
             mappedBuffer.position(offset);
             mappedBuffer.put(byteBuffer);
             boolean success = GL15.glUnmapBuffer(target());
@@ -167,13 +219,24 @@ public abstract class BufferView {
 
     protected ByteBuffer persistentMappedBuffer = null;
 
-    public final ByteBuffer getPersistentMappedBuffer() {
-        return persistentMappedBuffer;
+    /**
+     * This method is not suitable for hot paths.
+     * The result should be validated once and then cached if needed.
+     *
+     * @return The persistently mapped buffer
+     */
+    @NonNull
+    public final Optional<ByteBuffer> getPersistentMappedBuffer() {
+        return Optional.ofNullable(persistentMappedBuffer);
     }
 
-    public void allocPersistent(int size, MapBufferAccessBit... accessBits) {
+    public void allocPersistent(int size, @NonNull MapBufferAccessBit @NonNull ... accessBits) {
         if (validation) {
             Preconditions.checkArgument(size >= 0, "Cannot have a negative buffer size.");
+            Preconditions.checkNotNull(accessBits);
+            for (MapBufferAccessBit bit : accessBits) {
+                Preconditions.checkNotNull(bit);
+            }
         }
 
         int access = 0;
@@ -184,12 +247,16 @@ public abstract class BufferView {
         GL44C.glBufferStorage(target(), size, access);
     }
 
-    public void mapPersistent(int offset, int length, MapBufferAccessBit... accessBits) {
+    public void mapPersistent(int offset, int length, @NonNull MapBufferAccessBit @NonNull ... accessBits) {
         if (validation) {
             Preconditions.checkState(persistentMappedBuffer == null, "Buffer already mapped persistently.");
             Preconditions.checkArgument(offset >= 0, "Cannot have a negative offset.");
             Preconditions.checkArgument(offset + length <= fetchBufferSize(),
                     "Allocated buffer size must be greater than or equal to \"offset + length\".");
+            Preconditions.checkNotNull(accessBits);
+            for (MapBufferAccessBit bit : accessBits) {
+                Preconditions.checkNotNull(bit);
+            }
         }
 
         int access = 0;
@@ -202,6 +269,10 @@ public abstract class BufferView {
         if (persistentMappedBuffer == null) {
             throw new RuntimeException("Failed to map persistent buffer.");
         }
+
+        // key assumption (valid for all supported LWJGL/OpenGL desktop platforms):
+        // CPU and GPU use the same native endianness (little endian in practice)
+        persistentMappedBuffer.order(ByteOrder.nativeOrder());
     }
 
     public void unmapPersistent() {
