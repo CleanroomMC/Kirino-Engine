@@ -383,12 +383,15 @@ public class MinecraftScene extends CleanWorld {
                     ByteBuffer byteBufferOut = BufferUtils.createByteBuffer(3616 * 2);
 
                     ssboOut.bind();
-                    ssboOut.uploadDirectly(byteBufferOut);
+                    ssboOut.uploadDirectly(byteBufferOut); // automatically visible
                     GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
                     GL30.glBindBufferBase(ssboOut.target(), 1, ssboOut.bufferID);
+
                     computeShaderProgram.use();
+
+                    GL42.glMemoryBarrier(GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT); // make persistently mapped buffer visible
                     GL43.glDispatchCompute(1, 1, 1);
-                    GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+                    GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT); // only needed for subsequent ssbo reading in shaders
 
                     long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
                     // block
@@ -396,6 +399,8 @@ public class MinecraftScene extends CleanWorld {
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
                         ssboOut.bind();
                         ByteBuffer result = BufferUtils.createByteBuffer(3616);
+
+                        GL42.glMemoryBarrier(GL42C.GL_BUFFER_UPDATE_BARRIER_BIT);
                         GL15.glGetBufferSubData(ssboOut.target(), 3616, result);
                         KirinoCore.LOGGER.info("finished compute");
                         KirinoCore.LOGGER.info("normal: " + result.getFloat() + ", " + result.getFloat() + ", " + result.getFloat());
