@@ -15,6 +15,9 @@ import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
+import com.cleanroommc.kirino.engine.render.scene.fsm.MeshletGpuPipelineFSM;
+import com.cleanroommc.kirino.engine.render.scene.fsm.TerrainCpuPipelineFSM;
+import com.cleanroommc.kirino.engine.render.scene.fsm.WorldControlFSM;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuWriterContext;
 import com.cleanroommc.kirino.engine.render.task.system.*;
@@ -102,7 +105,9 @@ public class MinecraftScene extends CleanWorld {
     private final MinecraftCamera camera;
     private final MeshletGpuRegistry meshletGpuRegistry;
 
-    private final TerrainFSM terrainFsm;
+    private final TerrainCpuPipelineFSM terrainFsm;
+    private final MeshletGpuPipelineFSM meshletFsm;
+    private final WorldControlFSM worldFsm;
 
     private final SingleFlow<ChunkPrioritizationSystem> chunkPrioritizationSystem;
     private final SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem;
@@ -117,8 +122,6 @@ public class MinecraftScene extends CleanWorld {
 
     private int newWorldFrameCounter = 0;
     private final AtomicBoolean newChunksAdded = new AtomicBoolean(false); // not necessarily thread-safe, but must be a reference
-    private boolean newWorld = false;
-    private boolean rebuildWorld = false;
     private WorldClient minecraftWorld = null;
     private ChunkProviderClient minecraftChunkProvider = null;
     private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
@@ -139,7 +142,9 @@ public class MinecraftScene extends CleanWorld {
         this.camera = camera;
         this.meshletGpuRegistry = meshletGpuRegistry;
 
-        terrainFsm = new TerrainFSM();
+        terrainFsm = new TerrainCpuPipelineFSM();
+        meshletFsm = new MeshletGpuPipelineFSM();
+        worldFsm = new WorldControlFSM();
 
         chunkPrioritizationSystem = SingleFlow.newBuilder(this, ChunkPrioritizationSystem.class)
                 .addTransition(new ChunkPrioritizationSystem(camera, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
@@ -176,9 +181,32 @@ public class MinecraftScene extends CleanWorld {
                 .build();
     }
 
+    /**
+     * Block update hook. May be triggered at any time.
+     *
+     * @see KirinoCore#RenderGlobal$notifyBlockUpdate(int, int, int, IBlockState, IBlockState)
+     */
+    public void notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
+
+    }
+
+    /**
+     * Light update hook. May be triggered at any time.
+     *
+     * @see KirinoCore#RenderGlobal$notifyLightUpdate(int, int, int)
+     */
+    public void notifyLightUpdate(int x, int y, int z) {
+
+    }
+
+    /**
+     * Must be called before {@link #update()}.
+     *
+     * @param minecraftWorld The world from <code>Minecraft.getMinecraft().world</code>
+     */
     public void tryUpdateWorld(WorldClient minecraftWorld) {
         if (minecraftWorld != null && minecraftChunkProvider != minecraftWorld.getChunkProvider()) {
-            rebuildWorld = true;
+            worldFsm.reset(); // NO_WORLD
             this.minecraftWorld = minecraftWorld;
             minecraftChunkProvider = minecraftWorld.getChunkProvider();
             minecraftChunkProvider.loadChunkCallback = (x, z) -> {
@@ -187,7 +215,10 @@ public class MinecraftScene extends CleanWorld {
                     chunkComponent.chunkPosX = x;
                     chunkComponent.chunkPosY = i;
                     chunkComponent.chunkPosZ = z;
-                    chunkHandles.put(new ChunkPosKey(x, i, z), entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
+                    chunkHandles.put(
+                            new ChunkPosKey(x, i, z),
+                            // all changes are buffered and will be consumed at the end of the update - EntityManager.flush() to be exact
+                            entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
                 }
             };
             minecraftChunkProvider.unloadChunkCallback = (x, z) -> {
@@ -195,6 +226,7 @@ public class MinecraftScene extends CleanWorld {
                     ChunkPosKey key = new ChunkPosKey(x, i, z);
                     CleanEntityHandle handle = chunkHandles.get(key);
                     if (handle != null) {
+                        // all changes are buffered and will be consumed at the end of the update - EntityManager.flush() to be exact
                         handle.tryDestroy();
                         chunkHandles.remove(key);
                     }
@@ -202,16 +234,28 @@ public class MinecraftScene extends CleanWorld {
             };
             chunkMeshletGenSystem.getSystem().setChunkProvider(minecraftChunkProvider);
             chunkMeshletGenSystem.getSystem().setWorld(minecraftWorld);
-            // all changes are buffered and will be consumed at the end of the update
+            worldFsm.next(); // NEW_WORLD_REBUILD
         }
     }
 
-    public void notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
-
-    }
-
-    public void notifyLightUpdate(int x, int y, int z) {
-
+    // todo: more rebuild, including meshlets
+    private void rebuildWorld() {
+        for (CleanEntityHandle handle : chunkHandles.values()) {
+            handle.tryDestroy();
+        }
+        chunkHandles.clear();
+        for (Long chunkKey : minecraftChunkProvider.getLoadedChunks().keySet()) {
+            for (int i = 0; i < 16; i++) {
+                ChunkComponent chunkComponent = new ChunkComponent();
+                chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
+                chunkComponent.chunkPosY = i;
+                chunkComponent.chunkPosZ = ChunkPos.getZ(chunkKey);
+                chunkHandles.put(
+                        new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ),
+                        entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
+            }
+        }
+        worldFsm.next(); // NEW_WORLD_INITIAL_WAIT
     }
 
     private float oldCamX = 0f, oldCamY = 0f, oldCamZ = 0f;
@@ -219,78 +263,80 @@ public class MinecraftScene extends CleanWorld {
     private final FloatBuffer oldViewRot = BufferUtils.createFloatBuffer(16);
     private final FloatBuffer oldProjection = BufferUtils.createFloatBuffer(16);
 
+    private boolean updateCameraPos() {
+        Vector3f camPos = camera.getWorldOffset();
+        if (camPos.x != oldCamX || camPos.y != oldCamY || camPos.z != oldCamZ) {
+            if (Math.sqrt(
+                    (camPos.x - oldCamX) * (camPos.x - oldCamX) +
+                            (camPos.y - oldCamY) * (camPos.y - oldCamY) +
+                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCore.KIRINO_CONFIG_HUB.chunkUpdateDisplacement) {
+                oldCamX = camPos.x;
+                oldCamY = camPos.y;
+                oldCamZ = camPos.z;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean updateRenderDis() {
+        int renderDis = MINECRAFT.gameSettings.renderDistanceChunks;
+        if (oldRenderDis != renderDis) {
+            oldRenderDis = renderDis;
+            return true;
+        }
+        return false;
+    }
+
+    private boolean updateCameraViewProj() {
+        FloatBuffer viewRot = camera.getViewRotationBuffer();
+        FloatBuffer projection = camera.getProjectionBuffer();
+        if (!oldViewRot.equals(viewRot) || !oldProjection.equals(projection)) {
+            oldViewRot.position(0).put(viewRot).flip();
+            oldProjection.position(0).put(projection).flip();
+            return true;
+        }
+        return false;
+    }
+
     @Override
     public void update() {
         if (minecraftWorld == null) {
             return;
         }
-        if (rebuildWorld) {
-            rebuildWorld = false;
-            for (CleanEntityHandle handle : chunkHandles.values()) {
-                handle.tryDestroy();
-            }
-            chunkHandles.clear();
-            for (Long chunkKey : minecraftChunkProvider.getLoadedChunks().keySet()) {
-                for (int i = 0; i < 16; i++) {
-                    ChunkComponent chunkComponent = new ChunkComponent();
-                    chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
-                    chunkComponent.chunkPosY = i;
-                    chunkComponent.chunkPosZ = ChunkPos.getZ(chunkKey);
-                    chunkHandles.put(new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ), entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
-                }
-            }
+
+        if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_REBUILD) {
+            rebuildWorld();
+            // finish this update immediately to consume ecs-entity side effects
             entityManager.flush();
-            newWorld = true;
             return;
         }
-        if (newWorld) {
-            if (newWorldFrameCounter++ >= KirinoCore.KIRINO_CONFIG_HUB.worldInitFrames) {
-                newWorldFrameCounter = 0;
-            } else {
+
+        boolean newWorld = false;
+        if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_INITIAL_WAIT) {
+            worldFsm.next(); // NEW_WORLD_INITIAL_WAIT or IDLE
+            if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_INITIAL_WAIT) {
+                // wait; abort this update
                 entityManager.flush();
                 return;
+            } else {
+                newWorld = true; // continue running
             }
         }
 
-        Vector3f camPos = camera.getWorldOffset();
-        boolean cameraMoved = false;
-        if (camPos.x != oldCamX || camPos.y != oldCamY || camPos.z != oldCamZ) {
-            if (Math.sqrt(
-                    (camPos.x - oldCamX) * (camPos.x - oldCamX) +
-                    (camPos.y - oldCamY) * (camPos.y - oldCamY) +
-                    (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCore.KIRINO_CONFIG_HUB.chunkUpdateDisplacement) {
-                cameraMoved = true;
-                oldCamX = camPos.x;
-                oldCamY = camPos.y;
-                oldCamZ = camPos.z;
-            }
-        }
-
-        int renderDis = MINECRAFT.gameSettings.renderDistanceChunks;
-        boolean renderDisChanged = false;
-        if (oldRenderDis != renderDis) {
-            renderDisChanged = true;
-            oldRenderDis = renderDis;
-        }
-
-        FloatBuffer viewRot = camera.getViewRotationBuffer();
-        FloatBuffer projection = camera.getProjectionBuffer();
-        boolean cameraChanged = false;
-        if (!oldViewRot.equals(viewRot) || !oldProjection.equals(projection)) {
-            cameraChanged = true;
-            oldViewRot.position(0).put(viewRot).flip();
-            oldProjection.position(0).put(projection).flip();
-        }
+        boolean cameraMoved = updateCameraPos();
+        boolean renderDisChanged = updateRenderDis();
+        boolean cameraChanged = updateCameraViewProj();
 
         boolean chunkPopulationChange = cameraMoved || renderDisChanged || newWorld || newChunksAdded.get();
 
-        if (terrainFsm.getState() == TerrainFSM.State.IDLE && chunkPopulationChange) {
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && chunkPopulationChange) {
             // consume new chunks
             newChunksAdded.compareAndSet(true, false);
 
             // lod fallout distance = 16
             // so the counter target is also renderDis
-            terrainFsm.setMeshletGenCounter(renderDis);
+            terrainFsm.setMeshletGenCounter(oldRenderDis);
             terrainFsm.prioritizeChunks();
 
             // compute the lod of every loaded chunk
@@ -298,7 +344,7 @@ public class MinecraftScene extends CleanWorld {
             chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
         }
 
-        if (terrainFsm.getState() == TerrainFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
             chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
             // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE)
             chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
@@ -309,12 +355,7 @@ public class MinecraftScene extends CleanWorld {
             // todo: integrate MinecraftCulling
         }
 
-        // consume new world
-        if (newWorld) {
-            newWorld = false;
-        }
-
-        if (terrainFsm.getState() == TerrainFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
             terrainFsm.destroyMeshlets();
             // callback: terrainFsm.next() (IDLE)
             // must be blocking to prevent chunksDestroyedLastFrame from being modified (race)
@@ -322,7 +363,7 @@ public class MinecraftScene extends CleanWorld {
         }
 
         // test
-        if (terrainFsm.getState() == TerrainFSM.State.IDLE) {
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE) {
             if (debug) {
                 debug = false;
 

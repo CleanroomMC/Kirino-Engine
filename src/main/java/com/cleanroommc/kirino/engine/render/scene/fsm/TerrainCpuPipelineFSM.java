@@ -1,8 +1,8 @@
-package com.cleanroommc.kirino.engine.render.scene;
+package com.cleanroommc.kirino.engine.render.scene.fsm;
 
 import com.cleanroommc.kirino.schemata.fsm.FiniteStateMachine;
 
-public class TerrainFSM {
+public class TerrainCpuPipelineFSM {
 
     public enum State {
         IDLE,
@@ -13,7 +13,7 @@ public class TerrainFSM {
 
     private final FiniteStateMachine<State, Integer> fsm;
 
-    TerrainFSM() {
+    public TerrainCpuPipelineFSM() {
         fsm = FiniteStateMachine.Builder.enumIntStateMachine(State.class, 0, 2)
                 .initialState(State.IDLE)
                 .addTransition(State.IDLE, 1, State.CHUNK_PRIORITIZATION_TASK)
@@ -56,11 +56,15 @@ public class TerrainFSM {
     public void next() {
         if (fsm.state() == State.MESHLET_GEN_TASK) {
             if (++meshletGenCounter >= meshletGenTarget) {
-                fsm.accept(0);
+                fsm.accept(0); // pass
             }
             return;
         }
 
         fsm.accept(0);
+
+        if (fsm.state() == State.IDLE) {
+            fsm.reset(); // clear backlog
+        }
     }
 }
