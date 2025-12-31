@@ -13,6 +13,8 @@ import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import java.util.function.BiConsumer;
+
 public abstract class Subpass {
     protected final Renderer renderer;
     private final PipelineStateObject pso;
@@ -75,23 +77,24 @@ public abstract class Subpass {
     public abstract PassHint passHint();
 
     /**
-     * Draw all {@link LowLevelDC}s here via {@link Renderer} if it's a CPU-side pass.
+     * Draw all {@link LowLevelDC}s here via {@link Renderer}.
      *
-     * @implSpec If it's a CPU-side pass, then<br/><code>while (drawQueue.dequeue() instanceof LowLevelDC command) { ... }</code>
-     * @param drawQueue The queue that stores low-level draw commands
+     * @implSpec Default implementation: <br/><code>while (drawQueue.dequeue() instanceof LowLevelDC command) { ... }</code>
+     * @param drawQueue The queue that stores <b>low-level</b> draw commands
+     * @param payload The payload that comes from {@link RenderPass#render(ICamera, BiConsumer, Object[])}
      */
-    protected abstract void execute(DrawQueue drawQueue, Object payload);
+    protected abstract void execute(@NonNull DrawQueue drawQueue, @Nullable Object payload);
 
     /**
      * Enqueue draw commands, {@link LowLevelDC} or {@link HighLevelDC}, here.
-     * Use builders like {@link LowLevelDC#element()} to build low-level commands manually OR
-     * get high-level commands from elsewhere.
+     * Use methods like {@link LowLevelDC#acquire()} to build commands manually OR
+     * consume commands from elsewhere.
      *
      * @param drawQueue The draw queue
      */
-    public abstract void collectCommands(DrawQueue drawQueue);
+    public abstract void collectCommands(@NonNull DrawQueue drawQueue);
 
-    public final void decorateCommands(DrawQueue drawQueue, ISubpassDecorator decorator) {
+    public final void decorateCommands(@NonNull DrawQueue drawQueue, @NonNull ISubpassDecorator decorator) {
         // todo
     }
 }

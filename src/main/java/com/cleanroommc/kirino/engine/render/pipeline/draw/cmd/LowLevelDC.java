@@ -31,7 +31,7 @@ public final class LowLevelDC implements IDrawCommand {
         this.handle = handle;
     }
 
-    public static LowLevelDC get() {
+    public static LowLevelDC acquire() {
         return POOL.lend();
     }
 

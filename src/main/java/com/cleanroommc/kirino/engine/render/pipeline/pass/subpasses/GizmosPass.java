@@ -10,6 +10,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.google.common.base.Preconditions;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -31,12 +32,13 @@ public class GizmosPass extends Subpass {
         this.gizmosManager = gizmosManager;
     }
 
-    @SuppressWarnings("DataFlowIssue")
     @Override
     protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable ICamera camera, @Nullable Object payload) {
         int worldOffset = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "worldOffset");
         int viewRot = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "viewRot");
         int projection = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "projection");
+
+        Preconditions.checkNotNull(camera);
 
         Vector3f vec3 = camera.getWorldOffset();
         GL20.glUniform3f(worldOffset, vec3.x, vec3.y, vec3.z);
@@ -61,14 +63,14 @@ public class GizmosPass extends Subpass {
     }
 
     @Override
-    protected void execute(DrawQueue drawQueue, Object payload) {
+    protected void execute(@NonNull DrawQueue drawQueue, @Nullable Object payload) {
         while (drawQueue.dequeue() instanceof LowLevelDC command) {
             renderer.draw(command);
         }
     }
 
     @Override
-    public void collectCommands(DrawQueue drawQueue) {
+    public void collectCommands(@NonNull DrawQueue drawQueue) {
         List<HighLevelDC> list =  gizmosManager.getDrawCommands();
         for (HighLevelDC command : list) {
             drawQueue.enqueue(command);

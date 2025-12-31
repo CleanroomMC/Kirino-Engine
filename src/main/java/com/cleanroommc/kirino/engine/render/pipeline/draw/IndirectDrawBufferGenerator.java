@@ -75,7 +75,7 @@ public class IndirectDrawBufferGenerator {
         persistent.limit(offset + idbBufferSize);
         persistent.put(buildingAreaByteBuffer);
 
-        LowLevelDC lowLevelDC = LowLevelDC.get().fillMultiElementIndirect(
+        LowLevelDC lowLevelDC = LowLevelDC.acquire().fillMultiElementIndirect(
                 vao,
                 idbView.bufferID,
                 mode,

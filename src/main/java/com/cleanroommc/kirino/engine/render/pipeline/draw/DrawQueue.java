@@ -79,7 +79,7 @@ public class DrawQueue {
                     elementSize = 4;
                 }
 
-                deque2.offerLast(LowLevelDC.get().fillMultiElementIndirectUnit(
+                deque2.offerLast(LowLevelDC.acquire().fillMultiElementIndirectUnit(
                         meshReceipt.vao,
                         highLevelDC.mode,
                         highLevelDC.elementType,

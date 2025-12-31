@@ -70,15 +70,15 @@ public abstract class AbstractPostProcessingPass extends Subpass {
     }
 
     @Override
-    protected void execute(DrawQueue drawQueue, Object payload) {
+    protected void execute(@NonNull DrawQueue drawQueue, @Nullable Object payload) {
         while (drawQueue.dequeue() instanceof LowLevelDC command) {
             renderer.draw(command);
         }
     }
 
     @Override
-    public void collectCommands(DrawQueue drawQueue) {
-        drawQueue.enqueue(LowLevelDC.get().fillElement(
+    public void collectCommands(@NonNull DrawQueue drawQueue) {
+        drawQueue.enqueue(LowLevelDC.acquire().fillElement(
                 fullscreenTriangleVao.get().vaoID,
                 GL11.GL_TRIANGLES,
                 3,

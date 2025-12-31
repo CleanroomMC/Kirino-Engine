@@ -15,14 +15,26 @@ struct Meshlet
     Block blocks[32]; // 32 * 112 = 3584
 };
 
+// 32
+struct Vertex
+{
+    vec3 pos; // 16
+    vec2 texCoord; // 8
+};
+
 layout(std430, binding = 0) buffer InputMeshlets
 {
     Meshlet inMeshlets[];
 };
 
-layout(std430, binding = 1) buffer OutputMeshlets
+layout(std430, binding = 1) buffer OutputVertices
 {
-    Meshlet outMeshlets[];
+    Vertex outVertices[];
+};
+
+layout(std430, binding = 2) buffer OutputIndices
+{
+    int outIndices[];
 };
 
 layout(local_size_x = 1) in;
@@ -31,7 +43,4 @@ void main()
 {
     uint index = gl_GlobalInvocationID.x;
 
-    outMeshlets[1].normal = inMeshlets[0].normal;
-    outMeshlets[1].chunkPosAndBlockCount = inMeshlets[0].chunkPosAndBlockCount;
-    outMeshlets[1].blocks = inMeshlets[0].blocks;
 }

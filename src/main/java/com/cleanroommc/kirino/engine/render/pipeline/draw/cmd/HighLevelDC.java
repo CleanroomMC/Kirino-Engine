@@ -30,7 +30,7 @@ public final class HighLevelDC implements IDrawCommand {
         this.handle = handle;
     }
 
-    public static HighLevelDC get() {
+    public static HighLevelDC acquire() {
         return POOL.lend();
     }
 

@@ -92,6 +92,7 @@ public class RenderingCoordinator {
     public final GizmosManager gizmosManager;
 
     // ---------- Render Passes ----------
+    private final RenderPass terrainGpuPass;
     private final RenderPass chunkCpuPass;
     private final RenderPass gizmosPass;
     public final PostProcessingPass postProcessingPass;
@@ -144,9 +145,14 @@ public class RenderingCoordinator {
                 ForkJoinPool.commonPool(),
                 ForkJoinPool.commonPool());
 
-        ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag");
+        ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/opaque_terrain.vert", "forge:shaders/opaque_terrain.frag");
 
         Renderer renderer = new Renderer();
+        terrainGpuPass = new RenderPass("Terrain GPU", graphicResourceManager, idbGenerator);
+        terrainGpuPass.addSubpass("Opaque Pass", new OpaqueTerrainPass(renderer, PSOPresets.createOpaquePSO(shaderProgram)));
+
+        shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag");
+
         chunkCpuPass = new RenderPass("Chunk CPU", graphicResourceManager, idbGenerator);
         chunkCpuPass.addSubpass("Opaque Pass", new GizmosPass(renderer, PSOPresets.createOpaquePSO(shaderProgram), gizmosManager));
 //        chunkCpuPass.addSubpass("Cutout Pass", new WhateverPass(renderer, PSOPresets.createCutoutPSO(shaderProgram), null));

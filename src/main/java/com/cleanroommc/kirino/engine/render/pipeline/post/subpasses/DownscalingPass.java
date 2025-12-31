@@ -41,12 +41,12 @@ public class DownscalingPass extends Subpass {
     }
 
     @Override
-    protected void execute(DrawQueue drawQueue, Object payload) {
+    protected void execute(@NonNull DrawQueue drawQueue, @Nullable Object payload) {
 
     }
 
     @Override
-    public void collectCommands(DrawQueue drawQueue) {
+    public void collectCommands(@NonNull DrawQueue drawQueue) {
 
     }
 }

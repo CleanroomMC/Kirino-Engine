@@ -93,4 +93,12 @@ public final class Renderer {
 
         command.recycle();
     }
+
+    /**
+     * Trigger a shader without binding any actual data.
+     */
+    public void dummyDraw(int mode, int first, int count) {
+        // todo: bind vao
+        GL11.glDrawArrays(mode, first, count);
+    }
 }

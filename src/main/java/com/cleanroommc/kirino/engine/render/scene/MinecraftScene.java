@@ -397,16 +397,7 @@ public class MinecraftScene extends CleanWorld {
                     // block
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
-                        ssboOut.bind();
-                        ByteBuffer result = BufferUtils.createByteBuffer(3616);
-
-                        GL42.glMemoryBarrier(GL42C.GL_BUFFER_UPDATE_BARRIER_BIT);
-                        GL15.glGetBufferSubData(ssboOut.target(), 3616, result);
                         KirinoCore.LOGGER.info("finished compute");
-                        KirinoCore.LOGGER.info("normal: " + result.getFloat() + ", " + result.getFloat() + ", " + result.getFloat());
-                        result.getFloat(); // padding
-                        KirinoCore.LOGGER.info("chunk pos: " + result.getInt() + ", " + result.getInt() + ", " + result.getInt());
-                        KirinoCore.LOGGER.info("block count: " + result.getInt());
                     }
                     GL32C.glDeleteSync(fence);
                 }
