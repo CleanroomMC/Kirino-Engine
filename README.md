@@ -9,6 +9,118 @@ provide a set of clean rendering APIs to mod developers,
 
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
+## What This Project Provides?
+
+### 1) Engine-agnostic ECS framework
+- Data-oriented SoA archetypes as the core data model, 
+  designed for predictable memory layout and efficient iteration
+- Strict separation of entity identity, component storage, and system execution
+- Designed to integrate with other data-oriented tech stacks like
+  job systems, execution graphs
+
+### 2) Low-level OpenGL abstraction layer
+The project provides a low-level, semantic abstraction layer over modern OpenGL.
+Rather than acting as a black-box wrapper, this layer aims to preserve the
+meaning of OpenGL operations, **_and_** explain the implicit and subtle assumptions clearly. (WIP; partially usable)
+
+Note: this part is partially coupled with the engine implementation
+
+This abstraction focuses on:
+- Explicit GPU resource management, ctor allocation & explicit disposability & auto disposability
+- Shader and program registry
+- Clear separation between resource description and usage, a buffer-view pattern to be exact
+- OpenGL debug instrumentation
+
+The goal of this layer is not to hide OpenGL, **but to clarify it**.
+
+### 3) Rendering engine implementation
+
+Building on the ECS framework and OpenGL abstraction, the project includes a
+concrete rendering engine implementation. (WIP)
+
+The engine is designed around a hybrid CPU-GPU pipeline, where high-level
+orchestration remains on the CPU while some jobs like culling, data processing are delegated to the GPU.
+
+Note: Minecraft is mostly used as a data source and constraint, rather
+than as a strict compatibility target
+
+Key characteristics include:
+- A pass-based rendering architecture with explicit `RenderPass` and `Subpass`
+  composition
+- Immutable pipeline state descriptions to reduce state ambiguity and CPU-GPU stall (when fetching states)
+- Support for advanced rendering techniques like meshlet-based virtual geometry, GPU-driven draw submission
+- Leave rooms to experimental features like multi-resolution rendering, super-sampling
+
+## Contributing
+If you would like to contribute, please take a look at our
+[Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file)
+and the [Engine Overview](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)
+to understand the project’s assumptions and architectural direction.
+
+To keep discussions productive, please read the guidelines below.
+
+<details>
+<summary>Click to Expand</summary>
+
+### Clarification
+Before proposing changes or opening discussions, please:
+
+- Treat/Assume the current design choices as intentional and valid start points
+  (that is, reason within the given assumption space; feel free to do contradictions or contrapositives)
+- Base your reasoning on the assumptions implied by the existing docs
+- Focus on internal consistency, trade-offs, and constructive outcomes
+
+### What a Good Proposal Looks Like
+
+**Good example**:
+1. Assume the staging buffer and resource management designs are valid and
+   their stated (or implied) design principles are satisfied
+2. Demonstrate how the staging buffer design creates tension within the resource management principles
+3. Conclude that the staging buffer design may need some fix
+
+This kind of proposal helps identify real issues while respecting the project’s intent.
+
+### What to Avoid
+
+**Less helpful examples:**
+
+- “Why ECS? Why GPU-driven? Why XXX?”
+- “ECS isn’t useful; OOP might be faster based on my past tuning experience”
+
+These questions re-open foundational decisions **_without engaging with the project’s assumption space_**.
+
+If you believe core assumptions lead to issues,
+please demonstrate how it contradicts itself in this specific context.
+
+### Main idea & Notes
+
+We expect contributors to make sufficient assumptions and show valid reasonings.
+
+If the goal is to accelerate development, arguments should avoid:
+- Implicit equivalences
+- Unstated assumptions
+- Invalid inference steps
+
+_Clear reasoning is more valuable than confident conclusions._
+
+**_But_**, _please don’t feel discouraged if your reasoning isn’t formal.
+This project values thoughtful discussion. If an idea is
+proposed in good faith, incomplete and informal reasoning is still welcome._
+
+**Small reasoning notes**:
+- Showing that a design choice `A` is flawed does not imply that an alternative `B`
+  is therefore correct
+- Showing that a design choice `A` implies an alternative `B` does not guarantee
+  that rejecting `A` disqualifies `B`.
+
+</details>
+
+## Roadmap & Todos
+[View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
+
+## How It Works?
+A user-friendly version of engine overview is work-in-progress.
+
 ## Q&A
 
 <details>
@@ -41,57 +153,6 @@ provide a set of clean rendering APIs to mod developers,
   - Future-proof architecture
 
 </details>
-
-## What This Project Provides?
-
-### 1) Engine-agnostic ECS framework
-- Data-oriented SoA archetypes as the core data model, 
-  designed for predictable memory layout and efficient iteration
-- Strict separation of entity identity, component storage, and system execution
-- Designed to integrate with other data-oriented tech stacks like
-  job systems, execution graphs
-
-### 2) Low-level OpenGL abstraction layer
-The project provides a low-level, semantic abstraction layer over modern OpenGL.
-Rather than acting as a black-box wrapper, this layer aims to preserve the
-meaning of OpenGL operations, **_and_** explain the implicit and subtle assumptions clearly. (WIP; partially usable)
-
-Note: this part is partially coupled with the engine implementation
-
-This abstraction focuses on:
-- Explicit GPU resource management, ctor allocation & explicit disposability & auto disposability
-- Shader and program registry
-- Clear separation between resource description and usage, a buffer-view pattern to be exact
-- OpenGL debug instrumentation
-
-The goal of this layer is not to hide OpenGL, **but to clarify it**.
-
-### 3) Rendering engine implementation
-
-Building on the ECS framework and OpenGL abstraction, the project includes a
-concrete rendering engine implementation. (WIP)
-
-The engine is designed around a hybrid CPU–GPU pipeline, where high-level
-orchestration remains on the CPU while some jobs like culling, data processing are delegated to the GPU.
-
-Note: Minecraft is mostly used as a data source and constraint, rather
-than as a strict compatibility target.
-
-Key characteristics include:
-- A pass-based rendering architecture with explicit `RenderPass` and `Subpass`
-  composition
-- Immutable pipeline state descriptions to reduce state ambiguity and CPU-GPU stall (when fetching states)
-- Support for advanced rendering techniques like meshlet-based virtual geometry, GPU-driven draw submission
-- Leave rooms to experimental features like multi-resolution rendering, super-sampling
-
-## Roadmap & Todos
-[View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
-
-## How It Works?
-A user-friendly version of engine overview is work-in-progress.
-
-## Contributing
-If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file) and [Engine Overview Page](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)!
 
 ## Credits
 
