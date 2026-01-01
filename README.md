@@ -1,7 +1,10 @@
 
 # Kirino Engine <img src="logo.png" alt="logo" width="160" align="right" style="margin-left: 16px; vertical-align: middle;"/>
 
-Kirino-Engine is a CPU-GPU dual pipeline research-oriented rendering engine that combines ECS paradigm and modern rendering techniques.
+Kirino-Engine combines an ECS-based data-oriented architecture,
+explicit modern OpenGL abstractions,
+and a hybrid CPU-GPU rendering pipeline 
+to reimagine Minecraft's traditional, tightly coupled, and CPU-bound rendering.
 
 Its primary goal is to overhaul most of Minecraft’s rendering in a future-proof and elegant manner, 
 provide a set of clean rendering APIs to mod developers, 
@@ -9,16 +12,28 @@ provide a set of clean rendering APIs to mod developers,
 
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
+> Want a deeper look right away? Jump to **How Everything Works?**
+
 ## What This Project Provides?
 
 ### 1) Engine-agnostic ECS framework
+
+<details>
+<summary>Click to Expand</summary>
+
 - Data-oriented SoA archetypes as the core data model, 
   designed for predictable memory layout and efficient iteration
 - Strict separation of entity identity, component storage, and system execution
 - Designed to integrate with other data-oriented tech stacks like
   job systems, execution graphs
 
+</details>
+
 ### 2) Low-level OpenGL abstraction layer
+
+<details>
+<summary>Click to Expand</summary>
+
 The project provides a low-level, semantic abstraction layer over modern OpenGL.
 Rather than acting as a black-box wrapper, this layer aims to preserve the
 meaning of OpenGL operations, **_and_** explain the implicit and subtle assumptions clearly. (WIP; partially usable)
@@ -33,7 +48,12 @@ This abstraction focuses on:
 
 The goal of this layer is not to hide OpenGL, **but to clarify it**.
 
+</details>
+
 ### 3) Rendering engine implementation
+
+<details>
+<summary>Click to Expand</summary>
 
 Building on the ECS framework and OpenGL abstraction, the project includes a
 concrete rendering engine implementation. (WIP)
@@ -50,6 +70,8 @@ Key characteristics include:
 - Immutable pipeline state descriptions to reduce state ambiguity and CPU-GPU stall (when fetching states)
 - Support for advanced rendering techniques like meshlet-based virtual geometry, GPU-driven draw submission
 - Leave rooms to experimental features like multi-resolution rendering, super-sampling
+
+</details>
 
 ## Contributing
 If you would like to contribute, please take a look at our
@@ -115,11 +137,12 @@ proposed in good faith, incomplete and informal reasoning is still welcome._
 
 </details>
 
+## How Everything Works?
+See the `docs/` directory for a high-level overview of Kirino-Engine, 
+where you can understand our implicit assumptions and build the mental model gradually.
+
 ## Roadmap & Todos
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
-
-## How It Works?
-A user-friendly version of engine overview is work-in-progress.
 
 ## Q&A
 
