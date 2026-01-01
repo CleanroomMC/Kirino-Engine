@@ -66,6 +66,7 @@ public class RenderingCoordinator {
     private final FrameFinalizer frameFinalizer;
     private final Reference<IndirectDrawBufferGenerator> idbGenerator;
     private final Reference<VAO> fullscreenTriangleVao;
+    private final Reference<VAO> dummyVao;
 
     // ---------- Utilities ----------
     private final GLStateBackup stateBackup;
@@ -103,6 +104,7 @@ public class RenderingCoordinator {
 
         idbGenerator = new Reference<>();
         fullscreenTriangleVao = new Reference<>();
+        dummyVao = new Reference<>();
 
         stateBackup = new GLStateBackup();
 
@@ -147,7 +149,7 @@ public class RenderingCoordinator {
 
         ShaderProgram shaderProgram = shaderRegistry.newShaderProgram("forge:shaders/opaque_terrain.vert", "forge:shaders/opaque_terrain.frag");
 
-        Renderer renderer = new Renderer();
+        Renderer renderer = new Renderer(dummyVao);
         terrainGpuPass = new RenderPass("Terrain GPU", graphicResourceManager, idbGenerator);
         terrainGpuPass.addSubpass("Opaque Pass", new OpaqueTerrainPass(renderer, PSOPresets.createOpaquePSO(shaderProgram)));
 
@@ -296,6 +298,14 @@ public class RenderingCoordinator {
         this.fullscreenTriangleVao.set(fullscreenTriangleVao);
         //</editor-fold>
 
+        //<editor-fold desc="dummy vao initialization">
+        AttributeLayout dummyLayout = new AttributeLayout();
+        dummyLayout.push(new Stride(0));
+
+        VAO dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
+        this.dummyVao.set(dummyVao);
+        //</editor-fold>
+
         //<editor-fold desc="staging buffer initialization">
         stagingBufferManager.genPersistentBuffers("default");
         //</editor-fold>
@@ -351,6 +361,26 @@ public class RenderingCoordinator {
 
     // test
     private GLStateBackup glStateBackup = new GLStateBackup();
+
+    // test, temp
+    public static boolean debug = false;
+
+    public void runTerrainPass() {
+        if (!debug) {
+            return;
+        }
+
+        // test
+        glStateBackup.storeStates();
+        int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
+
+        terrainGpuPass.render(camera);
+
+        glStateBackup.restoreStates();
+        GL30.glBindVertexArray(0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+    }
 
     public void runChunkPass() {
         // test

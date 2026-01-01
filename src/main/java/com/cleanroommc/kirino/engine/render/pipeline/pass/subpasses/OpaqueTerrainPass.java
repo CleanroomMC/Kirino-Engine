@@ -8,12 +8,12 @@ import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureMap;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL20C;
+import org.lwjgl.opengl.*;
 
 public class OpaqueTerrainPass extends Subpass {
     /**
@@ -36,6 +36,22 @@ public class OpaqueTerrainPass extends Subpass {
         GL20.glUniform3f(worldOffset, vec3.x, vec3.y, vec3.z);
         GL20C.glUniformMatrix4fv(viewRot, false, camera.getViewRotationBuffer());
         GL20C.glUniformMatrix4fv(projection, false, camera.getProjectionBuffer());
+
+        int tex = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "tex");
+
+        // test
+        int[] res = new int[1];
+        GL11C.glGetIntegerv(GL13.GL_ACTIVE_TEXTURE, res);
+        int texUnit = res[0];
+
+        GL13.glActiveTexture(GL13.GL_TEXTURE3);
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D,
+                Minecraft.getMinecraft()
+                        .getTextureManager()
+                        .getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE)
+                        .getGlTextureId());
+        GL20.glUniform1i(tex, 3);
+        GL13.glActiveTexture(texUnit);
     }
 
     @Override
@@ -55,7 +71,7 @@ public class OpaqueTerrainPass extends Subpass {
 
     @Override
     protected void execute(@NonNull DrawQueue drawQueue, @Nullable Object payload) {
-        renderer.dummyDraw(GL11.GL_TRIANGLES, 0, 100);
+        renderer.dummyDraw(GL11.GL_TRIANGLES, 0, 3);
     }
 
     @Override

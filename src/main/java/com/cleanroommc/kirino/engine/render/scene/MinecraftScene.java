@@ -10,6 +10,7 @@ import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
+import com.cleanroommc.kirino.engine.render.RenderingCoordinator;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
@@ -378,14 +379,20 @@ public class MinecraftScene extends CleanWorld {
                 compute = false;
 
                 KirinoCore.LOGGER.info("start compute");
-                if (ssboOut == null) {
-                    ssboOut = new SSBOView(new GLBuffer());
-                    ByteBuffer byteBufferOut = BufferUtils.createByteBuffer(3616 * 2);
+                if (ssboOut1 == null) {
+                    ssboOut1 = new SSBOView(new GLBuffer());
+                    ssboOut2 = new SSBOView(new GLBuffer());
+                    ByteBuffer byteBufferOut1 = BufferUtils.createByteBuffer(meshletGpuRegistry.getMeshletCount() * 256 * 32);
+                    ByteBuffer byteBufferOut2 = BufferUtils.createByteBuffer(meshletGpuRegistry.getMeshletCount() * 256 * 36 * 4);
 
-                    ssboOut.bind();
-                    ssboOut.uploadDirectly(byteBufferOut); // automatically visible
+                    ssboOut1.bind();
+                    ssboOut1.uploadDirectly(byteBufferOut1); // automatically visible
+                    ssboOut2.bind();
+                    ssboOut2.uploadDirectly(byteBufferOut2); // automatically visible
+
                     GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
-                    GL30.glBindBufferBase(ssboOut.target(), 1, ssboOut.bufferID);
+                    GL30.glBindBufferBase(ssboOut1.target(), 1, ssboOut1.bufferID);
+                    GL30.glBindBufferBase(ssboOut2.target(), 2, ssboOut2.bufferID);
 
                     computeShaderProgram.use();
 
@@ -398,6 +405,7 @@ public class MinecraftScene extends CleanWorld {
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
                         KirinoCore.LOGGER.info("finished compute");
+                        RenderingCoordinator.debug = true;
                     }
                     GL32C.glDeleteSync(fence);
                 }
@@ -410,6 +418,7 @@ public class MinecraftScene extends CleanWorld {
     static boolean debug = true;
     static boolean computeReady = false;
     static boolean compute = true;
-    static SSBOView ssboOut = null;
+    static SSBOView ssboOut1 = null;
+    static SSBOView ssboOut2 = null;
     public static ShaderProgram computeShaderProgram;
 }

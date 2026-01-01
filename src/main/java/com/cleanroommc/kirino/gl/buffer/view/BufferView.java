@@ -21,7 +21,8 @@ public abstract class BufferView {
 
     /**
      * Enables validation for basic argument precondition checks.
-     * <p>Note: You should not turn on validation for hot paths.</p>
+     *
+     * <p>Note: you should not turn on validation for hot paths.</p>
      */
     public final void turnOnValidation() {
         validation = true;
@@ -29,7 +30,8 @@ public abstract class BufferView {
 
     /**
      * Disables validation for basic argument precondition checks.
-     * <p>Note: You should not turn on validation for hot paths.</p>
+     *
+     * <p>Note: you should not turn on validation for hot paths.</p>
      */
     public final void turnOffValidation() {
         validation = false;
@@ -58,6 +60,7 @@ public abstract class BufferView {
         bind(bufferID);
     }
 
+    //<editor-fold desc="OpenGL buffer queries">
     /**
      * Note: this is a OpenGL query.
      */
@@ -118,9 +121,16 @@ public abstract class BufferView {
     public int fetchMapBufferLength() {
         return GL15.glGetBufferParameteri(target(), GL30.GL_BUFFER_MAP_LENGTH);
     }
+    //</editor-fold>
 
     /**
-     * Declare the buffer size and upload hint without uploading anything.
+     * Allocates or re-specifies the storage and upload hint of this buffer without uploading any data.
+     *
+     * <p>This method call defines the buffer's size and upload hint, but leaves the buffer
+     * contents undefined. Any previous data is discarded, and the buffer storage is guaranteed to be visible
+     * to subsequent GPU commands issued after this call.</p>
+     *
+     * <p>Note: depending on driver behavior, this method call may cause implicit synchronization if the buffer is currently in use by the GPU.</p>
      *
      * @param size The byte size of the buffer
      * @param hint The upload hint
@@ -136,7 +146,12 @@ public abstract class BufferView {
 
     /**
      * The data that corresponds to <code>byteBuffer.remaining()</code> will be uploaded using the {@link BufferUploadHint#STATIC_DRAW} hint.
-     * By the way, it will reset the current upload hint to {@link BufferUploadHint#STATIC_DRAW}.
+     *
+     * <p>This method call re-specifies the buffer storage, resets and current upload hint to {@link BufferUploadHint#STATIC_DRAW},
+     * and copies the provided data into driver-managed memory.
+     * The uploaded data is guaranteed to be visible to subsequent GPU commands issued after this call.</p>
+     *
+     * <p>Note: depending on driver behavior, this method call may cause implicit synchronization if the buffer is currently in use by the GPU.</p>
      *
      * @param byteBuffer The data
      */
@@ -149,7 +164,14 @@ public abstract class BufferView {
     }
 
     /**
-     * The data that corresponds to <code>byteBuffer.remaining()</code> will be uploaded with the current hint and offset.
+     * The data that corresponds to <code>byteBuffer.remaining()</code> will be uploaded with the current upload hint and offset.
+     *
+     * <p>The data is written starting at the specified byte offset. The buffer
+     * storage must have been previously allocated and the specified range must
+     * lie entirely within the allocated size, and the new data is guaranteed to be visible
+     * to subsequent GPU commands issued after this call.</p>
+     *
+     * <p>Note: depending on driver behavior, this method call may cause implicit synchronization if the buffer is currently in use by the GPU.</p>
      *
      * @param offset The byte offset in the target buffer where the data will be uploaded
      * @param byteBuffer The data

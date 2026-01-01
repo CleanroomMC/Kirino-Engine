@@ -124,7 +124,10 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * The consume target is up to date since last {@link #finishWriting()}.
      * Must only retrieve the ssbo after {@link #finishWriting()} and before next {@link #finishWriting()}.
+     *
+     * <p>Be aware of the current phase when calling this method.</p>
      *
      * @return The the ssbo to be consumed by compute shaders
      */
@@ -132,5 +135,16 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(finishedWritingOnce, "Must finished writing once.");
 
         return meshletInputBuffer.getConsumeTarget();
+    }
+
+    /**
+     * The meshlet count is up to date since last begin.
+     *
+     * <p>Be aware of the current phase when calling this method.</p>
+     *
+     * @return The meshlet count
+     */
+    public synchronized int getMeshletCount() {
+        return meshletBufferSlotAllocator.getMeshletCount();
     }
 }

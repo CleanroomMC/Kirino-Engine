@@ -5,9 +5,17 @@ import com.cleanroommc.kirino.engine.render.pipeline.state.BlendState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.DepthState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.pipeline.state.RasterState;
+import com.cleanroommc.kirino.gl.vao.VAO;
+import com.cleanroommc.kirino.utils.Reference;
 import org.lwjgl.opengl.*;
 
 public final class Renderer {
+    private final Reference<VAO> dummyVao;
+
+    public Renderer(Reference<VAO> dummyVao) {
+        this.dummyVao = dummyVao;
+    }
+
     public void bindPipeline(PipelineStateObject pso) {
         applyBlend(pso.blendState());
         applyDepth(pso.depthState());
@@ -98,7 +106,7 @@ public final class Renderer {
      * Trigger a shader without binding any actual data.
      */
     public void dummyDraw(int mode, int first, int count) {
-        // todo: bind vao
+        dummyVao.get().bind();
         GL11.glDrawArrays(mode, first, count);
     }
 }

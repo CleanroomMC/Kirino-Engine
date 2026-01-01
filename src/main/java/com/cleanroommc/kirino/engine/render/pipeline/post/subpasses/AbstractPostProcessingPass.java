@@ -47,9 +47,7 @@ public abstract class AbstractPostProcessingPass extends Subpass {
 
         GL13.glActiveTexture(GL13.GL_TEXTURE3);
         colorAttachment.texture2D.bind();
-        GL13.glActiveTexture(GL13.GL_TEXTURE0);
         GL20.glUniform1i(screenTexture, 3);
-
         GL13.glActiveTexture(texUnit);
     }
 

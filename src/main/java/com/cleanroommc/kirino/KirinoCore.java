@@ -197,6 +197,7 @@ public final class KirinoCore {
 
         KIRINO_ENGINE.renderingCoordinator.update();
         KIRINO_ENGINE.renderingCoordinator.updateWorld(MINECRAFT.world);
+        KIRINO_ENGINE.renderingCoordinator.runTerrainPass();
 //        KIRINO_ENGINE.renderingCoordinator.runChunkPass();
 
         //<editor-fold desc="vanilla logic">

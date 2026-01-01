@@ -43,4 +43,17 @@ void main()
 {
     uint index = gl_GlobalInvocationID.x;
 
+    // test
+    outVertices[0].pos = vec3(-5, -5, 0);
+    outVertices[0].texCoord = vec2(0, 0);
+
+    outVertices[1].pos = vec3(5, -5, 0);
+    outVertices[1].texCoord = vec2(1, 0);
+
+    outVertices[2].pos = vec3(0, 5, 0);
+    outVertices[2].texCoord = vec2(0.5, 1);
+
+    outIndices[0] = 0;
+    outIndices[1] = 1;
+    outIndices[2] = 2;
 }
