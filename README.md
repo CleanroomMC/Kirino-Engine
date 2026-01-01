@@ -1,9 +1,11 @@
 
 # Kirino Engine <img src="logo.png" alt="logo" width="160" align="right" style="margin-left: 16px; vertical-align: middle;"/>
 
-Kirino-Engine is a CPU-GPU dual pipeline rendering engine that combines ECS paradigm and modern rendering techniques.
+Kirino-Engine is a CPU-GPU dual pipeline research-oriented rendering engine that combines ECS paradigm and modern rendering techniques.
 
-Its primary goal is to overhaul most of the Minecraft's rendering in a future-proof and elegant manner **_and_** provide a set of clean rendering APIs to mod devs.
+Its primary goal is to overhaul most of Minecraft’s rendering in a future-proof and elegant manner, 
+provide a set of clean rendering APIs to mod developers, 
+**_and_** serve as a platform for exploring the feasibility of modern, GPU-driven rendering techniques within Minecraft’s constraints.
 
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
@@ -16,7 +18,7 @@ Its primary goal is to overhaul most of the Minecraft's rendering in a future-pr
   - Because Kirino-Engine reimagines the entire rendering pipeline without patching things in an unmaintainable way
   - Kirino-Engine is fundamentally GPU-driven and ECS-driven, unlike traditional optimizers or shader mods
   - Kirino-Engine pays a huge attention to its architecture
-  - Kirino-Engine isn't merely an optimizer or shader mod — it's an rendering engine
+  - Kirino-Engine isn't merely an optimizer or shader mod — it's a research-oriented rendering engine
 
 - What's the most exciting features in dev?
   - GPU-Driven Meshlet Rendering & Virtual Geometry
@@ -30,7 +32,7 @@ Its primary goal is to overhaul most of the Minecraft's rendering in a future-pr
   - Performance wise: smoother performance and FPS improvements; Higher CPU & GPU utilization
   - Shader wise: modern lighting techniques and better global illumination
   - Configurability: optional HDR, optional resolution up-scaling or down-scaling, optional post-processing, etc.
-  - Ecosystem: easily extendable rendering pipeline for community shaders
+  - Ecosystem: easily extensible rendering pipeline for community shaders
 
 - What can I expect as a mod developer?
   - Clean rendering APIs that hide OpenGL completely
@@ -40,103 +42,60 @@ Its primary goal is to overhaul most of the Minecraft's rendering in a future-pr
 
 </details>
 
+## What This Project Provides?
+
+### 1) Engine-agnostic ECS framework
+- Data-oriented SoA archetypes as the core data model, 
+  designed for predictable memory layout and efficient iteration
+- Strict separation of entity identity, component storage, and system execution
+- Designed to integrate with other data-oriented tech stacks like
+  job systems, execution graphs
+
+### 2) Low-level OpenGL abstraction layer
+The project provides a low-level, semantic abstraction layer over modern OpenGL.
+Rather than acting as a black-box wrapper, this layer aims to preserve the
+meaning of OpenGL operations, **_and_** explain the implicit and subtle assumptions clearly. (WIP; partially usable)
+
+Note: this part is partially coupled with the engine implementation
+
+This abstraction focuses on:
+- Explicit GPU resource management, ctor allocation & explicit disposability & auto disposability
+- Shader and program registry
+- Clear separation between resource description and usage, a buffer-view pattern to be exact
+- OpenGL debug instrumentation
+
+The goal of this layer is not to hide OpenGL, **but to clarify it**.
+
+### 3) Rendering engine implementation
+
+Building on the ECS framework and OpenGL abstraction, the project includes a
+concrete rendering engine implementation. (WIP)
+
+The engine is designed around a hybrid CPU–GPU pipeline, where high-level
+orchestration remains on the CPU while some jobs like culling, data processing are delegated to the GPU.
+
+Note: Minecraft is mostly used as a data source and constraint, rather
+than as a strict compatibility target.
+
+Key characteristics include:
+- A pass-based rendering architecture with explicit `RenderPass` and `Subpass`
+  composition
+- Immutable pipeline state descriptions to reduce state ambiguity and CPU-GPU stall (when fetching states)
+- Support for advanced rendering techniques like meshlet-based virtual geometry, GPU-driven draw submission
+- Leave rooms to experimental features like multi-resolution rendering, super-sampling
+
 ## Roadmap & Todos
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
 
 ## How It Works?
-A player-friendly version of engine overview is work-in-progress.
+A user-friendly version of engine overview is work-in-progress.
 
 ## Contributing
 If you would like to contribute, check out our [Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file) and [Engine Overview Page](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)!
 
-## MVP Goals
-
-It's a bit outdated, [Project Board](https://github.com/orgs/CleanroomMC/projects/13) takes precedence.
-
-<details>
-<summary>GL Abstraction</summary>
-
-**Goal**: a semantic abstraction layer that preserves the meaning of GL operations instead of a black-box GL wrapper 
-
-- GL Resource Abstraction 🚧
-  - Resource manager 🚧
-- Shader Abstraction 🚧
-  - Only support `vert` + `frag` for now, but design with `tess`, `compute`, etc. in mind
-  - Global shader registry
-    - Compile and store shaders ✅
-    - Shader source hashing
-  - Uniform
-    - Parse uniforms from shader source
-    - Uniform location and type memorization
-    - UBO support
-  - ShaderProgram
-    - Uniform input type widening
-- Buffer Abstraction 🚧
-  - Generic buffer object + View ✅
-  - VAO (VBO + EBO) ✅
-  - Vertex attribute layout ✅
-  - UBO, SSBO
-  - PBO pack & unpack
-  - TBO
-  - Upload hint + access hint ✅
-  - Persistent buffer ✅
-  - Framebuffer ✅
-    - Attachment ✅
-    - RenderBuffer ✅
-- Texture Abstraction 🚧
-  - Sampler
-  - Generic texture object + View ✅
-  - Texture 🚧
-    - Texture2D (for common uses) ✅
-    - Texture2DMultisample (for multisampling fbo) 🚧
-    - Texture2DArray (for texture atlas)
-    - ...
-- Debug Abstraction ✅
-  - KHR_debug ✅
-- Material Abstraction
-  - MaterialTemplate to describe layout and shaders
-  - MaterialInstance to hold actual parameters
-
-</details>
-
-<details>
-<summary>ECS</summary>
-
-- Overall ECS structure ✅
-  - CleanWorld, CleanEntity, CleanComponent, CleanSystem ✅
-- Entity ✅
-  - Entity manager (utilizes archetype) ✅
-- Component ✅
-  - Component schema ✅
-  - Class scan via ClassGraph ✅
-- Storage ✅
-  - Archetype ✅
-- Runtime 🚧
-  - `SystemExeGraph` to coordinate different systems
-    - Execution priority
-    - Async execution & barrier
-- Job ✅
-  - Job is a unit of work that can be split and executed in parallel ✅
-
-</details>
-
-<details>
-<summary>Engine</summary>
-
-- CPU & GPU hybrid dual pipeline 🚧
-- DrawCommand decorating mechanism 🚧
-- RenderPass / Subpass architecture ✅
-- Built-in Multi-resolution & Super-sampling 🚧
-- Immutable Pipeline State Object ✅
-- Meshlets 🚧
-- Scriptable pipeline
-- ...
-
-</details>
-
 ## Credits
 
-Kirino Engine is made possible thanks to the efforts of all contributors!
+Kirino-Engine is made possible thanks to the efforts of all contributors!
 
 - [tttsaurus](https://github.com/tttsaurus) - Core maintainer, architecture design, and overall project coordination
 - [Eerie](https://github.com/Kuba663) - Feature development and algorithmic contributions
