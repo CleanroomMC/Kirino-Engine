@@ -10,7 +10,7 @@ This can be stated explicitly and even evexaggerated:
   since they don't share the same assumption space
 - We **_serve as a platform_** for exploring the feasibility of modern, GPU-driven rendering techniques within Minecraft’s constraints
 - As a consequence, users can still expect the engine to experiment with
-  cutting-edge rendering techniques where feasible, rather than focusing on incremental _optimizations_
+  cutting-edge rendering techniques where feasible, rather than focusing on incremental _marginal optimizations_
 
 ## Assumption 2: Rendering Architecture Should Be Explicit
 

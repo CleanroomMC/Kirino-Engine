@@ -7,7 +7,7 @@ import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
 import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;

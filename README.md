@@ -12,7 +12,14 @@ provide a set of clean rendering APIs to mod developers,
 
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
-> Want a deeper look right away? Jump to **How Everything Works?**
+> Want a deeper look right away? Jump to "**How Everything Works?**"
+
+## Non-Goals
+- Not a drop-in performance patch
+- Not a strict compatibility target
+- Not an object-centric rendering engine
+- Not a finalized or frozen architecture
+- Not a high-fidelity path tracing solution
 
 ## What This Project Provides?
 
@@ -154,6 +161,14 @@ where you can understand our implicit assumptions and build the mental model gra
   - Kirino-Engine is fundamentally GPU-driven and ECS-driven, unlike traditional optimizers or shader mods
   - Kirino-Engine pays a huge attention to its architecture
   - Kirino-Engine isn't merely an optimizer or shader mod — it's a research-oriented rendering engine
+  - See [Assumption Space](https://github.com/CleanroomMC/Kirino-Engine/blob/main/docs/assumptions.md) for detailed reasonings too
+
+<br>
+
+- Will Kirino-Engine be compatible with OptiFine / Sodium / Iris?
+  - No, because Kirino-Engine replaces the whole rendering pipeline
+
+<br>
 
 - What's the most exciting features in dev?
   - GPU-Driven Meshlet Rendering & Virtual Geometry
@@ -163,13 +178,17 @@ where you can understand our implicit assumptions and build the mental model gra
   - Async GPU Resource System
   - Multi-resolution & HDR & Post-processing Pipeline
 
-- What can I expect as a player?
+<br>
+
+- What can I _expect_ as a player?
   - Performance wise: smoother performance and FPS improvements; Higher CPU & GPU utilization
   - Shader wise: modern lighting techniques and better global illumination
   - Configurability: optional HDR, optional resolution up-scaling or down-scaling, optional post-processing, etc.
-  - Ecosystem: easily extensible rendering pipeline for community shaders
+  - Ecosystem: easily extensible rendering pipeline for community mods and shaders
 
-- What can I expect as a mod developer?
+<br>
+
+- What can I _expect_ as a mod developer?
   - Clean rendering APIs that hide OpenGL completely
   - Versatile rendering APIs that focus on the concept of render commands
   - Will be able to create emissive blocks, PBR, fogs, decals, any post-processing effects

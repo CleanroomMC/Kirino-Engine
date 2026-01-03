@@ -10,7 +10,7 @@ import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.minecraft.semantic.BlockUnifier;

@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.gizmos;
+package com.cleanroommc.kirino.engine.render.debug.gizmos;
 
 import com.cleanroommc.kirino.engine.render.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.HighLevelDC;
@@ -17,6 +17,7 @@ import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GizmosManager {
@@ -28,12 +29,12 @@ public class GizmosManager {
     private record BlockRecord(float x, float y, float z, int faceMask) {
     }
 
-    private final ConcurrentLinkedQueue<BlockSurface> blockSurfaces = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<BlockRecord> blocks = new ConcurrentLinkedQueue<>();
+    private final Queue<BlockSurface> blockSurfaces = new ConcurrentLinkedQueue<>();
+    private final Set<BlockRecord> blockIdentities = ConcurrentHashMap.newKeySet();
 
     public void clearBlocks() {
         blockSurfaces.clear();
-        blocks.clear();
+        blockIdentities.clear();
     }
 
     public void addMeshlet(int xWorldOffset, int yWorldOffset, int zWorldOffset, List<Integer> blocks) {
@@ -50,10 +51,10 @@ public class GizmosManager {
             float z = zWorldOffset + positionAndFaceMask[2];
             int faceMask = positionAndFaceMask[3];
 
-            if (this.blocks.contains(new BlockRecord(x, y, z, faceMask))) {
+            if (!blockIdentities.add(new BlockRecord(x, y, z, faceMask))) {
+                // duplicate; warn
                 addBlock(x, y, z, faceMask, Color.RED.getRGB());
             } else {
-                this.blocks.add(new BlockRecord(x, y, z, faceMask));
                 addBlock(x, y, z, faceMask, color.getRGB());
             }
         }

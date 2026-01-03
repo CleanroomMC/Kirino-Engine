@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.task.system;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.task.job.MeshletDebugJob;
 import org.jspecify.annotations.NonNull;
 

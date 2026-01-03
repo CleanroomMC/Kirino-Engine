@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.task.system;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.scene.MinecraftScene;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;

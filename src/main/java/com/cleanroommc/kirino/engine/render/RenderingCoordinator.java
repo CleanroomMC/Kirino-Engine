@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRendering;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;

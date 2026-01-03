@@ -14,7 +14,7 @@ import com.cleanroommc.kirino.engine.render.RenderingCoordinator;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
-import com.cleanroommc.kirino.engine.render.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.scene.fsm.MeshletGpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.scene.fsm.TerrainCpuPipelineFSM;
