@@ -147,6 +147,9 @@ public class InGameDebugHUDManager {
         huds.add(hud);
     }
 
+    /**
+     * Handles input and draw the HUDs via the OpenGL fixed-function pipeline if HUDs are active.
+     */
     public void updateAndRenderIfNeeded() {
         handleInput();
 
