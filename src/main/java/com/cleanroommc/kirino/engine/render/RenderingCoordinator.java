@@ -3,6 +3,9 @@ package com.cleanroommc.kirino.engine.render;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.debug.hud.InGameDebugHUDManager;
+import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRendering;
 import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;
@@ -43,6 +46,7 @@ import com.cleanroommc.kirino.utils.Reference;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
@@ -91,6 +95,7 @@ public class RenderingCoordinator {
     private final StagingBufferManager stagingBufferManager;
     private final GraphicResourceManager graphicResourceManager;
     public final GizmosManager gizmosManager;
+    public final InGameDebugHUDManager debugHudManager;
 
     // ---------- Render Passes ----------
     private final RenderPass terrainGpuPass;
@@ -119,9 +124,9 @@ public class RenderingCoordinator {
         List<ResourceLocation> shaderResourceLocations = MethodHolder.getShaderResourceLocations(shaderRegistrationEvent);
         for (ResourceLocation rl : shaderResourceLocations) {
             Shader shader = shaderRegistry.register(rl);
-            logger.info("Registered " + shader.getShaderType().toString() + " shader " + rl + ".");
+            logger.info("Registered " + shader.getShaderType().toString() + " shader \"" + rl + "\".");
             if (shader.getShaderSource().isEmpty()) {
-                logger.info("Warning! " + rl + " is empty.");
+                logger.info("Warning! \"" + rl + "\" is empty.");
             }
         }
         shaderRegistry.compile();
@@ -134,6 +139,14 @@ public class RenderingCoordinator {
         graphicResourceManager = new GraphicResourceManager(stagingBufferManager);
 
         gizmosManager = new GizmosManager(graphicResourceManager);
+        debugHudManager = new InGameDebugHUDManager();
+        DebugHUDRegistrationEvent debugHudRegistrationEvent = new DebugHUDRegistrationEvent();
+        eventBus.post(debugHudRegistrationEvent);
+        List<IImmediateHUD> debugHuds = MethodHolder.getDebugHuds(debugHudRegistrationEvent);
+        for (IImmediateHUD hud : debugHuds) {
+            debugHudManager.register(hud);
+            logger.info("Registered debug HUD \"" + hud.getClass().getName() + "\".");
+        }
 
         meshletGpuRegistry = new MeshletGpuRegistry();
         camera = new MinecraftCamera();
@@ -317,6 +330,10 @@ public class RenderingCoordinator {
         //<editor-fold desc="meshlet gpu registry late initialization">
         meshletGpuRegistry.lateInit();
         //</editor-fold>
+
+        //<editor-fold desc="debug hud late initialization">
+        debugHudManager.lateInit();
+        //</editor-fold>
     }
 
     public void update() {
@@ -357,6 +374,18 @@ public class RenderingCoordinator {
 
         HighLevelDC.nextGen();
         LowLevelDC.nextGen();
+
+        // set up fixed-func overlay rendering
+        ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0, resolution.getScaledWidth_double(), resolution.getScaledHeight_double(), 0, -1, 1);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
+    }
+
+    public void runOverlayPass() {
+        debugHudManager.updateAndRenderIfNeeded();
     }
 
     // test
@@ -414,10 +443,12 @@ public class RenderingCoordinator {
         static {
             DELEGATE = new Delegate(
                     ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "shaderResourceLocations", List.class),
-                    ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class));
+                    ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class),
+                    ReflectionUtils.getFieldGetter(DebugHUDRegistrationEvent.class, "debugHuds", List.class));
 
             Preconditions.checkNotNull(DELEGATE.shaderResourceLocationsGetter);
             Preconditions.checkNotNull(DELEGATE.postProcessingEntriesGetter);
+            Preconditions.checkNotNull(DELEGATE.debugHudsGetter);
         }
 
         @SuppressWarnings("unchecked")
@@ -442,9 +473,21 @@ public class RenderingCoordinator {
             return postProcessingEntries;
         }
 
+        @SuppressWarnings("unchecked")
+        static List<IImmediateHUD> getDebugHuds(DebugHUDRegistrationEvent debugHudRegistrationEvent) {
+            List<IImmediateHUD> debugHuds;
+            try {
+                debugHuds = (List<IImmediateHUD>) DELEGATE.debugHudsGetter.invokeExact(debugHudRegistrationEvent);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return debugHuds;
+        }
+
         record Delegate(
                 MethodHandle shaderResourceLocationsGetter,
-                MethodHandle postProcessingEntriesGetter) {
+                MethodHandle postProcessingEntriesGetter,
+                MethodHandle debugHudsGetter) {
         }
     }
 }

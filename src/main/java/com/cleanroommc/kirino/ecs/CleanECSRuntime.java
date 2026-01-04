@@ -83,7 +83,7 @@ public class CleanECSRuntime {
                     structClass,
                     new FieldDef(plan.structName()));
 
-            logger.info("Registered struct " + plan.structName() + ". Loaded " + plan.structClass());
+            logger.info("Registered struct \"" + plan.structName() + "\". Loaded \"" + plan.structClass() + "\".");
         }
 
         logger.info("Struct defs are as follows:" + (structRegistry.getStructDefMap().entrySet().isEmpty() ? " (Empty)" : ""));
@@ -116,7 +116,7 @@ public class CleanECSRuntime {
                     plan.memberLayout(),
                     plan.fieldTypeNames());
 
-            logger.info("Registered component " + plan.componentName() + ". Loaded " + plan.componentClass());
+            logger.info("Registered component \"" + plan.componentName() + "\". Loaded \"" + plan.componentClass() + "\".");
         }
 
         logger.info("Component descs are as follows:" + (componentRegistry.getComponentDescMap().entrySet().isEmpty() ? " (Empty)" : ""));
@@ -137,7 +137,7 @@ public class CleanECSRuntime {
         List<Class<? extends IParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
         for (Class<? extends IParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
-            logger.info("Parallel job " + clazz.getName() + " registered. Data queries are as follows:" +
+            logger.info("Parallel job \"" + clazz.getName() + "\" registered. Data queries are as follows:" +
                     (jobRegistry.getParallelJobDataQueries(clazz).keySet().isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).keySet().isEmpty() ? " (Empty)" : ""));
 
             List<String> arrayQueries = new ArrayList<>();

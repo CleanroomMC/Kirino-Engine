@@ -5,6 +5,8 @@ import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.KirinoEngine;
+import com.cleanroommc.kirino.engine.render.debug.TestHUD;
+import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.task.job.*;
@@ -377,6 +379,8 @@ public final class KirinoCore {
         //</editor-fold>
 
         KIRINO_ENGINE.renderingCoordinator.postUpdate();
+
+        KIRINO_ENGINE.renderingCoordinator.runOverlayPass();
     }
 
     public static void init() {
@@ -455,6 +459,10 @@ public final class KirinoCore {
             Method onPostProcessingRegister = KirinoCore.class.getDeclaredMethod("onPostProcessingRegister", PostProcessingRegistrationEvent.class);
             registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default PostProcessingRegistrationEvent listener.");
+
+            Method onDebugHudRegister = KirinoCore.class.getDeclaredMethod("onDebugHudRegister", DebugHUDRegistrationEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
+            LOGGER.info("Registered the default DebugHUDRegistrationEvent listener.");
         } catch (Throwable throwable) {
             throw new RuntimeException("Failed to register default event listeners.", throwable);
         }
@@ -563,6 +571,11 @@ public final class KirinoCore {
 //                "Tone Mapping Pass",
 //                event.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"),
 //                DefaultPostProcessingPass::new);
+    }
+
+    @SubscribeEvent
+    public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
+        event.register(new TestHUD());
     }
 
     //<editor-fold desc="reflection">
