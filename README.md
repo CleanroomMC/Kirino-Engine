@@ -1,6 +1,11 @@
 
 # Kirino Engine <img src="logo.png" alt="logo" width="160" align="right" style="margin-left: 16px; vertical-align: middle;"/>
 
+![Platform](https://img.shields.io/badge/Platform-Minecraft%201.12.2-brightgreen.svg)
+![Status](https://img.shields.io/badge/Status-WIP-yellow.svg)
+[![License](https://img.shields.io/badge/License-Custom%20(Mod%20Permissions)-orange.svg)](LICENSE)
+[![CodeFactor](https://www.codefactor.io/repository/github/cleanroommc/kirino-engine/badge/main)](https://www.codefactor.io/repository/github/cleanroommc/kirino-engine/overview/main)
+
 Kirino-Engine combines an ECS-based data-oriented architecture,
 explicit modern OpenGL abstractions,
 and a hybrid CPU-GPU rendering pipeline 
