@@ -44,6 +44,14 @@ public class HUDContext {
     private final FontRenderer fontRenderer;
     private final Tessellator tessellator;
 
+    public FontRenderer getFontRenderer() {
+        return fontRenderer;
+    }
+
+    public Tessellator getTessellator() {
+        return tessellator;
+    }
+
     HUDContext(FontRenderer fontRenderer, Tessellator tessellator) {
         this.fontRenderer = fontRenderer;
         this.tessellator = tessellator;
@@ -190,7 +198,7 @@ public class HUDContext {
                 GlStateManager.SourceFactor.SRC_ALPHA,
                 GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
                 GlStateManager.SourceFactor.ONE,
-                GlStateManager.DestFactor.ZERO);
+                GlStateManager.DestFactor.ONE);
 
         GlStateManager.pushMatrix();
         GlStateManager.translate(x, Math.round(y), 0);

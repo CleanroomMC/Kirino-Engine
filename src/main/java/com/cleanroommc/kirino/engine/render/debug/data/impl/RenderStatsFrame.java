@@ -24,7 +24,7 @@ public class RenderStatsFrame implements IDebugDataService {
         return drawCalls;
     }
 
-    public void incrementDrawCall() {
+    public void incrementDrawCalls() {
         drawCalls++;
     }
 }

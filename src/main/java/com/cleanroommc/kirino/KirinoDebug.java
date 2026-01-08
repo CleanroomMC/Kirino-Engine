@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.kirino.engine.render.debug.data.DebugDataHandle;
+import com.cleanroommc.kirino.engine.render.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.debug.data.impl.RenderStatsFrame;
 
 /**
@@ -11,19 +13,42 @@ public final class KirinoDebug {
     private KirinoDebug() {
     }
 
+    private static DebugDataHandle<RenderStatsFrame> renderStatsFrame = null;
+
+    private static DebugDataHandle<RenderStatsFrame> getRenderStatsFrame() {
+        if (renderStatsFrame == null) {
+            renderStatsFrame = KirinoCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
+        }
+        return renderStatsFrame;
+    }
+
     @SuppressWarnings("DataFlowIssue")
     public static void resetDrawCalls() {
-        var renderStatsFrame = KirinoCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
-        if (renderStatsFrame.fetch() != null) {
-            renderStatsFrame.fetch().setDrawCalls(0);
+        if (getRenderStatsFrame().fetch() != null) {
+            getRenderStatsFrame().fetch().setDrawCalls(0);
         }
     }
 
     @SuppressWarnings("DataFlowIssue")
     public static void incrementDrawCalls() {
-        var renderStatsFrame = KirinoCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
-        if (renderStatsFrame.fetch() != null) {
-            renderStatsFrame.fetch().incrementDrawCall();
+        if (getRenderStatsFrame().fetch() != null) {
+            getRenderStatsFrame().fetch().incrementDrawCalls();
+        }
+    }
+
+    private static DebugDataHandle<FpsHistory> fpsHistory = null;
+
+    private static DebugDataHandle<FpsHistory> getFpsHistory() {
+        if (fpsHistory == null) {
+            fpsHistory = KirinoCore.DEBUG_SERVICE.get(FpsHistory.class);
+        }
+        return fpsHistory;
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    public static void recordFps(int fps) {
+        if (getFpsHistory().fetch() != null) {
+            getFpsHistory().fetch().record(fps);
         }
     }
 }

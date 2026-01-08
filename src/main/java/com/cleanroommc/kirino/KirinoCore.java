@@ -5,11 +5,12 @@ import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.KirinoEngine;
+import com.cleanroommc.kirino.engine.render.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.debug.data.impl.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.debug.hud.impl.FpsHUD;
 import com.cleanroommc.kirino.engine.render.debug.data.DebugDataServiceLocator;
 import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.debug.hud.impl.RenderStatsFrameHUD;
+import com.cleanroommc.kirino.engine.render.debug.hud.impl.CommonStatsHUD;
 import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.task.job.*;
@@ -157,6 +158,7 @@ public final class KirinoCore {
             return;
         }
 
+        KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
 
         KIRINO_ENGINE.renderingCoordinator.preUpdate();
@@ -541,6 +543,7 @@ public final class KirinoCore {
         //</editor-fold>
 
         DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.renderingCoordinator.debugHudManager));
+        DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 
     public static void postInit() {
@@ -608,7 +611,7 @@ public final class KirinoCore {
     @SubscribeEvent
     public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
         event.register(new FpsHUD());
-        event.register(new RenderStatsFrameHUD());
+        event.register(new CommonStatsHUD());
     }
 
     //<editor-fold desc="reflection">

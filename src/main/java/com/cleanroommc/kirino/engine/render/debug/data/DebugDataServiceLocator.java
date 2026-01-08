@@ -15,10 +15,14 @@ public class DebugDataServiceLocator {
     /**
      * Register your service at any time. No event-driven entry point or strict phase restrictions.
      * However, it's preferably to register services during Forge's <code>preInit</code>/<code>init</code>/<code>postInit</code> stage.
+     *
+     * <p>Note: You are not allowed to register a type of service twice.</p>
      */
     public <T extends IDebugDataService> void register(@NonNull Class<T> type, @NonNull T service) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(service);
+        Preconditions.checkArgument(!handles.containsKey(type),
+                "You are not allowed to register a type of service twice (type=\"%s\").", type.getName());
 
         handles.put(type, new DebugDataHandle<>(service));
     }
