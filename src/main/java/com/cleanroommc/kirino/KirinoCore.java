@@ -5,8 +5,11 @@ import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.KirinoEngine;
-import com.cleanroommc.kirino.engine.render.debug.TestHUD;
+import com.cleanroommc.kirino.engine.render.debug.data.impl.RenderStatsFrame;
+import com.cleanroommc.kirino.engine.render.debug.hud.impl.FpsHUD;
+import com.cleanroommc.kirino.engine.render.debug.data.DebugDataServiceLocator;
 import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.debug.hud.impl.RenderStatsFrameHUD;
 import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.task.job.*;
@@ -39,19 +42,44 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class KirinoCore {
-    private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
-    public static final Logger LOGGER = LogManager.getLogger("Kirino Core");
-    public static final EventBus KIRINO_EVENT_BUS = new EventBus();
-    public static final KirinoConfigHub KIRINO_CONFIG_HUB = new KirinoConfigHub();
+    private KirinoCore() {
+    }
+
+    private static final Minecraft MINECRAFT;
+    public static final DebugDataServiceLocator DEBUG_SERVICE;
+    public static final Logger LOGGER;
+    public static final EventBus KIRINO_EVENT_BUS;
+    public static final KirinoConfigHub KIRINO_CONFIG_HUB;
     private static CleanECSRuntime ECS_RUNTIME;
     private static KirinoEngine KIRINO_ENGINE;
-    private static boolean UNSUPPORTED = false;
-    private static boolean FULLY_INITIALIZED = false;
+    private static boolean UNSUPPORTED;
+    private static boolean FULLY_INITIALIZED;
+
+    static {
+        MINECRAFT = Minecraft.getMinecraft();
+
+        Constructor<DebugDataServiceLocator> debugServiceCtor;
+        try {
+            debugServiceCtor = DebugDataServiceLocator.class.getDeclaredConstructor();
+            debugServiceCtor.setAccessible(true);
+            DEBUG_SERVICE = debugServiceCtor.newInstance();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER = LogManager.getLogger("Kirino Core");
+        KIRINO_EVENT_BUS = new EventBus();
+        KIRINO_CONFIG_HUB = new KirinoConfigHub();
+
+        UNSUPPORTED = false;
+        FULLY_INITIALIZED = false;
+    }
 
     public static boolean isEnableRenderDelegate() {
         return KIRINO_CONFIG_HUB.enableRenderDelegate && !UNSUPPORTED;
@@ -128,6 +156,8 @@ public final class KirinoCore {
         if (!FULLY_INITIALIZED) {
             return;
         }
+
+        KirinoDebug.resetDrawCalls();
 
         KIRINO_ENGINE.renderingCoordinator.preUpdate();
 
@@ -509,6 +539,8 @@ public final class KirinoCore {
         LOGGER.info("Kirino Engine Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         LOGGER.info("---------------");
         //</editor-fold>
+
+        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.renderingCoordinator.debugHudManager));
     }
 
     public static void postInit() {
@@ -575,7 +607,8 @@ public final class KirinoCore {
 
     @SubscribeEvent
     public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
-        event.register(new TestHUD());
+        event.register(new FpsHUD());
+        event.register(new RenderStatsFrameHUD());
     }
 
     //<editor-fold desc="reflection">

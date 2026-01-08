@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.debug.hud;
 
-import com.cleanroommc.kirino.KirinoCore;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
@@ -126,7 +125,7 @@ public class InGameDebugHUDManager {
     private int currentIndex = 0;
 
     public boolean isEnabled() {
-        return enabled;
+        return enabled && !huds.isEmpty();
     }
 
     private static final float START_X = 1f;
@@ -162,7 +161,11 @@ public class InGameDebugHUDManager {
 
         context.setPivotX(START_X);
         context.setPivotY(START_Y);
-        huds.get(currentIndex).draw(context);
+        IImmediateHUD hud = huds.get(currentIndex);
+        hud.draw(context);
+
+        Preconditions.checkState(context.getDepth() == 0,
+                "The layout depth of \"%s\" must be zero after a draw update.", hud.getClass().getName());
 
         glStateBackup.restoreGlStates();
     }

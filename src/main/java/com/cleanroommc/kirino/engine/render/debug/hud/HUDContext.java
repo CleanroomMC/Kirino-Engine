@@ -39,7 +39,7 @@ public class HUDContext {
     private static final float HORIZONTAL_SPACING = 4f;
 
     private static final Color FONT_COLOR = new Color(213, 213, 213);
-    private static final Color FONT_BACKGROUND_COLOR = new Color(28, 28, 28, 71);
+    private static final Color BACKGROUND_COLOR = new Color(28, 28, 28, 71);
 
     private final FontRenderer fontRenderer;
     private final Tessellator tessellator;
@@ -122,9 +122,14 @@ public class HUDContext {
         float w = getTextWidth(text);
         float h = getTextHeight(text);
 
-        drawRect(pivotX, pivotY, w, h, FONT_BACKGROUND_COLOR.getRGB());
+        drawRect(pivotX, pivotY, w, h, BACKGROUND_COLOR.getRGB());
         drawText(text, pivotX + 1, pivotY + 1, FONT_COLOR.getRGB());
 
+        advanceChildRect(w, h);
+    }
+
+    public void empty(float w, float h) {
+        drawRect(pivotX, pivotY, w, h, BACKGROUND_COLOR.getRGB());
         advanceChildRect(w, h);
     }
 

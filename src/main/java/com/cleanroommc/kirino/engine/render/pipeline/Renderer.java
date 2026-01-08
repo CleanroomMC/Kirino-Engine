@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.pipeline;
 
+import com.cleanroommc.kirino.KirinoDebug;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.pipeline.state.BlendState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.DepthState;
@@ -97,6 +98,8 @@ public final class Renderer {
                     GL43.glMultiDrawElementsIndirect(command.mode, command.elementType, command.idbOffset, command.instanceCount, command.idbStride);
                 }
             }
+
+            KirinoDebug.incrementDrawCalls();
         }
 
         command.recycle();
@@ -108,5 +111,7 @@ public final class Renderer {
     public void dummyDraw(int mode, int first, int count) {
         dummyVao.get().bind();
         GL11.glDrawArrays(mode, first, count);
+
+        KirinoDebug.incrementDrawCalls();
     }
 }
