@@ -9,6 +9,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import org.joml.Vector3f;
@@ -20,14 +21,14 @@ import org.lwjgl.opengl.GL20C;
 import java.util.List;
 
 public class GizmosPass extends Subpass {
-    private final GizmosManager gizmosManager;
+    private final ResourceSlot<GizmosManager> gizmosManager;
 
     /**
      * @param renderer      A global renderer
      * @param pso           A pipeline state object (pipeline parameters)
      * @param gizmosManager The gizmos manager
      */
-    public GizmosPass(@NonNull Renderer renderer, @NonNull PipelineStateObject pso, @NonNull GizmosManager gizmosManager) {
+    public GizmosPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso, @NonNull ResourceSlot<GizmosManager> gizmosManager) {
         super(renderer, pso);
         this.gizmosManager = gizmosManager;
     }

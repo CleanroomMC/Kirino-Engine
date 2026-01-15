@@ -106,7 +106,7 @@ public final class KirinoCore {
             return;
         }
 
-        KIRINO_ENGINE.coordinator.scene.notifyBlockUpdate(x, y, z, oldState, newState);
+        KIRINO_ENGINE.sceneViewState.scene.notifyBlockUpdate(x, y, z, oldState, newState);
     }
 
     /**
@@ -127,7 +127,7 @@ public final class KirinoCore {
             return;
         }
 
-        KIRINO_ENGINE.coordinator.scene.notifyLightUpdate(x, y, z);
+        KIRINO_ENGINE.sceneViewState.scene.notifyLightUpdate(x, y, z);
     }
     //</editor-fold>
 
@@ -166,9 +166,9 @@ public final class KirinoCore {
         KIRINO_ENGINE.run(FramePhase.PRE_UPDATE);
 
         //<editor-fold desc="vanilla logic">
-        KIRINO_ENGINE.coordinator.camera.getProjectionBuffer().clear();
-        KIRINO_ENGINE.coordinator.camera.getViewRotationBuffer().clear();
-        float partialTicks = (float) KIRINO_ENGINE.coordinator.camera.getPartialTicks();
+        KIRINO_ENGINE.sceneViewState.camera.getProjectionBuffer().clear();
+        KIRINO_ENGINE.sceneViewState.camera.getViewRotationBuffer().clear();
+        float partialTicks = (float) KIRINO_ENGINE.sceneViewState.camera.getPartialTicks();
         MethodHolder.updateLightmap(MINECRAFT.entityRenderer, partialTicks);
         if (MINECRAFT.getRenderViewEntity() == null) {
             MINECRAFT.setRenderViewEntity(Minecraft.getMinecraft().player);
@@ -232,12 +232,10 @@ public final class KirinoCore {
         //</editor-fold>
 
         KIRINO_ENGINE.run(FramePhase.UPDATE);
-        KIRINO_ENGINE.coordinator.updateWorld(MINECRAFT.world);
         KIRINO_ENGINE.run(FramePhase.RENDER_OPAQUE);
-//        KIRINO_ENGINE.renderingCoordinator.runChunkPass();
 
         //<editor-fold desc="vanilla logic">
-        KIRINO_ENGINE.coordinator.cullingPatch.collectEntitiesInView(
+        KIRINO_ENGINE.minecraftIntegration.cullingPatch.collectEntitiesInView(
                 renderViewEntity,
                 cameraFrustum,
                 MINECRAFT.world.getChunkProvider(),
@@ -256,7 +254,7 @@ public final class KirinoCore {
             GlStateManager.pushMatrix();
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(0);
-            KIRINO_ENGINE.coordinator.entityRenderingPatch.renderEntities(
+            KIRINO_ENGINE.minecraftIntegration.entityRenderingPatch.renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -268,7 +266,7 @@ public final class KirinoCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            KIRINO_ENGINE.coordinator.tesrRenderingPatch.renderTESRs(
+            KIRINO_ENGINE.minecraftIntegration.tesrRenderingPatch.renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -351,8 +349,6 @@ public final class KirinoCore {
 
         KIRINO_ENGINE.run(FramePhase.RENDER_TRANSPARENT);
 
-        KIRINO_ENGINE.coordinator.runGizmosPass();
-
         //<editor-fold desc="vanilla logic">
         // ========== entities ==========
         MINECRAFT.profiler.startSection("entities");
@@ -360,7 +356,7 @@ public final class KirinoCore {
         if (!MethodHolder.isDebugView(MINECRAFT.entityRenderer)) {
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(1);
-            KIRINO_ENGINE.coordinator.entityRenderingPatch.renderEntities(
+            KIRINO_ENGINE.minecraftIntegration.entityRenderingPatch.renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -372,7 +368,7 @@ public final class KirinoCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            KIRINO_ENGINE.coordinator.tesrRenderingPatch.renderTESRs(
+            KIRINO_ENGINE.minecraftIntegration.tesrRenderingPatch.renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -543,7 +539,8 @@ public final class KirinoCore {
         LOGGER.info("---------------");
         //</editor-fold>
 
-        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.coordinator.debugHudManager));
+        // only register whne the engine is not headless
+//        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.graphicsRuntimeServices.debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 
@@ -559,7 +556,7 @@ public final class KirinoCore {
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
-        KIRINO_ENGINE.coordinator.deferredInit();
+        KIRINO_ENGINE.run(FramePhase.PREPARE);
 
         stopWatch.stop();
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));

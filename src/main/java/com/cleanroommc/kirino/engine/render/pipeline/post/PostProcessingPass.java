@@ -7,6 +7,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.pass.ISubpassDecorator;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.pipeline.post.subpasses.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -29,8 +30,8 @@ public class PostProcessingPass {
     private Framebuffer intermediateFramebuffer;
 
     private final RenderPass postProcessingPass;
-    private final Renderer renderer;
-    private final Reference<VAO> fullscreenTriangleVao;
+    private final ResourceSlot<Renderer> renderer;
+    private final ResourceSlot<VAO> fullscreenTriangleVao;
 
     private boolean lock = false;
     private int subpassCount;
@@ -81,7 +82,7 @@ public class PostProcessingPass {
         }
     }
 
-    public PostProcessingPass(RenderPass postProcessingPass, Renderer renderer, Reference<VAO> fullscreenTriangleVao) {
+    public PostProcessingPass(RenderPass postProcessingPass, ResourceSlot<Renderer> renderer, ResourceSlot<VAO> fullscreenTriangleVao) {
         this.postProcessingPass = postProcessingPass;
         this.renderer = renderer;
         this.fullscreenTriangleVao = fullscreenTriangleVao;
@@ -94,7 +95,7 @@ public class PostProcessingPass {
     /**
      * Must use an unique <code>subpassName</code>. Otherwise the addition will be ignored silently.
      */
-    public void addSubpass(String subpassName, ShaderProgram shaderProgram, TriFunction<Renderer, PipelineStateObject, Reference<VAO>, AbstractPostProcessingPass> subpassCtor) {
+    public void addSubpass(String subpassName, ResourceSlot<ShaderProgram> shaderProgram, TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass> subpassCtor) {
         Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");
 
         AbstractPostProcessingPass subpass = subpassCtor.apply(renderer, PSOPresets.createScreenOverwritePSO(shaderProgram), fullscreenTriangleVao);

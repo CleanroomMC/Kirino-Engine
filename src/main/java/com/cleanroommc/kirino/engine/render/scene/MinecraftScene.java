@@ -10,7 +10,7 @@ import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
-import com.cleanroommc.kirino.engine.render.RenderCoordinator;
+import com.cleanroommc.kirino.engine.gl.view.GLWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
@@ -22,10 +22,10 @@ import com.cleanroommc.kirino.engine.render.scene.fsm.WorldControlFSM;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuWriterContext;
 import com.cleanroommc.kirino.engine.render.task.system.*;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
-import com.cleanroommc.kirino.utils.Reference;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
@@ -102,9 +102,9 @@ public class MinecraftScene extends CleanWorld {
 
     private final Executor systemFlowExecutor;
 
-    private final GizmosManager gizmosManager;
+    private final ResourceSlot<GizmosManager> gizmosManager;
     private final MinecraftCamera camera;
-    private final MeshletGpuRegistry meshletGpuRegistry;
+    private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
 
     private final TerrainCpuPipelineFSM terrainFsm;
     private final MeshletGpuPipelineFSM meshletFsm;
@@ -130,10 +130,10 @@ public class MinecraftScene extends CleanWorld {
     public MinecraftScene(
             EntityManager entityManager,
             JobScheduler jobScheduler,
-            Reference<BlockMeshGenerator> blockMeshGenerator,
-            GizmosManager gizmosManager,
+            ResourceSlot<BlockMeshGenerator> blockMeshGenerator,
+            ResourceSlot<GizmosManager> gizmosManager,
             MinecraftCamera camera,
-            MeshletGpuRegistry meshletGpuRegistry,
+            ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry,
             Executor systemFlowExecutor,
             Executor systemExecutor) {
 
@@ -405,7 +405,7 @@ public class MinecraftScene extends CleanWorld {
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
                         KirinoCore.LOGGER.info("finished compute");
-                        RenderCoordinator.debug = true;
+                        GLWorldViewImpl.debug = true;
                     }
                     GL32C.glDeleteSync(fence);
                 }

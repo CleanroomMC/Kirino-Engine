@@ -9,6 +9,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -16,14 +17,14 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.BiConsumer;
 
 public abstract class Subpass {
-    protected final Renderer renderer;
+    protected final ResourceSlot<Renderer> renderer;
     private final PipelineStateObject pso;
 
     /**
      * @param renderer A global renderer
      * @param pso A pipeline state object (pipeline parameters)
      */
-    public Subpass(@NonNull Renderer renderer, @NonNull PipelineStateObject pso) {
+    public Subpass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso) {
         this.renderer = renderer;
         this.pso = pso;
     }

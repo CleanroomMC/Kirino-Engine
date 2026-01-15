@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.engine.render.camera.ICamera;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.debug.KHRDebug;
 import com.cleanroommc.kirino.utils.Reference;
 import com.google.common.base.Preconditions;
@@ -21,8 +22,8 @@ public final class RenderPass {
     private final List<String> subpassOrder = new ArrayList<>();
     private final DrawQueue drawQueue = new DrawQueue();
 
-    private final GraphicResourceManager graphicResourceManager;
-    private final Reference<IndirectDrawBufferGenerator> idbGenerator;
+    private final ResourceSlot<GraphicResourceManager> graphicResourceManager;
+    private final ResourceSlot<IndirectDrawBufferGenerator> idbGenerator;
 
     public final String passName;
 
@@ -30,7 +31,10 @@ public final class RenderPass {
         return subpassMap.size();
     }
 
-    public RenderPass(String passName, GraphicResourceManager graphicResourceManager, Reference<IndirectDrawBufferGenerator> idbGenerator) {
+    public RenderPass(
+            String passName,
+            ResourceSlot<GraphicResourceManager> graphicResourceManager,
+            ResourceSlot<IndirectDrawBufferGenerator> idbGenerator) {
         this.passName = passName;
         this.graphicResourceManager = graphicResourceManager;
         this.idbGenerator = idbGenerator;

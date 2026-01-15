@@ -4,12 +4,13 @@ import com.cleanroommc.kirino.engine.render.pipeline.state.BlendState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.DepthState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.pipeline.state.RasterState;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 public final class PSOPresets {
-    public static PipelineStateObject createScreenOverwritePSO(ShaderProgram shaderProgram) {
+    public static PipelineStateObject createScreenOverwritePSO(ResourceSlot<ShaderProgram> shaderProgram) {
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -40,7 +41,7 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createGizmosPSO(ShaderProgram shaderProgram) {
+    public static PipelineStateObject createGizmosPSO(ResourceSlot<ShaderProgram> shaderProgram) {
         return new PipelineStateObject(
                 new BlendState(
                         true,
@@ -71,7 +72,7 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createOpaquePSO(ShaderProgram shaderProgram) {
+    public static PipelineStateObject createOpaquePSO(ResourceSlot<ShaderProgram> shaderProgram) {
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -102,7 +103,7 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createCutoutPSO(ShaderProgram shaderProgram) {
+    public static PipelineStateObject createCutoutPSO(ResourceSlot<ShaderProgram> shaderProgram) {
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -133,7 +134,7 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createTransparentPSO(ShaderProgram shaderProgram) {
+    public static PipelineStateObject createTransparentPSO(ResourceSlot<ShaderProgram> shaderProgram) {
         return new PipelineStateObject(
                 new BlendState(
                         true,

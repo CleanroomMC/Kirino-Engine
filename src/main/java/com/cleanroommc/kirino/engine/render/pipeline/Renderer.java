@@ -6,14 +6,16 @@ import com.cleanroommc.kirino.engine.render.pipeline.state.BlendState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.DepthState;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.pipeline.state.RasterState;
+import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.vao.VAO;
-import com.cleanroommc.kirino.utils.Reference;
 import org.lwjgl.opengl.*;
 
 public final class Renderer {
-    private final Reference<VAO> dummyVao;
+    private final ResourceStorage resourceStorage;
+    private final VAO dummyVao;
 
-    public Renderer(Reference<VAO> dummyVao) {
+    public Renderer(ResourceStorage resourceStorage, VAO dummyVao) {
+        this.resourceStorage = resourceStorage;
         this.dummyVao = dummyVao;
     }
 
@@ -21,7 +23,7 @@ public final class Renderer {
         applyBlend(pso.blendState());
         applyDepth(pso.depthState());
         applyRaster(pso.rasterState());
-        pso.shaderProgram().use();
+        resourceStorage.get(pso.shaderProgram()).use();
     }
 
     private void applyRaster(RasterState r) {
@@ -109,7 +111,7 @@ public final class Renderer {
      * Trigger a shader without binding any actual data.
      */
     public void dummyDraw(int mode, int first, int count) {
-        dummyVao.get().bind();
+        dummyVao.bind();
         GL11.glDrawArrays(mode, first, count);
 
         KirinoDebug.incrementDrawCalls();

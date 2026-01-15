@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.world;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.WorldKind;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
@@ -17,8 +18,8 @@ public final class WorldRunner<W extends WorldKind> {
 
     @SafeVarargs
     public static <W extends WorldKind> WorldRunner<W> of(
-            WorldContext<W> context,
-            ModuleInstaller<W>... modules) {
+            @NonNull WorldContext<W> context,
+            @NonNull ModuleInstaller<W> @NonNull ... modules) {
 
         WorldRunner<W> runner = new WorldRunner<>(context, List.of(modules));
 
@@ -29,7 +30,7 @@ public final class WorldRunner<W extends WorldKind> {
         return runner;
     }
 
-    public void run(FramePhase phase) {
+    public void run(@NonNull FramePhase phase) {
         context.run(phase);
     }
 }

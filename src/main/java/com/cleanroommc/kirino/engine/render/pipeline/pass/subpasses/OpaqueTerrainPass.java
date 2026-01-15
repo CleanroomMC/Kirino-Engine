@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
@@ -20,7 +21,7 @@ public class OpaqueTerrainPass extends Subpass {
      * @param renderer A global renderer
      * @param pso      A pipeline state object (pipeline parameters)
      */
-    public OpaqueTerrainPass(@NonNull Renderer renderer, @NonNull PipelineStateObject pso) {
+    public OpaqueTerrainPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso) {
         super(renderer, pso);
     }
 

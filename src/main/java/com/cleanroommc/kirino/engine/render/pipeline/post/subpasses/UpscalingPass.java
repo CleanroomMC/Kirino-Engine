@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.render.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -15,7 +16,7 @@ public class UpscalingPass extends Subpass {
      * @param renderer A global renderer
      * @param pso      A pipeline state object (pipeline parameters)
      */
-    public UpscalingPass(@NonNull Renderer renderer, @NonNull PipelineStateObject pso) {
+    public UpscalingPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso) {
         super(renderer, pso);
     }
 

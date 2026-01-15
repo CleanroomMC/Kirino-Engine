@@ -7,11 +7,11 @@ import com.cleanroommc.kirino.engine.render.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
-import com.cleanroommc.kirino.utils.Reference;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
@@ -20,14 +20,14 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 
 public abstract class AbstractPostProcessingPass extends Subpass {
-    private final Reference<VAO> fullscreenTriangleVao;
+    private final ResourceSlot<VAO> fullscreenTriangleVao;
 
     /**
      * @param renderer              A global renderer
      * @param pso                   A pipeline state object (pipeline parameters)
      * @param fullscreenTriangleVao The global fullscreen triangle VAO
      */
-    public AbstractPostProcessingPass(@NonNull Renderer renderer, @NonNull PipelineStateObject pso, @NonNull Reference<VAO> fullscreenTriangleVao) {
+    public AbstractPostProcessingPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso, @NonNull ResourceSlot<VAO> fullscreenTriangleVao) {
         super(renderer, pso);
         this.fullscreenTriangleVao = fullscreenTriangleVao;
     }
