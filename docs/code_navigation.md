@@ -29,5 +29,5 @@
 
 > Relevant conceptual entry point classes:
 > <br>· `com.cleanroommc.kirino.engine.KirinoEngine`
-> <br>· `com.cleanroommc.kirino.engine.render.RenderingCoordinator`
+> <br>· `com.cleanroommc.kirino.engine.render.RenderCoordinator`
 > <br>· `com.cleanroommc.kirino.engine.render.scene.MinecraftScene`

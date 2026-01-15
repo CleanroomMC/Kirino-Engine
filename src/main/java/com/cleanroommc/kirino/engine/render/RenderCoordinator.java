@@ -62,7 +62,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
-public class RenderingCoordinator {
+public class RenderCoordinator {
     public final boolean enableHDR;
     public final boolean enablePostProcessing;
 
@@ -103,7 +103,7 @@ public class RenderingCoordinator {
     private final RenderPass gizmosPass;
     public final PostProcessingPass postProcessingPass;
 
-    public RenderingCoordinator(EventBus eventBus, Logger logger, CleanECSRuntime ecsRuntime, boolean enableHDR, boolean enablePostProcessing) {
+    public RenderCoordinator(EventBus eventBus, Logger logger, CleanECSRuntime ecsRuntime, boolean enableHDR, boolean enablePostProcessing) {
         this.enableHDR = enableHDR;
         this.enablePostProcessing = enablePostProcessing;
 

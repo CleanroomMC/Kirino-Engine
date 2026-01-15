@@ -10,7 +10,7 @@ import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
-import com.cleanroommc.kirino.engine.render.RenderingCoordinator;
+import com.cleanroommc.kirino.engine.render.RenderCoordinator;
 import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.ecs.component.MeshletComponent;
@@ -405,7 +405,7 @@ public class MinecraftScene extends CleanWorld {
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
                         KirinoCore.LOGGER.info("finished compute");
-                        RenderingCoordinator.debug = true;
+                        RenderCoordinator.debug = true;
                     }
                     GL32C.glDeleteSync(fence);
                 }
