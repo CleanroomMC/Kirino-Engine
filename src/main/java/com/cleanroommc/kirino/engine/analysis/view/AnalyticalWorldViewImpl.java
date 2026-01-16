@@ -2,9 +2,9 @@ package com.cleanroommc.kirino.engine.analysis.view;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
-import com.cleanroommc.kirino.engine.render.RenderExtensions;
-import com.cleanroommc.kirino.engine.render.RenderStructure;
-import com.cleanroommc.kirino.engine.render.ShaderIntrospection;
+import com.cleanroommc.kirino.engine.render.core.RenderExtensions;
+import com.cleanroommc.kirino.engine.render.core.RenderStructure;
+import com.cleanroommc.kirino.engine.render.core.ShaderIntrospection;
 import com.cleanroommc.kirino.engine.world.context.AnalyticalWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Headless;

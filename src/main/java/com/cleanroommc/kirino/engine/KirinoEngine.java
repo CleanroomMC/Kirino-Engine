@@ -2,32 +2,35 @@ package com.cleanroommc.kirino.engine;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.analysis.install.AnalyticalWorldInstaller;
-import com.cleanroommc.kirino.engine.gl.install.GLWorldInstaller;
-import com.cleanroommc.kirino.engine.render.*;
-import com.cleanroommc.kirino.engine.render.camera.MinecraftCamera;
-import com.cleanroommc.kirino.engine.render.debug.gizmos.GizmosManager;
-import com.cleanroommc.kirino.engine.render.debug.hud.InGameDebugHUDManager;
-import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftCulling;
-import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftEntityRendering;
-import com.cleanroommc.kirino.engine.render.minecraft.patch.MinecraftTESRRendering;
-import com.cleanroommc.kirino.engine.render.minecraft.utils.BlockMeshGenerator;
-import com.cleanroommc.kirino.engine.render.pipeline.GLStateBackup;
-import com.cleanroommc.kirino.engine.render.pipeline.Renderer;
-import com.cleanroommc.kirino.engine.render.pipeline.draw.IndirectDrawBufferGenerator;
-import com.cleanroommc.kirino.engine.render.pipeline.post.FrameFinalizer;
-import com.cleanroommc.kirino.engine.render.resource.GraphicResourceManager;
-import com.cleanroommc.kirino.engine.render.scene.MinecraftScene;
-import com.cleanroommc.kirino.engine.render.scene.gpu_meshlet.MeshletGpuRegistry;
-import com.cleanroommc.kirino.engine.render.shader.ShaderRegistry;
-import com.cleanroommc.kirino.engine.render.staging.StagingBufferManager;
+import com.cleanroommc.kirino.engine.graphics.install.GraphicsWorldInstaller;
+import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
+import com.cleanroommc.kirino.engine.render.core.*;
+import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
+import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
+import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
+import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
+import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftCulling;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftEntityRendering;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftTESRRendering;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
+import com.cleanroommc.kirino.engine.render.core.pipeline.GLStateBackup;
+import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
+import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
+import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
+import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.world.WorldRunner;
-import com.cleanroommc.kirino.engine.world.type.GL;
+import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.engine.world.type.Headless;
 import com.cleanroommc.kirino.engine.analysis.view.AnalyticalWorldViewImpl;
-import com.cleanroommc.kirino.engine.gl.view.GLWorldViewImpl;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
@@ -50,9 +53,12 @@ public class KirinoEngine {
 
     public final ResourceStorage resourceStorage;
 
-    private final WorldRunner<GL> glWorld;
+    private final WorldRunner<Graphics> glWorld;
     private final WorldRunner<Headless> headlessWorld;
 
+    /**
+     * Side-effect free.
+     */
     private KirinoEngine(
             EventBus eventBus,
             Logger logger,
@@ -102,6 +108,7 @@ public class KirinoEngine {
 
         MinecraftCamera camera = new MinecraftCamera();
         MinecraftScene scene = new MinecraftScene(
+                resourceStorage,
                 ecsRuntime.entityManager,
                 ecsRuntime.jobScheduler,
                 blockMeshGenerator,
@@ -157,7 +164,7 @@ public class KirinoEngine {
                 downscalingPassProgram);
 
         glWorld = WorldRunner.of(
-                new GLWorldViewImpl(
+                new GraphicsWorldViewImpl(
                         ecsRuntime,
                         renderStructure,
                         renderExtensions,
@@ -170,7 +177,7 @@ public class KirinoEngine {
                         minecraftAssetProviders,
                         sceneViewState,
                         shaderIntrospection),
-                new GLWorldInstaller());
+                new GraphicsWorldInstaller());
 
         headlessWorld = WorldRunner.of(
                 new AnalyticalWorldViewImpl(
@@ -186,5 +193,9 @@ public class KirinoEngine {
     public void run(@NonNull FramePhase phase) {
         headlessWorld.run(phase);
         glWorld.run(phase);
+    }
+
+    public void runHeadlessly(@NonNull FramePhase phase) {
+        headlessWorld.run(phase);
     }
 }

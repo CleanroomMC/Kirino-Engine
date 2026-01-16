@@ -2,13 +2,13 @@ package com.cleanroommc.kirino.engine.analysis.install;
 
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.analysis.view.AnalyticalWorldViewImpl;
-import com.cleanroommc.kirino.engine.render.debug.hud.IImmediateHUD;
-import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.pipeline.Renderer;
-import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.pipeline.post.subpasses.AbstractPostProcessingPass;
-import com.cleanroommc.kirino.engine.render.pipeline.state.PipelineStateObject;
-import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.world.ModuleInstaller;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
@@ -62,7 +62,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
 
     @Override
     public void install(@NonNull WorldContext<Headless> context) {
-        context.on(FramePhase.PREPARE, this::install);
+        context.on(FramePhase.PREPARE, this::prepare);
     }
 
     private static class MethodHolder {

@@ -1,13 +1,12 @@
 package com.cleanroommc.kirino.engine.resource;
 
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public final class ResourceStorage {
-    private final Map<Integer, Object> storage = new HashMap<>();
+    private final Int2ObjectMap<Object> storage = new Int2ObjectOpenHashMap<>();
 
     public <T> boolean has(ResourceSlot<T> slot) {
         return storage.containsKey(slot.id());

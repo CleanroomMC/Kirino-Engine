@@ -2,13 +2,13 @@
 
 > Relevant classes:
 > <br>· `com.cleanroommc.kirino.KirinoCore`
-> <br>· `com.cleanroommc.kirino.engine.render.scene.MinecraftScene`
+> <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene`
 
 > Relevant methods:
 > <br>· `com.cleanroommc.kirino.KirinoCore#EntityRenderer$renderWorld`
 > <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyBlockUpdate`
 > <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyLightUpdate`
-> <br>· `com.cleanroommc.kirino.engine.render.scene.MinecraftScene#update`
+> <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene#update`
 
 <br>
 

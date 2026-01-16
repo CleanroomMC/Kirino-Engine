@@ -6,15 +6,15 @@ import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.KirinoEngine;
-import com.cleanroommc.kirino.engine.render.debug.data.impl.FpsHistory;
-import com.cleanroommc.kirino.engine.render.debug.data.impl.RenderStatsFrame;
-import com.cleanroommc.kirino.engine.render.debug.hud.impl.FpsHUD;
-import com.cleanroommc.kirino.engine.render.debug.data.DebugDataServiceLocator;
-import com.cleanroommc.kirino.engine.render.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.debug.hud.impl.CommonStatsHUD;
-import com.cleanroommc.kirino.engine.render.pipeline.post.event.PostProcessingRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.shader.event.ShaderRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.task.job.*;
+import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
+import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.FpsHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataServiceLocator;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.CommonStatsHUD;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.platform.task.job.*;
+import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.gl.GLTest;
 import com.cleanroommc.kirino.gl.debug.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -59,9 +59,8 @@ public final class KirinoCore {
     public static final EventBus KIRINO_EVENT_BUS;
     public static final KirinoConfigHub KIRINO_CONFIG_HUB;
     private static CleanECSRuntime ECS_RUNTIME;
-    private static KirinoEngine KIRINO_ENGINE;
+    public static KirinoEngine KIRINO_ENGINE;
     private static boolean UNSUPPORTED;
-    private static boolean FULLY_INITIALIZED;
 
     static {
         MINECRAFT = Minecraft.getMinecraft();
@@ -80,11 +79,10 @@ public final class KirinoCore {
         KIRINO_CONFIG_HUB = new KirinoConfigHub();
 
         UNSUPPORTED = false;
-        FULLY_INITIALIZED = false;
     }
 
-    public static boolean isEnableRenderDelegate() {
-        return KIRINO_CONFIG_HUB.enableRenderDelegate && !UNSUPPORTED;
+    public static boolean isUnsupported() {
+        return UNSUPPORTED;
     }
 
     //<editor-fold desc="hooks">
@@ -102,7 +100,13 @@ public final class KirinoCore {
      * </code>
      */
     public static void RenderGlobal$notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
-        if (!FULLY_INITIALIZED) {
+        if (!KIRINO_CONFIG_HUB.enable) {
+            return;
+        }
+        if (!KIRINO_CONFIG_HUB.enableRenderDelegate) {
+            return;
+        }
+        if (UNSUPPORTED) {
             return;
         }
 
@@ -123,13 +127,26 @@ public final class KirinoCore {
      * </code>
      */
     public static void RenderGlobal$notifyLightUpdate(int x, int y, int z) {
-        if (!FULLY_INITIALIZED) {
+        if (!KIRINO_CONFIG_HUB.enable) {
+            return;
+        }
+        if (!KIRINO_CONFIG_HUB.enableRenderDelegate) {
+            return;
+        }
+        if (UNSUPPORTED) {
             return;
         }
 
         KIRINO_ENGINE.sceneViewState.scene.notifyLightUpdate(x, y, z);
     }
     //</editor-fold>
+
+    public static void EntityRenderer$renderWorldHeadlessly(long finishTimeNano) {
+        KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
+        KIRINO_ENGINE.runHeadlessly(FramePhase.PRE_UPDATE);
+        KIRINO_ENGINE.runHeadlessly(FramePhase.UPDATE);
+        KIRINO_ENGINE.runHeadlessly(FramePhase.POST_UPDATE);
+    }
 
     /**
      * This method is a direct replacement of {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)}.
@@ -155,10 +172,6 @@ public final class KirinoCore {
      * </code>
      */
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
-        if (!FULLY_INITIALIZED) {
-            return;
-        }
-
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
 
@@ -414,7 +427,6 @@ public final class KirinoCore {
 
     public static void init() {
         if (!KIRINO_CONFIG_HUB.enable) {
-            KIRINO_CONFIG_HUB.enableRenderDelegate = false;
             return;
         }
 
@@ -442,18 +454,12 @@ public final class KirinoCore {
 
         if (rawGLVersion.isEmpty() || majorGLVersion == -1 || minorGLVersion == -1) {
             UNSUPPORTED = true;
-            KIRINO_CONFIG_HUB.enable = false;
-            KIRINO_CONFIG_HUB.enableRenderDelegate = false;
-            LOGGER.warn("Failed to parse the OpenGL version. Aborting Kirino initialization.");
-            return;
+            LOGGER.warn("Failed to parse the OpenGL version. Marking \"UNSUPPORTED\"=true.");
         }
 
         if (!(majorGLVersion == 4 && minorGLVersion == 6)) {
             UNSUPPORTED = true;
-            KIRINO_CONFIG_HUB.enable = false;
-            KIRINO_CONFIG_HUB.enableRenderDelegate = false;
-            LOGGER.warn("OpenGL 4.6 not supported. Aborting Kirino initialization.");
-            return;
+            LOGGER.warn("OpenGL 4.6 not supported. Marking \"UNSUPPORTED\"=true.");
         }
         //</editor-fold>
 
@@ -539,8 +545,7 @@ public final class KirinoCore {
         LOGGER.info("---------------");
         //</editor-fold>
 
-        // only register whne the engine is not headless
-//        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.graphicsRuntimeServices.debugHudManager));
+        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KIRINO_ENGINE.graphicsRuntimeServices.debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 
@@ -556,24 +561,26 @@ public final class KirinoCore {
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
-        KIRINO_ENGINE.run(FramePhase.PREPARE);
+        if (UNSUPPORTED) {
+            KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
+        } else {
+            KIRINO_ENGINE.run(FramePhase.PREPARE);
+        }
 
         stopWatch.stop();
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         LOGGER.info("---------------");
         //</editor-fold>
-
-        FULLY_INITIALIZED = true;
     }
 
     @SubscribeEvent
     public static void onStructScan(StructScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.ecs.struct");
+        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.struct");
     }
 
     @SubscribeEvent
     public static void onComponentScan(ComponentScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.ecs.component");
+        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.component");
     }
 
     @SubscribeEvent

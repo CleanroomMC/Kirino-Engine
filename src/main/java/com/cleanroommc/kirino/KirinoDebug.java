@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino;
 
-import com.cleanroommc.kirino.engine.render.debug.data.DebugDataHandle;
-import com.cleanroommc.kirino.engine.render.debug.data.impl.FpsHistory;
-import com.cleanroommc.kirino.engine.render.debug.data.impl.RenderStatsFrame;
+import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataHandle;
+import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
+import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
 
 /**
  * This helper class is made possible by {@link KirinoCore#DEBUG_SERVICE}, and

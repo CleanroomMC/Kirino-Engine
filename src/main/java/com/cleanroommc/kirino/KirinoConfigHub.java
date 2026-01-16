@@ -7,7 +7,7 @@ public final class KirinoConfigHub {
     public boolean enable = true;
     public boolean enableRenderDelegate = true;
     public boolean enableHDR = true;
-    public boolean enablePostProcessing = true;
+    public boolean enablePostProcessing = false;
 
     public int targetWorkloadPerThread = 5000;
 

@@ -10,7 +10,7 @@
 > <br>· `com.cleanroommc.kirino.ecs.job.JobRegistry`
 > <br>· `com.cleanroommc.kirino.ecs.system.CleanSystem`
 > <br>· `com.cleanroommc.kirino.ecs.world.CleanWorld`
-> <br>· `com.cleanroommc.kirino.engine.render.scene.MinecraftScene`
+> <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene`
 > <br>· `com.cleanroommc.kirino.engine.render.task.job.*`
 > <br>· `com.cleanroommc.kirino.engine.render.task.system.*`
 
@@ -30,4 +30,4 @@
 > Relevant conceptual entry point classes:
 > <br>· `com.cleanroommc.kirino.engine.KirinoEngine`
 > <br>· `com.cleanroommc.kirino.engine.render.RenderCoordinator`
-> <br>· `com.cleanroommc.kirino.engine.render.scene.MinecraftScene`
+> <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene`
