@@ -145,11 +145,8 @@ public final class KirinoCore {
     }
     //</editor-fold>
 
-    public static void EntityRenderer$renderWorldHeadlessly(long finishTimeNano) {
-        KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
-        KIRINO_ENGINE.runHeadlessly(FramePhase.PRE_UPDATE);
-        KIRINO_ENGINE.runHeadlessly(FramePhase.UPDATE);
-        KIRINO_ENGINE.runHeadlessly(FramePhase.POST_UPDATE);
+    public static void runHeadlessly(FramePhase phase) {
+        KIRINO_ENGINE.runHeadlessly(phase);
     }
 
     /**
