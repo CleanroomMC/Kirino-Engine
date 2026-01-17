@@ -72,7 +72,7 @@ public class JobScheduler {
             }
 
             // future count
-            int targetWorkloadPerThread = KirinoCore.KIRINO_CONFIG_HUB.targetWorkloadPerThread;
+            int targetWorkloadPerThread = KirinoCore.KIRINO_CONFIG_HUB.getTargetWorkloadPerThread();
             int futureCount = Math.ceilDivExact(workload, targetWorkloadPerThread);
             if (futureCount > Runtime.getRuntime().availableProcessors()) {
                 futureCount = Runtime.getRuntime().availableProcessors();

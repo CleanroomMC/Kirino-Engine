@@ -166,7 +166,7 @@ public class DrawQueue {
 
             int start = 0;
             while (start < mdiUnits.size()) {
-                int end = Math.min(start + KirinoCore.KIRINO_CONFIG_HUB.maxMultiDrawIndirectUnitCount, mdiUnits.size());
+                int end = Math.min(start + KirinoCore.KIRINO_CONFIG_HUB.getMaxMultiDrawIndirectUnitCount(), mdiUnits.size());
                 List<LowLevelDC> chunk = mdiUnits.subList(start, end);
                 deque2.offerLast(idbGenerator.generate(
                         chunk,

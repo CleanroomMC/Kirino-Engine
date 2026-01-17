@@ -13,7 +13,7 @@ public final class LowLevelDC implements IDrawCommand {
         MULTI_ELEMENTS_INDIRECT_UNIT // indirectly drawable (components of MULTI_ELEMENTS_INDIRECT)
     }
 
-    private final static ThreadSafeGenPool<LowLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.lowLevelDrawCommandPoolSize) {
+    private final static ThreadSafeGenPool<LowLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.getLowLevelDrawCommandPoolSize()) {
         @NonNull
         @Override
         public LowLevelDC newObject(@NonNull Handle<LowLevelDC> handle) {

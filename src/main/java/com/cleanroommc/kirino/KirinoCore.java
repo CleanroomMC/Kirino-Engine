@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.kirino.config.KirinoConfigHub;
+import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
@@ -64,8 +66,9 @@ public final class KirinoCore {
     public static final KirinoConfigHub KIRINO_CONFIG_HUB;
     private static CleanECSRuntime ECS_RUNTIME;
     public static KirinoEngine KIRINO_ENGINE;
-    private static boolean UNSUPPORTED;
+    private static boolean RENDER_UNSUPPORTED;
 
+    //<editor-fold desc="static init">
     static {
         MINECRAFT = Minecraft.getMinecraft();
 
@@ -80,16 +83,25 @@ public final class KirinoCore {
 
         LOGGER = LogManager.getLogger("Kirino Core");
         KIRINO_EVENT_BUS = new EventBus();
-        KIRINO_CONFIG_HUB = new KirinoConfigHub();
 
-        UNSUPPORTED = false;
+        Constructor<KirinoConfigHub> configHubCtor;
+        try {
+            configHubCtor = KirinoConfigHub.class.getDeclaredConstructor();
+            configHubCtor.setAccessible(true);
+            KIRINO_CONFIG_HUB = configHubCtor.newInstance();
+        } catch (Throwable e) {
+            throw new RuntimeException(e);
+        }
+
+        RENDER_UNSUPPORTED = false;
+    }
+    //</editor-fold>
+
+    public static boolean isRenderUnsupported() {
+        return RENDER_UNSUPPORTED;
     }
 
-    public static boolean isUnsupported() {
-        return UNSUPPORTED;
-    }
-
-    //<editor-fold desc="hooks">
+    //<editor-fold desc="vanilla source related patches">
     /**
      * Block update hook.
      *
@@ -102,15 +114,19 @@ public final class KirinoCore {
      * &emsp;com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyBlockUpdate(k1, l1, i2, oldState, newState);<br>
      * }<br>
      * </code>
+     *
+     * <br>
+     * <hr>
+     * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public static void RenderGlobal$notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
-        if (!KIRINO_CONFIG_HUB.enable) {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
-        if (!KIRINO_CONFIG_HUB.enableRenderDelegate) {
+        if (!KIRINO_CONFIG_HUB.isEnableRenderDelegate()) {
             return;
         }
-        if (UNSUPPORTED) {
+        if (RENDER_UNSUPPORTED) {
             return;
         }
 
@@ -129,28 +145,43 @@ public final class KirinoCore {
      * &emsp;com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyLightUpdate(pos.getX(), pos.getY(), pos.getZ());<br>
      * }<br>
      * </code>
+     *
+     * <br>
+     * <hr>
+     * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public static void RenderGlobal$notifyLightUpdate(int x, int y, int z) {
-        if (!KIRINO_CONFIG_HUB.enable) {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
-        if (!KIRINO_CONFIG_HUB.enableRenderDelegate) {
+        if (!KIRINO_CONFIG_HUB.isEnableRenderDelegate()) {
             return;
         }
-        if (UNSUPPORTED) {
+        if (RENDER_UNSUPPORTED) {
             return;
         }
 
         MethodHolder.getSceneViewState(KIRINO_ENGINE).scene.notifyLightUpdate(x, y, z);
     }
-    //</editor-fold>
 
+    /**
+     * This method is an alternative of our {@link #EntityRenderer$renderWorld(long)}.
+     * When the render delegate is disabled or the rendering is unsupported,
+     * vanilla {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)} will take place
+     * instead of our {@link #EntityRenderer$renderWorld(long)}, and this method will be injected
+     * to several places of vanilla {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)}
+     * to run the full engine cycle headlessly.
+     *
+     * <br>
+     * <p>Note: <b>must never be called manually by clients!</b></p>
+     */
     public static void runHeadlessly(FramePhase phase) {
         KIRINO_ENGINE.runHeadlessly(phase);
     }
 
     /**
-     * This method is a direct replacement of {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)}.
+     * This method is a direct replacement of vanilla {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)}
+     * <i>when the render delegate is enabled and the rendering is supported</i>.
      * Specifically, <code>anaglyph</code> logic is removed and all other functions remain the same.
      * <code>anaglyph</code> can be easily added back via post-processing by the way.
      *
@@ -160,7 +191,9 @@ public final class KirinoCore {
      * public void updateCameraAndRender(float partialTicks, long nanoTime)<br>
      * {<br>
      * &emsp;...<br>
-     * &emsp;if (com.cleanroommc.kirino.KirinoCore.isEnableRenderDelegate())<br>
+     * &emsp;if (com.cleanroommc.kirino.KirinoCore.KIRINO_CONFIG_HUB.isEnable()<br>
+     * &emsp;&emsp;&emsp;&& com.cleanroommc.kirino.KirinoCore.KIRINO_CONFIG_HUB.isEnableRenderDelegate()<br>
+     * &emsp;&emsp;&emsp;&& !com.cleanroommc.kirino.KirinoCore.isRenderUnsupported())<br>
      * &emsp;{<br>
      * &emsp;&emsp;com.cleanroommc.kirino.KirinoCore.EntityRenderer$renderWorld(System.nanoTime() + l);<br>
      * &emsp;}<br>
@@ -171,6 +204,10 @@ public final class KirinoCore {
      * &emsp;...<br>
      * }<br>
      * </code>
+     *
+     * <br>
+     * <hr>
+     * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
@@ -425,15 +462,16 @@ public final class KirinoCore {
         KIRINO_ENGINE.run(FramePhase.POST_UPDATE);
         KIRINO_ENGINE.run(FramePhase.RENDER_OVERLAY);
     }
+    //</editor-fold>
 
     public static void init() {
-        if (!KIRINO_CONFIG_HUB.enable) {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
 
         LOGGER.info("KirinoCore Initialization Stage");
 
-        //<editor-fold desc="gl version check">
+        //<editor-fold desc="gl version fetch">
         String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
         int majorGLVersion = -1;
         int minorGLVersion = -1;
@@ -454,15 +492,14 @@ public final class KirinoCore {
         LOGGER.info("OpenGL version: {}", rawGLVersion);
 
         if (rawGLVersion.isEmpty() || majorGLVersion == -1 || minorGLVersion == -1) {
-            UNSUPPORTED = true;
-            LOGGER.warn("Failed to parse the OpenGL version. Marking \"UNSUPPORTED\"=true.");
-        }
-
-        if (!(majorGLVersion == 4 && minorGLVersion == 6)) {
-            UNSUPPORTED = true;
-            LOGGER.warn("OpenGL 4.6 not supported. Marking \"UNSUPPORTED\"=true.");
+            throw new RuntimeException("Failed to parse the OpenGL version.");
         }
         //</editor-fold>
+
+        if (!(majorGLVersion == 4 && minorGLVersion == 6)) {
+            RENDER_UNSUPPORTED = true;
+            LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
+        }
 
         KHRDebug.enable(LOGGER, List.of(
                 new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
@@ -536,7 +573,7 @@ public final class KirinoCore {
                     boolean.class);
             Preconditions.checkNotNull(ctor);
 
-            KIRINO_ENGINE = (KirinoEngine) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, KIRINO_CONFIG_HUB.enableHDR, KIRINO_CONFIG_HUB.enablePostProcessing);
+            KIRINO_ENGINE = (KirinoEngine) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, KIRINO_CONFIG_HUB.isEnableHDR(), KIRINO_CONFIG_HUB.isEnablePostProcessing());
         } catch (Throwable throwable) {
             throw new RuntimeException("Kirino Engine failed to initialize.", throwable);
         }
@@ -551,7 +588,7 @@ public final class KirinoCore {
     }
 
     public static void postInit() {
-        if (!KIRINO_CONFIG_HUB.enable) {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
 
@@ -562,7 +599,7 @@ public final class KirinoCore {
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
-        if (UNSUPPORTED) {
+        if (RENDER_UNSUPPORTED) {
             KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
         } else {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
@@ -606,6 +643,7 @@ public final class KirinoCore {
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
     }
 
+    // todo: abstraction
     @SubscribeEvent
     public static void onPostProcessingRegister(PostProcessingRegistrationEvent event) {
 //        event.register(

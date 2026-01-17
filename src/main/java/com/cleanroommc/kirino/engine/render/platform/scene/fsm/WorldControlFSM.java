@@ -36,7 +36,7 @@ public class WorldControlFSM {
 
     public void next() {
         if (fsm.state() == State.NEW_WORLD_INITIAL_WAIT) {
-            if (newWorldFrameCounter++ >= KirinoCore.KIRINO_CONFIG_HUB.worldInitFrames) {
+            if (newWorldFrameCounter++ >= KirinoCore.KIRINO_CONFIG_HUB.getWorldInitFrames()) {
                 newWorldFrameCounter = 0; // pass
             } else {
                 return;

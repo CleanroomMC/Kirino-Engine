@@ -279,7 +279,7 @@ public class MinecraftScene extends CleanWorld {
             if (Math.sqrt(
                     (camPos.x - oldCamX) * (camPos.x - oldCamX) +
                             (camPos.y - oldCamY) * (camPos.y - oldCamY) +
-                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCore.KIRINO_CONFIG_HUB.chunkUpdateDisplacement) {
+                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCore.KIRINO_CONFIG_HUB.getChunkUpdateDisplacement()) {
                 oldCamX = camPos.x;
                 oldCamY = camPos.y;
                 oldCamZ = camPos.z;

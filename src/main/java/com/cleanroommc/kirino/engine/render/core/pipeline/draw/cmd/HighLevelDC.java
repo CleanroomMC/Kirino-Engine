@@ -12,7 +12,7 @@ public final class HighLevelDC implements IDrawCommand {
         SCENE_SUBMITTED
     }
 
-    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.highLevelDrawCommandPoolSize) {
+    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.getHighLevelDrawCommandPoolSize()) {
         @NonNull
         @Override
         public HighLevelDC newObject(@NonNull Handle<HighLevelDC> handle) {

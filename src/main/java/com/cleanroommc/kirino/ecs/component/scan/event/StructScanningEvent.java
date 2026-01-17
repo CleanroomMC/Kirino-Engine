@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ecs.component.scan.event;
 
 import net.minecraftforge.fml.common.eventhandler.Event;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
 public final class StructScanningEvent extends Event {
     private final List<String> scanPackageNames = new ArrayList<>();
 
-    public void register(String packageName) {
+    public void register(@NonNull String packageName) {
         scanPackageNames.add(packageName);
     }
 }

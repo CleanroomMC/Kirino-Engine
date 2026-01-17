@@ -203,6 +203,9 @@ public class KirinoEngine {
                 new AnalyticalWorldInstaller());
     }
 
+    /**
+     * <p>Note: <b>must never be called manually by clients!</b></p>
+     */
     public void run(@NonNull FramePhase phase) {
         headlessWorld.run(phase);
         graphicsWorld.run(phase);
@@ -212,6 +215,9 @@ public class KirinoEngine {
         }
     }
 
+    /**
+     * <p>Note: <b>must never be called manually by clients!</b></p>
+     */
     public void runHeadlessly(@NonNull FramePhase phase) {
         headlessWorld.run(phase);
 
