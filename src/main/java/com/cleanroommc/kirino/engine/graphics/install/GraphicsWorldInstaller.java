@@ -44,7 +44,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
     private boolean init = false;
 
     private void initBootstrapResources(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.resourceStorage;
+        ResourceStorage storage = context.storage;
 
         FrameFinalizer frameFinalizer = new FrameFinalizer(
                 context.logger(),
@@ -125,7 +125,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
     }
 
     private void initGraphicsRuntimeServices(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.resourceStorage;
+        ResourceStorage storage = context.storage;
 
         GLStateBackup stateBackup = new GLStateBackup();
         Renderer renderer = new Renderer(storage, storage.get(context.bootstrapResources.dummyVao));
@@ -172,13 +172,13 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
     }
 
     private void initMinecraftAssetProviders(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.resourceStorage;
+        ResourceStorage storage = context.storage;
 
         storage.put(context.minecraftAssetProviders.blockMeshGenerator, new BlockMeshGenerator(Minecraft.getMinecraft()));
     }
 
     private void initSceneViewState(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.resourceStorage;
+        ResourceStorage storage = context.storage;
 
         MeshletGpuRegistry meshletGpuRegistry = new MeshletGpuRegistry();
         meshletGpuRegistry.lateInit();
@@ -187,7 +187,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
     }
 
     private void initRenderExtensions(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.resourceStorage;
+        ResourceStorage storage = context.storage;
         PostProcessingPass pass = context.ext().postProcessingPass;
 
         pass.lock();
@@ -247,7 +247,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         initSceneViewState(glWorldView);
         initRenderExtensions(glWorldView);
 
-        glWorldView.sceneViewState.scene.computeShaderProgram = glWorldView.resourceStorage
+        glWorldView.sceneViewState.scene.computeShaderProgram = glWorldView.storage
                 .get(glWorldView.graphicsRuntimeServices.shaderRegistry)
                 .newShaderProgram("forge:shaders/meshlets2vertices.comp");
 

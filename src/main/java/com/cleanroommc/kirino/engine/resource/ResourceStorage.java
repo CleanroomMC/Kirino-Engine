@@ -8,6 +8,19 @@ import org.jspecify.annotations.NonNull;
 public final class ResourceStorage {
     private final Int2ObjectMap<Object> storage = new Int2ObjectOpenHashMap<>();
 
+    private ResourceStorage() {
+    }
+
+    private boolean sealed = false;
+
+    public boolean isSealed() {
+        return sealed;
+    }
+
+    private void seal() {
+        sealed = true;
+    }
+
     public <T> boolean has(ResourceSlot<T> slot) {
         return storage.containsKey(slot.id());
     }
@@ -23,6 +36,8 @@ public final class ResourceStorage {
     }
 
     public <T> void put(@NonNull ResourceSlot<T> slot, @NonNull T resource) {
+        Preconditions.checkState(!sealed,
+                "The storage is sealed. You are no longer allowed to make changes.");
         Preconditions.checkNotNull(slot);
         Preconditions.checkNotNull(resource);
 
@@ -30,6 +45,8 @@ public final class ResourceStorage {
     }
 
     public void remove(@NonNull ResourceSlot<?> slot) {
+        Preconditions.checkState(!sealed,
+                "The storage is sealed. You are no longer allowed to make changes.");
         Preconditions.checkNotNull(slot);
 
         storage.remove(slot.id());

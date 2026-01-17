@@ -35,7 +35,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     private final EventBus eventBus;
     private final Logger logger;
 
-    public final ResourceStorage resourceStorage;
+    public final ResourceStorage storage;
 
     public final BootstrapResources bootstrapResources;
     public final GraphicsRuntimeServices graphicsRuntimeServices;
@@ -53,7 +53,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
             RenderExtensions extensions,
             EventBus eventBus,
             Logger logger,
-            ResourceStorage resourceStorage,
+            ResourceStorage storage,
             BootstrapResources bootstrapResources,
             GraphicsRuntimeServices graphicsRuntimeServices,
             MinecraftIntegration minecraftIntegration,
@@ -66,7 +66,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         this.eventBus = eventBus;
         this.logger = logger;
 
-        this.resourceStorage = resourceStorage;
+        this.storage = storage;
         this.bootstrapResources = bootstrapResources;
         this.graphicsRuntimeServices = graphicsRuntimeServices;
         this.minecraftIntegration = minecraftIntegration;
@@ -115,12 +115,12 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         switch (phase) {
             case PRE_UPDATE -> {
                 // only read states once to prevent huge amount of pipeline stalls
-                GLStateBackup stateBackup = resourceStorage.get(graphicsRuntimeServices.stateBackup);
+                GLStateBackup stateBackup = storage.get(graphicsRuntimeServices.stateBackup);
                 if (!stateBackup.isStored()) {
                     stateBackup.storeStates();
                 }
 
-                FrameFinalizer frameFinalizer = resourceStorage.get(bootstrapResources.frameFinalizer);
+                FrameFinalizer frameFinalizer = storage.get(bootstrapResources.frameFinalizer);
                 frameFinalizer.updateResolution();
 
                 // current render target: main framebuffer
@@ -128,15 +128,15 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
             }
             case UPDATE -> {
-                resourceStorage.get(graphicsRuntimeServices.graphicResourceManager).runStaging();
+                storage.get(graphicsRuntimeServices.graphicResourceManager).runStaging();
                 sceneViewState.scene.tryUpdateWorld(Minecraft.getMinecraft().world);
                 sceneViewState.scene.update();
             }
             case POST_UPDATE -> {
-                GLStateBackup stateBackup = resourceStorage.get(graphicsRuntimeServices.stateBackup);
-                FrameFinalizer frameFinalizer = resourceStorage.get(bootstrapResources.frameFinalizer);
+                GLStateBackup stateBackup = storage.get(graphicsRuntimeServices.stateBackup);
+                FrameFinalizer frameFinalizer = storage.get(bootstrapResources.frameFinalizer);
 
-                frameFinalizer.finalizeFramebuffer(resourceStorage);
+                frameFinalizer.finalizeFramebuffer(storage);
 
                 // current render target: minecraft framebuffer
                 frameFinalizer.bindMinecraftFramebuffer(true);
@@ -167,7 +167,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 glStateBackup.storeStates();
                 int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
 
-                rs().terrainGpuPass.render(resourceStorage, sceneViewState.camera);
+                rs().terrainGpuPass.render(storage, sceneViewState.camera);
 //                rs().chunkCpuPass.render(sceneViewState.camera);
 
                 glStateBackup.restoreStates();
@@ -180,7 +180,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 glStateBackup.storeStates();
                 int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
 
-                rs().gizmosPass.render(resourceStorage, sceneViewState.camera);
+                rs().gizmosPass.render(storage, sceneViewState.camera);
 
                 glStateBackup.restoreStates();
                 GL30.glBindVertexArray(0);
@@ -188,7 +188,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
             }
             case RENDER_OVERLAY -> {
-                InGameDebugHUDManager debugHudManager = resourceStorage.get(graphicsRuntimeServices.debugHudManager);
+                InGameDebugHUDManager debugHudManager = storage.get(graphicsRuntimeServices.debugHudManager);
                 debugHudManager.updateAndRenderIfNeeded();
             }
         }

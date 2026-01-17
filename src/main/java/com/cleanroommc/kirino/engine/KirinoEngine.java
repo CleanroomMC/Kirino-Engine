@@ -35,25 +35,38 @@ import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
 import com.cleanroommc.kirino.gl.vao.VAO;
+import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
 import java.util.concurrent.ForkJoinPool;
 
 public class KirinoEngine {
-    public final BootstrapResources bootstrapResources;
-    public final GraphicsRuntimeServices graphicsRuntimeServices;
-    public final SceneViewState sceneViewState;
-    public final MinecraftIntegration minecraftIntegration;
-    public final MinecraftAssetProviders minecraftAssetProviders;
-    public final ShaderIntrospection shaderIntrospection;
-    public final RenderStructure renderStructure;
-    public final RenderExtensions renderExtensions;
+    private final BootstrapResources bootstrapResources;
+    private final GraphicsRuntimeServices graphicsRuntimeServices;
+    private final SceneViewState sceneViewState;
+    private final MinecraftIntegration minecraftIntegration;
+    private final MinecraftAssetProviders minecraftAssetProviders;
+    private final ShaderIntrospection shaderIntrospection;
+    private final RenderStructure renderStructure;
+    private final RenderExtensions renderExtensions;
 
-    public final ResourceStorage resourceStorage;
+    private final ResourceStorage storage;
 
-    private final WorldRunner<Graphics> glWorld;
+    @Nullable
+    public ResourceStorage getStorage() {
+        if (storage.isSealed()) {
+            return storage;
+        } else {
+            return null;
+        }
+    }
+
+    private final WorldRunner<Graphics> graphicsWorld;
     private final WorldRunner<Headless> headlessWorld;
 
     /**
@@ -66,8 +79,8 @@ public class KirinoEngine {
             boolean enableHDR,
             boolean enablePostProcessing) {
 
-        ResourceLayout resourceLayout = new ResourceLayout();
-        resourceStorage = new ResourceStorage();
+        ResourceLayout resourceLayout = MethodHolder.constructResourceLayout();
+        storage = MethodHolder.constructResourceStorage();
 
         ResourceSlot<GLStateBackup> stateBackup = resourceLayout.slot(GLStateBackup.class);
         ResourceSlot<Renderer> renderer = resourceLayout.slot(Renderer.class);
@@ -108,7 +121,7 @@ public class KirinoEngine {
 
         MinecraftCamera camera = new MinecraftCamera();
         MinecraftScene scene = new MinecraftScene(
-                resourceStorage,
+                storage,
                 ecsRuntime.entityManager,
                 ecsRuntime.jobScheduler,
                 blockMeshGenerator,
@@ -163,14 +176,14 @@ public class KirinoEngine {
                 upscalingPassProgram,
                 downscalingPassProgram);
 
-        glWorld = WorldRunner.of(
+        graphicsWorld = WorldRunner.of(
                 new GraphicsWorldViewImpl(
                         ecsRuntime,
                         renderStructure,
                         renderExtensions,
                         eventBus,
                         logger,
-                        resourceStorage,
+                        storage,
                         bootstrapResources,
                         graphicsRuntimeServices,
                         minecraftIntegration,
@@ -192,10 +205,67 @@ public class KirinoEngine {
 
     public void run(@NonNull FramePhase phase) {
         headlessWorld.run(phase);
-        glWorld.run(phase);
+        graphicsWorld.run(phase);
+
+        if (phase == FramePhase.PREPARE && !storage.isSealed()) {
+            MethodHolder.sealResourceStorage(storage);
+        }
     }
 
     public void runHeadlessly(@NonNull FramePhase phase) {
         headlessWorld.run(phase);
+
+        if (phase == FramePhase.PREPARE && !storage.isSealed()) {
+            MethodHolder.sealResourceStorage(storage);
+        }
+    }
+
+    private static class MethodHolder {
+        static final Delegate DELEGATE;
+
+        static {
+            DELEGATE = new Delegate(
+                    ReflectionUtils.getConstructor(ResourceLayout.class),
+                    ReflectionUtils.getConstructor(ResourceStorage.class),
+                    ReflectionUtils.getMethod(ResourceStorage.class, "seal", void.class));
+
+            Preconditions.checkNotNull(DELEGATE.resourceLayoutCtor);
+            Preconditions.checkNotNull(DELEGATE.resourceStorageCtor);
+            Preconditions.checkNotNull(DELEGATE.resourceStorageSeal);
+        }
+
+        static ResourceLayout constructResourceLayout() {
+            ResourceLayout result;
+            try {
+                result = (ResourceLayout) DELEGATE.resourceLayoutCtor.invokeExact();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
+        static ResourceStorage constructResourceStorage() {
+            ResourceStorage result;
+            try {
+                result = (ResourceStorage) DELEGATE.resourceStorageCtor.invokeExact();
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
+        static void sealResourceStorage(ResourceStorage storage) {
+            try {
+                DELEGATE.resourceStorageSeal.invokeExact(storage);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(
+                MethodHandle resourceLayoutCtor,
+                MethodHandle resourceStorageCtor,
+                MethodHandle resourceStorageSeal) {
+        }
     }
 }

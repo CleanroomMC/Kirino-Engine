@@ -15,10 +15,14 @@ public class RenderStatsFrame implements IDebugDataService {
 
     @Override
     public boolean isActive() {
-        if (!KirinoCore.KIRINO_ENGINE.resourceStorage.has(hud)) {
+        if (KirinoCore.KIRINO_ENGINE.getStorage() == null) {
             return false;
         }
-        return KirinoCore.KIRINO_ENGINE.resourceStorage.get(hud).isEnabled();
+        if (!KirinoCore.KIRINO_ENGINE.getStorage().has(hud)) {
+            return false;
+        }
+
+        return KirinoCore.KIRINO_ENGINE.getStorage().get(hud).isEnabled();
     }
 
     public void setDrawCalls(int drawCalls) {
