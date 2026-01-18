@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.config.KirinoConfigHub;
-import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
@@ -21,7 +20,6 @@ import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
-import com.cleanroommc.kirino.gl.GLTest;
 import com.cleanroommc.kirino.gl.debug.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -52,7 +50,6 @@ import org.lwjgl.util.glu.Project;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class KirinoCore {
@@ -213,7 +210,10 @@ public final class KirinoCore {
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
 
-        KIRINO_ENGINE.run(FramePhase.PREPARE);
+        if (KIRINO_ENGINE.nextExpectedPhase() == FramePhase.PREPARE) {
+            KIRINO_ENGINE.run(FramePhase.PREPARE);
+        }
+
         KIRINO_ENGINE.run(FramePhase.PRE_UPDATE);
 
         //<editor-fold desc="vanilla logic">
@@ -501,12 +501,6 @@ public final class KirinoCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
-        KHRDebug.enable(LOGGER, List.of(
-                new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
-                new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
-
-        GLTest.test();
-
         //<editor-fold desc="event listeners">
         // register default event listeners
         try {
@@ -599,10 +593,10 @@ public final class KirinoCore {
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
-        if (RENDER_UNSUPPORTED) {
-            KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
-        } else {
+        if (KIRINO_CONFIG_HUB.isEnableRenderDelegate() && !RENDER_UNSUPPORTED) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
+        } else {
+            KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
         }
 
         stopWatch.stop();

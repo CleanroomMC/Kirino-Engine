@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.graphics.install;
 
+import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
@@ -22,6 +23,7 @@ import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.view.EBOView;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
+import com.cleanroommc.kirino.gl.debug.*;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
@@ -38,6 +40,7 @@ import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
@@ -240,6 +243,10 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         if (!(context instanceof GraphicsWorldViewImpl glWorldView)) {
             throw new RuntimeException("WorldContext is not an instance of GLWorldViewImpl.");
         }
+
+        KHRDebug.enable(KirinoCore.LOGGER, List.of(
+                new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
+                new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
 
         initBootstrapResources(glWorldView);
         initGraphicsRuntimeServices(glWorldView);

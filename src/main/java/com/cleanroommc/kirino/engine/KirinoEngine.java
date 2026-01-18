@@ -203,10 +203,32 @@ public class KirinoEngine {
                 new AnalyticalWorldInstaller());
     }
 
+    private boolean modeChosen = false;
+    private boolean headlessMode = false;
+
+    private final FramePhaseFSM framePhaseFsm = new FramePhaseFSM();
+
+    public FramePhase nextExpectedPhase() {
+        return framePhaseFsm.getState();
+    }
+
     /**
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public void run(@NonNull FramePhase phase) {
+        Preconditions.checkState(!modeChosen || !headlessMode,
+                "The engine was running headlessly and it's not allowed to switch mode during runtime.");
+
+        if (!modeChosen) {
+            modeChosen = true;
+            headlessMode = false;
+        }
+
+        Preconditions.checkState(framePhaseFsm.getState() == phase,
+                "Expect to run \"%s\" but got \"%s\".", framePhaseFsm.getState(), phase);
+
+        framePhaseFsm.next();
+
         headlessWorld.run(phase);
         graphicsWorld.run(phase);
 
@@ -219,6 +241,19 @@ public class KirinoEngine {
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public void runHeadlessly(@NonNull FramePhase phase) {
+        Preconditions.checkState(!modeChosen || headlessMode,
+                "The engine wasn't running headlessly and it's not allowed to switch mode during runtime.");
+
+        if (!modeChosen) {
+            modeChosen = true;
+            headlessMode = true;
+        }
+
+        Preconditions.checkState(framePhaseFsm.getState() == phase,
+                "Expect to run \"%s\" but got \"%s\".", framePhaseFsm.getState(), phase);
+
+        framePhaseFsm.next();
+
         headlessWorld.run(phase);
 
         if (phase == FramePhase.PREPARE && !storage.isSealed()) {
