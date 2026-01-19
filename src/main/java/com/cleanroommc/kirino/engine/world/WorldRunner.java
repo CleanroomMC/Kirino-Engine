@@ -16,6 +16,7 @@ public final class WorldRunner<W extends WorldKind> {
         this.modules = modules;
     }
 
+    @NonNull
     @SafeVarargs
     public static <W extends WorldKind> WorldRunner<W> of(
             @NonNull WorldContext<W> context,

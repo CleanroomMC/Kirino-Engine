@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.analysis.install;
 
 import com.cleanroommc.kirino.engine.FramePhase;
+import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.analysis.view.AnalyticalWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
@@ -62,7 +63,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
 
     @Override
     public void install(@NonNull WorldContext<Headless> context) {
-        context.on(FramePhase.PREPARE, this::prepare);
+        context.on(FramePhase.PREPARE, FramePhaseTiming.BEFORE, this::prepare);
     }
 
     private static class MethodHolder {

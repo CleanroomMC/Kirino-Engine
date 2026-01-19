@@ -2,17 +2,19 @@ package com.cleanroommc.kirino.engine.analysis.view;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
+import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.RenderExtensions;
 import com.cleanroommc.kirino.engine.render.core.RenderStructure;
 import com.cleanroommc.kirino.engine.render.core.ShaderIntrospection;
 import com.cleanroommc.kirino.engine.world.context.AnalyticalWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Headless;
+import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -25,7 +27,7 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
 
     public final ShaderIntrospection shaderIntrospection;
 
-    private final Map<FramePhase, Consumer<WorldContext<Headless>>> callbacks = new HashMap<>();
+    private final Map<FramePhase, Map<FramePhaseTiming, Consumer<WorldContext<Headless>>>> callbacks = new Object2ObjectOpenHashMap<>();
 
     public AnalyticalWorldViewImpl(
             CleanECSRuntime ecs,
@@ -75,15 +77,29 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
 
     @Override
     public void run(@NonNull FramePhase phase) {
-        Consumer<WorldContext<Headless>> consumer = callbacks.get(phase);
-        if (consumer != null) {
-            consumer.accept(this);
+        Map<FramePhaseTiming, Consumer<WorldContext<Headless>>> map = callbacks.get(phase);
+        if (map != null) {
+            Consumer<WorldContext<Headless>> consumer = map.get(FramePhaseTiming.BEFORE);
+            if (consumer != null) {
+                consumer.accept(this);
+            }
         }
 
+        if (map != null) {
+            Consumer<WorldContext<Headless>> consumer = map.get(FramePhaseTiming.AFTER);
+            if (consumer != null) {
+                consumer.accept(this);
+            }
+        }
     }
 
     @Override
-    public void on(@NonNull FramePhase phase, @NonNull Consumer<WorldContext<Headless>> consumer) {
-        callbacks.put(phase, consumer);
+    public void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<Headless>> consumer) {
+        Preconditions.checkNotNull(phase);
+        Preconditions.checkNotNull(timing);
+        Preconditions.checkNotNull(consumer);
+
+        Map<FramePhaseTiming, Consumer<WorldContext<Headless>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
+        map.put(timing, consumer);
     }
 }

@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.world.context;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
+import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.RenderExtensions;
 import com.cleanroommc.kirino.engine.render.core.RenderStructure;
 import com.cleanroommc.kirino.engine.world.type.WorldKind;
@@ -17,6 +18,10 @@ public interface WorldContext<W extends WorldKind> {
     @NonNull RenderExtensions ext();
     @NonNull Logger logger();
     @NonNull EventBus bus();
+
+    /**
+     * <p>Note: <b>must never be called manually by clients!</b></p>
+     */
     void run(@NonNull FramePhase phase);
-    void on(@NonNull FramePhase phase, @NonNull Consumer<WorldContext<W>> consumer);
+    void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<W>> consumer);
 }

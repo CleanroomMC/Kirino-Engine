@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.graphics.install;
 
 import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.FramePhase;
+import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
@@ -263,6 +264,6 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
     @Override
     public void install(@NonNull WorldContext<Graphics> context) {
-        context.on(FramePhase.PREPARE, this::prepare);
+        context.on(FramePhase.PREPARE, FramePhaseTiming.BEFORE, this::prepare);
     }
 }

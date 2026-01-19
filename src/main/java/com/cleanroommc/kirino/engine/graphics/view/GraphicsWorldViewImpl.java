@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.graphics.view;
 
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
+import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.*;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
 import com.cleanroommc.kirino.engine.render.core.pipeline.GLStateBackup;
@@ -15,6 +16,8 @@ import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
+import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
@@ -24,7 +27,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -45,7 +47,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     public final ShaderIntrospection shaderIntrospection;
 
-    private final Map<FramePhase, Consumer<WorldContext<Graphics>>> callbacks = new HashMap<>();
+    private final Map<FramePhase, Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>>> callbacks = new Object2ObjectOpenHashMap<>();
 
     public GraphicsWorldViewImpl(
             CleanECSRuntime ecs,
@@ -107,9 +109,12 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     @Override
     public void run(@NonNull FramePhase phase) {
-        Consumer<WorldContext<Graphics>> consumer = callbacks.get(phase);
-        if (consumer != null) {
-            consumer.accept(this);
+        Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>> map = callbacks.get(phase);
+        if (map != null) {
+            Consumer<WorldContext<Graphics>> consumer = map.get(FramePhaseTiming.BEFORE);
+            if (consumer != null) {
+                consumer.accept(this);
+            }
         }
 
         switch (phase) {
@@ -192,6 +197,13 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 debugHudManager.updateAndRenderIfNeeded();
             }
         }
+
+        if (map != null) {
+            Consumer<WorldContext<Graphics>> consumer = map.get(FramePhaseTiming.AFTER);
+            if (consumer != null) {
+                consumer.accept(this);
+            }
+        }
     }
 
     // test
@@ -201,7 +213,12 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     public static boolean debug = false;
 
     @Override
-    public void on(@NonNull FramePhase phase, @NonNull Consumer<WorldContext<Graphics>> consumer) {
-        callbacks.put(phase, consumer);
+    public void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<Graphics>> consumer) {
+        Preconditions.checkNotNull(phase);
+        Preconditions.checkNotNull(timing);
+        Preconditions.checkNotNull(consumer);
+
+        Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
+        map.put(timing, consumer);
     }
 }

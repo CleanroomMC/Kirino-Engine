@@ -27,7 +27,9 @@ import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.world.ModuleInstaller;
 import com.cleanroommc.kirino.engine.world.WorldRunner;
+import com.cleanroommc.kirino.engine.world.event.ModuleInstallerRegistrationEvent;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.engine.world.type.Headless;
 import com.cleanroommc.kirino.engine.analysis.view.AnalyticalWorldViewImpl;
@@ -43,6 +45,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 public class KirinoEngine {
@@ -72,6 +77,7 @@ public class KirinoEngine {
     /**
      * Side-effect free.
      */
+    @SuppressWarnings("unchecked")
     private KirinoEngine(
             EventBus eventBus,
             Logger logger,
@@ -176,6 +182,21 @@ public class KirinoEngine {
                 upscalingPassProgram,
                 downscalingPassProgram);
 
+        ModuleInstallerRegistrationEvent event = new ModuleInstallerRegistrationEvent();
+        eventBus.post(event);
+        List<ModuleInstaller<Headless>> headlessInstallers = MethodHolder.getHeadlessInstallers(event);
+        List<ModuleInstaller<Graphics>> graphicsInstallers = MethodHolder.getGraphicsInstallers(event);
+
+        headlessInstallers.addFirst(new AnalyticalWorldInstaller());
+        graphicsInstallers.addFirst(new GraphicsWorldInstaller());
+
+        for (ModuleInstaller<Headless> installer : headlessInstallers) {
+            logger.info("Registered headless module installer \"" + installer.getClass().getName() + "\".");
+        }
+        for (ModuleInstaller<Graphics> installer : graphicsInstallers) {
+            logger.info("Registered graphics module installer \"" + installer.getClass().getName() + "\".");
+        }
+
         graphicsWorld = WorldRunner.of(
                 new GraphicsWorldViewImpl(
                         ecsRuntime,
@@ -190,7 +211,7 @@ public class KirinoEngine {
                         minecraftAssetProviders,
                         sceneViewState,
                         shaderIntrospection),
-                new GraphicsWorldInstaller());
+                graphicsInstallers.toArray(ModuleInstaller[]::new));
 
         headlessWorld = WorldRunner.of(
                 new AnalyticalWorldViewImpl(
@@ -200,7 +221,7 @@ public class KirinoEngine {
                         eventBus,
                         logger,
                         shaderIntrospection),
-                new AnalyticalWorldInstaller());
+                headlessInstallers.toArray(ModuleInstaller[]::new));
     }
 
     private boolean modeChosen = false;
@@ -268,11 +289,15 @@ public class KirinoEngine {
             DELEGATE = new Delegate(
                     ReflectionUtils.getConstructor(ResourceLayout.class),
                     ReflectionUtils.getConstructor(ResourceStorage.class),
-                    ReflectionUtils.getMethod(ResourceStorage.class, "seal", void.class));
+                    ReflectionUtils.getMethod(ResourceStorage.class, "seal", void.class),
+                    ReflectionUtils.getFieldGetter(ModuleInstallerRegistrationEvent.class, "headlessInstallers", List.class),
+                    ReflectionUtils.getFieldGetter(ModuleInstallerRegistrationEvent.class, "graphicsInstallers", List.class));
 
             Preconditions.checkNotNull(DELEGATE.resourceLayoutCtor);
             Preconditions.checkNotNull(DELEGATE.resourceStorageCtor);
             Preconditions.checkNotNull(DELEGATE.resourceStorageSeal);
+            Preconditions.checkNotNull(DELEGATE.headlessInstallersGetter);
+            Preconditions.checkNotNull(DELEGATE.graphicsInstallersGetter);
         }
 
         static ResourceLayout constructResourceLayout() {
@@ -303,10 +328,34 @@ public class KirinoEngine {
             }
         }
 
+        @SuppressWarnings("unchecked")
+        static List<ModuleInstaller<Headless>> getHeadlessInstallers(ModuleInstallerRegistrationEvent event) {
+            List<ModuleInstaller<Headless>> result;
+            try {
+                result = (List<ModuleInstaller<Headless>>) DELEGATE.headlessInstallersGetter.invokeExact(event);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
+        @SuppressWarnings("unchecked")
+        static List<ModuleInstaller<Graphics>> getGraphicsInstallers(ModuleInstallerRegistrationEvent event) {
+            List<ModuleInstaller<Graphics>> result;
+            try {
+                result = (List<ModuleInstaller<Graphics>>) DELEGATE.graphicsInstallersGetter.invokeExact(event);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
         record Delegate(
                 MethodHandle resourceLayoutCtor,
                 MethodHandle resourceStorageCtor,
-                MethodHandle resourceStorageSeal) {
+                MethodHandle resourceStorageSeal,
+                MethodHandle headlessInstallersGetter,
+                MethodHandle graphicsInstallersGetter) {
         }
     }
 }
