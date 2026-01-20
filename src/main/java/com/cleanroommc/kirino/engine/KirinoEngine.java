@@ -45,8 +45,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
@@ -64,7 +62,7 @@ public class KirinoEngine {
 
     @Nullable
     public ResourceStorage getStorage() {
-        if (storage.isSealed()) {
+        if (storage.isStorageSealed()) {
             return storage;
         } else {
             return null;
@@ -211,6 +209,7 @@ public class KirinoEngine {
                         minecraftAssetProviders,
                         sceneViewState,
                         shaderIntrospection),
+                resourceLayout,
                 graphicsInstallers.toArray(ModuleInstaller[]::new));
 
         headlessWorld = WorldRunner.of(
@@ -221,6 +220,7 @@ public class KirinoEngine {
                         eventBus,
                         logger,
                         shaderIntrospection),
+                resourceLayout,
                 headlessInstallers.toArray(ModuleInstaller[]::new));
     }
 
@@ -253,7 +253,7 @@ public class KirinoEngine {
         headlessWorld.run(phase);
         graphicsWorld.run(phase);
 
-        if (phase == FramePhase.PREPARE && !storage.isSealed()) {
+        if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);
         }
     }
@@ -277,7 +277,7 @@ public class KirinoEngine {
 
         headlessWorld.run(phase);
 
-        if (phase == FramePhase.PREPARE && !storage.isSealed()) {
+        if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);
         }
     }

@@ -2,7 +2,6 @@ package com.cleanroommc.kirino.engine.analysis.install;
 
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
-import com.cleanroommc.kirino.engine.analysis.view.AnalyticalWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
@@ -10,8 +9,10 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcess
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
+import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.world.ModuleInstaller;
+import com.cleanroommc.kirino.engine.world.context.AnalyticalWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Headless;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -29,7 +30,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
 
     private boolean init = false;
 
-    private void initRenderExtensions(AnalyticalWorldViewImpl context) {
+    private void initRenderExtensions(AnalyticalWorldView context) {
         ShaderRegistrationEvent shaderRegistrationEvent = new ShaderRegistrationEvent();
         context.bus().post(shaderRegistrationEvent);
         context.ext().shaderRLs.clear();
@@ -52,7 +53,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
         if (init) {
             return;
         }
-        if (!(context instanceof AnalyticalWorldViewImpl analyticalWorldView)) {
+        if (!(context instanceof AnalyticalWorldView analyticalWorldView)) {
             throw new RuntimeException("WorldContext is not an instance of AnalyticalWorldViewImpl.");
         }
 
@@ -62,7 +63,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
     }
 
     @Override
-    public void install(@NonNull WorldContext<Headless> context) {
+    public void install(@NonNull WorldContext<Headless> context, @NonNull ResourceLayout layout) {
         context.on(FramePhase.PREPARE, FramePhaseTiming.BEFORE, this::prepare);
     }
 

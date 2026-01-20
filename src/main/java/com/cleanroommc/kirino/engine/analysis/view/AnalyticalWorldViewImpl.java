@@ -15,6 +15,8 @@ import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -24,10 +26,11 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
     private final RenderExtensions extensions;
     private final EventBus eventBus;
     private final Logger logger;
+    private final ShaderIntrospection shaderIntrospection;
 
-    public final ShaderIntrospection shaderIntrospection;
-
-    private final Map<FramePhase, Map<FramePhaseTiming, Consumer<WorldContext<Headless>>>> callbacks = new Object2ObjectOpenHashMap<>();
+    private final Map<FramePhase,
+            Map<FramePhaseTiming, List<Consumer<WorldContext<Headless>>>>> callbacks =
+            new Object2ObjectOpenHashMap<>();
 
     public AnalyticalWorldViewImpl(
             CleanECSRuntime ecs,
@@ -41,7 +44,6 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
         this.extensions = extensions;
         this.eventBus = eventBus;
         this.logger = logger;
-
         this.shaderIntrospection = shaderIntrospection;
     }
 
@@ -75,20 +77,30 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
         return eventBus;
     }
 
+    @NonNull
+    @Override
+    public ShaderIntrospection shaderIntrospection() {
+        return shaderIntrospection;
+    }
+
     @Override
     public void run(@NonNull FramePhase phase) {
-        Map<FramePhaseTiming, Consumer<WorldContext<Headless>>> map = callbacks.get(phase);
+        Map<FramePhaseTiming, List<Consumer<WorldContext<Headless>>>> map = callbacks.get(phase);
         if (map != null) {
-            Consumer<WorldContext<Headless>> consumer = map.get(FramePhaseTiming.BEFORE);
-            if (consumer != null) {
-                consumer.accept(this);
+            List<Consumer<WorldContext<Headless>>> list = map.get(FramePhaseTiming.BEFORE);
+            if (list != null) {
+                for (Consumer<WorldContext<Headless>> consumer : list) {
+                    consumer.accept(this);
+                }
             }
         }
 
         if (map != null) {
-            Consumer<WorldContext<Headless>> consumer = map.get(FramePhaseTiming.AFTER);
-            if (consumer != null) {
-                consumer.accept(this);
+            List<Consumer<WorldContext<Headless>>> list = map.get(FramePhaseTiming.AFTER);
+            if (list != null) {
+                for (Consumer<WorldContext<Headless>> consumer : list) {
+                    consumer.accept(this);
+                }
             }
         }
     }
@@ -99,7 +111,8 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
         Preconditions.checkNotNull(timing);
         Preconditions.checkNotNull(consumer);
 
-        Map<FramePhaseTiming, Consumer<WorldContext<Headless>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
-        map.put(timing, consumer);
+        Map<FramePhaseTiming, List<Consumer<WorldContext<Headless>>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
+        List<Consumer<WorldContext<Headless>>> list = map.computeIfAbsent(timing, k -> new ArrayList<>());
+        list.add(consumer);
     }
 }

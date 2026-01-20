@@ -27,6 +27,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -36,18 +38,17 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     private final RenderExtensions extensions;
     private final EventBus eventBus;
     private final Logger logger;
+    private final ResourceStorage storage;
+    private final BootstrapResources bootstrapResources;
+    private final GraphicsRuntimeServices graphicsRuntimeServices;
+    private final MinecraftIntegration minecraftIntegration;
+    private final MinecraftAssetProviders minecraftAssetProviders;
+    private final SceneViewState sceneViewState;
+    private final ShaderIntrospection shaderIntrospection;
 
-    public final ResourceStorage storage;
-
-    public final BootstrapResources bootstrapResources;
-    public final GraphicsRuntimeServices graphicsRuntimeServices;
-    public final MinecraftIntegration minecraftIntegration;
-    public final MinecraftAssetProviders minecraftAssetProviders;
-    public final SceneViewState sceneViewState;
-
-    public final ShaderIntrospection shaderIntrospection;
-
-    private final Map<FramePhase, Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>>> callbacks = new Object2ObjectOpenHashMap<>();
+    private final Map<FramePhase,
+            Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>>> callbacks =
+            new Object2ObjectOpenHashMap<>();
 
     public GraphicsWorldViewImpl(
             CleanECSRuntime ecs,
@@ -67,7 +68,6 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         this.extensions = extensions;
         this.eventBus = eventBus;
         this.logger = logger;
-
         this.storage = storage;
         this.bootstrapResources = bootstrapResources;
         this.graphicsRuntimeServices = graphicsRuntimeServices;
@@ -107,13 +107,57 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         return eventBus;
     }
 
+    @NonNull
+    @Override
+    public ResourceStorage storage() {
+        return storage;
+    }
+
+    @NonNull
+    @Override
+    public ShaderIntrospection shaderIntrospection() {
+        return shaderIntrospection;
+    }
+
+    @NonNull
+    @Override
+    public BootstrapResources bootstrapResources() {
+        return bootstrapResources;
+    }
+
+    @NonNull
+    @Override
+    public GraphicsRuntimeServices graphicsRuntimeServices() {
+        return graphicsRuntimeServices;
+    }
+
+    @NonNull
+    @Override
+    public MinecraftIntegration minecraftIntegration() {
+        return minecraftIntegration;
+    }
+
+    @NonNull
+    @Override
+    public MinecraftAssetProviders minecraftAssetProviders() {
+        return minecraftAssetProviders;
+    }
+
+    @NonNull
+    @Override
+    public SceneViewState sceneViewState() {
+        return sceneViewState;
+    }
+
     @Override
     public void run(@NonNull FramePhase phase) {
-        Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>> map = callbacks.get(phase);
+        Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>> map = callbacks.get(phase);
         if (map != null) {
-            Consumer<WorldContext<Graphics>> consumer = map.get(FramePhaseTiming.BEFORE);
-            if (consumer != null) {
-                consumer.accept(this);
+            List<Consumer<WorldContext<Graphics>>> list = map.get(FramePhaseTiming.BEFORE);
+            if (list != null) {
+                for (Consumer<WorldContext<Graphics>> consumer : list) {
+                    consumer.accept(this);
+                }
             }
         }
 
@@ -199,9 +243,11 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         }
 
         if (map != null) {
-            Consumer<WorldContext<Graphics>> consumer = map.get(FramePhaseTiming.AFTER);
-            if (consumer != null) {
-                consumer.accept(this);
+            List<Consumer<WorldContext<Graphics>>> list = map.get(FramePhaseTiming.AFTER);
+            if (list != null) {
+                for (Consumer<WorldContext<Graphics>> consumer : list) {
+                    consumer.accept(this);
+                }
             }
         }
     }
@@ -218,7 +264,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         Preconditions.checkNotNull(timing);
         Preconditions.checkNotNull(consumer);
 
-        Map<FramePhaseTiming, Consumer<WorldContext<Graphics>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
-        map.put(timing, consumer);
+        Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>> map = callbacks.computeIfAbsent(phase, k -> new Object2ObjectOpenHashMap<>());
+        List<Consumer<WorldContext<Graphics>>> list = map.computeIfAbsent(timing, k -> new ArrayList<>());
+        list.add(consumer);
     }
 }

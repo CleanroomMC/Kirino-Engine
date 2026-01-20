@@ -3,7 +3,6 @@ package com.cleanroommc.kirino.engine.graphics.install;
 import com.cleanroommc.kirino.KirinoCore;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
-import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
@@ -17,8 +16,10 @@ import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
+import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.world.ModuleInstaller;
+import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
@@ -47,8 +48,8 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
     private boolean init = false;
 
-    private void initBootstrapResources(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.storage;
+    private void initBootstrapResources(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
 
         FrameFinalizer frameFinalizer = new FrameFinalizer(
                 context.logger(),
@@ -122,17 +123,22 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         VAO dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
         //</editor-fold>
 
-        storage.put(context.bootstrapResources.frameFinalizer, frameFinalizer);
-        storage.put(context.bootstrapResources.idbGenerator, idbGenerator);
-        storage.put(context.bootstrapResources.fullscreenTriangleVao, fullscreenTriangleVao);
-        storage.put(context.bootstrapResources.dummyVao, dummyVao);
+        storage.put(context.bootstrapResources().frameFinalizer, frameFinalizer);
+        storage.put(context.bootstrapResources().idbGenerator, idbGenerator);
+        storage.put(context.bootstrapResources().fullscreenTriangleVao, fullscreenTriangleVao);
+        storage.put(context.bootstrapResources().dummyVao, dummyVao);
+
+        storage.sealResource(context.bootstrapResources().frameFinalizer);
+        storage.sealResource(context.bootstrapResources().idbGenerator);
+        storage.sealResource(context.bootstrapResources().fullscreenTriangleVao);
+        storage.sealResource(context.bootstrapResources().dummyVao);
     }
 
-    private void initGraphicsRuntimeServices(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.storage;
+    private void initGraphicsRuntimeServices(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
 
         GLStateBackup stateBackup = new GLStateBackup();
-        Renderer renderer = new Renderer(storage, storage.get(context.bootstrapResources.dummyVao));
+        Renderer renderer = new Renderer(storage, storage.get(context.bootstrapResources().dummyVao));
 
         StagingBufferManager stagingBufferManager = new StagingBufferManager();
         GraphicResourceManager graphicResourceManager = new GraphicResourceManager(stagingBufferManager);
@@ -163,35 +169,47 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         context.logger().info("Shader compilation passed.");
 
         shaderRegistry.analyze(
-                context.shaderIntrospection.glslRegistry,
-                context.shaderIntrospection.defaultShaderAnalyzer);
+                context.shaderIntrospection().glslRegistry,
+                context.shaderIntrospection().defaultShaderAnalyzer);
 
-        storage.put(context.graphicsRuntimeServices.stateBackup, stateBackup);
-        storage.put(context.graphicsRuntimeServices.renderer, renderer);
-        storage.put(context.graphicsRuntimeServices.stagingBufferManager, stagingBufferManager);
-        storage.put(context.graphicsRuntimeServices.graphicResourceManager, graphicResourceManager);
-        storage.put(context.graphicsRuntimeServices.gizmosManager, gizmosManager);
-        storage.put(context.graphicsRuntimeServices.debugHudManager, debugHudManager);
-        storage.put(context.graphicsRuntimeServices.shaderRegistry, shaderRegistry);
+        storage.put(context.graphicsRuntimeServices().stateBackup, stateBackup);
+        storage.put(context.graphicsRuntimeServices().renderer, renderer);
+        storage.put(context.graphicsRuntimeServices().stagingBufferManager, stagingBufferManager);
+        storage.put(context.graphicsRuntimeServices().graphicResourceManager, graphicResourceManager);
+        storage.put(context.graphicsRuntimeServices().gizmosManager, gizmosManager);
+        storage.put(context.graphicsRuntimeServices().debugHudManager, debugHudManager);
+        storage.put(context.graphicsRuntimeServices().shaderRegistry, shaderRegistry);
+
+        storage.sealResource(context.graphicsRuntimeServices().stateBackup);
+        storage.sealResource(context.graphicsRuntimeServices().renderer);
+        storage.sealResource(context.graphicsRuntimeServices().stagingBufferManager);
+        storage.sealResource(context.graphicsRuntimeServices().graphicResourceManager);
+        storage.sealResource(context.graphicsRuntimeServices().gizmosManager);
+        storage.sealResource(context.graphicsRuntimeServices().debugHudManager);
+        storage.sealResource(context.graphicsRuntimeServices().shaderRegistry);
     }
 
-    private void initMinecraftAssetProviders(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.storage;
+    private void initMinecraftAssetProviders(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
 
-        storage.put(context.minecraftAssetProviders.blockMeshGenerator, new BlockMeshGenerator(Minecraft.getMinecraft()));
+        storage.put(context.minecraftAssetProviders().blockMeshGenerator, new BlockMeshGenerator(Minecraft.getMinecraft()));
+
+        storage.sealResource(context.minecraftAssetProviders().blockMeshGenerator);
     }
 
-    private void initSceneViewState(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.storage;
+    private void initSceneViewState(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
 
         MeshletGpuRegistry meshletGpuRegistry = new MeshletGpuRegistry();
         meshletGpuRegistry.lateInit();
 
-        storage.put(context.sceneViewState.meshletGpuRegistry, meshletGpuRegistry);
+        storage.put(context.sceneViewState().meshletGpuRegistry, meshletGpuRegistry);
+
+        storage.sealResource(context.sceneViewState().meshletGpuRegistry);
     }
 
-    private void initRenderExtensions(GraphicsWorldViewImpl context) {
-        ResourceStorage storage = context.storage;
+    private void initRenderExtensions(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
         PostProcessingPass pass = context.ext().postProcessingPass;
 
         pass.lock();
@@ -200,48 +218,56 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
                     "Post-processing is enabled. Post-processing pass must have at least one subpasses at runtime to work as expected.");
 
             context.ext().postProcessingPass.lateInit(
-                    storage.get(context.bootstrapResources.frameFinalizer).getMinecraftFramebuffer(),
-                    storage.get(context.bootstrapResources.frameFinalizer).getPingPongFramebuffer(),
-                    storage.get(context.bootstrapResources.frameFinalizer).getIntermediateFramebuffer());
+                    storage.get(context.bootstrapResources().frameFinalizer).getMinecraftFramebuffer(),
+                    storage.get(context.bootstrapResources().frameFinalizer).getPingPongFramebuffer(),
+                    storage.get(context.bootstrapResources().frameFinalizer).getIntermediateFramebuffer());
         } else {
             Preconditions.checkState(pass.getSubpassCount() == 0,
                     "Post-processing is disabled. Post-processing pass must have exactly zero subpasses at runtime to work as expected.");
         }
 
         storage.put(context.ext().postProcessingDefaultProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
         storage.put(context.ext().terrainGpuPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/opaque_terrain.vert", "forge:shaders/opaque_terrain.frag"));
 
         storage.put(context.ext().chunkCpuPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
 
         storage.put(context.ext().gizmosPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
 
         storage.put(context.ext().toneMappingPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
         storage.put(context.ext().upscalingPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
         storage.put(context.ext().downscalingPassProgram,
-                storage.get(context.graphicsRuntimeServices.shaderRegistry).newShaderProgram(
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
+
+        storage.sealResource(context.ext().postProcessingDefaultProgram);
+        storage.sealResource(context.ext().terrainGpuPassProgram);
+        storage.sealResource(context.ext().chunkCpuPassProgram);
+        storage.sealResource(context.ext().gizmosPassProgram);
+        storage.sealResource(context.ext().toneMappingPassProgram);
+        storage.sealResource(context.ext().upscalingPassProgram);
+        storage.sealResource(context.ext().downscalingPassProgram);
     }
 
     private void prepare(WorldContext<Graphics> context) {
         if (init) {
             return;
         }
-        if (!(context instanceof GraphicsWorldViewImpl glWorldView)) {
+        if (!(context instanceof GraphicsWorldView glWorldView)) {
             throw new RuntimeException("WorldContext is not an instance of GLWorldViewImpl.");
         }
 
@@ -255,15 +281,15 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         initSceneViewState(glWorldView);
         initRenderExtensions(glWorldView);
 
-        glWorldView.sceneViewState.scene.computeShaderProgram = glWorldView.storage
-                .get(glWorldView.graphicsRuntimeServices.shaderRegistry)
+        glWorldView.sceneViewState().scene.computeShaderProgram = glWorldView.storage()
+                .get(glWorldView.graphicsRuntimeServices().shaderRegistry)
                 .newShaderProgram("forge:shaders/meshlets2vertices.comp");
 
         init = true;
     }
 
     @Override
-    public void install(@NonNull WorldContext<Graphics> context) {
+    public void install(@NonNull WorldContext<Graphics> context, @NonNull ResourceLayout layout) {
         context.on(FramePhase.PREPARE, FramePhaseTiming.BEFORE, this::prepare);
     }
 }
