@@ -683,7 +683,7 @@ public final class KirinoCore {
 
     @SubscribeEvent
     public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
-
+//        event.getOneTimeConfig().enableRenderDelegate = false;
     }
 
     //<editor-fold desc="reflection">
