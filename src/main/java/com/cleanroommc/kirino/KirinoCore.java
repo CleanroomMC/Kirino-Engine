@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.config.KirinoConfigHub;
+import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
@@ -37,8 +38,10 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.fml.common.InjectedModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.asm.FMLSanityChecker;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.time.StopWatch;
@@ -50,6 +53,7 @@ import org.lwjgl.util.glu.Project;
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public final class KirinoCore {
@@ -464,6 +468,31 @@ public final class KirinoCore {
     }
     //</editor-fold>
 
+    // last chance to modify the config
+    public static void configEvent() {
+        try {
+            Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
+            registerMethod.setAccessible(true);
+
+            Method onKirinoOneTimeConfig = KirinoCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
+        } catch (Throwable throwable) {
+            throw new RuntimeException("Failed to register the Kirino one time config event.", throwable);
+        }
+
+        KIRINO_EVENT_BUS.post(new KirinoOneTimeConfigEvent());
+    }
+
+    public static void identifyMods(List<ModContainer> mods) {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
+            return;
+        }
+
+        mods.add(new InjectedModContainer(new KirinoEngineModContainer(), FMLSanityChecker.fmlLocation));
+        mods.add(new InjectedModContainer(new KirinoECSModContainer(), FMLSanityChecker.fmlLocation));
+        mods.add(new InjectedModContainer(new KirinoGLModContainer(), FMLSanityChecker.fmlLocation));
+    }
+
     public static void init() {
         if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
@@ -650,6 +679,11 @@ public final class KirinoCore {
     public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
         event.register(new FpsHUD());
         event.register(new CommonStatsHUD());
+    }
+
+    @SubscribeEvent
+    public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
+
     }
 
     //<editor-fold desc="reflection">
