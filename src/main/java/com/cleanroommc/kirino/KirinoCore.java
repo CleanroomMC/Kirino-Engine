@@ -112,7 +112,7 @@ public final class KirinoCore {
      * public void notifyBlockUpdate(World worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags)<br>
      * {<br>
      * &emsp;...<br>
-     * &emsp;com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyBlockUpdate(k1, l1, i2, oldState, newState);<br>
+     * &emsp;com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyBlockUpdate(i, j, k, oldState, newState);<br>
      * }<br>
      * </code>
      *
@@ -477,7 +477,7 @@ public final class KirinoCore {
             Method onKirinoOneTimeConfig = KirinoCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
             registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
         } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to register the Kirino one time config event.", throwable);
+            throw new RuntimeException("Failed to register the Kirino one time config event listener.", throwable);
         }
 
         KIRINO_EVENT_BUS.post(new KirinoOneTimeConfigEvent());
@@ -683,7 +683,7 @@ public final class KirinoCore {
 
     @SubscribeEvent
     public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
-//        event.getOneTimeConfig().enableRenderDelegate = false;
+        event.getOneTimeConfig().enableRenderDelegate = false;
     }
 
     //<editor-fold desc="reflection">

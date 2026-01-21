@@ -27,16 +27,21 @@ import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.Chunk;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -45,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 public class MinecraftScene extends CleanWorld {
 
@@ -126,7 +132,6 @@ public class MinecraftScene extends CleanWorld {
 
     private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
-    private int newWorldFrameCounter = 0;
     private final AtomicBoolean newChunksAdded = new AtomicBoolean(false); // not necessarily thread-safe, but must be a reference
     private WorldClient minecraftWorld = null;
     private ChunkProviderClient minecraftChunkProvider = null;
@@ -219,7 +224,8 @@ public class MinecraftScene extends CleanWorld {
             worldFsm.reset(); // NO_WORLD
             this.minecraftWorld = minecraftWorld;
             minecraftChunkProvider = minecraftWorld.getChunkProvider();
-            minecraftChunkProvider.loadChunkCallback = (x, z) -> {
+
+            MethodHolder.setLoadChunkCallback(minecraftChunkProvider, (x, z) -> {
                 for (int i = 0; i < 16; i++) {
                     ChunkComponent chunkComponent = new ChunkComponent();
                     chunkComponent.chunkPosX = x;
@@ -230,8 +236,9 @@ public class MinecraftScene extends CleanWorld {
                             // all changes are buffered and will be consumed at the end of the update - EntityManager.flush() to be exact
                             entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
                 }
-            };
-            minecraftChunkProvider.unloadChunkCallback = (x, z) -> {
+            });
+
+            MethodHolder.setUnloadChunkCallback(minecraftChunkProvider, (x, z) -> {
                 for (int i = 0; i < 16; i++) {
                     ChunkPosKey key = new ChunkPosKey(x, i, z);
                     CleanEntityHandle handle = chunkHandles.get(key);
@@ -241,7 +248,8 @@ public class MinecraftScene extends CleanWorld {
                         chunkHandles.remove(key);
                     }
                 }
-            };
+            });
+
             chunkMeshletGenSystem.getSystem().setChunkProvider(minecraftChunkProvider);
             chunkMeshletGenSystem.getSystem().setWorld(minecraftWorld);
             worldFsm.next(); // NEW_WORLD_REBUILD
@@ -254,7 +262,7 @@ public class MinecraftScene extends CleanWorld {
             handle.tryDestroy();
         }
         chunkHandles.clear();
-        for (Long chunkKey : minecraftChunkProvider.getLoadedChunks().keySet()) {
+        for (Long chunkKey : MethodHolder.getLoadedChunks(minecraftChunkProvider).keySet()) {
             for (int i = 0; i < 16; i++) {
                 ChunkComponent chunkComponent = new ChunkComponent();
                 chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
@@ -430,4 +438,52 @@ public class MinecraftScene extends CleanWorld {
     static SSBOView ssboOut1 = null;
     static SSBOView ssboOut2 = null;
     public static ShaderProgram computeShaderProgram;
+
+    private static class MethodHolder {
+        static final Delegate DELEGATE;
+
+        static {
+            DELEGATE = new Delegate(
+                    ReflectionUtils.getFieldSetter(ChunkProviderClient.class, "loadChunkCallback", BiConsumer.class),
+                    ReflectionUtils.getFieldSetter(ChunkProviderClient.class, "unloadChunkCallback", BiConsumer.class),
+                    ReflectionUtils.getFieldGetter(ChunkProviderClient.class, "loadedChunks", "field_73236_b", Long2ObjectMap.class));
+
+            Preconditions.checkNotNull(DELEGATE.loadChunkCallbackSetter);
+            Preconditions.checkNotNull(DELEGATE.unloadChunkCallbackSetter);
+            Preconditions.checkNotNull(DELEGATE.loadedChunksGetter);
+        }
+
+        static void setLoadChunkCallback(ChunkProviderClient chunkProvider, BiConsumer<Integer, Integer> callback) {
+            try {
+                DELEGATE.loadChunkCallbackSetter.invokeExact(chunkProvider, callback);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setUnloadChunkCallback(ChunkProviderClient chunkProvider, BiConsumer<Integer, Integer> callback) {
+            try {
+                DELEGATE.unloadChunkCallbackSetter.invokeExact(chunkProvider, callback);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @SuppressWarnings("unchecked")
+        static Long2ObjectMap<Chunk> getLoadedChunks(ChunkProviderClient chunkProvider) {
+            Long2ObjectMap<Chunk> result;
+            try {
+                result = (Long2ObjectMap<Chunk>) DELEGATE.loadedChunksGetter.invokeExact(chunkProvider);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+            return result;
+        }
+
+        record Delegate(
+                MethodHandle loadChunkCallbackSetter,
+                MethodHandle unloadChunkCallbackSetter,
+                MethodHandle loadedChunksGetter) {
+        }
+    }
 }
