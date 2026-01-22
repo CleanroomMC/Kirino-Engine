@@ -34,9 +34,9 @@ import java.util.List;
 import java.util.Map;
 
 public class CleanECSRuntime {
-    public final StructRegistry structRegistry;
-    public final FieldRegistry fieldRegistry;
-    public final ComponentRegistry componentRegistry;
+    private final StructRegistry structRegistry;
+    private final FieldRegistry fieldRegistry;
+    private final ComponentRegistry componentRegistry;
     public final EntityManager entityManager;
     public final JobRegistry jobRegistry;
     public final JobScheduler jobScheduler;

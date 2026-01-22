@@ -267,22 +267,20 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         if (init) {
             return;
         }
-        if (!(context instanceof GraphicsWorldView glWorldView)) {
-            throw new RuntimeException("WorldContext is not an instance of GLWorldViewImpl.");
-        }
+        GraphicsWorldView view = castGraphics(context);
 
         KHRDebug.enable(KirinoCore.LOGGER, List.of(
                 new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
                 new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
 
-        initBootstrapResources(glWorldView);
-        initGraphicsRuntimeServices(glWorldView);
-        initMinecraftAssetProviders(glWorldView);
-        initSceneViewState(glWorldView);
-        initRenderExtensions(glWorldView);
+        initBootstrapResources(view);
+        initGraphicsRuntimeServices(view);
+        initMinecraftAssetProviders(view);
+        initSceneViewState(view);
+        initRenderExtensions(view);
 
-        glWorldView.sceneViewState().scene.computeShaderProgram = glWorldView.storage()
-                .get(glWorldView.graphicsRuntimeServices().shaderRegistry)
+        view.sceneViewState().scene.computeShaderProgram = view.storage()
+                .get(view.graphicsRuntimeServices().shaderRegistry)
                 .newShaderProgram("forge:shaders/meshlets2vertices.comp");
 
         init = true;

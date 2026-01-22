@@ -53,11 +53,9 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
         if (init) {
             return;
         }
-        if (!(context instanceof AnalyticalWorldView analyticalWorldView)) {
-            throw new RuntimeException("WorldContext is not an instance of AnalyticalWorldViewImpl.");
-        }
+        AnalyticalWorldView view = castHeadless(context);
 
-        initRenderExtensions(analyticalWorldView);
+        initRenderExtensions(view);
 
         init = true;
     }

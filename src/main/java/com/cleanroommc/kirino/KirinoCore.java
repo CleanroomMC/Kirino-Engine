@@ -170,7 +170,7 @@ public final class KirinoCore {
      * vanilla {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)} will take place
      * instead of our {@link #EntityRenderer$renderWorld(long)}, and this method will be injected
      * to several places of vanilla {@link net.minecraft.client.renderer.EntityRenderer#renderWorld(float, long)}
-     * to run the full engine cycle headlessly.
+     * to run the full engine lifecycle headlessly.
      *
      * <br>
      * <p>Note: <b>must never be called manually by clients!</b></p>
