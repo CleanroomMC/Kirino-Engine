@@ -156,3 +156,10 @@ World Context
 > **Note**:<br>
 > You should create `SingleFlow<TSys extends CleanSystem>` inside your `CleanWorld` to help
 > systems to run asynchronously with callbacks.
+
+## Summary
+In order to utilize `epoch-1.a1` to make a mod, you are supposed to put logic and computations inside
+the headless world, _**and**_ put rendering elsewhere like `RenderWorldLast` but not the graphics world since it's disabled for now.
+
+This alpha test exists to validate the versatility of the engine entry point 
+and the robustness of the ECS runtime under real-world usage.

@@ -196,6 +196,8 @@ where you can understand our implicit assumptions and build the mental model gra
 - What can I _expect_ as a mod developer?
   - Clean rendering APIs that hide OpenGL completely
   - Versatile rendering APIs that focus on the concept of render commands
+  - Constrained and explicit engine lifecycle
+  - ECS runtime
   - Will be able to create emissive blocks, PBR, fogs, decals, any post-processing effects
   - Future-proof architecture
 
