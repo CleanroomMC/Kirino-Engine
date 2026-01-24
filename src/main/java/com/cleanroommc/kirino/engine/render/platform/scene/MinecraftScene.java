@@ -108,8 +108,6 @@ public class MinecraftScene extends CleanWorld {
 
     // ----------------------------------------
 
-    private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
-
     private final ResourceStorage storage;
 
     private final Executor systemFlowExecutor;
@@ -299,7 +297,7 @@ public class MinecraftScene extends CleanWorld {
     }
 
     private boolean updateRenderDis() {
-        int renderDis = MINECRAFT.gameSettings.renderDistanceChunks;
+        int renderDis = Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
         if (oldRenderDis != renderDis) {
             oldRenderDis = renderDis;
             return true;
