@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
 
@@ -13,7 +13,7 @@ public final class LowLevelDC implements IDrawCommand {
         MULTI_ELEMENTS_INDIRECT_UNIT // indirectly drawable (components of MULTI_ELEMENTS_INDIRECT)
     }
 
-    private final static ThreadSafeGenPool<LowLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.getLowLevelDrawCommandPoolSize()) {
+    private final static ThreadSafeGenPool<LowLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCommonCore.KIRINO_CONFIG_HUB.getLowLevelDrawCommandPoolSize()) {
         @NonNull
         @Override
         public LowLevelDC newObject(@NonNull Handle<LowLevelDC> handle) {

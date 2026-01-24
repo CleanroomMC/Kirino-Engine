@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
@@ -12,7 +12,7 @@ public final class HighLevelDC implements IDrawCommand {
         SCENE_SUBMITTED
     }
 
-    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCore.KIRINO_CONFIG_HUB.getHighLevelDrawCommandPoolSize()) {
+    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCommonCore.KIRINO_CONFIG_HUB.getHighLevelDrawCommandPoolSize()) {
         @NonNull
         @Override
         public HighLevelDC newObject(@NonNull Handle<HighLevelDC> handle) {

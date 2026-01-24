@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.IDrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
@@ -166,7 +166,7 @@ public class DrawQueue {
 
             int start = 0;
             while (start < mdiUnits.size()) {
-                int end = Math.min(start + KirinoCore.KIRINO_CONFIG_HUB.getMaxMultiDrawIndirectUnitCount(), mdiUnits.size());
+                int end = Math.min(start + KirinoCommonCore.KIRINO_CONFIG_HUB.getMaxMultiDrawIndirectUnitCount(), mdiUnits.size());
                 List<LowLevelDC> chunk = mdiUnits.subList(start, end);
                 deque2.offerLast(idbGenerator.generate(
                         chunk,

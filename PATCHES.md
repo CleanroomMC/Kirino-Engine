@@ -40,12 +40,12 @@
   public void beginMinecraftLoading(Minecraft minecraft, List<IResourcePack> resourcePackList, IReloadableResourceManager resourceManager, MetadataSerializer metaSerializer)
   {
       ...
-      com.cleanroommc.kirino.KirinoCore.init();
+      com.cleanroommc.kirino.KirinoClientCore.init();
   }
   
   public void finishMinecraftLoading()
   {
       ...
-      com.cleanroommc.kirino.KirinoCore.postInit();
+      com.cleanroommc.kirino.KirinoClientCore.postInit();
   }
   ```

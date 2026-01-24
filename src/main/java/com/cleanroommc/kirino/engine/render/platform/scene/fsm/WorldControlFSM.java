@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.fsm;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.schemata.fsm.FiniteStateMachine;
 
 public class WorldControlFSM {
@@ -36,7 +36,7 @@ public class WorldControlFSM {
 
     public void next() {
         if (fsm.state() == State.NEW_WORLD_INITIAL_WAIT) {
-            if (newWorldFrameCounter++ >= KirinoCore.KIRINO_CONFIG_HUB.getWorldInitFrames()) {
+            if (newWorldFrameCounter++ >= KirinoCommonCore.KIRINO_CONFIG_HUB.getWorldInitFrames()) {
                 newWorldFrameCounter = 0; // pass
             } else {
                 return;

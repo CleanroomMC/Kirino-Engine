@@ -9,7 +9,7 @@ public final class KirinoECSModContainer extends DummyModContainer {
 
     public KirinoECSModContainer() {
         super(new ModMetadata());
-        KirinoCore.LOGGER.info("Initializing Kirino-ECS's Mod Container.");
+        KirinoCommonCore.LOGGER.info("Initializing Kirino-ECS's Mod Container.");
         ModMetadata meta = this.getMetadata();
 
         meta.modId = "kirino_ecs";

@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.gl;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 
 import java.util.PriorityQueue;
 
@@ -20,12 +20,12 @@ public final class GLResourceManager {
     }
 
     public static void disposeAll() {
-        KirinoCore.LOGGER.info("Starts disposing OpenGL resources.");
+        KirinoCommonCore.LOGGER.info("Starts disposing OpenGL resources.");
         while (!disposables.isEmpty()) {
             GLDisposable disposable = disposables.poll();
-            KirinoCore.LOGGER.info("Disposing " + disposable.getName());
+            KirinoCommonCore.LOGGER.info("Disposing " + disposable.getName());
             disposable.dispose();
         }
-        KirinoCore.LOGGER.info("Finished.");
+        KirinoCommonCore.LOGGER.info("Finished.");
     }
 }

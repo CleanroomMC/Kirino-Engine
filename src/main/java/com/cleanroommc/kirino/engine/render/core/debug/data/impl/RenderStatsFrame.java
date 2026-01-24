@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.core.debug.data.impl;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoClientCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.IDebugDataService;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
@@ -15,14 +16,14 @@ public class RenderStatsFrame implements IDebugDataService {
 
     @Override
     public boolean isActive() {
-        if (KirinoCore.KIRINO_ENGINE.getStorage() == null) {
+        if (KirinoCommonCore.KIRINO_ENGINE.getStorage() == null) {
             return false;
         }
-        if (!KirinoCore.KIRINO_ENGINE.getStorage().has(hud)) {
+        if (!KirinoCommonCore.KIRINO_ENGINE.getStorage().has(hud)) {
             return false;
         }
 
-        return KirinoCore.KIRINO_ENGINE.getStorage().get(hud).isEnabled();
+        return KirinoCommonCore.KIRINO_ENGINE.getStorage().get(hud).isEnabled();
     }
 
     public void setDrawCalls(int drawCalls) {

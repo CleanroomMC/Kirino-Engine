@@ -9,7 +9,7 @@ public final class KirinoGLModContainer extends DummyModContainer {
 
     public KirinoGLModContainer() {
         super(new ModMetadata());
-        KirinoCore.LOGGER.info("Initializing Kirino-GL's Mod Container.");
+        KirinoCommonCore.LOGGER.info("Initializing Kirino-GL's Mod Container.");
         ModMetadata meta = this.getMetadata();
 
         meta.modId = "kirino_gl";

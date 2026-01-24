@@ -9,7 +9,7 @@ public final class KirinoEngineModContainer extends DummyModContainer {
 
     public KirinoEngineModContainer() {
         super(new ModMetadata());
-        KirinoCore.LOGGER.info("Initializing Kirino-Engine's Mod Container.");
+        KirinoCommonCore.LOGGER.info("Initializing Kirino-Engine's Mod Container.");
         ModMetadata meta = this.getMetadata();
 
         meta.modId = "kirino_engine";

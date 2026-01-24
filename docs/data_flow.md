@@ -1,13 +1,13 @@
 # Terrain Rendering Related Data Flow
 
 > Relevant classes:
-> <br>· `com.cleanroommc.kirino.KirinoCore`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore`
 > <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene`
 
 > Relevant methods:
-> <br>· `com.cleanroommc.kirino.KirinoCore#EntityRenderer$renderWorld`
-> <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyBlockUpdate`
-> <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyLightUpdate`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#EntityRenderer$renderWorld`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#RenderGlobal$notifyBlockUpdate`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#RenderGlobal$notifyLightUpdate`
 > <br>· `com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene#update`
 
 <br>

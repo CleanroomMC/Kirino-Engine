@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.graphics.install;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
@@ -269,7 +269,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         }
         GraphicsWorldView view = castGraphics(context);
 
-        KHRDebug.enable(KirinoCore.LOGGER, List.of(
+        KHRDebug.enable(KirinoCommonCore.LOGGER, List.of(
                 new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
                 new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
 

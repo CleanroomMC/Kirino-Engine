@@ -5,9 +5,9 @@ import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
 
 /**
- * This helper class is made possible by {@link KirinoCore#DEBUG_SERVICE}, and
- * the purpose is to make {@link KirinoCore#DEBUG_SERVICE} calls shorter and simpler.
- * You are free to access {@link KirinoCore#DEBUG_SERVICE} directly as an alternative route.
+ * This helper class is made possible by {@link KirinoClientCore#DEBUG_SERVICE}, and
+ * the purpose is to make {@link KirinoClientCore#DEBUG_SERVICE} calls shorter and simpler.
+ * You are free to access {@link KirinoClientCore#DEBUG_SERVICE} directly as an alternative route.
  */
 public final class KirinoDebug {
     private KirinoDebug() {
@@ -17,7 +17,7 @@ public final class KirinoDebug {
 
     private static DebugDataHandle<RenderStatsFrame> getRenderStatsFrame() {
         if (renderStatsFrame == null) {
-            renderStatsFrame = KirinoCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
+            renderStatsFrame = KirinoClientCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
         }
         return renderStatsFrame;
     }
@@ -40,7 +40,7 @@ public final class KirinoDebug {
 
     private static DebugDataHandle<FpsHistory> getFpsHistory() {
         if (fpsHistory == null) {
-            fpsHistory = KirinoCore.DEBUG_SERVICE.get(FpsHistory.class);
+            fpsHistory = KirinoClientCore.DEBUG_SERVICE.get(FpsHistory.class);
         }
         return fpsHistory;
     }

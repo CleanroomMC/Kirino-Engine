@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.config.event;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.config.KirinoConfigHub;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -12,7 +12,7 @@ import java.lang.invoke.MethodHandle;
 public class KirinoOneTimeConfigEvent extends Event {
 
     public KirinoConfigHub.@NonNull RequiresRestart getOneTimeConfig() {
-        return MethodHolder.getConfig(KirinoCore.KIRINO_CONFIG_HUB);
+        return MethodHolder.getConfig(KirinoCommonCore.KIRINO_CONFIG_HUB);
     }
 
     private static class MethodHolder {

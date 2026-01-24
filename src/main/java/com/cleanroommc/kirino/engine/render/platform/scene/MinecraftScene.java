@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.platform.scene;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoClientCore;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ecs.entity.CleanEntityHandle;
 import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
 import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
@@ -199,7 +200,7 @@ public class MinecraftScene extends CleanWorld {
     /**
      * Block update hook. May be triggered at any time.
      *
-     * @see KirinoCore#RenderGlobal$notifyBlockUpdate(int, int, int, IBlockState, IBlockState)
+     * @see KirinoClientCore#RenderGlobal$notifyBlockUpdate(int, int, int, IBlockState, IBlockState)
      */
     public void notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
 
@@ -208,7 +209,7 @@ public class MinecraftScene extends CleanWorld {
     /**
      * Light update hook. May be triggered at any time.
      *
-     * @see KirinoCore#RenderGlobal$notifyLightUpdate(int, int, int)
+     * @see KirinoClientCore#RenderGlobal$notifyLightUpdate(int, int, int)
      */
     public void notifyLightUpdate(int x, int y, int z) {
 
@@ -287,7 +288,7 @@ public class MinecraftScene extends CleanWorld {
             if (Math.sqrt(
                     (camPos.x - oldCamX) * (camPos.x - oldCamX) +
                             (camPos.y - oldCamY) * (camPos.y - oldCamY) +
-                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCore.KIRINO_CONFIG_HUB.getChunkUpdateDisplacement()) {
+                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCommonCore.KIRINO_CONFIG_HUB.getChunkUpdateDisplacement()) {
                 oldCamX = camPos.x;
                 oldCamY = camPos.y;
                 oldCamZ = camPos.z;
@@ -395,7 +396,7 @@ public class MinecraftScene extends CleanWorld {
             if (compute) {
                 compute = false;
 
-                KirinoCore.LOGGER.info("start compute");
+                KirinoCommonCore.LOGGER.info("start compute");
                 if (ssboOut1 == null) {
                     ssboOut1 = new SSBOView(new GLBuffer());
                     ssboOut2 = new SSBOView(new GLBuffer());
@@ -421,7 +422,7 @@ public class MinecraftScene extends CleanWorld {
                     // block
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
-                        KirinoCore.LOGGER.info("finished compute");
+                        KirinoCommonCore.LOGGER.info("finished compute");
                         GraphicsWorldViewImpl.debug = true;
                     }
                     GL32C.glDeleteSync(fence);

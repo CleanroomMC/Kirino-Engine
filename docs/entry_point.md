@@ -1,7 +1,7 @@
 # Initialization Entry Point
 
 > Relevant classes:
-> <br>· `com.cleanroommc.kirino.KirinoCore`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore`
 
 - `KirinoCore.init()` will be executed at the end of `FMLClientHandler.beginMinecraftLoading()`, which occurs at the end of the `preInit` phase.
 - `KirinoCore.postInit()` will be executed at end of `FMLClientHandler.finishMinecraftLoading()`, which occurs right after Forge's splash process.
@@ -31,12 +31,12 @@ Here's a list of events you can listen from Kirino Engine setup:
 # Rendering Entry Point
 
 > Relevant classes:
-> <br>· `com.cleanroommc.kirino.KirinoCore`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore`
 
 > Relevant methods:
-> <br>· `com.cleanroommc.kirino.KirinoCore#EntityRenderer$renderWorld`
-> <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyBlockUpdate`
-> <br>· `com.cleanroommc.kirino.KirinoCore#RenderGlobal$notifyLightUpdate`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#EntityRenderer$renderWorld`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#RenderGlobal$notifyBlockUpdate`
+> <br>· `com.cleanroommc.kirino.KirinoClientCore#RenderGlobal$notifyLightUpdate`
 
 `EntityRenderer$renderWorld` is a direct replacement of Minecraft's implementation `EntityRenderer#renderWorld`.
 Specifically, `anaglyph` logic is removed and all other functions remain the same,

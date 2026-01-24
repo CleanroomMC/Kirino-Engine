@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.debug.hud.impl;
 
-import com.cleanroommc.kirino.KirinoCore;
+import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
@@ -18,7 +18,7 @@ public class CommonStatsHUD implements IImmediateHUD {
     @SuppressWarnings("DataFlowIssue")
     @Override
     public void draw(@NonNull HUDContext hud) {
-        var renderStatsFrame = KirinoCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
+        var renderStatsFrame = KirinoClientCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
         int drawCalls = -1;
         if (renderStatsFrame.fetch() != null) {
             drawCalls = renderStatsFrame.fetch().getDrawCalls();
@@ -26,7 +26,7 @@ public class CommonStatsHUD implements IImmediateHUD {
 
         hud.text("Draw Calls via KE: " + ((drawCalls == -1) ? "UNKNOWN" : drawCalls));
 
-        var fpsHistory = KirinoCore.DEBUG_SERVICE.get(FpsHistory.class);
+        var fpsHistory = KirinoClientCore.DEBUG_SERVICE.get(FpsHistory.class);
         boolean fpsGraph = false;
         int[] fpsSnapshot = null;
         int logicalFpsIndex = 0;

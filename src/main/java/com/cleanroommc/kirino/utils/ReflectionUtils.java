@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.utils;
 
+import com.cleanroommc.kirino.KirinoClientCore;
 import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.jspecify.annotations.NonNull;
@@ -23,7 +24,7 @@ import java.util.Optional;
  * Whenever possible, cache the results in a {@code static final} field. Another way to cache it is to store them in a {@code record}
  * and store that reference in a {@code static final} field.
  *
- * @see com.cleanroommc.kirino.KirinoCore.MethodHolder An example of inlinable cached handles
+ * @see KirinoClientCore.MethodHolder An example of inlinable cached handles
  * @see <a href="https://jornvernee.github.io/methodhandles/2024/01/19/methodhandle-primer.html#method-handle-inlining">For more details about caching/inlining</a>
  */
 public final class ReflectionUtils {

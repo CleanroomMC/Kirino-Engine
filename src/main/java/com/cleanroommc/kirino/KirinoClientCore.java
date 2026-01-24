@@ -1,26 +1,15 @@
 package com.cleanroommc.kirino;
 
-import com.cleanroommc.kirino.config.KirinoConfigHub;
-import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
-import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
-import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
-import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.*;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.FpsHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataServiceLocator;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.CommonStatsHUD;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
-import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.block.material.Material;
@@ -33,39 +22,28 @@ import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.fml.common.InjectedModContainer;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.ModContainer;
-import net.minecraftforge.fml.common.asm.FMLSanityChecker;
-import net.minecraftforge.fml.common.eventhandler.EventBus;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.time.StopWatch;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class KirinoCore {
-    private KirinoCore() {
+import static com.cleanroommc.kirino.KirinoCommonCore.LOGGER;
+import static com.cleanroommc.kirino.KirinoCommonCore.KIRINO_CONFIG_HUB;
+import static com.cleanroommc.kirino.KirinoCommonCore.KIRINO_ENGINE;
+
+public final class KirinoClientCore {
+    private KirinoClientCore() {
     }
 
     private static final Minecraft MINECRAFT;
     public static final DebugDataServiceLocator DEBUG_SERVICE;
-    public static final Logger LOGGER;
-    public static final EventBus KIRINO_EVENT_BUS;
-    public static final KirinoConfigHub KIRINO_CONFIG_HUB;
-    private static CleanECSRuntime ECS_RUNTIME;
-    public static KirinoEngine KIRINO_ENGINE;
+
     private static boolean RENDER_UNSUPPORTED;
 
     //<editor-fold desc="static init">
@@ -77,18 +55,6 @@ public final class KirinoCore {
             debugServiceCtor = DebugDataServiceLocator.class.getDeclaredConstructor();
             debugServiceCtor.setAccessible(true);
             DEBUG_SERVICE = debugServiceCtor.newInstance();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-
-        LOGGER = LogManager.getLogger("Kirino Core");
-        KIRINO_EVENT_BUS = new EventBus();
-
-        Constructor<KirinoConfigHub> configHubCtor;
-        try {
-            configHubCtor = KirinoConfigHub.class.getDeclaredConstructor();
-            configHubCtor.setAccessible(true);
-            KIRINO_CONFIG_HUB = configHubCtor.newInstance();
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
@@ -467,37 +433,14 @@ public final class KirinoCore {
     }
     //</editor-fold>
 
-    // last chance to modify the config
-    public static void configEvent() {
-        try {
-            Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
-            registerMethod.setAccessible(true);
-
-            Method onKirinoOneTimeConfig = KirinoCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
-        } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to register the Kirino one time config event listener.", throwable);
-        }
-
-        KIRINO_EVENT_BUS.post(new KirinoOneTimeConfigEvent());
-    }
-
-    public static void identifyMods(List<ModContainer> mods) {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
-            return;
-        }
-
-        mods.add(new InjectedModContainer(new KirinoEngineModContainer(), FMLSanityChecker.fmlLocation));
-        mods.add(new InjectedModContainer(new KirinoECSModContainer(), FMLSanityChecker.fmlLocation));
-        mods.add(new InjectedModContainer(new KirinoGLModContainer(), FMLSanityChecker.fmlLocation));
-    }
-
     public static void init() {
+        KirinoCommonCore.init();
+
         if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
 
-        LOGGER.info("KirinoCore Initialization Stage");
+        LOGGER.info("Kirino Client-Side Initialization");
 
         //<editor-fold desc="gl version fetch">
         String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
@@ -529,92 +472,18 @@ public final class KirinoCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
-        //<editor-fold desc="event listeners">
-        // register default event listeners
-        try {
-            Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
-            registerMethod.setAccessible(true);
-
-            Method onStructScan = KirinoCore.class.getDeclaredMethod("onStructScan", StructScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, StructScanningEvent.class, KirinoCore.class, onStructScan, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default StructScanningEvent listener.");
-
-            Method onComponentScan = KirinoCore.class.getDeclaredMethod("onComponentScan", ComponentScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ComponentScanningEvent.class, KirinoCore.class, onComponentScan, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default ComponentScanningEvent listener.");
-
-            Method onShaderRegister = KirinoCore.class.getDeclaredMethod("onShaderRegister", ShaderRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ShaderRegistrationEvent.class, KirinoCore.class, onShaderRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default ShaderRegistrationEvent listener.");
-
-            Method onJobRegister = KirinoCore.class.getDeclaredMethod("onJobRegister", JobRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, JobRegistrationEvent.class, KirinoCore.class, onJobRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default JobRegistrationEvent listener.");
-
-            Method onPostProcessingRegister = KirinoCore.class.getDeclaredMethod("onPostProcessingRegister", PostProcessingRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default PostProcessingRegistrationEvent listener.");
-
-            Method onDebugHudRegister = KirinoCore.class.getDeclaredMethod("onDebugHudRegister", DebugHUDRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default DebugHUDRegistrationEvent listener.");
-        } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to register default event listeners.", throwable);
-        }
-        //</editor-fold>
-
-        //<editor-fold desc="ecs runtime">
-        LOGGER.info("---------------");
-        LOGGER.info("Initializing ECS Runtime.");
-        StopWatch stopWatch = StopWatch.createStarted();
-
-        try {
-            MethodHandle ctor = ReflectionUtils.getConstructor(CleanECSRuntime.class, EventBus.class, Logger.class);
-            Preconditions.checkNotNull(ctor);
-
-            ECS_RUNTIME = (CleanECSRuntime) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER);
-        } catch (Throwable throwable) {
-            throw new RuntimeException("ECS Runtime failed to initialize.", throwable);
-        }
-
-        stopWatch.stop();
-        LOGGER.info("ECS Runtime Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
-        //</editor-fold>
-
-        //<editor-fold desc="kirino engine">
-        LOGGER.info("---------------");
-        LOGGER.info("Initializing Kirino Engine.");
-        stopWatch = StopWatch.createStarted();
-
-        try {
-            MethodHandle ctor = ReflectionUtils.getConstructor(KirinoEngine.class,
-                    EventBus.class,
-                    Logger.class,
-                    CleanECSRuntime.class,
-                    boolean.class,
-                    boolean.class);
-            Preconditions.checkNotNull(ctor);
-
-            KIRINO_ENGINE = (KirinoEngine) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, KIRINO_CONFIG_HUB.isEnableHDR(), KIRINO_CONFIG_HUB.isEnablePostProcessing());
-        } catch (Throwable throwable) {
-            throw new RuntimeException("Kirino Engine failed to initialize.", throwable);
-        }
-
-        stopWatch.stop();
-        LOGGER.info("Kirino Engine Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
-        LOGGER.info("---------------");
-        //</editor-fold>
-
-        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
+        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KirinoClientCore.MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 
     public static void postInit() {
+        KirinoCommonCore.postInit();
+
         if (!KIRINO_CONFIG_HUB.isEnable()) {
             return;
         }
 
-        LOGGER.info("KirinoCore Post-Initialization Stage");
+        LOGGER.info("Kirino Client-Side Post-Initialization");
 
         //<editor-fold desc="kirino engine">
         LOGGER.info("---------------");
@@ -631,58 +500,6 @@ public final class KirinoCore {
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         LOGGER.info("---------------");
         //</editor-fold>
-    }
-
-    @SubscribeEvent
-    public static void onStructScan(StructScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.struct");
-    }
-
-    @SubscribeEvent
-    public static void onComponentScan(ComponentScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.component");
-    }
-
-    @SubscribeEvent
-    public static void onJobRegister(JobRegistrationEvent event) {
-        event.register(ChunkMeshletGenJob.class);
-        event.register(ChunkPrioritizationJob.class);
-        event.register(MeshletDestroyJob.class);
-        event.register(MeshletDebugJob.class);
-        event.register(MeshletBufferWriteJob.class);
-    }
-
-    @SubscribeEvent
-    public static void onShaderRegister(ShaderRegistrationEvent event) {
-        event.register(new ResourceLocation("forge:shaders/test.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.frag"));
-        event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
-        event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
-        event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
-        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"));
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.vert"));
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
-    }
-
-    // todo: abstraction
-    @SubscribeEvent
-    public static void onPostProcessingRegister(PostProcessingRegistrationEvent event) {
-//        event.register(
-//                "Tone Mapping Pass",
-//                event.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"),
-//                DefaultPostProcessingPass::new);
-    }
-
-    @SubscribeEvent
-    public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
-        event.register(new FpsHUD());
-        event.register(new CommonStatsHUD());
-    }
-
-    @SubscribeEvent
-    public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
-        event.getOneTimeConfig().enableRenderDelegate = false;
     }
 
     //<editor-fold desc="reflection">
