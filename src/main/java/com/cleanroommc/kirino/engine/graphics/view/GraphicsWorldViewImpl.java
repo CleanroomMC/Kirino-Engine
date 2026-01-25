@@ -257,6 +257,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     // test, temp
     public static boolean debug = false;
+    public static int vertexCounter;
+    public static int indexCounter;
 
     @Override
     public void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<Graphics>> consumer) {

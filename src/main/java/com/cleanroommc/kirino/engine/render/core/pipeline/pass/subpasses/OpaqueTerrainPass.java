@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.pass.subpasses;
 
+import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
@@ -73,7 +74,7 @@ public class OpaqueTerrainPass extends Subpass {
 
     @Override
     protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
-        storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, 3);
+        storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, GraphicsWorldViewImpl.vertexCounter);
     }
 
     @Override

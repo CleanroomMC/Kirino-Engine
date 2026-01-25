@@ -380,6 +380,13 @@ public class MinecraftScene extends CleanWorld {
         }
 
         // test
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 18) {
+            counter = 0;
+            storage.get(gizmosManager).clearBlocks();
+            meshletDebugSystem.execute();
+        }
+
+        // test
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE) {
             if (debug) {
                 debug = false;
@@ -395,25 +402,32 @@ public class MinecraftScene extends CleanWorld {
                 compute = false;
 
                 KirinoCommonCore.LOGGER.info("start compute");
+                KirinoCommonCore.LOGGER.info("meshlet count: " + storage.get(meshletGpuRegistry).getMeshletCount());
                 if (ssboOut1 == null) {
                     ssboOut1 = new SSBOView(new GLBuffer());
                     ssboOut2 = new SSBOView(new GLBuffer());
+                    ssboOut3 = new SSBOView(new GLBuffer());
                     ByteBuffer byteBufferOut1 = BufferUtils.createByteBuffer(storage.get(meshletGpuRegistry).getMeshletCount() * 256 * 32);
                     ByteBuffer byteBufferOut2 = BufferUtils.createByteBuffer(storage.get(meshletGpuRegistry).getMeshletCount() * 256 * 36 * 4);
+                    ByteBuffer byteBufferOut3 = BufferUtils.createByteBuffer(16);
 
                     ssboOut1.bind();
                     ssboOut1.uploadDirectly(byteBufferOut1); // automatically visible
                     ssboOut2.bind();
                     ssboOut2.uploadDirectly(byteBufferOut2); // automatically visible
+                    ssboOut3.bind();
+                    ssboOut3.uploadDirectly(byteBufferOut3); // automatically visible
 
                     GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getConsumeTarget().target(), 0, storage.get(meshletGpuRegistry).getConsumeTarget().bufferID);
                     GL30.glBindBufferBase(ssboOut1.target(), 1, ssboOut1.bufferID);
                     GL30.glBindBufferBase(ssboOut2.target(), 2, ssboOut2.bufferID);
+                    GL30.glBindBufferBase(ssboOut3.target(), 3, ssboOut3.bufferID);
 
                     computeShaderProgram.use();
 
                     GL42.glMemoryBarrier(GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT); // make persistently mapped buffer visible
-                    GL43.glDispatchCompute(1, 1, 1);
+                    GL43.glDispatchCompute(storage.get(meshletGpuRegistry).getMeshletCount(), 1, 1);
+//                    GL43.glDispatchCompute(1, 1, 1);
                     GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT); // only needed for subsequent ssbo reading in shaders
 
                     long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -421,7 +435,16 @@ public class MinecraftScene extends CleanWorld {
                     int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
                     if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
                         KirinoCommonCore.LOGGER.info("finished compute");
+                        ssboOut3.bind();
+                        ByteBuffer result = BufferUtils.createByteBuffer(16);
+                        GL15.glGetBufferSubData(ssboOut3.target(), 0, result);
+                        int vertexCounter = result.getInt();
+                        int indexCounter = result.getInt();
+                        KirinoCommonCore.LOGGER.info("vertexCounter: " + vertexCounter);
+                        KirinoCommonCore.LOGGER.info("indexCounter " + indexCounter);
                         GraphicsWorldViewImpl.debug = true;
+                        GraphicsWorldViewImpl.vertexCounter = vertexCounter;
+                        GraphicsWorldViewImpl.indexCounter = indexCounter;
                     }
                     GL32C.glDeleteSync(fence);
                 }
@@ -431,11 +454,14 @@ public class MinecraftScene extends CleanWorld {
         super.update();
     }
 
+    static int counter = 0;
+
     static boolean debug = true;
     static boolean computeReady = false;
     static boolean compute = true;
     static SSBOView ssboOut1 = null;
     static SSBOView ssboOut2 = null;
+    static SSBOView ssboOut3 = null;
     public static ShaderProgram computeShaderProgram;
 
     private static class MethodHolder {
