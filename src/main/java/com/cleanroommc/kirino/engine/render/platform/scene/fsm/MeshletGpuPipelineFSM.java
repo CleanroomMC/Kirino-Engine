@@ -17,7 +17,7 @@ public class MeshletGpuPipelineFSM {
                 .addTransition(State.INITIAL_WAIT, 0, State.PREPARE_FIRST_MESHLET_INPUT)
                 .error((state, input) -> {
                     throw new RuntimeException(String.format(
-                            "An error occurred inside MeshletComputeFSM. The input=%d leads to a non-existent route. Current state=%s.", input, state));
+                            "An error occurred inside MeshletGpuPipelineFSM. The input=%d leads to a non-existent route. Current state=%s.", input, state));
                 })
                 .validate()
                 .build();

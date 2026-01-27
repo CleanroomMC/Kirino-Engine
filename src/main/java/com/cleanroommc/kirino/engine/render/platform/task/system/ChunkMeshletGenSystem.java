@@ -3,10 +3,8 @@ package com.cleanroommc.kirino.engine.render.platform.task.system;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
-import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
-import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.platform.task.job.ChunkMeshletGenJob;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
@@ -27,19 +25,17 @@ public class ChunkMeshletGenSystem extends CleanSystem {
 
     public ChunkMeshletGenSystem(
             ResourceStorage storage,
-            ResourceSlot<GizmosManager> gizmosManager,
             ResourceSlot<BlockMeshGenerator> blockMeshGenerator,
-            ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry,
             MinecraftScene.MeshletDestroyCallback meshletDestroyCallback,
+            MinecraftScene.MeshletCreateCallback meshletCreateCallback,
             Executor executor) {
 
         externalData = new HashMap<>();
         externalData.put("storage", storage);
-        externalData.put("gizmosManager", gizmosManager);
         externalData.put("blockMeshGenerator", blockMeshGenerator);
         externalData.put("tempBuffers", new ConcurrentHashMap<Integer, BufferBuilder>());
-        externalData.put("meshletGpuRegistry", meshletGpuRegistry);
         externalData.put("meshletDestroyCallback", meshletDestroyCallback);
+        externalData.put("meshletCreateCallback", meshletCreateCallback);
         this.executor = executor;
     }
 

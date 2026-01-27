@@ -11,7 +11,6 @@ import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
-import com.cleanroommc.kirino.engine.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
@@ -20,14 +19,12 @@ import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGe
 import com.cleanroommc.kirino.engine.render.platform.scene.fsm.MeshletGpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.platform.scene.fsm.TerrainCpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.platform.scene.fsm.WorldControlFSM;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuWriterContext;
 import com.cleanroommc.kirino.engine.render.platform.task.system.*;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
-import com.cleanroommc.kirino.gl.buffer.GLBuffer;
-import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
-import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -43,7 +40,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.lang.invoke.MethodHandle;
-import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +51,7 @@ import java.util.function.BiConsumer;
 
 public class MinecraftScene extends CleanWorld {
 
+    //<editor-fold desc="inner classes">
     public record ChunkPosKey(int x, int y, int z) {
     }
 
@@ -106,7 +103,23 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    // ----------------------------------------
+    public static class MeshletCreateCallback implements IEntityCreateCallback {
+
+        private final ResourceStorage storage;
+        private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
+
+        MeshletCreateCallback(ResourceStorage storage, ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry) {
+            this.storage = storage;
+            this.meshletGpuRegistry = meshletGpuRegistry;
+        }
+
+        @Override
+        public void beforeCreate(@NonNull EntityCreateContext createContext) {
+            MeshletComponent meshletComponent = (MeshletComponent) createContext.getComponent(MeshletComponent.class);
+            storage.get(meshletGpuRegistry).allocateMeshletID(meshletComponent);
+        }
+    }
+    //</editor-fold>
 
     private final ResourceStorage storage;
 
@@ -114,27 +127,26 @@ public class MinecraftScene extends CleanWorld {
 
     private final ResourceSlot<GizmosManager> gizmosManager;
     private final MinecraftCamera camera;
-    private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
+    private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry; // allocate/dispose id at the end of update by the callback
+    private final ResourceSlot<MeshletComputeSystem> meshletComputeSystem;
 
+    // fsm
     private final TerrainCpuPipelineFSM terrainFsm;
     private final MeshletGpuPipelineFSM meshletFsm;
     private final WorldControlFSM worldFsm;
 
+    // system flows
     private final SingleFlow<ChunkPrioritizationSystem> chunkPrioritizationSystem;
     private final SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem;
     private final SingleFlow<MeshletDestroySystem> meshletDestroySystem;
     private final SingleFlow<MeshletDebugSystem> meshletDebugSystem;
     private final SingleFlow<MeshletBufferWriteSystem> meshletBufferWriteSystem;
 
+    // callbacks
     private final ChunkDestroyCallback chunkDestroyCallback;
     private final ChunkCreateCallback chunkCreateCallback;
-
-    private final List<ChunkPosKey> chunksDestroyedLastFrame;
-
-    private final AtomicBoolean newChunksAdded = new AtomicBoolean(false); // not necessarily thread-safe, but must be a reference
-    private WorldClient minecraftWorld = null;
-    private ChunkProviderClient minecraftChunkProvider = null;
-    private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
+    private final List<ChunkPosKey> chunksDestroyedLastFrame; // will be modified at the end of update by the callback
+    private final AtomicBoolean newChunksAdded = new AtomicBoolean(false); // will be modified at the end of update by the callback
 
     public MinecraftScene(
             ResourceStorage storage,
@@ -144,6 +156,7 @@ public class MinecraftScene extends CleanWorld {
             ResourceSlot<GizmosManager> gizmosManager,
             MinecraftCamera camera,
             ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry,
+            ResourceSlot<MeshletComputeSystem> meshletComputeSystem,
             Executor systemFlowExecutor,
             Executor systemExecutor) {
 
@@ -155,6 +168,7 @@ public class MinecraftScene extends CleanWorld {
         this.gizmosManager = gizmosManager;
         this.camera = camera;
         this.meshletGpuRegistry = meshletGpuRegistry;
+        this.meshletComputeSystem = meshletComputeSystem;
 
         terrainFsm = new TerrainCpuPipelineFSM();
         meshletFsm = new MeshletGpuPipelineFSM();
@@ -166,7 +180,7 @@ public class MinecraftScene extends CleanWorld {
                 .build();
 
         chunkMeshletGenSystem = SingleFlow.newBuilder(this, ChunkMeshletGenSystem.class)
-                .addTransition(new ChunkMeshletGenSystem(storage, gizmosManager, blockMeshGenerator, meshletGpuRegistry, new MeshletDestroyCallback(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .addTransition(new ChunkMeshletGenSystem(storage, blockMeshGenerator, new MeshletDestroyCallback(storage, meshletGpuRegistry), new MeshletCreateCallback(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
                 .setFinishCallback(terrainFsm::next)
                 .build();
 
@@ -189,12 +203,13 @@ public class MinecraftScene extends CleanWorld {
         meshletBufferWriteSystem = SingleFlow.newBuilder(this, MeshletBufferWriteSystem.class)
                 .addTransition(new MeshletBufferWriteSystem(new MeshletGpuWriterContext(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
                 .setFinishCallback(() -> {
-                    storage.get(meshletGpuRegistry).finishWriting(); // may not finish immediately, wait for compute result
-                    computeReady = true;
+                    // finish immediately after writing -> compute process -> judge if the next writing is needed (any changes?)
+                    storage.get(meshletGpuRegistry).finishWriting();
                 })
                 .build();
     }
 
+    //<editor-fold desc="hooks">
     /**
      * Block update hook. May be triggered at any time.
      *
@@ -212,7 +227,13 @@ public class MinecraftScene extends CleanWorld {
     public void notifyLightUpdate(int x, int y, int z) {
 
     }
+    //</editor-fold>
 
+    private WorldClient minecraftWorld = null;
+    private ChunkProviderClient minecraftChunkProvider = null;
+    private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
+
+    //<editor-fold desc="world related methods">
     /**
      * Must be called before {@link #update()}.
      *
@@ -274,12 +295,14 @@ public class MinecraftScene extends CleanWorld {
         }
         worldFsm.next(); // NEW_WORLD_INITIAL_WAIT
     }
+    //</editor-fold>
 
     private float oldCamX = 0f, oldCamY = 0f, oldCamZ = 0f;
     private int oldRenderDis = 0;
     private final FloatBuffer oldViewRot = BufferUtils.createFloatBuffer(16);
     private final FloatBuffer oldProjection = BufferUtils.createFloatBuffer(16);
 
+    //<editor-fold desc="diffing">
     private boolean updateCameraPos() {
         Vector3f camPos = camera.getWorldOffset();
         if (camPos.x != oldCamX || camPos.y != oldCamY || camPos.z != oldCamZ) {
@@ -315,6 +338,7 @@ public class MinecraftScene extends CleanWorld {
         }
         return false;
     }
+    //</editor-fold>
 
     @Override
     public void update() {
@@ -379,90 +403,26 @@ public class MinecraftScene extends CleanWorld {
             meshletDestroySystem.execute();
         }
 
-        // test
-        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 18) {
-            counter = 0;
-            storage.get(gizmosManager).clearBlocks();
-            meshletDebugSystem.execute();
-        }
+//        // test
+//        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 18) {
+//            counter = 0;
+//            storage.get(gizmosManager).clearBlocks();
+//            meshletDebugSystem.execute();
+//        }
 
-        // test
-        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE) {
-            if (debug) {
-                debug = false;
-
-                storage.get(meshletGpuRegistry).beginWriting();
-                // callback: meshletGpuRegistry.finishWriting(); computeReady = true
-                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
-            }
-        }
-
-        if (computeReady) {
-            if (compute) {
-                compute = false;
-
-                KirinoCommonCore.LOGGER.info("start compute");
-                KirinoCommonCore.LOGGER.info("meshlet count: " + storage.get(meshletGpuRegistry).getMeshletCount());
-                if (ssboOut1 == null) {
-                    ssboOut1 = new SSBOView(new GLBuffer());
-                    ssboOut2 = new SSBOView(new GLBuffer());
-                    ssboOut3 = new SSBOView(new GLBuffer());
-                    ByteBuffer byteBufferOut1 = BufferUtils.createByteBuffer(storage.get(meshletGpuRegistry).getMeshletCount() * 256 * 32);
-                    ByteBuffer byteBufferOut2 = BufferUtils.createByteBuffer(storage.get(meshletGpuRegistry).getMeshletCount() * 256 * 36 * 4);
-                    ByteBuffer byteBufferOut3 = BufferUtils.createByteBuffer(16);
-
-                    ssboOut1.bind();
-                    ssboOut1.uploadDirectly(byteBufferOut1); // automatically visible
-                    ssboOut2.bind();
-                    ssboOut2.uploadDirectly(byteBufferOut2); // automatically visible
-                    ssboOut3.bind();
-                    ssboOut3.uploadDirectly(byteBufferOut3); // automatically visible
-
-                    GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getConsumeTarget().target(), 0, storage.get(meshletGpuRegistry).getConsumeTarget().bufferID);
-                    GL30.glBindBufferBase(ssboOut1.target(), 1, ssboOut1.bufferID);
-                    GL30.glBindBufferBase(ssboOut2.target(), 2, ssboOut2.bufferID);
-                    GL30.glBindBufferBase(ssboOut3.target(), 3, ssboOut3.bufferID);
-
-                    computeShaderProgram.use();
-
-                    GL42.glMemoryBarrier(GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT); // make persistently mapped buffer visible
-                    GL43.glDispatchCompute(storage.get(meshletGpuRegistry).getMeshletCount(), 1, 1);
-//                    GL43.glDispatchCompute(1, 1, 1);
-                    GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT); // only needed for subsequent ssbo reading in shaders
-
-                    long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
-                    // block
-                    int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000_000L);
-                    if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
-                        KirinoCommonCore.LOGGER.info("finished compute");
-                        ssboOut3.bind();
-                        ByteBuffer result = BufferUtils.createByteBuffer(16);
-                        GL15.glGetBufferSubData(ssboOut3.target(), 0, result);
-                        int vertexCounter = result.getInt();
-                        int indexCounter = result.getInt();
-                        KirinoCommonCore.LOGGER.info("vertexCounter: " + vertexCounter);
-                        KirinoCommonCore.LOGGER.info("indexCounter " + indexCounter);
-                        GraphicsWorldViewImpl.debug = true;
-                        GraphicsWorldViewImpl.vertexCounter = vertexCounter;
-                        GraphicsWorldViewImpl.indexCounter = indexCounter;
-                    }
-                    GL32C.glDeleteSync(fence);
-                }
-            }
-        }
+//        // test
+//        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE) {
+//            if (debug) {
+//                debug = false;
+//
+//                storage.get(meshletGpuRegistry).beginWriting();
+//                // callback: meshletGpuRegistry.finishWriting(); computeReady = true
+//                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+//            }
+//        }
 
         super.update();
     }
-
-    static int counter = 0;
-
-    static boolean debug = true;
-    static boolean computeReady = false;
-    static boolean compute = true;
-    static SSBOView ssboOut1 = null;
-    static SSBOView ssboOut2 = null;
-    static SSBOView ssboOut3 = null;
-    public static ShaderProgram computeShaderProgram;
 
     private static class MethodHolder {
         static final Delegate DELEGATE;

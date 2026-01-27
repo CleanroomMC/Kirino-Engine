@@ -13,6 +13,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBuffe
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
@@ -203,9 +204,13 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         MeshletGpuRegistry meshletGpuRegistry = new MeshletGpuRegistry();
         meshletGpuRegistry.lateInit();
 
+        MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(context.ext().meshletComputeProgram);
+
         storage.put(context.sceneViewState().meshletGpuRegistry, meshletGpuRegistry);
+        storage.put(context.sceneViewState().meshletComputeSystem, meshletComputeSystem);
 
         storage.sealResource(context.sceneViewState().meshletGpuRegistry);
+        storage.sealResource(context.sceneViewState().meshletComputeSystem);
     }
 
     private void initRenderExtensions(GraphicsWorldView context) {
@@ -254,6 +259,10 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
                 storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
+        storage.put(context.ext().meshletComputeProgram,
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
+                        "forge:shaders/meshlets2vertices.comp"));
+
         storage.sealResource(context.ext().postProcessingDefaultProgram);
         storage.sealResource(context.ext().terrainGpuPassProgram);
         storage.sealResource(context.ext().chunkCpuPassProgram);
@@ -261,6 +270,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         storage.sealResource(context.ext().toneMappingPassProgram);
         storage.sealResource(context.ext().upscalingPassProgram);
         storage.sealResource(context.ext().downscalingPassProgram);
+        storage.sealResource(context.ext().meshletComputeProgram);
     }
 
     private void prepare(WorldContext<Graphics> context) {
@@ -278,10 +288,6 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         initMinecraftAssetProviders(view);
         initSceneViewState(view);
         initRenderExtensions(view);
-
-        view.sceneViewState().scene.computeShaderProgram = view.storage()
-                .get(view.graphicsRuntimeServices().shaderRegistry)
-                .newShaderProgram("forge:shaders/meshlets2vertices.comp");
 
         init = true;
     }

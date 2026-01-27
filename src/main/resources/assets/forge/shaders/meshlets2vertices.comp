@@ -90,6 +90,7 @@ void main()
     uint meshletID = gl_GlobalInvocationID.x;
     Meshlet m = inMeshlets[meshletID];
 
+    vec3 meshletPos = vec3(m.chunkPosAndBlockCount.x * 16, m.chunkPosAndBlockCount.y * 16, m.chunkPosAndBlockCount.z * 16);
     int blockCount = clamp(m.chunkPosAndBlockCount.w, 0, 32);
 
     for (int b = 0; b < blockCount; ++b)
@@ -98,11 +99,11 @@ void main()
         int posFace = block.positionAndFaceMask;
 
         int faceMask = posFace & 0x3F;
-        int x = (posFace >> 6)  & 0xF;
+        int x = (posFace >> 6) & 0xF;
         int y = (posFace >> 10) & 0xF;
         int z = (posFace >> 14) & 0xF;
 
-        vec3 base = vec3(x, y, z);
+        vec3 base = vec3(meshletPos.x + x, meshletPos.y + y, meshletPos.z + z);
 
         if ((faceMask & (1 << FACE_X_POS)) != 0)
         {

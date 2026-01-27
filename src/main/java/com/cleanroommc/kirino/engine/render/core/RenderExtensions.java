@@ -39,6 +39,7 @@ public class RenderExtensions {
     public final ResourceSlot<ShaderProgram> toneMappingPassProgram;
     public final ResourceSlot<ShaderProgram> upscalingPassProgram;
     public final ResourceSlot<ShaderProgram> downscalingPassProgram;
+    public final ResourceSlot<ShaderProgram> meshletComputeProgram;
 
     public RenderExtensions(
             ResourceSlot<Renderer> renderer,
@@ -51,7 +52,8 @@ public class RenderExtensions {
             ResourceSlot<ShaderProgram> gizmosPassProgram,
             ResourceSlot<ShaderProgram> toneMappingPassProgram,
             ResourceSlot<ShaderProgram> upscalingPassProgram,
-            ResourceSlot<ShaderProgram> downscalingPassProgram) {
+            ResourceSlot<ShaderProgram> downscalingPassProgram,
+            ResourceSlot<ShaderProgram> meshletComputeProgram) {
 
         this.postProcessingDefaultProgram = postProcessingDefaultProgram;
         this.terrainGpuPassProgram = terrainGpuPassProgram;
@@ -60,6 +62,7 @@ public class RenderExtensions {
         this.toneMappingPassProgram = toneMappingPassProgram;
         this.upscalingPassProgram = upscalingPassProgram;
         this.downscalingPassProgram = downscalingPassProgram;
+        this.meshletComputeProgram = meshletComputeProgram;
 
         postProcessingPass = new PostProcessingPass(
                 new RenderPass("Post-Processing", graphicResourceManager, idbGenerator),

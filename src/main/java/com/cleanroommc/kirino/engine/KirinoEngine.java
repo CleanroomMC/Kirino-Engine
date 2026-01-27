@@ -21,6 +21,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBuffe
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
@@ -96,6 +97,7 @@ public class KirinoEngine {
         ResourceSlot<FrameFinalizer> frameFinalizer = resourceLayout.slot(FrameFinalizer.class);
         ResourceSlot<VAO> dummyVao = resourceLayout.slot(VAO.class);
         ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry = resourceLayout.slot(MeshletGpuRegistry.class);
+        ResourceSlot<MeshletComputeSystem> meshletComputeSystem = resourceLayout.slot(MeshletComputeSystem.class);
         ResourceSlot<BlockMeshGenerator> blockMeshGenerator = resourceLayout.slot(BlockMeshGenerator.class);
         ResourceSlot<StagingBufferManager> stagingBufferManager = resourceLayout.slot(StagingBufferManager.class);
         ResourceSlot<InGameDebugHUDManager> debugHudManager = resourceLayout.slot(InGameDebugHUDManager.class);
@@ -107,6 +109,7 @@ public class KirinoEngine {
         ResourceSlot<ShaderProgram> toneMappingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> upscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> downscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
+        ResourceSlot<ShaderProgram> meshletComputeProgram = resourceLayout.slot(ShaderProgram.class);
 
         bootstrapResources = new BootstrapResources(
                 frameFinalizer,
@@ -132,13 +135,15 @@ public class KirinoEngine {
                 gizmosManager,
                 camera,
                 meshletGpuRegistry,
+                meshletComputeSystem,
                 ForkJoinPool.commonPool(),
                 ForkJoinPool.commonPool());
 
         sceneViewState = new SceneViewState(
                 camera,
                 scene,
-                meshletGpuRegistry);
+                meshletGpuRegistry,
+                meshletComputeSystem);
 
         MinecraftCulling cullingPatch = new MinecraftCulling();
         minecraftIntegration = new MinecraftIntegration(
@@ -178,7 +183,8 @@ public class KirinoEngine {
                 gizmosPassProgram,
                 toneMappingPassProgram,
                 upscalingPassProgram,
-                downscalingPassProgram);
+                downscalingPassProgram,
+                meshletComputeProgram);
 
         ModuleInstallerRegistrationEvent event = new ModuleInstallerRegistrationEvent();
         eventBus.post(event);

@@ -37,7 +37,7 @@ public class MeshletGpuRegistry {
      *     <li>The allocated id must be disposed later rather than leaked</li>
      * </ul>
      *
-     * Thread-safety is guaranteed. Can be ran anywhere.
+     * Thread-safety is guaranteed. Can be run anywhere.
      * Feel free to allocate ids during writing; that is allowed.
      */
     public void allocateMeshletID(MeshletComponent meshletComponent) {
@@ -64,7 +64,7 @@ public class MeshletGpuRegistry {
      *     <li>Must not dispose twice</li>
      * </ul>
      *
-     * Thread-safety is guaranteed. Can be ran anywhere.
+     * Thread-safety is guaranteed. Can be run anywhere.
      * Feel free to dispose ids during writing; that is allowed.
      */
     public synchronized void disposeMeshletID(int meshletId) {
@@ -86,9 +86,10 @@ public class MeshletGpuRegistry {
     }
 
     /**
-     * Thread-safety is guaranteed. Must be ran first or after {@link #finishWriting}.
+     * Thread-safety is guaranteed. Must be run first or after {@link #finishWriting}.
+     * <p>Semantic Note: it consumes all ID changes until now since last <code>beginWriting</code> and prepares for the writing task.</p>
      * <br>
-     * Should be called before an independent async writing task.
+     * Should be called before an independent writing task.
      */
     public synchronized void beginWriting() {
         Preconditions.checkState(!writing, "Must not be writing already.");
@@ -105,9 +106,10 @@ public class MeshletGpuRegistry {
     }
 
     /**
-     * Thread-safety is guaranteed. Must be ran after {@link #beginWriting()}.
+     * Thread-safety is guaranteed. Must be run after {@link #beginWriting()}.
+     * <p>Semantic Note: it frees all pending ID disposals during the writing phase and prepares the output to be consumed.</p>
      * <br>
-     * Should be called after an independent async writing task.
+     * Should be called after an independent writing task.
      */
     public synchronized void finishWriting() {
         Preconditions.checkState(writing, "Must be writing already.");
