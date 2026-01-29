@@ -38,7 +38,7 @@ public class CleanECSRuntime {
     private final FieldRegistry fieldRegistry;
     private final ComponentRegistry componentRegistry;
     public final EntityManager entityManager;
-    public final JobRegistry jobRegistry;
+    private final JobRegistry jobRegistry;
     public final JobScheduler jobScheduler;
 
     @SuppressWarnings({"DataFlowIssue"})
