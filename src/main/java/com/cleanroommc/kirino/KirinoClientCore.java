@@ -183,6 +183,7 @@ public final class KirinoClientCore {
      * <hr>
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
+    @SuppressWarnings("DataFlowIssue")
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
@@ -263,7 +264,7 @@ public final class KirinoClientCore {
         KIRINO_ENGINE.run(FramePhase.RENDER_OPAQUE);
 
         //<editor-fold desc="vanilla logic">
-        MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).cullingPatch.collectEntitiesInView(
+        KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).cullingPatch).collectEntitiesInView(
                 renderViewEntity,
                 cameraFrustum,
                 MINECRAFT.world.getChunkProvider(),
@@ -282,7 +283,7 @@ public final class KirinoClientCore {
             GlStateManager.pushMatrix();
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(0);
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch.renderEntities(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -294,7 +295,7 @@ public final class KirinoClientCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch.renderTESRs(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -384,7 +385,7 @@ public final class KirinoClientCore {
         if (!MethodHolder1.isDebugView(MINECRAFT.entityRenderer)) {
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(1);
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch.renderEntities(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -396,7 +397,7 @@ public final class KirinoClientCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch.renderTESRs(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -510,7 +511,7 @@ public final class KirinoClientCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
-        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KirinoClientCore.MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
+        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 

@@ -6,6 +6,9 @@ import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftCulling;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftEntityRendering;
+import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftTESRRendering;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.GLStateBackup;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
@@ -189,6 +192,19 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         storage.sealResource(context.graphicsRuntimeServices().shaderRegistry);
     }
 
+    private void initMinecraftIntegration(GraphicsWorldView context) {
+        ResourceStorage storage = context.storage();
+
+        MinecraftCulling minecraftCulling = new MinecraftCulling();
+        storage.put(context.minecraftIntegration().cullingPatch, minecraftCulling);
+        storage.put(context.minecraftIntegration().entityRenderingPatch, new MinecraftEntityRendering(minecraftCulling));
+        storage.put(context.minecraftIntegration().tesrRenderingPatch, new MinecraftTESRRendering(minecraftCulling));
+
+        storage.sealResource(context.minecraftIntegration().cullingPatch);
+        storage.sealResource(context.minecraftIntegration().entityRenderingPatch);
+        storage.sealResource(context.minecraftIntegration().tesrRenderingPatch);
+    }
+
     private void initMinecraftAssetProviders(GraphicsWorldView context) {
         ResourceStorage storage = context.storage();
 
@@ -275,6 +291,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
         initBootstrapResources(view);
         initGraphicsRuntimeServices(view);
+        initMinecraftIntegration(view);
         initMinecraftAssetProviders(view);
         initSceneViewState(view);
         initRenderExtensions(view);
