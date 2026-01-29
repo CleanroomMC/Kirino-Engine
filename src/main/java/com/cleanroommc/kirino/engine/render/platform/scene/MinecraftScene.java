@@ -37,7 +37,6 @@ import net.minecraft.world.chunk.Chunk;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.*;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
@@ -298,7 +297,7 @@ public class MinecraftScene extends CleanWorld {
     //</editor-fold>
 
     private float oldCamX = 0f, oldCamY = 0f, oldCamZ = 0f;
-    private int oldRenderDis = 0;
+    private int oldForegroundRenderDis = 0;
     private final FloatBuffer oldViewRot = BufferUtils.createFloatBuffer(16);
     private final FloatBuffer oldProjection = BufferUtils.createFloatBuffer(16);
 
@@ -319,10 +318,11 @@ public class MinecraftScene extends CleanWorld {
         return false;
     }
 
-    private boolean updateRenderDis() {
+    private boolean updateForegroundRenderDis() {
         int renderDis = Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
-        if (oldRenderDis != renderDis) {
-            oldRenderDis = renderDis;
+        renderDis = Math.max(renderDis, KirinoCommonCore.KIRINO_CONFIG_HUB.getForegroundRenderDistance());
+        if (oldForegroundRenderDis != renderDis) {
+            oldForegroundRenderDis = renderDis;
             return true;
         }
         return false;
@@ -346,14 +346,19 @@ public class MinecraftScene extends CleanWorld {
             return;
         }
 
+        //<editor-fold desc="process NEW_WORLD_REBUILD -> NEW_WORLD_INITIAL_WAIT">
         if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_REBUILD) {
             rebuildWorld();
             // finish this update immediately to consume ecs-entity side effects
             entityManager.flush();
             return;
         }
+        //</editor-fold>
 
+        // this flag will be modified inside "process NEW_WORLD_INITIAL_WAIT"
         boolean newWorld = false;
+
+        //<editor-fold desc="process NEW_WORLD_INITIAL_WAIT -> IDLE">
         if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_INITIAL_WAIT) {
             worldFsm.next(); // NEW_WORLD_INITIAL_WAIT or IDLE
             if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_INITIAL_WAIT) {
@@ -364,44 +369,56 @@ public class MinecraftScene extends CleanWorld {
                 newWorld = true; // continue running
             }
         }
+        //</editor-fold>
+
+        // worldFsm finishes its duty here
 
         boolean cameraMoved = updateCameraPos();
-        boolean renderDisChanged = updateRenderDis();
+        boolean renderDisChanged = updateForegroundRenderDis();
         boolean cameraChanged = updateCameraViewProj();
 
+        // newChunksAdded will be modified at the end of update by ChunkCreateCallback
         boolean chunkPopulationChange = cameraMoved || renderDisChanged || newWorld || newChunksAdded.get();
 
+        //<editor-fold desc="trigger CHUNK_PRIORITIZATION_TASK -> MESHLET_GEN_TASK">
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && chunkPopulationChange) {
-            // consume new chunks
+            // consume newChunksAdded
             newChunksAdded.compareAndSet(true, false);
 
             // lod fallout distance = 16
-            // so the counter target is also renderDis
-            terrainFsm.setMeshletGenCounter(oldRenderDis);
+            // so the counter target is also render distance
+            // i.e. generate meshlets based on the loaded chunks til the render distance
+            terrainFsm.setMeshletGenCounter(oldForegroundRenderDis); // we just updated the render distance; it's up to date
             terrainFsm.prioritizeChunks();
 
             // compute the lod of every loaded chunk
             // callback: terrainFsm.next() (MESHLET_GEN_TASK)
             chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
         }
+        //</editor-fold>
 
+        //<editor-fold desc="process MESHLET_GEN_TASK -> IDLE">
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
             chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
             // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE)
             chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
         }
+        //</editor-fold>
 
         if (chunkPopulationChange || cameraChanged) {
             // basic culling
             // todo: integrate MinecraftCulling
         }
 
+        //<editor-fold desc="trigger MESHLET_DESTROY_TASK -> IDLE">
+        // chunksDestroyedLastFrame will be modified at the end of update by ChunkDestroyCallback
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && !chunksDestroyedLastFrame.isEmpty()) {
             terrainFsm.destroyMeshlets();
             // callback: terrainFsm.next() (IDLE)
             // must be blocking to prevent chunksDestroyedLastFrame from being modified (race)
             meshletDestroySystem.execute();
         }
+        //</editor-fold>
 
 //        // test
 //        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 18) {

@@ -22,6 +22,8 @@ public final class KirinoConfigHub {
 
         public int worldInitFrames = 5;
         public float chunkUpdateDisplacement = 8f;
+
+        public int foregroundRenderDistance = 8;
     }
 
     public static class Runtime {
@@ -70,5 +72,9 @@ public final class KirinoConfigHub {
 
     public float getChunkUpdateDisplacement() {
         return requiresRestart.chunkUpdateDisplacement;
+    }
+
+    public int getForegroundRenderDistance() {
+        return requiresRestart.foregroundRenderDistance;
     }
 }
