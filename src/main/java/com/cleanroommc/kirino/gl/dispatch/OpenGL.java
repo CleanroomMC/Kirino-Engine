@@ -1,10 +1,236 @@
 package com.cleanroommc.kirino.gl.dispatch;
 
 import org.apache.commons.lang3.NotImplementedException;
+import org.lwjglx.opengl.KHRDebugCallback;
 
 import java.nio.*;
 
-sealed interface OpenGL permits OGL44 {
+sealed interface OpenGL permits OGL43 {
+    // <editor-fold desc="OpenGL 43">
+    default void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
+        throw new NotImplementedException("glBindVertexBuffer is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glClearBufferData(int target, int internalformat, int format, int type, ByteBuffer data) {
+        throw new NotImplementedException("glClearBufferData is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glClearBufferSubData(int target, int internalformat, long offset, long size, int format, int type, ByteBuffer data) {
+        throw new NotImplementedException("glClearBufferSubData is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glCopyImageSubData(int srcName, int srcTarget, int srcLevel, int srcX, int srcY, int srcZ, int dstName, int dstTarget, int dstLevel, int dstX, int dstY, int dstZ, int srcWidth, int srcHeight, int srcDepth) {
+        throw new NotImplementedException("glCopyImageSubData is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDebugMessageCallback(KHRDebugCallback callback) {
+        throw new NotImplementedException("glDebugMessageCallback is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDebugMessageControl(int source, int type, int severity, IntBuffer ids, boolean enabled) {
+        throw new NotImplementedException("glDebugMessageControl is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDebugMessageInsert(int source, int type, int id, int severity, CharSequence buf) {
+        throw new NotImplementedException("glDebugMessageInsert is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDebugMessageInsert(int source, int type, int id, int severity, ByteBuffer buf) {
+        throw new NotImplementedException("glDebugMessageInsert is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDispatchCompute(int num_groups_x, int num_groups_y, int num_groups_z) {
+        throw new NotImplementedException("glDispatchCompute is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glDispatchComputeIndirect(long indirect) {
+        throw new NotImplementedException("glDispatchComputeIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glFramebufferParameteri(int target, int pname, int param) {
+        throw new NotImplementedException("glFramebufferParameteri is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetDebugMessageLog(int count, IntBuffer sources, IntBuffer types, IntBuffer ids, IntBuffer severities, IntBuffer lengths, ByteBuffer messageLog) {
+        throw new NotImplementedException("glGetDebugMessageLog is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetFramebufferParameter(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetFramebufferParameter is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetFramebufferParameteri(int target, int pname) {
+        throw new NotImplementedException("glGetFramebufferParameteri is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetInternalformat(int target, int internalformat, int pname, LongBuffer params) {
+        throw new NotImplementedException("glGetInternalformat is only avaliable for OpenGL 43 and above");
+    }
+
+    default long glGetInternalformati64(int target, int internalformat, int pname) {
+        throw new NotImplementedException("glGetInternalformati64 is only avaliable for OpenGL 43 and above");
+    }
+
+    default String glGetObjectLabel(int identifier, int name, int bufSize) {
+        throw new NotImplementedException("glGetObjectLabel is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetObjectLabel(int identifier, int name, IntBuffer length, ByteBuffer label) {
+        throw new NotImplementedException("glGetObjectLabel is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetProgramInterface(int program, int programInterface, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetProgramInterface is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramInterfacei(int program, int programInterface, int pname) {
+        throw new NotImplementedException("glGetProgramInterfacei is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetProgramResource(int program, int programInterface, int index, IntBuffer props, IntBuffer length, IntBuffer params) {
+        throw new NotImplementedException("glGetProgramResource is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceIndex(int program, int programInterface, CharSequence name) {
+        throw new NotImplementedException("glGetProgramResourceIndex is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceIndex(int program, int programInterface, ByteBuffer name) {
+        throw new NotImplementedException("glGetProgramResourceIndex is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceLocation(int program, int programInterface, CharSequence name) {
+        throw new NotImplementedException("glGetProgramResourceLocation is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceLocation(int program, int programInterface, ByteBuffer name) {
+        throw new NotImplementedException("glGetProgramResourceLocation is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceLocationIndex(int program, int programInterface, CharSequence name) {
+        throw new NotImplementedException("glGetProgramResourceLocationIndex is only avaliable for OpenGL 43 and above");
+    }
+
+    default int glGetProgramResourceLocationIndex(int program, int programInterface, ByteBuffer name) {
+        throw new NotImplementedException("glGetProgramResourceLocationIndex is only avaliable for OpenGL 43 and above");
+    }
+
+    default String glGetProgramResourceName(int program, int programInterface, int index, int bufSize) {
+        throw new NotImplementedException("glGetProgramResourceName is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glGetProgramResourceName(int program, int programInterface, int index, IntBuffer length, ByteBuffer name) {
+        throw new NotImplementedException("glGetProgramResourceName is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateBufferData(int buffer) {
+        throw new NotImplementedException("glInvalidateBufferData is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateBufferSubData(int buffer, long offset, long length) {
+        throw new NotImplementedException("glInvalidateBufferSubData is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateFramebuffer(int target, IntBuffer attachments) {
+        throw new NotImplementedException("glInvalidateFramebuffer is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateSubFramebuffer(int target, IntBuffer attachments, int x, int y, int width, int height) {
+        throw new NotImplementedException("glInvalidateSubFramebuffer is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateTexImage(int texture, int level) {
+        throw new NotImplementedException("glInvalidateTexImage is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glInvalidateTexSubImage(int texture, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth) {
+        throw new NotImplementedException("glInvalidateTexSubImage is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawArraysIndirect(int mode, long indirect_buffer_offset, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawArraysIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawArraysIndirect(int mode, ByteBuffer indirect, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawArraysIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawArraysIndirect(int mode, IntBuffer indirect, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawArraysIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawElementsIndirect(int mode, int type, long indirect_buffer_offset, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawElementsIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawElementsIndirect(int mode, int type, ByteBuffer indirect, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawElementsIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glMultiDrawElementsIndirect(int mode, int type, IntBuffer indirect, int primcount, int stride) {
+        throw new NotImplementedException("glMultiDrawElementsIndirect is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glObjectLabel(int identifier, int name, CharSequence label) {
+        throw new NotImplementedException("glObjectLabel is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glObjectLabel(int identifier, int name, ByteBuffer label) {
+        throw new NotImplementedException("glObjectLabel is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glPopDebugGroup() {
+        throw new NotImplementedException("glPopDebugGroup is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glPushDebugGroup(int source, int id, CharSequence message) {
+        throw new NotImplementedException("glPushDebugGroup is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glPushDebugGroup(int source, int id, ByteBuffer message) {
+        throw new NotImplementedException("glPushDebugGroup is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glShaderStorageBlockBinding(int program, int storageBlockIndex, int storageBlockBinding) {
+        throw new NotImplementedException("glShaderStorageBlockBinding is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glTexBufferRange(int target, int internalformat, int buffer, long offset, long size) {
+        throw new NotImplementedException("glTexBufferRange is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glTexStorage2DMultisample(int target, int samples, int internalformat, int width, int height, boolean fixedsamplelocations) {
+        throw new NotImplementedException("glTexStorage2DMultisample is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glTexStorage3DMultisample(int target, int samples, int internalformat, int width, int height, int depth, boolean fixedsamplelocations) {
+        throw new NotImplementedException("glTexStorage3DMultisample is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glTextureView(int texture, int target, int origtexture, int internalformat, int minlevel, int numlevels, int minlayer, int numlayers) {
+        throw new NotImplementedException("glTextureView is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glVertexAttribBinding(int attribindex, int bindingindex) {
+        throw new NotImplementedException("glVertexAttribBinding is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glVertexAttribFormat(int attribindex, int size, int type, boolean normalized, int relativeoffset) {
+        throw new NotImplementedException("glVertexAttribFormat is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glVertexAttribIFormat(int attribindex, int size, int type, int relativeoffset) {
+        throw new NotImplementedException("glVertexAttribIFormat is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glVertexAttribLFormat(int attribindex, int size, int type, int relativeoffset) {
+        throw new NotImplementedException("glVertexAttribLFormat is only avaliable for OpenGL 43 and above");
+    }
+
+    default void glVertexBindingDivisor(int bindingindex, int divisor) {
+        throw new NotImplementedException("glVertexBindingDivisor is only avaliable for OpenGL 43 and above");
+    }
+    // </editor-fold>
     // <editor-fold desc="OpenGL 44">
     default void glBufferStorage(int target, long size, int flags) {
         throw new NotImplementedException("glBufferStorage is only avaliable for OpenGL 44 and above");

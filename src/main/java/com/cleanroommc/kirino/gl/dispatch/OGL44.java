@@ -4,7 +4,7 @@ import org.lwjglx.opengl.GL44;
 
 import java.nio.*;
 
-sealed class OGL44 implements OpenGL permits OGL45 {
+sealed class OGL44 extends OGL43 permits OGL45 {
     @Override
     public void glBufferStorage(int target, long size, int flags) {
         GL44.glBufferStorage(target, size, flags);
