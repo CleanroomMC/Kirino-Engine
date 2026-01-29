@@ -65,7 +65,7 @@ public final class KirinoCommonCore {
             registerMethod.setAccessible(true);
 
             Method onKirinoOneTimeConfig = KirinoCommonCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoClientCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCommonCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
         } catch (Throwable throwable) {
             throw new RuntimeException("Failed to register the Kirino one time config event listener.", throwable);
         }
@@ -97,27 +97,27 @@ public final class KirinoCommonCore {
             registerMethod.setAccessible(true);
 
             Method onStructScan = KirinoCommonCore.class.getDeclaredMethod("onStructScan", StructScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, StructScanningEvent.class, KirinoClientCore.class, onStructScan, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, StructScanningEvent.class, KirinoCommonCore.class, onStructScan, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default StructScanningEvent listener.");
 
             Method onComponentScan = KirinoCommonCore.class.getDeclaredMethod("onComponentScan", ComponentScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ComponentScanningEvent.class, KirinoClientCore.class, onComponentScan, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, ComponentScanningEvent.class, KirinoCommonCore.class, onComponentScan, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default ComponentScanningEvent listener.");
 
             Method onShaderRegister = KirinoCommonCore.class.getDeclaredMethod("onShaderRegister", ShaderRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ShaderRegistrationEvent.class, KirinoClientCore.class, onShaderRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, ShaderRegistrationEvent.class, KirinoCommonCore.class, onShaderRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default ShaderRegistrationEvent listener.");
 
             Method onJobRegister = KirinoCommonCore.class.getDeclaredMethod("onJobRegister", JobRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, JobRegistrationEvent.class, KirinoClientCore.class, onJobRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, JobRegistrationEvent.class, KirinoCommonCore.class, onJobRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default JobRegistrationEvent listener.");
 
             Method onPostProcessingRegister = KirinoCommonCore.class.getDeclaredMethod("onPostProcessingRegister", PostProcessingRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoClientCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoCommonCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default PostProcessingRegistrationEvent listener.");
 
             Method onDebugHudRegister = KirinoCommonCore.class.getDeclaredMethod("onDebugHudRegister", DebugHUDRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoClientCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoCommonCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default DebugHUDRegistrationEvent listener.");
         } catch (Throwable throwable) {
             throw new RuntimeException("Failed to register default event listeners.", throwable);
