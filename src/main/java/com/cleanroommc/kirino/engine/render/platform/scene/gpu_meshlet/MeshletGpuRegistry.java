@@ -1,6 +1,9 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletBufferSlotAllocator;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.VertexOutputDoubleBuffer;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.google.common.base.Preconditions;
 
@@ -9,6 +12,7 @@ import java.util.List;
 
 public class MeshletGpuRegistry {
     protected final MeshletInputDoubleBuffer meshletInputBuffer;
+    protected final VertexOutputDoubleBuffer vertexOutputBuffer;
     protected final MeshletBufferSlotAllocator meshletBufferSlotAllocator;
 
     private int meshletIdCounter = 0;
@@ -23,11 +27,13 @@ public class MeshletGpuRegistry {
 
     public MeshletGpuRegistry() {
         meshletInputBuffer = new MeshletInputDoubleBuffer();
+        vertexOutputBuffer = new VertexOutputDoubleBuffer();
         meshletBufferSlotAllocator = new MeshletBufferSlotAllocator(meshletInputBuffer);
     }
 
     public void lateInit() {
         meshletInputBuffer.lateInit();
+        vertexOutputBuffer.lateInit();
     }
 
     //<editor-fold desc="id allocation & disposal">

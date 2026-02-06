@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.google.common.base.Preconditions;

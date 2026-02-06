@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
+package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer;
 
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
@@ -14,7 +14,7 @@ public class MeshletBufferSlotAllocator {
     // key: meshlet id, value: buffer slot ordinal
     private final Map<Integer, Integer> meshletId2BufSlotMapping = new HashMap<>();
 
-    MeshletBufferSlotAllocator(MeshletInputDoubleBuffer buffer) {
+    public MeshletBufferSlotAllocator(MeshletInputDoubleBuffer buffer) {
         this.buffer = buffer;
     }
 

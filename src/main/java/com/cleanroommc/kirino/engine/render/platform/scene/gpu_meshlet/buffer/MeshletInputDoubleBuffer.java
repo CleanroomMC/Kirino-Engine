@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
+package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer;
 
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
@@ -16,7 +16,7 @@ public class MeshletInputDoubleBuffer {
     private final static int INITIAL_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
     private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
 
-    MeshletInputDoubleBuffer() {
+    public MeshletInputDoubleBuffer() {
         ssboSize0 = INITIAL_SSBO_SIZE;
         ssboSize1 = INITIAL_SSBO_SIZE;
     }
@@ -36,6 +36,7 @@ public class MeshletInputDoubleBuffer {
         ssbo1.bind(0);
     }
 
+    //<editor-fold desc="grow utils">
     /**
      * Make sure that ssbo0 isn't being used by gpu at the moment.
      * Must only grow the current write target.
@@ -73,7 +74,9 @@ public class MeshletInputDoubleBuffer {
 
         return true;
     }
+    //</editor-fold>
 
+    //<editor-fold desc="resize utils">
     /**
      * Make sure that ssbo0 isn't being used by gpu at the moment.
      * Must only resize the current write target.
@@ -113,6 +116,7 @@ public class MeshletInputDoubleBuffer {
 
         ssbo1.bind(prevID);
     }
+    //</editor-fold>
 
     private int index = 0;
 
@@ -130,12 +134,12 @@ public class MeshletInputDoubleBuffer {
         index = index == 0 ? 1 : 0;
     }
 
-    // inactive one (not being used by gpu)
+    // not being used by compute atm; going to be written on cpu side
     public SSBOView getWriteTarget() {
         return index == 0 ? ssbo0 : ssbo1;
     }
 
-    // active one (to be used by gpu)
+    // just finished writing on cpu side; going to be passed to compute
     public SSBOView getConsumeTarget() {
         return index == 0 ? ssbo1 : ssbo0;
     }
