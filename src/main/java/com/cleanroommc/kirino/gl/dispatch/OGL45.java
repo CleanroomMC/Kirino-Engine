@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.gl.dispatch;
 
-import org.lwjglx.opengl.GL45;
+import org.lwjgl.opengl.GL45;
 
 import java.nio.*;
 

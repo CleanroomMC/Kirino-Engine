@@ -1,13 +1,13 @@
 package com.cleanroommc.kirino.gl.dispatch;
 
-import org.lwjglx.opengl.GL43;
-import org.lwjglx.opengl.KHRDebugCallback;
+import org.lwjgl.opengl.GL43;
+import org.lwjgl.opengl.KHRDebugCallback;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 
-sealed class OGL43 implements OpenGL permits OGL44 {
+sealed class OGL43 extends OGL11 permits OGL44 {
     @Override
     public void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
         GL43.glBindVertexBuffer(bindingindex, buffer, offset, stride);
