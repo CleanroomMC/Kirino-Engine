@@ -1,11 +1,1274 @@
 package com.cleanroommc.kirino.gl.dispatch;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.lwjglx.opengl.KHRDebugCallback;
-
+import org.lwjgl.opengl.KHRDebugCallback;
 import java.nio.*;
 
-sealed interface OpenGL permits OGL43 {
+public sealed interface OpenGL permits OGL11 {
+    // <editor-fold desc="OpenGL 11">
+    default void glAccum(int op, float value) {
+        throw new NotImplementedException("glAccum is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glAlphaFunc(int func, float ref) {
+        throw new NotImplementedException("glAlphaFunc is only avaliable for OpenGL 11 and above");
+    }
+
+    default boolean glAreTexturesResident(IntBuffer textures, ByteBuffer residences) {
+        throw new NotImplementedException("glAreTexturesResident is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glArrayElement(int i) {
+        throw new NotImplementedException("glArrayElement is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glBegin(int mode) {
+        throw new NotImplementedException("glBegin is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glBindTexture(int target, int texture) {
+        throw new NotImplementedException("glBindTexture is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glBitmap(int width, int height, float xorig, float yorig, float xmove, float ymove, long bitmap_buffer_offset) {
+        throw new NotImplementedException("glBitmap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glBitmap(int width, int height, float xorig, float yorig, float xmove, float ymove, ByteBuffer bitmap) {
+        throw new NotImplementedException("glBitmap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glBlendFunc(int sfactor, int dfactor) {
+        throw new NotImplementedException("glBlendFunc is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCallList(int list) {
+        throw new NotImplementedException("glCallList is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCallLists(ByteBuffer lists) {
+        throw new NotImplementedException("glCallLists is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCallLists(IntBuffer lists) {
+        throw new NotImplementedException("glCallLists is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCallLists(ShortBuffer lists) {
+        throw new NotImplementedException("glCallLists is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClear(int mask) {
+        throw new NotImplementedException("glClear is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClearAccum(float red, float green, float blue, float alpha) {
+        throw new NotImplementedException("glClearAccum is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClearColor(float red, float green, float blue, float alpha) {
+        throw new NotImplementedException("glClearColor is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClearDepth(double depth) {
+        throw new NotImplementedException("glClearDepth is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClearStencil(int s) {
+        throw new NotImplementedException("glClearStencil is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glClipPlane(int plane, DoubleBuffer equation) {
+        throw new NotImplementedException("glClipPlane is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor3b(byte red, byte green, byte blue) {
+        throw new NotImplementedException("glColor3b is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor3d(double red, double green, double blue) {
+        throw new NotImplementedException("glColor3d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor3f(float red, float green, float blue) {
+        throw new NotImplementedException("glColor3f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor3ub(byte red, byte green, byte blue) {
+        throw new NotImplementedException("glColor3ub is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor4b(byte red, byte green, byte blue, byte alpha) {
+        throw new NotImplementedException("glColor4b is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor4d(double red, double green, double blue, double alpha) {
+        throw new NotImplementedException("glColor4d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor4f(float red, float green, float blue, float alpha) {
+        throw new NotImplementedException("glColor4f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColor4ub(byte red, byte green, byte blue, byte alpha) {
+        throw new NotImplementedException("glColor4ub is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorMask(boolean red, boolean green, boolean blue, boolean alpha) {
+        throw new NotImplementedException("glColorMask is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorMaterial(int face, int mode) {
+        throw new NotImplementedException("glColorMaterial is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorPointer(int size, int type, int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glColorPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorPointer(int size, int type, int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glColorPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorPointer(int size, int stride, DoubleBuffer pointer) {
+        throw new NotImplementedException("glColorPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorPointer(int size, int stride, FloatBuffer pointer) {
+        throw new NotImplementedException("glColorPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glColorPointer(int size, boolean unsigned, int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glColorPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCopyPixels(int x, int y, int width, int height, int type) {
+        throw new NotImplementedException("glCopyPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCopyTexImage1D(int target, int level, int internalFormat, int x, int y, int width, int border) {
+        throw new NotImplementedException("glCopyTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCopyTexImage2D(int target, int level, int internalFormat, int x, int y, int width, int height, int border) {
+        throw new NotImplementedException("glCopyTexImage2D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCopyTexSubImage1D(int target, int level, int xoffset, int x, int y, int width) {
+        throw new NotImplementedException("glCopyTexSubImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCopyTexSubImage2D(int target, int level, int xoffset, int yoffset, int x, int y, int width, int height) {
+        throw new NotImplementedException("glCopyTexSubImage2D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glCullFace(int mode) {
+        throw new NotImplementedException("glCullFace is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDeleteLists(int list, int range) {
+        throw new NotImplementedException("glDeleteLists is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDeleteTextures(int texture) {
+        throw new NotImplementedException("glDeleteTextures is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDeleteTextures(IntBuffer textures) {
+        throw new NotImplementedException("glDeleteTextures is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDepthFunc(int func) {
+        throw new NotImplementedException("glDepthFunc is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDepthMask(boolean flag) {
+        throw new NotImplementedException("glDepthMask is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDepthRange(double zNear, double zFar) {
+        throw new NotImplementedException("glDepthRange is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDisable(int cap) {
+        throw new NotImplementedException("glDisable is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDisableClientState(int cap) {
+        throw new NotImplementedException("glDisableClientState is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawArrays(int mode, int first, int count) {
+        throw new NotImplementedException("glDrawArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawBuffer(int mode) {
+        throw new NotImplementedException("glDrawBuffer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawElements(int mode, int indices_count, int type, long indices_buffer_offset) {
+        throw new NotImplementedException("glDrawElements is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawElements(int mode, int count, int type, ByteBuffer indices) {
+        throw new NotImplementedException("glDrawElements is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawElements(int mode, ByteBuffer indices) {
+        throw new NotImplementedException("glDrawElements is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawElements(int mode, IntBuffer indices) {
+        throw new NotImplementedException("glDrawElements is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawElements(int mode, ShortBuffer indices) {
+        throw new NotImplementedException("glDrawElements is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawPixels(int width, int height, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glDrawPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawPixels(int width, int height, int format, int type, ByteBuffer pixels) {
+        throw new NotImplementedException("glDrawPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawPixels(int width, int height, int format, int type, IntBuffer pixels) {
+        throw new NotImplementedException("glDrawPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glDrawPixels(int width, int height, int format, int type, ShortBuffer pixels) {
+        throw new NotImplementedException("glDrawPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEdgeFlag(boolean flag) {
+        throw new NotImplementedException("glEdgeFlag is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEdgeFlagPointer(int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glEdgeFlagPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEdgeFlagPointer(int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glEdgeFlagPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEnable(int cap) {
+        throw new NotImplementedException("glEnable is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEnableClientState(int cap) {
+        throw new NotImplementedException("glEnableClientState is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEnd() {
+        throw new NotImplementedException("glEnd is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEndList() {
+        throw new NotImplementedException("glEndList is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalCoord1d(double u) {
+        throw new NotImplementedException("glEvalCoord1d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalCoord1f(float u) {
+        throw new NotImplementedException("glEvalCoord1f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalCoord2d(double u, double v) {
+        throw new NotImplementedException("glEvalCoord2d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalCoord2f(float u, float v) {
+        throw new NotImplementedException("glEvalCoord2f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalMesh1(int mode, int i1, int i2) {
+        throw new NotImplementedException("glEvalMesh1 is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalMesh2(int mode, int i1, int i2, int j1, int j2) {
+        throw new NotImplementedException("glEvalMesh2 is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalPoint1(int i) {
+        throw new NotImplementedException("glEvalPoint1 is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glEvalPoint2(int i, int j) {
+        throw new NotImplementedException("glEvalPoint2 is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFeedbackBuffer(int type, FloatBuffer buffer) {
+        throw new NotImplementedException("glFeedbackBuffer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFinish() {
+        throw new NotImplementedException("glFinish is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFlush() {
+        throw new NotImplementedException("glFlush is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFog(int pname, FloatBuffer params) {
+        throw new NotImplementedException("glFog is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFog(int pname, IntBuffer params) {
+        throw new NotImplementedException("glFog is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFogf(int pname, float param) {
+        throw new NotImplementedException("glFogf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFogi(int pname, int param) {
+        throw new NotImplementedException("glFogi is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFrontFace(int mode) {
+        throw new NotImplementedException("glFrontFace is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glFrustum(double left, double right, double bottom, double top, double zNear, double zFar) {
+        throw new NotImplementedException("glFrustum is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGenLists(int range) {
+        throw new NotImplementedException("glGenLists is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGenTextures() {
+        throw new NotImplementedException("glGenTextures is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGenTextures(IntBuffer textures) {
+        throw new NotImplementedException("glGenTextures is only avaliable for OpenGL 11 and above");
+    }
+
+    default boolean glGetBoolean(int pname) {
+        throw new NotImplementedException("glGetBoolean is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetBoolean(int pname, ByteBuffer params) {
+        throw new NotImplementedException("glGetBoolean is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetClipPlane(int plane, DoubleBuffer equation) {
+        throw new NotImplementedException("glGetClipPlane is only avaliable for OpenGL 11 and above");
+    }
+
+    default double glGetDouble(int pname) {
+        throw new NotImplementedException("glGetDouble is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetDouble(int pname, DoubleBuffer params) {
+        throw new NotImplementedException("glGetDouble is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetError() {
+        throw new NotImplementedException("glGetError is only avaliable for OpenGL 11 and above");
+    }
+
+    default float glGetFloat(int pname) {
+        throw new NotImplementedException("glGetFloat is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetFloat(int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetFloat is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetInteger(int pname) {
+        throw new NotImplementedException("glGetInteger is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetInteger(int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetInteger is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetLight(int light, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetLight is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetLight(int light, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetLight is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetMap(int target, int query, DoubleBuffer v) {
+        throw new NotImplementedException("glGetMap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetMap(int target, int query, FloatBuffer v) {
+        throw new NotImplementedException("glGetMap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetMap(int target, int query, IntBuffer v) {
+        throw new NotImplementedException("glGetMap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetMaterial(int face, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetMaterial is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetMaterial(int face, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetMaterial is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMap(int map, FloatBuffer values) {
+        throw new NotImplementedException("glGetPixelMap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMapfv(int map, long values_buffer_offset) {
+        throw new NotImplementedException("glGetPixelMapfv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMapu(int map, IntBuffer values) {
+        throw new NotImplementedException("glGetPixelMapu is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMapu(int map, ShortBuffer values) {
+        throw new NotImplementedException("glGetPixelMapu is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMapuiv(int map, long values_buffer_offset) {
+        throw new NotImplementedException("glGetPixelMapuiv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPixelMapusv(int map, long values_buffer_offset) {
+        throw new NotImplementedException("glGetPixelMapusv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPolygonStipple(long mask_buffer_offset) {
+        throw new NotImplementedException("glGetPolygonStipple is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetPolygonStipple(ByteBuffer mask) {
+        throw new NotImplementedException("glGetPolygonStipple is only avaliable for OpenGL 11 and above");
+    }
+
+    default String glGetString(int name) {
+        throw new NotImplementedException("glGetString is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexEnv(int coord, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetTexEnv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexEnv(int coord, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexEnv is only avaliable for OpenGL 11 and above");
+    }
+
+    default float glGetTexEnvf(int coord, int pname) {
+        throw new NotImplementedException("glGetTexEnvf is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetTexEnvi(int coord, int pname) {
+        throw new NotImplementedException("glGetTexEnvi is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexGen(int coord, int pname, DoubleBuffer params) {
+        throw new NotImplementedException("glGetTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexGen(int coord, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexGen(int coord, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default double glGetTexGend(int coord, int pname) {
+        throw new NotImplementedException("glGetTexGend is only avaliable for OpenGL 11 and above");
+    }
+
+    default float glGetTexGenf(int coord, int pname) {
+        throw new NotImplementedException("glGetTexGenf is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetTexGeni(int coord, int pname) {
+        throw new NotImplementedException("glGetTexGeni is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, ByteBuffer pixels) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, DoubleBuffer pixels) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, FloatBuffer pixels) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, IntBuffer pixels) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexImage(int target, int level, int format, int type, ShortBuffer pixels) {
+        throw new NotImplementedException("glGetTexImage is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexLevelParameter(int target, int level, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetTexLevelParameter is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexLevelParameter(int target, int level, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexLevelParameter is only avaliable for OpenGL 11 and above");
+    }
+
+    default float glGetTexLevelParameterf(int target, int level, int pname) {
+        throw new NotImplementedException("glGetTexLevelParameterf is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetTexLevelParameteri(int target, int level, int pname) {
+        throw new NotImplementedException("glGetTexLevelParameteri is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexParameter(int target, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetTexParameter is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glGetTexParameter(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexParameter is only avaliable for OpenGL 11 and above");
+    }
+
+    default float glGetTexParameterf(int target, int pname) {
+        throw new NotImplementedException("glGetTexParameterf is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glGetTexParameteri(int target, int pname) {
+        throw new NotImplementedException("glGetTexParameteri is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glHint(int target, int mode) {
+        throw new NotImplementedException("glHint is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInitNames() {
+        throw new NotImplementedException("glInitNames is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, DoubleBuffer pointer) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, FloatBuffer pointer) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, IntBuffer pointer) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glInterleavedArrays(int format, int stride, ShortBuffer pointer) {
+        throw new NotImplementedException("glInterleavedArrays is only avaliable for OpenGL 11 and above");
+    }
+
+    default boolean glIsEnabled(int cap) {
+        throw new NotImplementedException("glIsEnabled is only avaliable for OpenGL 11 and above");
+    }
+
+    default boolean glIsList(int list) {
+        throw new NotImplementedException("glIsList is only avaliable for OpenGL 11 and above");
+    }
+
+    default boolean glIsTexture(int texture) {
+        throw new NotImplementedException("glIsTexture is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLight(int light, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glLight is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLight(int light, int pname, IntBuffer params) {
+        throw new NotImplementedException("glLight is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLightModel(int pname, FloatBuffer params) {
+        throw new NotImplementedException("glLightModel is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLightModel(int pname, IntBuffer params) {
+        throw new NotImplementedException("glLightModel is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLightModelf(int pname, float param) {
+        throw new NotImplementedException("glLightModelf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLightModeli(int pname, int param) {
+        throw new NotImplementedException("glLightModeli is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLightf(int light, int pname, float param) {
+        throw new NotImplementedException("glLightf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLighti(int light, int pname, int param) {
+        throw new NotImplementedException("glLighti is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLineStipple(int factor, short pattern) {
+        throw new NotImplementedException("glLineStipple is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLineWidth(float width) {
+        throw new NotImplementedException("glLineWidth is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glListBase(int base) {
+        throw new NotImplementedException("glListBase is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLoadIdentity() {
+        throw new NotImplementedException("glLoadIdentity is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLoadMatrix(DoubleBuffer m) {
+        throw new NotImplementedException("glLoadMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLoadMatrix(FloatBuffer m) {
+        throw new NotImplementedException("glLoadMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLoadName(int name) {
+        throw new NotImplementedException("glLoadName is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glLogicOp(int opcode) {
+        throw new NotImplementedException("glLogicOp is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMap1d(int target, double u1, double u2, int stride, int order, DoubleBuffer points) {
+        throw new NotImplementedException("glMap1d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMap1f(int target, float u1, float u2, int stride, int order, FloatBuffer points) {
+        throw new NotImplementedException("glMap1f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMap2d(int target, double u1, double u2, int ustride, int uorder, double v1, double v2, int vstride, int vorder, DoubleBuffer points) {
+        throw new NotImplementedException("glMap2d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMap2f(int target, float u1, float u2, int ustride, int uorder, float v1, float v2, int vstride, int vorder, FloatBuffer points) {
+        throw new NotImplementedException("glMap2f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMapGrid1d(int un, double u1, double u2) {
+        throw new NotImplementedException("glMapGrid1d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMapGrid1f(int un, float u1, float u2) {
+        throw new NotImplementedException("glMapGrid1f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMapGrid2d(int un, double u1, double u2, int vn, double v1, double v2) {
+        throw new NotImplementedException("glMapGrid2d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMapGrid2f(int un, float u1, float u2, int vn, float v1, float v2) {
+        throw new NotImplementedException("glMapGrid2f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMaterial(int face, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glMaterial is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMaterial(int face, int pname, IntBuffer params) {
+        throw new NotImplementedException("glMaterial is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMaterialf(int face, int pname, float param) {
+        throw new NotImplementedException("glMaterialf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMateriali(int face, int pname, int param) {
+        throw new NotImplementedException("glMateriali is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMatrixMode(int mode) {
+        throw new NotImplementedException("glMatrixMode is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMultMatrix(DoubleBuffer m) {
+        throw new NotImplementedException("glMultMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glMultMatrix(FloatBuffer m) {
+        throw new NotImplementedException("glMultMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNewList(int list, int mode) {
+        throw new NotImplementedException("glNewList is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormal3b(byte nx, byte ny, byte nz) {
+        throw new NotImplementedException("glNormal3b is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormal3d(double nx, double ny, double nz) {
+        throw new NotImplementedException("glNormal3d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormal3f(float nx, float ny, float nz) {
+        throw new NotImplementedException("glNormal3f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormal3i(int nx, int ny, int nz) {
+        throw new NotImplementedException("glNormal3i is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int type, int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int type, int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int stride, DoubleBuffer pointer) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int stride, FloatBuffer pointer) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glNormalPointer(int stride, IntBuffer pointer) {
+        throw new NotImplementedException("glNormalPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glOrtho(double left, double right, double bottom, double top, double zNear, double zFar) {
+        throw new NotImplementedException("glOrtho is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPassThrough(float token) {
+        throw new NotImplementedException("glPassThrough is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMap(int map, FloatBuffer values) {
+        throw new NotImplementedException("glPixelMap is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMapfv(int map, int values_mapsize, long values_buffer_offset) {
+        throw new NotImplementedException("glPixelMapfv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMapu(int map, IntBuffer values) {
+        throw new NotImplementedException("glPixelMapu is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMapu(int map, ShortBuffer values) {
+        throw new NotImplementedException("glPixelMapu is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMapuiv(int map, int values_mapsize, long values_buffer_offset) {
+        throw new NotImplementedException("glPixelMapuiv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelMapusv(int map, int values_mapsize, long values_buffer_offset) {
+        throw new NotImplementedException("glPixelMapusv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelStoref(int pname, float param) {
+        throw new NotImplementedException("glPixelStoref is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelStorei(int pname, int param) {
+        throw new NotImplementedException("glPixelStorei is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelTransferf(int pname, float param) {
+        throw new NotImplementedException("glPixelTransferf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelTransferi(int pname, int param) {
+        throw new NotImplementedException("glPixelTransferi is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPixelZoom(float xfactor, float yfactor) {
+        throw new NotImplementedException("glPixelZoom is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPointSize(float size) {
+        throw new NotImplementedException("glPointSize is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPolygonMode(int face, int mode) {
+        throw new NotImplementedException("glPolygonMode is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPolygonOffset(float factor, float units) {
+        throw new NotImplementedException("glPolygonOffset is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPolygonStipple(long mask_buffer_offset) {
+        throw new NotImplementedException("glPolygonStipple is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPolygonStipple(ByteBuffer mask) {
+        throw new NotImplementedException("glPolygonStipple is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPopAttrib() {
+        throw new NotImplementedException("glPopAttrib is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPopClientAttrib() {
+        throw new NotImplementedException("glPopClientAttrib is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPopMatrix() {
+        throw new NotImplementedException("glPopMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPopName() {
+        throw new NotImplementedException("glPopName is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPrioritizeTextures(IntBuffer textures, FloatBuffer priorities) {
+        throw new NotImplementedException("glPrioritizeTextures is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPushAttrib(int mask) {
+        throw new NotImplementedException("glPushAttrib is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPushClientAttrib(int mask) {
+        throw new NotImplementedException("glPushClientAttrib is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPushMatrix() {
+        throw new NotImplementedException("glPushMatrix is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glPushName(int name) {
+        throw new NotImplementedException("glPushName is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos2d(double x, double y) {
+        throw new NotImplementedException("glRasterPos2d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos2f(float x, float y) {
+        throw new NotImplementedException("glRasterPos2f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos2i(int x, int y) {
+        throw new NotImplementedException("glRasterPos2i is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos3d(double x, double y, double z) {
+        throw new NotImplementedException("glRasterPos3d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos3f(float x, float y, float z) {
+        throw new NotImplementedException("glRasterPos3f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos3i(int x, int y, int z) {
+        throw new NotImplementedException("glRasterPos3i is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos4d(double x, double y, double z, double w) {
+        throw new NotImplementedException("glRasterPos4d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos4f(float x, float y, float z, float w) {
+        throw new NotImplementedException("glRasterPos4f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRasterPos4i(int x, int y, int z, int w) {
+        throw new NotImplementedException("glRasterPos4i is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadBuffer(int mode) {
+        throw new NotImplementedException("glReadBuffer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, ByteBuffer pixels) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, DoubleBuffer pixels) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, FloatBuffer pixels) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, IntBuffer pixels) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glReadPixels(int x, int y, int width, int height, int format, int type, ShortBuffer pixels) {
+        throw new NotImplementedException("glReadPixels is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRectd(double x1, double y1, double x2, double y2) {
+        throw new NotImplementedException("glRectd is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRectf(float x1, float y1, float x2, float y2) {
+        throw new NotImplementedException("glRectf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRecti(int x1, int y1, int x2, int y2) {
+        throw new NotImplementedException("glRecti is only avaliable for OpenGL 11 and above");
+    }
+
+    default int glRenderMode(int mode) {
+        throw new NotImplementedException("glRenderMode is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRotated(double angle, double x, double y, double z) {
+        throw new NotImplementedException("glRotated is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glRotatef(float angle, float x, float y, float z) {
+        throw new NotImplementedException("glRotatef is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glScaled(double x, double y, double z) {
+        throw new NotImplementedException("glScaled is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glScalef(float x, float y, float z) {
+        throw new NotImplementedException("glScalef is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glScissor(int x, int y, int width, int height) {
+        throw new NotImplementedException("glScissor is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glSelectBuffer(IntBuffer buffer) {
+        throw new NotImplementedException("glSelectBuffer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glShadeModel(int mode) {
+        throw new NotImplementedException("glShadeModel is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glStencilFunc(int func, int ref, int mask) {
+        throw new NotImplementedException("glStencilFunc is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glStencilMask(int mask) {
+        throw new NotImplementedException("glStencilMask is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glStencilOp(int fail, int zfail, int zpass) {
+        throw new NotImplementedException("glStencilOp is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord1d(double s) {
+        throw new NotImplementedException("glTexCoord1d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord1f(float s) {
+        throw new NotImplementedException("glTexCoord1f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord2d(double s, double t) {
+        throw new NotImplementedException("glTexCoord2d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord2f(float s, float t) {
+        throw new NotImplementedException("glTexCoord2f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord3d(double s, double t, double r) {
+        throw new NotImplementedException("glTexCoord3d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord3f(float s, float t, float r) {
+        throw new NotImplementedException("glTexCoord3f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord4d(double s, double t, double r, double q) {
+        throw new NotImplementedException("glTexCoord4d is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoord4f(float s, float t, float r, float q) {
+        throw new NotImplementedException("glTexCoord4f is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int type, int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int type, int stride, ByteBuffer pointer) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int stride, DoubleBuffer pointer) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int stride, FloatBuffer pointer) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int stride, IntBuffer pointer) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexCoordPointer(int size, int stride, ShortBuffer pointer) {
+        throw new NotImplementedException("glTexCoordPointer is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexEnv(int target, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glTexEnv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexEnv(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glTexEnv is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexEnvf(int target, int pname, float param) {
+        throw new NotImplementedException("glTexEnvf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexEnvi(int target, int pname, int param) {
+        throw new NotImplementedException("glTexEnvi is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGen(int coord, int pname, DoubleBuffer params) {
+        throw new NotImplementedException("glTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGen(int coord, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGen(int coord, int pname, IntBuffer params) {
+        throw new NotImplementedException("glTexGen is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGend(int coord, int pname, double param) {
+        throw new NotImplementedException("glTexGend is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGenf(int coord, int pname, float param) {
+        throw new NotImplementedException("glTexGenf is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexGeni(int coord, int pname, int param) {
+        throw new NotImplementedException("glTexGeni is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, ByteBuffer pixels) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, DoubleBuffer pixels) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, FloatBuffer pixels) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, IntBuffer pixels) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage1D(int target, int level, int internalformat, int width, int border, int format, int type, ShortBuffer pixels) {
+        throw new NotImplementedException("glTexImage1D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glTexImage2D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, ByteBuffer pixels) {
+        throw new NotImplementedException("glTexImage2D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, DoubleBuffer pixels) {
+        throw new NotImplementedException("glTexImage2D is only avaliable for OpenGL 11 and above");
+    }
+
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, FloatBuffer pixels) {
+        throw new NotImplementedException("glTexImage2D is only avaliable for OpenGL 11 and above");
+    }
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, java.nio.IntBuffer pixels) {
+        throw new NotImplementedException("glTexImage2D(IntBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexImage2D(int target, int level, int internalformat, int width, int height, int border, int format, int type, java.nio.ShortBuffer pixels) {
+        throw new NotImplementedException("glTexImage2D(ShortBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexParameter(int target, int pname, java.nio.FloatBuffer param) {
+        throw new NotImplementedException("glTexParameter(FloatBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexParameter(int target, int pname, java.nio.IntBuffer param) {
+        throw new NotImplementedException("glTexParameter(IntBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexParameterf(int target, int pname, float param) {
+        throw new NotImplementedException("glTexParameterf is only available for OpenGL 11 and above");
+    }
+
+    default void glTexParameteri(int target, int pname, int param) {
+        throw new NotImplementedException("glTexParameteri is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glTexSubImage1D(buffer offset) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, java.nio.ByteBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage1D(ByteBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, java.nio.DoubleBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage1D(DoubleBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, java.nio.FloatBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage1D(FloatBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, java.nio.IntBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage1D(IntBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage1D(int target, int level, int xoffset, int width, int format, int type, java.nio.ShortBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage1D(ShortBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, long pixels_buffer_offset) {
+        throw new NotImplementedException("glTexSubImage2D(buffer offset) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, java.nio.ByteBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage2D(ByteBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, java.nio.DoubleBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage2D(DoubleBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, java.nio.FloatBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage2D(FloatBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, java.nio.IntBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage2D(IntBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int type, java.nio.ShortBuffer pixels) {
+        throw new NotImplementedException("glTexSubImage2D(ShortBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glTranslated(double x, double y, double z) {
+        throw new NotImplementedException("glTranslated is only available for OpenGL 11 and above");
+    }
+
+    default void glTranslatef(float x, float y, float z) {
+        throw new NotImplementedException("glTranslatef is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex2d(double x, double y) {
+        throw new NotImplementedException("glVertex2d is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex2f(float x, float y) {
+        throw new NotImplementedException("glVertex2f is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex2i(int x, int y) {
+        throw new NotImplementedException("glVertex2i is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex3d(double x, double y, double z) {
+        throw new NotImplementedException("glVertex3d is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex3f(float x, float y, float z) {
+        throw new NotImplementedException("glVertex3f is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex3i(int x, int y, int z) {
+        throw new NotImplementedException("glVertex3i is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex4d(double x, double y, double z, double w) {
+        throw new NotImplementedException("glVertex4d is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex4f(float x, float y, float z, float w) {
+        throw new NotImplementedException("glVertex4f is only available for OpenGL 11 and above");
+    }
+
+    default void glVertex4i(int x, int y, int z, int w) {
+        throw new NotImplementedException("glVertex4i is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int type, int stride, long pointer_buffer_offset) {
+        throw new NotImplementedException("glVertexPointer(buffer offset) is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int type, int stride, java.nio.ByteBuffer pointer) {
+        throw new NotImplementedException("glVertexPointer(ByteBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int stride, java.nio.DoubleBuffer pointer) {
+        throw new NotImplementedException("glVertexPointer(DoubleBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int stride, java.nio.FloatBuffer pointer) {
+        throw new NotImplementedException("glVertexPointer(FloatBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int stride, java.nio.IntBuffer pointer) {
+        throw new NotImplementedException("glVertexPointer(IntBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glVertexPointer(int size, int stride, java.nio.ShortBuffer pointer) {
+        throw new NotImplementedException("glVertexPointer(ShortBuffer) is only available for OpenGL 11 and above");
+    }
+
+    default void glViewport(int x, int y, int width, int height) {
+        throw new NotImplementedException("glViewport is only available for OpenGL 11 and above");
+    }
+    // </editor-fold>
     // <editor-fold desc="OpenGL 43">
     default void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
         throw new NotImplementedException("glBindVertexBuffer is only avaliable for OpenGL 43 and above");
