@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.camera;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.entity.Entity;
 import org.joml.Matrix4f;
@@ -41,7 +42,7 @@ public class MinecraftCamera implements ICamera {
     public Vector3f getWorldOffset() {
         Entity camera = Minecraft.getMinecraft().getRenderViewEntity();
         if (camera == null) {
-            camera = Minecraft.getMinecraft().player;
+            camera = MethodHolder.getPlayer(Minecraft.getMinecraft());
         }
         double partialTicks = getPartialTicks();
         double camX = camera.lastTickPosX + (camera.posX - camera.lastTickPosX) * partialTicks;
@@ -57,11 +58,13 @@ public class MinecraftCamera implements ICamera {
             DELEGATE = new CameraInfoDelegate(
                     ReflectionUtils.getFieldGetter(ActiveRenderInfo.class, "PROJECTION", "field_178813_c", FloatBuffer.class),
                     ReflectionUtils.getFieldGetter(ActiveRenderInfo.class, "MODELVIEW", "field_178812_b", FloatBuffer.class),
-                    ReflectionUtils.getFieldGetter(Minecraft.class, "renderPartialTicksPaused", "field_193996_ah", float.class));
+                    ReflectionUtils.getFieldGetter(Minecraft.class, "renderPartialTicksPaused", "field_193996_ah", float.class),
+                    ReflectionUtils.getFieldGetter(Minecraft.class, "player", "field_71439_g", EntityPlayerSP.class));
 
             Preconditions.checkNotNull(DELEGATE.projectionBuffer());
             Preconditions.checkNotNull(DELEGATE.viewRotationBuffer());
             Preconditions.checkNotNull(DELEGATE.partialTicksPaused());
+            Preconditions.checkNotNull(DELEGATE.player());
         }
 
         /**
@@ -97,9 +100,21 @@ public class MinecraftCamera implements ICamera {
             }
         }
 
+        /**
+         * @see Minecraft#player
+         */
+        static Entity getPlayer(Minecraft instance) {
+            try {
+                return (EntityPlayerSP) DELEGATE.player().invokeExact(instance);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         record CameraInfoDelegate(
                 MethodHandle projectionBuffer,
                 MethodHandle viewRotationBuffer,
-                MethodHandle partialTicksPaused) {}
+                MethodHandle partialTicksPaused,
+                MethodHandle player) {}
     }
 }

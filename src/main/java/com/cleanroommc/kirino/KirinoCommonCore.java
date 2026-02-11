@@ -3,13 +3,7 @@ package com.cleanroommc.kirino;
 import com.cleanroommc.kirino.config.KirinoConfigHub;
 import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
-import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
-import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
-import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.KirinoEngine;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.CommonStatsHUD;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.FpsHUD;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
@@ -65,7 +59,7 @@ public final class KirinoCommonCore {
             registerMethod.setAccessible(true);
 
             Method onKirinoOneTimeConfig = KirinoCommonCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoClientCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCommonCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
         } catch (Throwable throwable) {
             throw new RuntimeException("Failed to register the Kirino one time config event listener.", throwable);
         }
@@ -96,29 +90,13 @@ public final class KirinoCommonCore {
             Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
             registerMethod.setAccessible(true);
 
-            Method onStructScan = KirinoCommonCore.class.getDeclaredMethod("onStructScan", StructScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, StructScanningEvent.class, KirinoClientCore.class, onStructScan, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default StructScanningEvent listener.");
-
-            Method onComponentScan = KirinoCommonCore.class.getDeclaredMethod("onComponentScan", ComponentScanningEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ComponentScanningEvent.class, KirinoClientCore.class, onComponentScan, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default ComponentScanningEvent listener.");
-
             Method onShaderRegister = KirinoCommonCore.class.getDeclaredMethod("onShaderRegister", ShaderRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, ShaderRegistrationEvent.class, KirinoClientCore.class, onShaderRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, ShaderRegistrationEvent.class, KirinoCommonCore.class, onShaderRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default ShaderRegistrationEvent listener.");
 
-            Method onJobRegister = KirinoCommonCore.class.getDeclaredMethod("onJobRegister", JobRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, JobRegistrationEvent.class, KirinoClientCore.class, onJobRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default JobRegistrationEvent listener.");
-
             Method onPostProcessingRegister = KirinoCommonCore.class.getDeclaredMethod("onPostProcessingRegister", PostProcessingRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoClientCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
+            registerMethod.invoke(KIRINO_EVENT_BUS, PostProcessingRegistrationEvent.class, KirinoCommonCore.class, onPostProcessingRegister, Loader.instance().getMinecraftModContainer());
             LOGGER.info("Registered the default PostProcessingRegistrationEvent listener.");
-
-            Method onDebugHudRegister = KirinoCommonCore.class.getDeclaredMethod("onDebugHudRegister", DebugHUDRegistrationEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoClientCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
-            LOGGER.info("Registered the default DebugHUDRegistrationEvent listener.");
         } catch (Throwable throwable) {
             throw new RuntimeException("Failed to register default event listeners.", throwable);
         }
@@ -176,25 +154,6 @@ public final class KirinoCommonCore {
     }
 
     @SubscribeEvent
-    public static void onStructScan(StructScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.struct");
-    }
-
-    @SubscribeEvent
-    public static void onComponentScan(ComponentScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.component");
-    }
-
-    @SubscribeEvent
-    public static void onJobRegister(JobRegistrationEvent event) {
-        event.register(ChunkMeshletGenJob.class);
-        event.register(ChunkPrioritizationJob.class);
-        event.register(MeshletDestroyJob.class);
-        event.register(MeshletDebugJob.class);
-        event.register(MeshletBufferWriteJob.class);
-    }
-
-    @SubscribeEvent
     public static void onShaderRegister(ShaderRegistrationEvent event) {
         event.register(new ResourceLocation("forge:shaders/test.vert"));
         event.register(new ResourceLocation("forge:shaders/gizmos.vert"));
@@ -214,12 +173,6 @@ public final class KirinoCommonCore {
 //                "Tone Mapping Pass",
 //                event.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"),
 //                DefaultPostProcessingPass::new);
-    }
-
-    @SubscribeEvent
-    public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
-        event.register(new FpsHUD());
-        event.register(new CommonStatsHUD());
     }
 
     @SubscribeEvent

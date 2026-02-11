@@ -101,6 +101,9 @@ public class KirinoEngine {
         ResourceSlot<BlockMeshGenerator> blockMeshGenerator = resourceLayout.slot(BlockMeshGenerator.class);
         ResourceSlot<StagingBufferManager> stagingBufferManager = resourceLayout.slot(StagingBufferManager.class);
         ResourceSlot<InGameDebugHUDManager> debugHudManager = resourceLayout.slot(InGameDebugHUDManager.class);
+        ResourceSlot<MinecraftCulling> minecraftCulling = resourceLayout.slot(MinecraftCulling.class);
+        ResourceSlot<MinecraftEntityRendering> minecraftEntityRendering = resourceLayout.slot(MinecraftEntityRendering.class);
+        ResourceSlot<MinecraftTESRRendering> minecraftTESRRendering = resourceLayout.slot(MinecraftTESRRendering.class);
 
         ResourceSlot<ShaderProgram> terrainGpuPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> chunkCpuPassProgram = resourceLayout.slot(ShaderProgram.class);
@@ -145,11 +148,10 @@ public class KirinoEngine {
                 meshletGpuRegistry,
                 meshletComputeSystem);
 
-        MinecraftCulling cullingPatch = new MinecraftCulling();
         minecraftIntegration = new MinecraftIntegration(
-                cullingPatch,
-                new MinecraftEntityRendering(cullingPatch),
-                new MinecraftTESRRendering(cullingPatch));
+                minecraftCulling,
+                minecraftEntityRendering,
+                minecraftTESRRendering);
 
         minecraftAssetProviders = new MinecraftAssetProviders(blockMeshGenerator);
 

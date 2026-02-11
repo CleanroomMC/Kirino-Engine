@@ -25,12 +25,14 @@ public final class ClassScanUtils {
 
     static Map<String, ClassInfo> scan(List<String> packages, String annotation) {
         Map<String, ClassInfo> allClassInfos = new TreeMap<>();
-        try (ScanResult scanResult = new ClassGraph()
-                .enableAllInfo()
-                .acceptPackages(packages.toArray(new String[0]))
-                .scan()) {
-            for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(annotation)) {
-                allClassInfos.put(classInfo.getName(), classInfo);
+        if (!packages.isEmpty()) {
+            try (ScanResult scanResult = new ClassGraph()
+                    .enableAllInfo()
+                    .acceptPackages(packages.toArray(new String[0]))
+                    .scan()) {
+                for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(annotation)) {
+                    allClassInfos.put(classInfo.getName(), classInfo);
+                }
             }
         }
         return allClassInfos;

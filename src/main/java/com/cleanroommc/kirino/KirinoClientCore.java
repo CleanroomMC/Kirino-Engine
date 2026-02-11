@@ -1,11 +1,17 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
+import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.*;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataServiceLocator;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.CommonStatsHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.impl.FpsHUD;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
@@ -25,17 +31,19 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.ModContainer;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.time.StopWatch;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.Project;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
-import static com.cleanroommc.kirino.KirinoCommonCore.LOGGER;
-import static com.cleanroommc.kirino.KirinoCommonCore.KIRINO_CONFIG_HUB;
-import static com.cleanroommc.kirino.KirinoCommonCore.KIRINO_ENGINE;
+import static com.cleanroommc.kirino.KirinoCommonCore.*;
 
 public final class KirinoClientCore {
     private KirinoClientCore() {
@@ -175,6 +183,7 @@ public final class KirinoClientCore {
      * <hr>
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
+    @SuppressWarnings("DataFlowIssue")
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
@@ -255,7 +264,7 @@ public final class KirinoClientCore {
         KIRINO_ENGINE.run(FramePhase.RENDER_OPAQUE);
 
         //<editor-fold desc="vanilla logic">
-        MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).cullingPatch.collectEntitiesInView(
+        KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).cullingPatch).collectEntitiesInView(
                 renderViewEntity,
                 cameraFrustum,
                 MINECRAFT.world.getChunkProvider(),
@@ -274,7 +283,7 @@ public final class KirinoClientCore {
             GlStateManager.pushMatrix();
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(0);
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch.renderEntities(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -286,7 +295,7 @@ public final class KirinoClientCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch.renderTESRs(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -376,7 +385,7 @@ public final class KirinoClientCore {
         if (!MethodHolder1.isDebugView(MINECRAFT.entityRenderer)) {
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(1);
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch.renderEntities(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
                     MINECRAFT.getRenderViewEntity(),
                     MINECRAFT.pointedEntity,
                     MINECRAFT.player,
@@ -388,7 +397,7 @@ public final class KirinoClientCore {
                     MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
-            MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch.renderTESRs(
+            KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
                     MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
                     MINECRAFT.world,
@@ -434,6 +443,36 @@ public final class KirinoClientCore {
     //</editor-fold>
 
     public static void init() {
+        if (!KIRINO_CONFIG_HUB.isEnable()) {
+            return;
+        }
+
+        //<editor-fold desc="client-side event listeners">
+        // register client-side default event listeners
+        try {
+            Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
+            registerMethod.setAccessible(true);
+
+            Method onStructScan = KirinoClientCore.class.getDeclaredMethod("onStructScan", StructScanningEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, StructScanningEvent.class, KirinoClientCore.class, onStructScan, Loader.instance().getMinecraftModContainer());
+            LOGGER.info("Registered the client-side default StructScanningEvent listener.");
+
+            Method onComponentScan = KirinoClientCore.class.getDeclaredMethod("onComponentScan", ComponentScanningEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, ComponentScanningEvent.class, KirinoClientCore.class, onComponentScan, Loader.instance().getMinecraftModContainer());
+            LOGGER.info("Registered the client-side default ComponentScanningEvent listener.");
+
+            Method onJobRegister = KirinoClientCore.class.getDeclaredMethod("onJobRegister", JobRegistrationEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, JobRegistrationEvent.class, KirinoClientCore.class, onJobRegister, Loader.instance().getMinecraftModContainer());
+            LOGGER.info("Registered the client-side default JobRegistrationEvent listener.");
+
+            Method onDebugHudRegister = KirinoClientCore.class.getDeclaredMethod("onDebugHudRegister", DebugHUDRegistrationEvent.class);
+            registerMethod.invoke(KIRINO_EVENT_BUS, DebugHUDRegistrationEvent.class, KirinoClientCore.class, onDebugHudRegister, Loader.instance().getMinecraftModContainer());
+            LOGGER.info("Registered the client-side default DebugHUDRegistrationEvent listener.");
+        } catch (Throwable throwable) {
+            throw new RuntimeException("Failed to register client-side default event listeners.", throwable);
+        }
+        //</editor-fold>
+
         KirinoCommonCore.init();
 
         if (!KIRINO_CONFIG_HUB.isEnable()) {
@@ -472,7 +511,7 @@ public final class KirinoClientCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
-        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(KirinoClientCore.MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
+        DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
     }
 
@@ -500,6 +539,31 @@ public final class KirinoClientCore {
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         LOGGER.info("---------------");
         //</editor-fold>
+    }
+
+    @SubscribeEvent
+    public static void onStructScan(StructScanningEvent event) {
+        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.struct");
+    }
+
+    @SubscribeEvent
+    public static void onComponentScan(ComponentScanningEvent event) {
+        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.component");
+    }
+
+    @SubscribeEvent
+    public static void onJobRegister(JobRegistrationEvent event) {
+        event.register(ChunkMeshletGenJob.class);
+        event.register(ChunkPrioritizationJob.class);
+        event.register(MeshletDestroyJob.class);
+        event.register(MeshletDebugJob.class);
+        event.register(MeshletBufferWriteJob.class);
+    }
+
+    @SubscribeEvent
+    public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
+        event.register(new FpsHUD());
+        event.register(new CommonStatsHUD());
     }
 
     //<editor-fold desc="reflection">

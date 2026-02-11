@@ -15,6 +15,10 @@ Its primary goal is to overhaul most of Minecraft’s rendering in a future-proo
 provide a set of clean rendering APIs to mod developers, 
 **_and_** serve as a platform for exploring the feasibility of modern, GPU-driven rendering techniques within Minecraft’s constraints.
 
+Looking further ahead, the long-term goal is to evolve into a general-purpose engine kernel for Minecraft,
+while keeping the main focus on rendering. To illustrate, we will pay more attention to lifecycles, phases, and systems, 
+rather than features, compatibility with legacy solutions, or similar concerns.
+
 > The project is highly WIP - contributions are welcome to help accelerate development!
 
 > Want a deeper look right away? Jump to "**How Everything Works?**"
@@ -25,6 +29,8 @@ provide a set of clean rendering APIs to mod developers,
 - Not an object-centric rendering engine
 - Not a finalized or frozen architecture
 - Not a high-fidelity path tracing solution
+
+> Jump to "**FAQs**" for more details
 
 ## What This Project Provides?
 
@@ -156,7 +162,7 @@ where you can understand our implicit assumptions and build the mental model gra
 ## Roadmap & Todos
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
 
-## Q&A
+## FAQs
 
 <details>
 <summary>Click to Expand</summary>
@@ -172,6 +178,8 @@ where you can understand our implicit assumptions and build the mental model gra
 
 - Will Kirino-Engine be compatible with OptiFine / Sodium / Iris?
   - No, because Kirino-Engine replaces the whole rendering pipeline
+  - _**But**_, Kirino-Engine isn't tightly coupled with rendering. 
+    You can try disabling the rendering part of the engine, and things might work
 
 <br>
 
