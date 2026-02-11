@@ -7,7 +7,7 @@ import org.jspecify.annotations.NonNull;
 /**
  * Jobs will be instantiated per thread. A job must have an empty (no parameters) constructor.
  */
-public interface IParallelJob {
+public interface ParallelJob {
     /**
      * Every execution should be stateless except the index.
      * You can introduce state-dependent logic if two executions share the same <code>threadOrdinal</code>.

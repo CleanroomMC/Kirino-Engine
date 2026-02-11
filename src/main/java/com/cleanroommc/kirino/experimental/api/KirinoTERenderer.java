@@ -5,6 +5,6 @@ import com.cleanroommc.kirino.api.render.RenderCommand;
 import com.cleanroommc.kirino.api.render.RenderContext;
 import net.minecraft.tileentity.TileEntity;
 
-public interface IKirinoTERenderer {
+public interface KirinoTERenderer {
     IRenderQueue<RenderCommand> render(TileEntity tileEntity, RenderContext<RenderCommand> renderContext);
 }

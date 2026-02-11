@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.ecs.storage;
 
 import org.jspecify.annotations.NonNull;
 
-public interface IPrimitiveArray {
+public interface PrimitiveArray {
     /**
      * Getter for integers.
      *

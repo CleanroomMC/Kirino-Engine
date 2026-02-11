@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.gl.framebuffer;
 
 import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
 
-public interface IFramebufferAttachment {
+public interface FramebufferAttachment {
     /**
      * @implSpec Don't bind framebuffer; simply attach.
      */

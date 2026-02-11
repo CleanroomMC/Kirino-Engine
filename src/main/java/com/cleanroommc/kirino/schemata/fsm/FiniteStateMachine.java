@@ -104,7 +104,7 @@ public interface FiniteStateMachine<S, I> {
         void transition(@NonNull S currState, @NonNull I input, @NonNull S nextState);
     }
 
-    interface IBuilder<S, I> {
+    interface Builder<S, I> {
         /**
          * Adds a possible transition to the FSM
          * @param state From
@@ -125,7 +125,7 @@ public interface FiniteStateMachine<S, I> {
          * @return the builder
          */
         @NonNull
-        IBuilder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
+        Builder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
                                     @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
                                     @Nullable OnExitStateCallback<S, I> onExitStateCallback,
                                     @Nullable Rollback<S, I> rollbackCallback);
@@ -140,7 +140,7 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          */
         @NonNull
-        IBuilder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback);
+        Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback);
 
         /**
          * Sets the exit callback for a state
@@ -152,7 +152,7 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          */
         @NonNull
-        IBuilder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback);
+        Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback);
 
         /**
          * Sets the initial state, that the FSM will start in. <br/>
@@ -162,7 +162,7 @@ public interface FiniteStateMachine<S, I> {
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
         @NonNull
-        IBuilder<S, I> initialState(@NonNull S initialState);
+        Builder<S, I> initialState(@NonNull S initialState);
 
         /**
          * Sets the error callback which will be executed if and only if a transition fails
@@ -172,14 +172,14 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          */
         @NonNull
-        IBuilder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback);
+        Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback);
 
         /**
          * @implNote Throw an exception if the FSM has states that can't be reached from any other state while not being the initial state
          * @implSpec Use DFS or another graph traversal algorithm
          */
         @NonNull
-        IBuilder<S, I> validate();
+        Builder<S, I> validate();
 
         /**
          * Finish instantiating the FSM. <br/>
@@ -191,12 +191,12 @@ public interface FiniteStateMachine<S, I> {
 
         // defaults
         @NonNull
-        default IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState) {
+        default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState) {
             return addTransition(state, input, nextState, null, null, null);
         }
 
         @NonNull
-        default IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
+        default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                              @NonNull OnEnterStateCallback<S, I> onEnterStateCallback,
                                              @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
             Preconditions.checkNotNull(onEnterStateCallback);
@@ -206,7 +206,7 @@ public interface FiniteStateMachine<S, I> {
         }
 
         @NonNull
-        default IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
+        default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                              @NonNull OnEnterStateCallback<S, I> onEnterStateCallback) {
             Preconditions.checkNotNull(onEnterStateCallback);
 
@@ -214,7 +214,7 @@ public interface FiniteStateMachine<S, I> {
         }
 
         @NonNull
-        default IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
+        default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                              @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
             Preconditions.checkNotNull(onExitStateCallback);
 
@@ -222,7 +222,7 @@ public interface FiniteStateMachine<S, I> {
         }
 
         @NonNull
-        default IBuilder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
+        default Builder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
                                              @NonNull Rollback<S, I> rollbackCallback) {
             Preconditions.checkNotNull(rollbackCallback);
 
@@ -230,7 +230,7 @@ public interface FiniteStateMachine<S, I> {
         }
     }
 
-    class Builder {
+    class BuilderImpl {
         public static <S extends Enum<S>, I extends Enum<I>> IBuilder<S, I> enumStateMachine(Class<S> stateClass, Class<I> inputClass) {
             return new EnumStateMachine.Builder<>(stateClass, inputClass);
         }
