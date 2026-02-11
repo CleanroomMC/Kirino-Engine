@@ -230,19 +230,26 @@ public class MinecraftScene extends CleanWorld {
 
     private WorldClient minecraftWorld = null;
     private ChunkProviderClient minecraftChunkProvider = null;
+    private Map<Long, Chunk> cachedEarlyChunks = null; // put when loading a new world; consumed right after
     private final Map<ChunkPosKey, CleanEntityHandle> chunkHandles = new HashMap<>();
 
     //<editor-fold desc="world related methods">
     /**
-     * Must be called before {@link #update()}.
+     * Must call this method and then {@link #update()} in a row.
      *
      * @param minecraftWorld The world from <code>Minecraft.getMinecraft().world</code>
      */
     public void tryUpdateWorld(WorldClient minecraftWorld) {
+        // todo: investigate if switching dim will trigger this
         if (minecraftWorld != null && minecraftChunkProvider != minecraftWorld.getChunkProvider()) {
+
+            // entrypoint: load in a new world
+
             worldFsm.reset(); // NO_WORLD
             this.minecraftWorld = minecraftWorld;
             minecraftChunkProvider = minecraftWorld.getChunkProvider();
+
+            cachedEarlyChunks = new HashMap<>(MethodHolder.getLoadedChunks(minecraftChunkProvider));
 
             MethodHolder.setLoadChunkCallback(minecraftChunkProvider, (x, z) -> {
                 for (int i = 0; i < 16; i++) {
@@ -275,13 +282,17 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    // todo: more rebuild, including meshlets
     private void rebuildWorld() {
+        // destroy existing chunk components
         for (CleanEntityHandle handle : chunkHandles.values()) {
             handle.tryDestroy();
         }
         chunkHandles.clear();
-        for (Long chunkKey : MethodHolder.getLoadedChunks(minecraftChunkProvider).keySet()) {
+
+        // todo: destroy exisiting meshlet components
+
+        // add early chunks (for those chunks that were there before load/unload callback setup)
+        for (Long chunkKey : cachedEarlyChunks.keySet()) {
             for (int i = 0; i < 16; i++) {
                 ChunkComponent chunkComponent = new ChunkComponent();
                 chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
@@ -292,7 +303,10 @@ public class MinecraftScene extends CleanWorld {
                         entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
             }
         }
+
         worldFsm.next(); // NEW_WORLD_INITIAL_WAIT
+        terrainFsm.reset();
+        meshletFsm.reset();
     }
     //</editor-fold>
 
@@ -350,7 +364,7 @@ public class MinecraftScene extends CleanWorld {
         if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_REBUILD) {
             rebuildWorld();
             // finish this update immediately to consume ecs-entity side effects
-            entityManager.flush();
+            super.update();
             return;
         }
         //</editor-fold>
@@ -363,7 +377,7 @@ public class MinecraftScene extends CleanWorld {
             worldFsm.next(); // NEW_WORLD_INITIAL_WAIT or IDLE
             if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_INITIAL_WAIT) {
                 // wait; abort this update
-                entityManager.flush();
+                super.update();
                 return;
             } else {
                 newWorld = true; // continue running
@@ -371,7 +385,7 @@ public class MinecraftScene extends CleanWorld {
         }
         //</editor-fold>
 
-        // worldFsm finishes its duty here
+        // ----- worldFsm finishes its duty here -----
 
         boolean cameraMoved = updateCameraPos();
         boolean renderDisChanged = updateForegroundRenderDis();
@@ -400,7 +414,7 @@ public class MinecraftScene extends CleanWorld {
         //<editor-fold desc="process MESHLET_GEN_TASK -> IDLE">
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
             chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
-            // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE)
+            // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE); it also increments meshlet gen counter
             chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
         }
         //</editor-fold>
@@ -437,6 +451,23 @@ public class MinecraftScene extends CleanWorld {
 //                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
 //            }
 //        }
+
+        // ----- terrainFsm finishes its duty here -----
+
+        //<editor-fold desc="process INITIAL_WAIT -> PREPARE_MESHLET_INPUT">
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.INITIAL_WAIT) {
+            meshletFsm.next(); // INITIAL_WAIT or PREPARE_MESHLET_INPUT
+            if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.INITIAL_WAIT) {
+                // wait; abort this update
+                super.update();
+                return;
+            }
+        }
+        //</editor-fold>
+
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.PREPARE_MESHLET_INPUT) {
+
+        }
 
         super.update();
     }

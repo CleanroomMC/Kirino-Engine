@@ -21,6 +21,7 @@ public final class KirinoConfigHub {
         public int lowLevelDrawCommandPoolSize = 2000;
 
         public int worldInitFrames = 5;
+        public int meshletInitFrames = 5;
         public float chunkUpdateDisplacement = 8f;
 
         public int foregroundRenderDistance = 8;
@@ -68,6 +69,10 @@ public final class KirinoConfigHub {
 
     public int getWorldInitFrames() {
         return requiresRestart.worldInitFrames;
+    }
+
+    public int getMeshletInitFrames() {
+        return requiresRestart.meshletInitFrames;
     }
 
     public float getChunkUpdateDisplacement() {
