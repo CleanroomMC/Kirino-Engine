@@ -1,12 +1,11 @@
 package com.cleanroommc.kirino.engine.render.core.debug.data.impl;
 
-import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.KirinoCommonCore;
-import com.cleanroommc.kirino.engine.render.core.debug.data.IDebugDataService;
+import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 
-public class RenderStatsFrame implements IDebugDataService {
+public class RenderStatsFrame implements DebugDataService {
     private final ResourceSlot<InGameDebugHUDManager> hud;
     private int drawCalls;
 

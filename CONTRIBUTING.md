@@ -201,7 +201,7 @@ See [this article](https://hazelcast.com/blog/turbocharging-java-reflection-perf
   CallSite callSite;
   try {
       callSite = LambdaMetafactory.metafactory(LOOKUP, "inject",
-              MethodType.methodType(IJobDataInjector.class, MethodHandle.class),
+              MethodType.methodType(JobDataInjector.class, MethodHandle.class),
               setterType.erase(),
               MethodHandles.exactInvoker(setterType),
               setterType);
@@ -209,7 +209,7 @@ See [this article](https://hazelcast.com/blog/turbocharging-java-reflection-perf
       throw new RuntimeException(e);
   }
   try {
-      return (IJobDataInjector) callSite.getTarget().invokeExact(setter);
+      return (JobDataInjector) callSite.getTarget().invokeExact(setter);
   } catch (Throwable e) {
       throw new RuntimeException(e);
   }

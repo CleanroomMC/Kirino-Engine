@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.pass;
 
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
@@ -19,7 +19,7 @@ import java.util.function.BiConsumer;
 
 public final class RenderPass {
     private final Map<String, Subpass> subpassMap = new HashMap<>();
-    private final Map<String, List<ISubpassDecorator>> subpassDecoratorMap = new HashMap<>();
+    private final Map<String, List<SubpassDecorator>> subpassDecoratorMap = new HashMap<>();
     private final List<String> subpassOrder = new ArrayList<>();
     private final DrawQueue drawQueue = new DrawQueue();
 
@@ -58,16 +58,16 @@ public final class RenderPass {
         subpassOrder.remove(subpassName);
     }
 
-    public void attachSubpassDecorator(String subpassName, ISubpassDecorator decorator) {
-        List<ISubpassDecorator> list = subpassDecoratorMap.computeIfAbsent(subpassName, k -> new ArrayList<>());
+    public void attachSubpassDecorator(String subpassName, SubpassDecorator decorator) {
+        List<SubpassDecorator> list = subpassDecoratorMap.computeIfAbsent(subpassName, k -> new ArrayList<>());
         list.add(decorator);
     }
 
-    public void render(@NonNull ResourceStorage storage, @Nullable ICamera camera) {
+    public void render(@NonNull ResourceStorage storage, @Nullable Camera camera) {
         render(storage, camera, null, null);
     }
 
-    public void render(@NonNull ResourceStorage storage, @Nullable ICamera camera, @Nullable BiConsumer<String, Integer> subpassCallback, @Nullable Object @Nullable [] payloads) {
+    public void render(@NonNull ResourceStorage storage, @Nullable Camera camera, @Nullable BiConsumer<String, Integer> subpassCallback, @Nullable Object @Nullable [] payloads) {
         if (payloads != null) {
             Preconditions.checkArgument(payloads.length == size(),
                     "Payloads length (%s) must equal to the size (%s) of this render pass.", payloads.length, size());
@@ -80,9 +80,9 @@ public final class RenderPass {
             drawQueue.clear();
             Subpass subpass = subpassMap.get(subpassName);
             subpass.collectCommands(storage, drawQueue);
-            List<ISubpassDecorator> list = subpassDecoratorMap.get(subpassName);
+            List<SubpassDecorator> list = subpassDecoratorMap.get(subpassName);
             if (list != null) {
-                for (ISubpassDecorator decorator : list) {
+                for (SubpassDecorator decorator : list) {
                     subpass.decorateCommands(storage, drawQueue, decorator);
                 }
             }

@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.entity.callback;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
@@ -9,7 +9,7 @@ import java.util.List;
 
 public class EntityDestroyContext {
     private int entityID;
-    private List<Class<? extends ICleanComponent>> components;
+    private List<Class<? extends CleanComponent>> components;
     private ArchetypeDataPool archetype;
 
     public EntityDestroyContext() {
@@ -18,14 +18,14 @@ public class EntityDestroyContext {
     /**
      * Must not be accessed by clients.
      */
-    public void setInternal(int entityID, List<Class<? extends ICleanComponent>> components, ArchetypeDataPool archetype) {
+    public void setInternal(int entityID, List<Class<? extends CleanComponent>> components, ArchetypeDataPool archetype) {
         this.entityID = entityID;
         this.components = components;
         this.archetype = archetype;
     }
 
     @NonNull
-    public ICleanComponent getComponent(Class<? extends ICleanComponent> component) {
+    public CleanComponent getComponent(Class<? extends CleanComponent> component) {
         Preconditions.checkArgument(components.contains(component),
                 "The target entity doesn't contain the argument \"component\" - %s.", component.getName());
 

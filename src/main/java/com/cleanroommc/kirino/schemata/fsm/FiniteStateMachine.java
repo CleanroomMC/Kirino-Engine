@@ -134,7 +134,7 @@ public interface FiniteStateMachine<S, I> {
          * Sets the entry callback for a state
          * @param state The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link IBuilder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          * @return The builder
@@ -146,7 +146,7 @@ public interface FiniteStateMachine<S, I> {
          * Sets the exit callback for a state
          * @param state The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link IBuilder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          * @return The builder
@@ -156,7 +156,7 @@ public interface FiniteStateMachine<S, I> {
 
         /**
          * Sets the initial state, that the FSM will start in. <br/>
-         * <b>MUST BE CALLED BEFORE {@link IBuilder#build()}!!!</b>
+         * <b>MUST BE CALLED BEFORE {@link Builder#build()}!!!</b>
          * @param initialState The initial state
          * @return The builder
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
@@ -183,7 +183,7 @@ public interface FiniteStateMachine<S, I> {
 
         /**
          * Finish instantiating the FSM. <br/>
-         * <b>{@link IBuilder#initialState(Object)} must be called before this!!!</b>
+         * <b>{@link Builder#initialState(Object)} must be called before this!!!</b>
          * @return the FSM
          */
         @NonNull
@@ -231,27 +231,27 @@ public interface FiniteStateMachine<S, I> {
     }
 
     class BuilderImpl {
-        public static <S extends Enum<S>, I extends Enum<I>> IBuilder<S, I> enumStateMachine(Class<S> stateClass, Class<I> inputClass) {
-            return new EnumStateMachine.Builder<>(stateClass, inputClass);
+        public static <S extends Enum<S>, I extends Enum<I>> Builder<S, I> enumStateMachine(Class<S> stateClass, Class<I> inputClass) {
+            return new EnumStateMachine.BuilderImpl<>(stateClass, inputClass);
         }
 
-        public static <S, I> IBuilder<S, I> tableStateMachine() {
-            return new TableFiniteStateMachine.Builder<>();
+        public static <S, I> Builder<S, I> tableStateMachine() {
+            return new TableFiniteStateMachine.BuilderImpl<>();
         }
 
-        public static IBuilder<Integer, Integer> intRangeStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
+        public static Builder<Integer, Integer> intRangeStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
                                                                      int lowerInputBoundInclusive, int upperInputBoundInclusive) {
-            return new IntRangeStateMachine.Builder(lowerStateBoundInclusive, upperStateBoundInclusive, lowerInputBoundInclusive, upperInputBoundInclusive);
+            return new IntRangeStateMachine.BuilderImpl(lowerStateBoundInclusive, upperStateBoundInclusive, lowerInputBoundInclusive, upperInputBoundInclusive);
         }
 
-        public static <S extends Enum<S>> IBuilder<S, Integer> enumIntStateMachine(Class<S> stateClass,
+        public static <S extends Enum<S>> Builder<S, Integer> enumIntStateMachine(Class<S> stateClass,
                                                                                   int lowerInputBoundInclusive, int upperInputBoundInclusive) {
-            return new EnumIntStateMachine.Builder<>(stateClass, lowerInputBoundInclusive, upperInputBoundInclusive);
+            return new EnumIntStateMachine.BuilderImpl<>(stateClass, lowerInputBoundInclusive, upperInputBoundInclusive);
         }
 
-        public static <I extends Enum<I>> IBuilder<Integer, I> enumIntStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
+        public static <I extends Enum<I>> Builder<Integer, I> enumIntStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
                                                                                    Class<I> inputClass) {
-            return new IntEnumStateMachine.Builder<>(lowerStateBoundInclusive, upperStateBoundInclusive, inputClass);
+            return new IntEnumStateMachine.BuilderImpl<>(lowerStateBoundInclusive, upperStateBoundInclusive, inputClass);
         }
     }
 

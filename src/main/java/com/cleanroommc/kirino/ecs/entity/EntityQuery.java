@@ -1,14 +1,14 @@
 package com.cleanroommc.kirino.ecs.entity;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class EntityQuery {
-    final List<Class<? extends ICleanComponent>> mustHave;
-    final List<Class<? extends ICleanComponent>> mustNotHave;
+    final List<Class<? extends CleanComponent>> mustHave;
+    final List<Class<? extends CleanComponent>> mustNotHave;
 
     private EntityQuery() {
         mustHave = new ArrayList<>();
@@ -30,7 +30,7 @@ public final class EntityQuery {
      * @return The query object
      */
     @NonNull
-    public EntityQuery with(@NonNull Class<? extends ICleanComponent> component) {
+    public EntityQuery with(@NonNull Class<? extends CleanComponent> component) {
         mustHave.add(component);
         return this;
     }
@@ -45,7 +45,7 @@ public final class EntityQuery {
      * @return The query object
      */
     @NonNull
-    public EntityQuery without(@NonNull Class<? extends ICleanComponent> component) {
+    public EntityQuery without(@NonNull Class<? extends CleanComponent> component) {
         mustNotHave.add(component);
         return this;
     }

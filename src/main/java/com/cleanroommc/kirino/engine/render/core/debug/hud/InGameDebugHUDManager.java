@@ -118,7 +118,7 @@ public class InGameDebugHUDManager {
 
     private final GLStateBackup glStateBackup;
 
-    private final List<IImmediateHUD> huds;
+    private final List<ImmediateHUD> huds;
     private HUDContext context;
 
     private boolean enabled = false;
@@ -140,7 +140,7 @@ public class InGameDebugHUDManager {
         context = new HUDContext(Minecraft.getMinecraft().fontRenderer, Tessellator.getInstance());
     }
 
-    public void register(@NonNull IImmediateHUD hud) {
+    public void register(@NonNull ImmediateHUD hud) {
         Preconditions.checkNotNull(hud);
 
         huds.add(hud);
@@ -161,7 +161,7 @@ public class InGameDebugHUDManager {
 
         context.setPivotX(START_X);
         context.setPivotY(START_Y);
-        IImmediateHUD hud = huds.get(currentIndex);
+        ImmediateHUD hud = huds.get(currentIndex);
         hud.draw(context);
 
         Preconditions.checkState(context.getDepth() == 0,

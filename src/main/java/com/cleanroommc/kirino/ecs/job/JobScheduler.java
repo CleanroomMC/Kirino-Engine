@@ -1,12 +1,12 @@
 package com.cleanroommc.kirino.ecs.job;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.cleanroommc.kirino.ecs.storage.ArrayRange;
-import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
+import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -28,10 +28,10 @@ public class JobScheduler {
     public record ExecutionHandle(@NonNull CompletableFuture<Void> future, int totalThreadCount, boolean async) {
     }
 
-    public ExecutionHandle executeParallelJob(EntityManager entityManager, Class<? extends IParallelJob> clazz, @Nullable Map<String, Object> externalData, Executor executor) {
-        Map<JobDataQuery, IJobDataInjector> parallelJobDataQueries = jobRegistry.getParallelJobDataQueries(clazz);
-        Map<String, IJobDataInjector> parallelJobExternalDataQueries = jobRegistry.getParallelJobExternalDataQueries(clazz);
-        IJobInstantiator instantiator = jobRegistry.getParallelJobInstantiator(clazz);
+    public ExecutionHandle executeParallelJob(EntityManager entityManager, Class<? extends ParallelJob> clazz, @Nullable Map<String, Object> externalData, Executor executor) {
+        Map<JobDataQuery, JobDataInjector> parallelJobDataQueries = jobRegistry.getParallelJobDataQueries(clazz);
+        Map<String, JobDataInjector> parallelJobExternalDataQueries = jobRegistry.getParallelJobExternalDataQueries(clazz);
+        JobInstantiator instantiator = jobRegistry.getParallelJobInstantiator(clazz);
         if (parallelJobDataQueries == null || parallelJobExternalDataQueries == null || instantiator == null) {
             throw new IllegalStateException("Parallel job class " + clazz.getName() + " isn't registered.");
         }
@@ -46,14 +46,14 @@ public class JobScheduler {
         }
 
         EntityQuery query = entityManager.newQuery();
-        ((IParallelJob) instantiator.instantiate()).query(query);
+        ((ParallelJob) instantiator.instantiate()).query(query);
         List<ArchetypeDataPool> archetypes = entityManager.startQuery(query);
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         int threadOrdinal = 0;
         for (ArchetypeDataPool archetype : archetypes) {
-            IParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
+            ParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
             ArrayRange arrayRange = archetype.getArrayRange();
 
@@ -109,7 +109,7 @@ public class JobScheduler {
                         final int finalThreadOrdinal = threadOrdinal;
                         final int finalStartIndex = startIndex;
 
-                        final IParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
+                        final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
                         futures.add(CompletableFuture.runAsync(() -> {
                             for (int j = finalStartIndex; j < endIndexExclusive; j++) {
@@ -142,7 +142,7 @@ public class JobScheduler {
                     final int finalThreadOrdinal = threadOrdinal;
                     final int finalStartIndex = startIndex;
 
-                    final IParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
+                    final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
                     futures.add(CompletableFuture.runAsync(() -> {
                         for (int j = finalStartIndex; j < arrayRange.end; j++) {
@@ -171,22 +171,22 @@ public class JobScheduler {
         }
     }
 
-    private IParallelJob newParallelJob(
-            IJobInstantiator instantiator,
-            Map<JobDataQuery, IJobDataInjector> parallelJobDataQueries,
-            Map<String, IJobDataInjector> parallelJobExternalDataQueries,
+    private ParallelJob newParallelJob(
+            JobInstantiator instantiator,
+            Map<JobDataQuery, JobDataInjector> parallelJobDataQueries,
+            Map<String, JobDataInjector> parallelJobExternalDataQueries,
             ArchetypeDataPool archetype,
             @Nullable Map<String, Object> externalData) {
 
-        IParallelJob job = (IParallelJob) instantiator.instantiate();
+        ParallelJob job = (ParallelJob) instantiator.instantiate();
 
         // data injection
-        for (Map.Entry<JobDataQuery, IJobDataInjector> entry : parallelJobDataQueries.entrySet()) {
-            IPrimitiveArray array = archetype.getArray(entry.getKey().componentClass().asSubclass(ICleanComponent.class), entry.getKey().fieldAccessChain());
+        for (Map.Entry<JobDataQuery, JobDataInjector> entry : parallelJobDataQueries.entrySet()) {
+            PrimitiveArray array = archetype.getArray(entry.getKey().componentClass().asSubclass(CleanComponent.class), entry.getKey().fieldAccessChain());
             entry.getValue().inject(job, array);
         }
         if (externalData != null) {
-            for (Map.Entry<String, IJobDataInjector> entry : parallelJobExternalDataQueries.entrySet()) {
+            for (Map.Entry<String, JobDataInjector> entry : parallelJobExternalDataQueries.entrySet()) {
                 entry.getValue().inject(job, externalData.get(entry.getKey()));
             }
         }

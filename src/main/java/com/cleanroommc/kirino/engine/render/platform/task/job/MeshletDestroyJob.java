@@ -2,28 +2,28 @@ package com.cleanroommc.kirino.engine.render.platform.task.job;
 
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.IParallelJob;
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
+import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
-public class MeshletDestroyJob implements IParallelJob {
+public class MeshletDestroyJob implements ParallelJob {
     @JobExternalDataQuery
     List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosX"})
-    IPrimitiveArray chunkPosXArray;
+    PrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosY"})
-    IPrimitiveArray chunkPosYArray;
+    PrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosZ"})
-    IPrimitiveArray chunkPosZArray;
+    PrimitiveArray chunkPosZArray;
 
     @Override
     public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {

@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.resource;
 import com.cleanroommc.kirino.engine.render.core.resource.mapping.Obj2BufMorphism;
 import com.cleanroommc.kirino.engine.render.core.resource.payload.MeshPayload;
 import com.cleanroommc.kirino.engine.render.core.resource.receipt.MeshReceipt;
-import com.cleanroommc.kirino.engine.render.core.staging.IStagingCallback;
+import com.cleanroommc.kirino.engine.render.core.staging.StagingCallback;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingContext;
 import com.cleanroommc.kirino.engine.render.core.staging.handle.*;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
@@ -12,7 +12,7 @@ import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItem;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-public final class GResourceStagingCallback implements IStagingCallback {
+public final class GResourceStagingCallback implements StagingCallback {
     private final GraphicResourceManager graphicResourceManager;
 
     public GResourceStagingCallback(GraphicResourceManager graphicResourceManager) {

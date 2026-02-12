@@ -15,7 +15,7 @@ public class WorldControlFSM {
     private final FiniteStateMachine<State, Integer> fsm;
 
     public WorldControlFSM() {
-        fsm = FiniteStateMachine.Builder.enumIntStateMachine(WorldControlFSM.State.class, 0, 0)
+        fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(WorldControlFSM.State.class, 0, 0)
                 .initialState(State.NO_WORLD)
                 .addTransition(State.NO_WORLD, 0, State.NEW_WORLD_REBUILD)
                 .addTransition(State.NEW_WORLD_REBUILD, 0, State.NEW_WORLD_INITIAL_WAIT)

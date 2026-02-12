@@ -121,7 +121,7 @@ LOGGER.info("archetype num: " + archetypes.size()); // assert: 1
 
 // the array is fetched from archetype data pools directly. zero copy
 // providing a friendly structure to parallel jobs
-IPrimitiveArray<?> array = archetypes.get(0).getArray(PositionComponent.class, "xyz", "z");
+PrimitiveArray<?> array = archetypes.get(0).getArray(PositionComponent.class, "xyz", "z");
 ArrayRange range = archetypes.get(0).getArrayRange();
 for (int i = range.start; i < range.end; i++) {
     // skip deleted entities
@@ -138,15 +138,15 @@ Although raw chunk data can't be stored directly in ECS, ECS is still useful to 
 
 ### ECS Job usage example
 ```java
-public class ChunkMeshletGenJob implements IParallelJob {
+public class ChunkMeshletGenJob implements ParallelJob {
     @JobExternalDataQuery
     public ChunkProviderClient chunkProvider;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    public PrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    public PrimitiveArray chunkPosZArray;
 
     @Override
     public void execute(int index) {
@@ -165,7 +165,7 @@ public class ChunkMeshletGenJob implements IParallelJob {
 ### Example: How do I register ECS components?
 ```java
 @CleanComponent
-public class YourComponent implements ICleanComponent {
+public class YourComponent implements CleanComponent {
     public YourStruct a;
 }
 

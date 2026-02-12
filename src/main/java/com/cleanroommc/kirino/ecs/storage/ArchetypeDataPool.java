@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.ecs.storage;
 
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
 
@@ -15,7 +15,7 @@ import java.util.Optional;
  * @see #shrinkStep
  */
 public abstract class ArchetypeDataPool {
-    public final ImmutableList<Class<? extends ICleanComponent>> components;
+    public final ImmutableList<Class<? extends CleanComponent>> components;
 
     protected int currentSize;
     public final int initSize;
@@ -45,7 +45,7 @@ public abstract class ArchetypeDataPool {
      * @param growStep The size to grow when the pool is full
      * @param shrinkStep The threshold to judge when the pool is too large; Also the size to shrink
      */
-    public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends ICleanComponent>> components, int initSize, int growStep, int shrinkStep) {
+    public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
         this.componentRegistry = componentRegistry;
         this.components = ImmutableList.copyOf(components);
         this.initSize = initSize;
@@ -68,7 +68,7 @@ public abstract class ArchetypeDataPool {
      * @return The instantiated component
      */
     @NonNull
-    public abstract ICleanComponent getComponent(int entityID, Class<? extends ICleanComponent> component);
+    public abstract CleanComponent getComponent(int entityID, Class<? extends CleanComponent> component);
 
     /**
      * <p>Prerequisite include:</p>
@@ -80,7 +80,7 @@ public abstract class ArchetypeDataPool {
      * @param entityID The id of the entity
      * @param component The component
      */
-    public abstract void setComponent(int entityID, ICleanComponent component);
+    public abstract void setComponent(int entityID, CleanComponent component);
 
     /**
      * <p>Prerequisite include:</p>
@@ -92,7 +92,7 @@ public abstract class ArchetypeDataPool {
      * @param entityID The id of the entity
      * @param components The components
      */
-    public abstract void addEntity(int entityID, List<ICleanComponent> components);
+    public abstract void addEntity(int entityID, List<CleanComponent> components);
 
     /**
      * <p>Prerequisite include:</p>
@@ -116,7 +116,7 @@ public abstract class ArchetypeDataPool {
      * @return An array of field values
      */
     @NonNull
-    public abstract IPrimitiveArray getArray(Class<? extends ICleanComponent> component, String... fieldAccessChain);
+    public abstract PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain);
 
     @NonNull
     public abstract ArrayRange getArrayRange();

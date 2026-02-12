@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.entity;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
@@ -66,7 +66,7 @@ public class CleanEntityHandle {
      *
      * @see EntityManager#flush()
      */
-    public boolean trySetComponent(@NonNull ICleanComponent component) {
+    public boolean trySetComponent(@NonNull CleanComponent component) {
         if (!valid()) {
             return false;
         }
@@ -101,7 +101,7 @@ public class CleanEntityHandle {
      *
      * @see EntityManager#flush()
      */
-    public boolean tryAddComponent(@NonNull ICleanComponent component) {
+    public boolean tryAddComponent(@NonNull CleanComponent component) {
         if (!valid()) {
             return false;
         }
@@ -128,7 +128,7 @@ public class CleanEntityHandle {
      *
      * @see EntityManager#flush()
      */
-    public boolean tryRemoveComponent(@NonNull Class<? extends ICleanComponent> component) {
+    public boolean tryRemoveComponent(@NonNull Class<? extends CleanComponent> component) {
         if (!valid()) {
             return false;
         }

@@ -5,7 +5,7 @@ import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
 
-public class FreeCamera implements ICamera{
+public class FreeCamera implements Camera{
     @Override
     public Matrix4f getProjectionMatrix() {
         return null;

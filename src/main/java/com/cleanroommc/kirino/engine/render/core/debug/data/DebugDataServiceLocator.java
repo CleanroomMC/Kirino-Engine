@@ -18,7 +18,7 @@ public class DebugDataServiceLocator {
      *
      * <p>Note: You are not allowed to register a type of service twice.</p>
      */
-    public <T extends IDebugDataService> void register(@NonNull Class<T> type, @NonNull T service) {
+    public <T extends DebugDataService> void register(@NonNull Class<T> type, @NonNull T service) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(service);
         Preconditions.checkArgument(!handles.containsKey(type),
@@ -32,7 +32,7 @@ public class DebugDataServiceLocator {
      */
     @SuppressWarnings("unchecked")
     @NonNull
-    public <T extends IDebugDataService> DebugDataHandle<T> get(@NonNull Class<T> type) {
+    public <T extends DebugDataService> DebugDataHandle<T> get(@NonNull Class<T> type) {
         Preconditions.checkNotNull(type);
 
         DebugDataHandle<T> handle = (DebugDataHandle<T>) handles.get(type);

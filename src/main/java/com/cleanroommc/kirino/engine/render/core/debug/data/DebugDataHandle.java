@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.core.debug.data;
 
 import org.jspecify.annotations.Nullable;
 
-public class DebugDataHandle<T extends IDebugDataService> {
+public class DebugDataHandle<T extends DebugDataService> {
     private final T service;
 
     DebugDataHandle(T service) {

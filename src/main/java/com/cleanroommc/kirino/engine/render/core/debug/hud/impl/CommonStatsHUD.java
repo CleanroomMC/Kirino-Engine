@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 
-public class CommonStatsHUD implements IImmediateHUD {
+public class CommonStatsHUD implements ImmediateHUD {
     @SuppressWarnings("DataFlowIssue")
     @Override
     public void draw(@NonNull HUDContext hud) {

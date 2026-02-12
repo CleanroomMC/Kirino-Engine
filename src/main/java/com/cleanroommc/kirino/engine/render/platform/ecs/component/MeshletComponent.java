@@ -1,8 +1,7 @@
 package com.cleanroommc.kirino.engine.render.platform.ecs.component;
 
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
-import com.cleanroommc.kirino.ecs.component.scan.CleanComponent;
+import com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature;
 import com.cleanroommc.kirino.engine.render.platform.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.platform.ecs.struct.Block;
 import com.google.common.base.Preconditions;
@@ -13,8 +12,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-@CleanComponent
-public class MeshletComponent implements ICleanComponent, Iterable<Block> {
+@CleanComponentSignature
+public class MeshletComponent implements com.cleanroommc.kirino.ecs.component.CleanComponent, Iterable<Block> {
     public AABB aabb = new AABB();
     public Vector3f normal = new Vector3f();
 

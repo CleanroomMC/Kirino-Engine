@@ -1,10 +1,10 @@
-package com.cleanroommc.kirino.api;
+package com.cleanroommc.kirino.experimental.api;
 
-import com.cleanroommc.kirino.api.render.IRenderQueue;
-import com.cleanroommc.kirino.api.render.RenderCommand;
-import com.cleanroommc.kirino.api.render.RenderContext;
+import com.cleanroommc.kirino.experimental.api.render.RenderCommandImpl;
+import com.cleanroommc.kirino.experimental.api.render.RenderContext;
+import com.cleanroommc.kirino.experimental.api.render.RenderQueue;
 import net.minecraft.tileentity.TileEntity;
 
 public interface KirinoTERenderer {
-    IRenderQueue<RenderCommand> render(TileEntity tileEntity, RenderContext<RenderCommand> renderContext);
+    RenderQueue<RenderCommandImpl> render(TileEntity tileEntity, RenderContext<RenderCommandImpl> renderContext);
 }

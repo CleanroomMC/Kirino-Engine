@@ -7,7 +7,7 @@ public class FramePhaseFSM {
     private final FiniteStateMachine<FramePhase, Integer> fsm;
 
     FramePhaseFSM() {
-        fsm = FiniteStateMachine.Builder.enumIntStateMachine(FramePhase.class, 0, 0)
+        fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(FramePhase.class, 0, 0)
                 .initialState(FramePhase.PREPARE)
                 .addTransition(FramePhase.PREPARE, 0, FramePhase.PRE_UPDATE)
                 .addTransition(FramePhase.PRE_UPDATE, 0, FramePhase.UPDATE)

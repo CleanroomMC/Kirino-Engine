@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.core.resource.receipt;
 
 import org.jspecify.annotations.NonNull;
 
-public class TextureReceipt implements IResourceReceipt<TextureReceipt> {
+public class TextureReceipt implements ResourceReceipt<TextureReceipt> {
     public TextureReceipt() {
     }
 

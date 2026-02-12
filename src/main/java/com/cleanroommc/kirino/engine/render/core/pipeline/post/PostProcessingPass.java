@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.PingPongFramebuffer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
-import com.cleanroommc.kirino.engine.render.core.pipeline.pass.ISubpassDecorator;
+import com.cleanroommc.kirino.engine.render.core.pipeline.pass.SubpassDecorator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
@@ -113,7 +113,7 @@ public class PostProcessingPass {
         return postProcessingPass.hasSubpass(subpassName);
     }
 
-    public void attachSubpassDecorator(String subpassName, ISubpassDecorator decorator) {
+    public void attachSubpassDecorator(String subpassName, SubpassDecorator decorator) {
         Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");
 
         postProcessingPass.attachSubpassDecorator(subpassName, decorator);

@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.core.resource.payload;
 
 import org.jspecify.annotations.NonNull;
 
-public class TexturePayload implements IResourcePayload<TexturePayload> {
+public class TexturePayload implements ResourcePayload<TexturePayload> {
     public TexturePayload() {
     }
 

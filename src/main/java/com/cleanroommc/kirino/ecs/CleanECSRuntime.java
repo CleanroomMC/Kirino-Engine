@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs;
 import com.cleanroommc.kirino.ecs.component.ComponentDesc;
 import com.cleanroommc.kirino.ecs.component.ComponentDescFlattened;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.scan.ComponentRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.StructRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
@@ -16,7 +16,7 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.job.IParallelJob;
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobRegistry;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
@@ -97,9 +97,9 @@ public class CleanECSRuntime {
         eventBus.post(componentScanningEvent);
         for (ComponentRegisterPlan plan : ComponentScanningHelper.scanComponentClasses(componentScanningEvent, fieldRegistry)) {
             // component class loading
-            Class<? extends ICleanComponent> componentClass;
+            Class<? extends CleanComponent> componentClass;
             try {
-                componentClass = Class.forName(plan.componentClass(), false, Thread.currentThread().getContextClassLoader()).asSubclass(ICleanComponent.class);
+                componentClass = Class.forName(plan.componentClass(), false, Thread.currentThread().getContextClassLoader()).asSubclass(CleanComponent.class);
             } catch (ClassNotFoundException e) { // impossible
                 throw new RuntimeException("Unexpected class not found.", e);
             }
@@ -134,8 +134,8 @@ public class CleanECSRuntime {
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
-        List<Class<? extends IParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
-        for (Class<? extends IParallelJob> clazz : parallelJobs) {
+        List<Class<? extends ParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
+        for (Class<? extends ParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
             logger.info("Parallel job \"" + clazz.getName() + "\" registered. Data queries are as follows:" +
                     (jobRegistry.getParallelJobDataQueries(clazz).keySet().isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).keySet().isEmpty() ? " (Empty)" : ""));
@@ -143,7 +143,7 @@ public class CleanECSRuntime {
             List<String> arrayQueries = new ArrayList<>();
             List<String> externalQueries = new ArrayList<>();
             for (JobDataQuery jobDataQuery : jobRegistry.getParallelJobDataQueries(clazz).keySet()) {
-                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(ICleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
+                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
             }
             for (String fieldName : jobRegistry.getParallelJobExternalDataQueries(clazz).keySet()) {
                 externalQueries.add(fieldName);
@@ -161,13 +161,13 @@ public class CleanECSRuntime {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Class<? extends IParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
+    private static List<Class<? extends ParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
         MethodHandle parallelJobClassesGetter = ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class);
         Preconditions.checkNotNull(parallelJobClassesGetter);
 
-        List<Class<? extends IParallelJob>> parallelJobs;
+        List<Class<? extends ParallelJob>> parallelJobs;
         try {
-            parallelJobs = (List<Class<? extends IParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
+            parallelJobs = (List<Class<? extends ParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

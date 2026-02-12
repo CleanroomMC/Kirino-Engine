@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.resource;
 import com.cleanroommc.kirino.engine.render.core.resource.builder.MeshTicketBuilder;
 import com.cleanroommc.kirino.engine.render.core.resource.payload.MeshPayload;
 import com.cleanroommc.kirino.engine.render.core.resource.receipt.MeshReceipt;
-import com.cleanroommc.kirino.engine.render.core.staging.IStagingCallback;
+import com.cleanroommc.kirino.engine.render.core.staging.StagingCallback;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class GraphicResourceManager {
     private final StagingBufferManager stagingBufferManager;
-    private final IStagingCallback stagingCallback;
+    private final StagingCallback stagingCallback;
 
     protected final Map<GResourceType, Map<String, GResourceTicket<?, ?>>> resourceTickets = new HashMap<>();
 

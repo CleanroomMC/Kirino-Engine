@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftEntityRendering;
@@ -152,7 +152,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
         InGameDebugHUDManager debugHudManager = new InGameDebugHUDManager();
 
-        for (IImmediateHUD hud : context.ext().debugHuds) {
+        for (ImmediateHUD hud : context.ext().debugHuds) {
             debugHudManager.register(hud);
             context.logger().info("Registered debug HUD \"" + hud.getClass().getName() + "\".");
         }

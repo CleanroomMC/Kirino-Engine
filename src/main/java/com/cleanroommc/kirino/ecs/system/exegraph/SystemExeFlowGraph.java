@@ -21,7 +21,7 @@ import java.util.concurrent.Executor;
  * You're supposed to instantiate an instance in {@link CleanWorld} to help you manage the system execution.
  *
  * @implNote The flow graphs should be immutable once constructed, and
- *           the builder pattern ({@link IBuilder}) should be utilized to help constructing the flow graphs
+ *           the builder pattern ({@link Builder}) should be utilized to help constructing the flow graphs
  */
 public interface SystemExeFlowGraph {
     String START_NODE = "__START__";
@@ -56,7 +56,7 @@ public interface SystemExeFlowGraph {
      * The builder of an execution flow graph.
      * The execution graph must be a DAG and everything must start from {@link #START_NODE} and ends in {@link #END_NODE}.
      */
-    interface Builder<TFlowGraph extends ISystemExeFlowGraph> {
+    interface Builder<TFlowGraph extends SystemExeFlowGraph> {
         /**
          * <p>Must not input {@link #START_NODE} or {@link #END_NODE}.</p>
          * <p>Inputting the same <code>nodeID</code> again overrides the old node.</p>
@@ -106,7 +106,7 @@ public interface SystemExeFlowGraph {
         Builder<TFlowGraph> setEndNodeCallback(@Nullable Runnable callback);
 
         /**
-         * Set the callback of the method <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>.
+         * Set the callback of the method <code>{@link SystemExeFlowGraph#execute()} / {@link SystemExeFlowGraph#executeAsync(Executor)}</code>.
          * It's different from {@link #setEndNodeCallback(Runnable)} since the end node callback will be ran
          * before the finish callback.
          *

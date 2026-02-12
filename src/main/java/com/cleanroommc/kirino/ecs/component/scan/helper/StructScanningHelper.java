@@ -118,7 +118,7 @@ public final class StructScanningHelper {
         List<String> scanPackageNames = getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
                 scanPackageNames,
-                "com.cleanroommc.kirino.ecs.component.scan.CleanStruct");
+                "com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature");
 
         Map<String, List<FieldInfo>> structs = new TreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {

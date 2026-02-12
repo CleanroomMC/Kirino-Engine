@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses;
 
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
@@ -35,7 +35,7 @@ public abstract class AbstractPostProcessingPass extends Subpass {
 
     @SuppressWarnings("DataFlowIssue")
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable ICamera camera, @Nullable Object payload) {
+    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
         Framebuffer framebuffer = (Framebuffer) payload;
         ColorAttachment colorAttachment = (ColorAttachment) framebuffer.getColorAttachment(0);
 

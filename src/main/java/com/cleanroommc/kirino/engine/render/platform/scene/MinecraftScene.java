@@ -3,11 +3,11 @@ package com.cleanroommc.kirino.engine.render.platform.scene;
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ecs.entity.CleanEntityHandle;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateCallback;
 import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.callback.IEntityCreateCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.IEntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
@@ -60,7 +60,7 @@ public class MinecraftScene extends CleanWorld {
 
     // callbacks will be executed at the end of the update - EntityManager.flush() to be exact
 
-    static class ChunkDestroyCallback implements IEntityDestroyCallback {
+    static class ChunkDestroyCallback implements EntityDestroyCallback {
 
         private final List<ChunkPosKey> chunksDestroyedLastFrame;
 
@@ -75,7 +75,7 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    static class ChunkCreateCallback implements IEntityCreateCallback {
+    static class ChunkCreateCallback implements EntityCreateCallback {
 
         private final AtomicBoolean newChunksAdded;
 
@@ -89,7 +89,7 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    public static class MeshletDestroyCallback implements IEntityDestroyCallback {
+    public static class MeshletDestroyCallback implements EntityDestroyCallback {
 
         private final ResourceStorage storage;
         private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;

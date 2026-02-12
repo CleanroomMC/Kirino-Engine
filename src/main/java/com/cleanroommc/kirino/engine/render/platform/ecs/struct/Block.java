@@ -1,9 +1,9 @@
 package com.cleanroommc.kirino.engine.render.platform.ecs.struct;
 
-import com.cleanroommc.kirino.ecs.component.scan.CleanStruct;
+import com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature;
 import org.joml.Vector3i;
 
-@CleanStruct
+@CleanStructSignature
 public class Block {
     public Vector3i position;
     public int faceMask;

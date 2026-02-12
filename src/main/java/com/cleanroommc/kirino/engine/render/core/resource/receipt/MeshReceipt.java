@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.core.resource.receipt;
 
 import org.jspecify.annotations.NonNull;
 
-public class MeshReceipt implements IResourceReceipt<MeshReceipt> {
+public class MeshReceipt implements ResourceReceipt<MeshReceipt> {
     public MeshReceipt() {
     }
 

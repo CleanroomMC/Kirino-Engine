@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.ecs.storage;
 
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentDescFlattened;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FlattenedField;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
 import com.google.common.collect.BiMap;
@@ -40,7 +40,7 @@ public final class HeapPool extends ArchetypeDataPool{
         }
     }
 
-    private final Map<Class<? extends ICleanComponent>, ComDataLocation> componentDataLocations = new HashMap<>();
+    private final Map<Class<? extends CleanComponent>, ComDataLocation> componentDataLocations = new HashMap<>();
 
     // key: entity id
     // value: array index
@@ -59,13 +59,13 @@ public final class HeapPool extends ArchetypeDataPool{
      * @param components The component types for this archetype
      */
     @SuppressWarnings("DataFlowIssue")
-    public HeapPool(ComponentRegistry componentRegistry, List<Class<? extends ICleanComponent>> components, int initSize, int growStep, int shrinkStep) {
+    public HeapPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
         super(componentRegistry, components, initSize, growStep, shrinkStep);
 
         int intArrCount = 0;
         int floatArrCount = 0;
         int booleanArrCount = 0;
-        for (Class<? extends ICleanComponent> clazz : components) {
+        for (Class<? extends CleanComponent> clazz : components) {
             ComponentDescFlattened descFlattened = componentRegistry.getComponentDescFlattened(componentRegistry.getComponentName(clazz));
 
             int intArrFrom = intArrCount;
@@ -105,7 +105,7 @@ public final class HeapPool extends ArchetypeDataPool{
     @NonNull
     @Override
     @SuppressWarnings("DataFlowIssue")
-    public ICleanComponent getComponent(int entityID, Class<? extends ICleanComponent> component) {
+    public CleanComponent getComponent(int entityID, Class<? extends CleanComponent> component) {
         ComDataLocation location = componentDataLocations.get(component);
         int index = entityDataIndexes.get(entityID);
 
@@ -136,7 +136,7 @@ public final class HeapPool extends ArchetypeDataPool{
     }
 
     @Override
-    public void setComponent(int entityID, ICleanComponent component) {
+    public void setComponent(int entityID, CleanComponent component) {
         Object[] args = componentRegistry.flattenComponent(component);
 
         ComDataLocation location = componentDataLocations.get(component.getClass());
@@ -162,7 +162,7 @@ public final class HeapPool extends ArchetypeDataPool{
     }
 
     @Override
-    public void addEntity(int entityID, List<ICleanComponent> components) {
+    public void addEntity(int entityID, List<CleanComponent> components) {
         int index;
         if (freeIndexes.isEmpty()) {
             // grow pool
@@ -179,8 +179,8 @@ public final class HeapPool extends ArchetypeDataPool{
 
         entityDataIndexes.put(entityID, index);
 
-        for (Class<? extends ICleanComponent> clazz : this.components) {
-            ICleanComponent component = Objects.requireNonNull(components.stream().filter(c -> c.getClass().equals(clazz)).findFirst().orElse(null));
+        for (Class<? extends CleanComponent> clazz : this.components) {
+            CleanComponent component = Objects.requireNonNull(components.stream().filter(c -> c.getClass().equals(clazz)).findFirst().orElse(null));
 
             Object[] args = componentRegistry.flattenComponent(component);
             ComDataLocation location = componentDataLocations.get(clazz);
@@ -233,7 +233,7 @@ public final class HeapPool extends ArchetypeDataPool{
 
     @NonNull
     @Override
-    public IPrimitiveArray getArray(Class<? extends ICleanComponent> component, String... fieldAccessChain) {
+    public PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain) {
         int ordinal = componentRegistry.getFieldOrdinal(componentRegistry.getComponentName(component), fieldAccessChain);
         ComDataLocation location = componentDataLocations.get(component);
 
@@ -283,7 +283,7 @@ public final class HeapPool extends ArchetypeDataPool{
         StringBuilder builder = new StringBuilder();
         builder.append("\n=====HeapPool Snapshot=====\n");
         int i = 0;
-        for (Class<? extends ICleanComponent> clazz : components) {
+        for (Class<? extends CleanComponent> clazz : components) {
             ComDataLocation location = componentDataLocations.get(clazz);
             builder.append("[").append(i++).append("] ")
                     .append("Component name: ").append(componentRegistry.getComponentName(clazz))

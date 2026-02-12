@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.DrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
-import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.IDrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.core.resource.GResourceTicket;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
@@ -17,22 +17,22 @@ public class DrawQueue {
     /**
      * The queue we use for commands.
      */
-    private Deque<IDrawCommand> deque = new ArrayDeque<>();
+    private Deque<DrawCommand> deque = new ArrayDeque<>();
 
     /**
      * Part of the double-buffered queue optimization.
      */
-    private Deque<IDrawCommand> deque2 = new ArrayDeque<>();
+    private Deque<DrawCommand> deque2 = new ArrayDeque<>();
 
     public DrawQueue() {
     }
 
-    public void enqueue(IDrawCommand command) {
+    public void enqueue(DrawCommand command) {
         deque.offerLast(command);
     }
 
     @Nullable
-    public IDrawCommand dequeue() {
+    public DrawCommand dequeue() {
         return deque.pollFirst();
     }
 
@@ -55,7 +55,7 @@ public class DrawQueue {
             deque2.clear();
         }
 
-        IDrawCommand item;
+        DrawCommand item;
         while ((item = deque.pollFirst()) != null) {
             if (item instanceof LowLevelDC) {
                 deque2.offerLast(item);
@@ -94,7 +94,7 @@ public class DrawQueue {
         }
 
         // deque is now empty and deque2 is filled; swap
-        Deque<IDrawCommand> swap = deque2;
+        Deque<DrawCommand> swap = deque2;
         deque2 = deque;
         deque = swap;
         return this;
@@ -134,7 +134,7 @@ public class DrawQueue {
             list.clear();
         }
 
-        IDrawCommand item;
+        DrawCommand item;
         while ((item = deque.pollFirst()) != null) {
             LowLevelDC lowLevelDC = (LowLevelDC) item;
             VAOKey key = new VAOKey(lowLevelDC.vao, lowLevelDC.mode, lowLevelDC.elementType);
@@ -178,7 +178,7 @@ public class DrawQueue {
         }
 
         // deque is empty and deque2 is filled; swap
-        Deque<IDrawCommand> swap = deque2;
+        Deque<DrawCommand> swap = deque2;
         deque2 = deque;
         deque = swap;
         return this;

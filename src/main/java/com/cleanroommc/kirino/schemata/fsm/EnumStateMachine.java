@@ -90,7 +90,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
         }
     }
 
-    static class Builder<S extends Enum<S>, I extends Enum<I>> implements IBuilder<S, I> {
+    static class BuilderImpl<S extends Enum<S>, I extends Enum<I>> implements Builder<S, I> {
 
         private final S[] states;
         private final I[] inputs; // only for validation
@@ -102,7 +102,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
         private S initialState;
 
         @SuppressWarnings("unchecked")
-        Builder(Class<S> stateClass, Class<I> inputClass){
+        BuilderImpl(Class<S> stateClass, Class<I> inputClass){
             states = stateClass.getEnumConstants();
             inputs = inputClass.getEnumConstants();
             int length = states.length * inputs.length;
@@ -121,7 +121,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
+        public Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
                                             @Nullable OnExitStateCallback<S, I> onExitStateCallback,
                                             @Nullable Rollback<S, I> rollbackCallback) {
@@ -143,7 +143,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
+        public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
 
             entryCallbacks[state.ordinal()] = callback;
@@ -152,7 +152,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
+        public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
 
             exitCallbacks[state.ordinal()] = callback;
@@ -161,7 +161,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> initialState(@NonNull S initialState) {
+        public Builder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Parameter \"initialState\" must not be null.");
 
             this.initialState = initialState;
@@ -170,7 +170,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
+        public Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
                     "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
 
@@ -180,7 +180,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
 
         @NonNull
         @Override
-        public IBuilder<S, I> validate() {
+        public Builder<S, I> validate() {
             BitSet reachable = new BitSet(states.length);
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
