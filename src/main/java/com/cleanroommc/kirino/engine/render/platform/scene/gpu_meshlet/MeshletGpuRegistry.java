@@ -124,6 +124,9 @@ public class MeshletGpuRegistry {
         pendingMeshletIdRemoval.clear();
 
         meshletInputBuffer.swap();
+        if (finishedWritingOnce) {
+            vertexOutputBuffer.swap();
+        }
 
         writing = false;
         if (!finishedWritingOnce) {
@@ -143,6 +146,20 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(finishedWritingOnce, "Must finished writing once.");
 
         return meshletInputBuffer.getConsumeTarget();
+    }
+
+    /**
+     * @return The the vertex ssbo to be written by compute shaders
+     */
+    public synchronized SSBOView getVertexWriteTarget() {
+        return vertexOutputBuffer.getVertexWriteTarget();
+    }
+
+    /**
+     * @return The the index ssbo to be written by compute shaders
+     */
+    public synchronized SSBOView getIndexWriteTarget() {
+        return vertexOutputBuffer.getIndexWriteTarget();
     }
 
     /**

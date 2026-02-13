@@ -502,6 +502,8 @@ public final class KirinoClientCore {
         if (rawGLVersion.isEmpty() || majorGLVersion == -1 || minorGLVersion == -1) {
             throw new RuntimeException("Failed to parse the OpenGL version.");
         }
+
+        LOGGER.info("Parsed OpenGL version: {}.{}", majorGLVersion, minorGLVersion);
         //</editor-fold>
 
         if (!(majorGLVersion == 4 && minorGLVersion == 6)) {

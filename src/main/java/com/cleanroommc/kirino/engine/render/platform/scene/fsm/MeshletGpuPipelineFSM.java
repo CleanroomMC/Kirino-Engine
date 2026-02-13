@@ -7,9 +7,9 @@ public class MeshletGpuPipelineFSM {
 
     public enum State {
         INITIAL_WAIT,
-        PREPARE_MESHLET_INPUT,
-        COMPUTE_DISPATCH,
-        IDLE, // if there's no meshlet changes after compute
+        ARMED, // transitional state. last check before the computation
+        COMPUTABLE, // when able to compute OR computing
+        IDLE
     }
 
     private boolean isPullResultReady = false;
@@ -18,7 +18,10 @@ public class MeshletGpuPipelineFSM {
     public MeshletGpuPipelineFSM() {
         fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 0, 0)
                 .initialState(State.INITIAL_WAIT)
-                .addTransition(State.INITIAL_WAIT, 0, State.PREPARE_MESHLET_INPUT)
+                .addTransition(State.INITIAL_WAIT, 0, State.IDLE)
+                .addTransition(State.ARMED, 0, State.COMPUTABLE)
+                .addTransition(State.COMPUTABLE, 0, State.IDLE)
+                .addTransition(State.IDLE, 0, State.ARMED)
                 .error((state, input) -> {
                     throw new RuntimeException(String.format(
                             "An error occurred inside MeshletGpuPipelineFSM. The input=%d leads to a non-existent route. Current state=%s.", input, state));
@@ -43,11 +46,19 @@ public class MeshletGpuPipelineFSM {
         }
 
         // first time of finishing compute; results are ready to be drawn
-        if (!isPullResultReady && fsm.state() == State.COMPUTE_DISPATCH) {
+        if (!isPullResultReady && fsm.state() == State.COMPUTABLE) {
             isPullResultReady = true;
         }
 
+        State oldState = fsm.state();
+
         fsm.accept(0);
+
+        if (oldState != State.INITIAL_WAIT && fsm.state() == State.IDLE) {
+            // clear backlog
+            fsm.reset();
+            fsm.accept(0);
+        }
     }
 
     public void reset() {

@@ -102,7 +102,7 @@ public class MinecraftScene extends CleanWorld {
         }
     }
 
-    public static class MeshletCreateCallback implements IEntityCreateCallback {
+    public static class MeshletCreateCallback implements EntityCreateCallback {
 
         private final ResourceStorage storage;
         private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
@@ -201,10 +201,6 @@ public class MinecraftScene extends CleanWorld {
 
         meshletBufferWriteSystem = SingleFlow.newBuilder(this, MeshletBufferWriteSystem.class)
                 .addTransition(new MeshletBufferWriteSystem(new MeshletGpuWriterContext(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(() -> {
-                    // finish immediately after writing -> compute process -> judge if the next writing is needed (any changes?)
-                    storage.get(meshletGpuRegistry).finishWriting();
-                })
                 .build();
     }
 
@@ -441,22 +437,11 @@ public class MinecraftScene extends CleanWorld {
 //            meshletDebugSystem.execute();
 //        }
 
-//        // test
-//        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE) {
-//            if (debug) {
-//                debug = false;
-//
-//                storage.get(meshletGpuRegistry).beginWriting();
-//                // callback: meshletGpuRegistry.finishWriting(); computeReady = true
-//                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
-//            }
-//        }
-
         // ----- terrainFsm finishes its duty here -----
 
-        //<editor-fold desc="process INITIAL_WAIT -> PREPARE_MESHLET_INPUT">
+        //<editor-fold desc="process INITIAL_WAIT -> IDLE">
         if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.INITIAL_WAIT) {
-            meshletFsm.next(); // INITIAL_WAIT or PREPARE_MESHLET_INPUT
+            meshletFsm.next(); // INITIAL_WAIT or IDLE
             if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.INITIAL_WAIT) {
                 // wait; abort this update
                 super.update();
@@ -465,9 +450,49 @@ public class MinecraftScene extends CleanWorld {
         }
         //</editor-fold>
 
-        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.PREPARE_MESHLET_INPUT) {
+        //<editor-fold desc="trigger ARMED -> COMPUTABLE">
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.IDLE && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+            meshletFsm.next(); // ARMED
 
+            if (storage.get(meshletGpuRegistry).isWriting()) {
+                meshletFsm.next(); // COMPUTABLE
+            } else {
+                storage.get(meshletGpuRegistry).beginWriting();
+                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+                meshletFsm.next(); // COMPUTABLE
+            }
         }
+        //</editor-fold>
+
+        //<editor-fold desc="process COMPUTABLE -> IDLE">
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.COMPUTABLE) {
+            // before dispatching compute, finish existing writing task if possible
+            if (!storage.get(meshletComputeSystem).isShaderRunning()
+                    && storage.get(meshletGpuRegistry).isWriting()
+                    && !meshletBufferWriteSystem.isExecuting()) {
+                storage.get(meshletGpuRegistry).finishWriting();
+            }
+
+            // start dispatching if possible
+            if (!storage.get(meshletComputeSystem).isShaderRunning()
+                    && storage.get(meshletGpuRegistry).isFinishedWritingOnce()
+                    && !storage.get(meshletGpuRegistry).isWriting()) {
+                storage.get(meshletComputeSystem).startDispatch(storage);
+            }
+
+            // start the next writing task right after the dispatch signal if needed. maximize throughput
+            if (storage.get(meshletComputeSystem).isShaderRunning()
+                    && !storage.get(meshletGpuRegistry).isWriting()
+                    && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+                storage.get(meshletGpuRegistry).beginWriting();
+            }
+
+            // pull compute result
+            if (storage.get(meshletComputeSystem).tryPullResult(storage)) {
+                meshletFsm.next(); // IDLE
+            }
+        }
+        //</editor-fold>
 
         super.update();
     }
