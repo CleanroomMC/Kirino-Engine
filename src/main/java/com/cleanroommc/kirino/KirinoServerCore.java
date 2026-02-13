@@ -14,7 +14,7 @@ public final class KirinoServerCore {
             return;
         }
 
-        LOGGER.info("Kirino Server-Side Initialization");
+        LOGGER.info("---------- Kirino Server-Side Initialization ----------");
     }
 
     public static void postInit() {
@@ -24,6 +24,6 @@ public final class KirinoServerCore {
             return;
         }
 
-        LOGGER.info("Kirino Server-Side Post-Initialization");
+        LOGGER.info("---------- Kirino Server-Side Post-Initialization ----------");
     }
 }
