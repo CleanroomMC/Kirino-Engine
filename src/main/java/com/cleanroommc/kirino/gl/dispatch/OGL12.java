@@ -4,7 +4,7 @@ import org.lwjgl.opengl.GL12;
 
 import java.nio.*;
 
-sealed class OGL12 extends OGL11 permits OGL43 {
+sealed class OGL12 extends OGL11 permits OGL13 {
     @Override
     public void glCopyTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int x, int y, int width, int height) {
         GL12.glCopyTexSubImage3D(target, level, xoffset, yoffset, zoffset, x, y, width, height);

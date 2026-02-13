@@ -2,6 +2,8 @@ package com.cleanroommc.kirino.gl.dispatch;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.opengl.KHRDebugCallback;
+import org.lwjglx.MemoryUtil;
+
 import java.nio.*;
 
 public sealed interface OpenGL permits OGL11 {
@@ -1353,6 +1355,162 @@ public sealed interface OpenGL permits OGL11 {
     default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, ShortBuffer pixels)
     {
         throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+    // </editor-fold>
+    // <editor-fold desc="OpenGL 13">
+    default void glActiveTexture(int texture)
+    {
+        throw new NotImplementedException("glActiveTexture is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glClientActiveTexture(int texture)
+    {
+        throw new NotImplementedException("glClientActiveTexture is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage1D(int target, int level, int internalformat, int width, int border, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexImage1D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage1D(int target, int level, int internalformat, int width, int border, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexImage1D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage2D(int target, int level, int internalformat, int width, int height, int border, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexImage2D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage2D(int target, int level, int internalformat, int width, int height, int border, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexImage2D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage3D(int target, int level, int internalformat, int width, int height, int depth, int border, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexImage3D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexImage3D(int target, int level, int internalformat, int width, int height, int depth, int border, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexImage3D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage1D(int target, int level, int xoffset, int width, int format, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage1D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage1D(int target, int level, int xoffset, int width, int format, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage1D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage2D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage2D(int target, int level, int xoffset, int yoffset, int width, int height, int format, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage2D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int data_imageSize, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage3D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glCompressedTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, ByteBuffer data)
+    {
+        throw new NotImplementedException("glCompressedTexSubImage3D is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glGetCompressedTexImage(int target, int lod, long img_buffer_offset)
+    {
+        throw new NotImplementedException("glGetCompressedTexImage is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glGetCompressedTexImage(int target, int lod, ByteBuffer img)
+    {
+        throw new NotImplementedException("glGetCompressedTexImage is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glGetCompressedTexImage(int target, int lod, IntBuffer img)
+    {
+        throw new NotImplementedException("glGetCompressedTexImage is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glGetCompressedTexImage(int target, int lod, ShortBuffer img)
+    {
+        throw new NotImplementedException("glGetCompressedTexImage is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glLoadTransposeMatrix(DoubleBuffer m)
+    {
+        throw new NotImplementedException("glLoadTransposeMatrix is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glLoadTransposeMatrix(FloatBuffer m)
+    {
+        throw new NotImplementedException("glLoadTransposeMatrix is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultTransposeMatrix(DoubleBuffer m)
+    {
+        throw new NotImplementedException("glMultTransposeMatrix is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultTransposeMatrix(FloatBuffer m)
+    {
+        throw new NotImplementedException("glMultTransposeMatrix is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord1d(int target, double s)
+    {
+        throw new NotImplementedException("glMultiTexCoord1d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord1f(int target, float s)
+    {
+        throw new NotImplementedException("glMultiTexCoord1f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord2d(int target, double s, double t)
+    {
+        throw new NotImplementedException("glMultiTexCoord2d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord2f(int target, float s, float t)
+    {
+        throw new NotImplementedException("glMultiTexCoord2f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord3d(int target, double s, double t, double r)
+    {
+        throw new NotImplementedException("glMultiTexCoord3d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord3f(int target, float s, float t, float r)
+    {
+        throw new NotImplementedException("glMultiTexCoord3f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord4d(int target, double s, double t, double r, double q)
+    {
+        throw new NotImplementedException("glMultiTexCoord4d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiTexCoord4f(int target, float s, float t, float r, float q)
+    {
+        throw new NotImplementedException("glMultiTexCoord4f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSampleCoverage(float value, boolean invert)
+    {
+        throw new NotImplementedException("glSampleCoverage is only avaliable for OpenGL 13 and above");
     }
     // </editor-fold>
     // <editor-fold desc="OpenGL 43">
