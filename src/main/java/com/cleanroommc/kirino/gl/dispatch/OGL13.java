@@ -5,7 +5,7 @@ import org.lwjglx.MemoryUtil;
 
 import java.nio.*;
 
-sealed class OGL13 extends OGL12 permits OGL43 {
+sealed class OGL13 extends OGL12 permits OGL14 {
     @Override
     public void glActiveTexture(int texture) {
         GL13.glActiveTexture(texture);

@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.gl.dispatch;
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.opengl.KHRDebugCallback;
 import org.lwjglx.MemoryUtil;
+import org.lwjglx.lwjgl3ify.BufferCasts;
 
 import java.nio.*;
 
@@ -1511,6 +1512,142 @@ public sealed interface OpenGL permits OGL11 {
     default void glSampleCoverage(float value, boolean invert)
     {
         throw new NotImplementedException("glSampleCoverage is only avaliable for OpenGL 13 and above");
+    }
+    // </editor-fold>
+    // <editor-fold desc="OpenGL 14">
+    default void glBlendColor(float red, float green, float blue, float alpha)
+    {
+        throw new NotImplementedException("glBlendColor is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glBlendEquation(int mode)
+    {
+        throw new NotImplementedException("glBlendEquation is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha)
+    {
+        throw new NotImplementedException("glBlendFuncSeparate is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glFogCoordPointer(int type, int stride, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glFogCoordPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glFogCoordPointer(int stride, DoubleBuffer data)
+    {
+        throw new NotImplementedException("glFogCoordPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glFogCoordPointer(int stride, FloatBuffer data)
+    {
+        throw new NotImplementedException("glFogCoordPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glFogCoordd(double coord)
+    {
+        throw new NotImplementedException("glFogCoordd is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glFogCoordf(float coord)
+    {
+        throw new NotImplementedException("glFogCoordf is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glMultiDrawArrays(int mode, IntBuffer piFirst, IntBuffer piCount)
+    {
+        throw new NotImplementedException("glMultiDrawArrays is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glPointParameter(int pname, FloatBuffer params)
+    {
+        throw new NotImplementedException("glPointParameter is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glPointParameter(int pname, IntBuffer params)
+    {
+        throw new NotImplementedException("glPointParameter is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glPointParameterf(int pname, float param)
+    {
+        throw new NotImplementedException("glPointParameterf is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glPointParameteri(int pname, int param)
+    {
+        throw new NotImplementedException("glPointParameteri is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColor3b(byte red, byte green, byte blue)
+    {
+        throw new NotImplementedException("glSecondaryColor3b is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColor3d(double red, double green, double blue)
+    {
+        throw new NotImplementedException("glSecondaryColor3d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColor3f(float red, float green, float blue)
+    {
+        throw new NotImplementedException("glSecondaryColor3f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColor3ub(byte red, byte green, byte blue)
+    {
+        throw new NotImplementedException("glSecondaryColor3ub is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColorPointer(int size, int type, int stride, long data_buffer_offset)
+    {
+        throw new NotImplementedException("glSecondaryColorPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColorPointer(int size, int stride, DoubleBuffer data)
+    {
+        throw new NotImplementedException("glSecondaryColorPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColorPointer(int size, int stride, FloatBuffer data)
+    {
+        throw new NotImplementedException("glSecondaryColorPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glSecondaryColorPointer(int size, boolean unsigned, int stride, ByteBuffer data)
+    {
+        throw new NotImplementedException("glSecondaryColorPointer is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos2d(double x, double y)
+    {
+        throw new NotImplementedException("glWindowPos2d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos2f(float x, float y)
+    {
+        throw new NotImplementedException("glWindowPos2f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos2i(int x, int y)
+    {
+        throw new NotImplementedException("glWindowPos2i is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos3d(double x, double y, double z)
+    {
+        throw new NotImplementedException("glWindowPos3d is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos3f(float x, float y, float z)
+    {
+        throw new NotImplementedException("glWindowPos3f is only avaliable for OpenGL 13 and above");
+    }
+
+    default void glWindowPos3i(int x, int y, int z)
+    {
+        throw new NotImplementedException("glWindowPos3i is only avaliable for OpenGL 13 and above");
     }
     // </editor-fold>
     // <editor-fold desc="OpenGL 43">

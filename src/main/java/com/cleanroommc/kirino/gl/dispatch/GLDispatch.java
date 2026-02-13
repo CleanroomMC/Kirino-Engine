@@ -15,6 +15,8 @@ public class GLDispatch {
             gl = new OGL44();
         else if (cp.OpenGL43)
             gl = new OGL43();
+        else if (cp.OpenGL14)
+            gl = new OGL14();
         else if (cp.OpenGL13)
             gl = new OGL13();
         else if (cp.OpenGL12)
