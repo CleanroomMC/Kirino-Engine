@@ -7,7 +7,7 @@ import org.lwjglx.lwjgl3ify.BufferCasts;
 
 import java.nio.*;
 
-sealed class OGL11 implements OpenGL permits OGL43 {
+sealed class OGL11 implements OpenGL permits OGL12 {
     @Override
     public void glAccum(int op, float value) {
         GL11.glAccum(op, value);

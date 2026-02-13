@@ -1269,6 +1269,92 @@ public sealed interface OpenGL permits OGL11 {
         throw new NotImplementedException("glViewport is only available for OpenGL 11 and above");
     }
     // </editor-fold>
+    // <editor-fold desc="OpenGL 12">
+    default void glCopyTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int x, int y, int width, int height)
+    {
+        throw new NotImplementedException("glCopyTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glDrawRangeElements(int mode, int start, int end, int indices_count, int type, long indices_buffer_offset)
+    {
+        throw new NotImplementedException("glDrawRangeElements is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glDrawRangeElements(int mode, int start, int end, ByteBuffer indices)
+    {
+        throw new NotImplementedException("glDrawRangeElements is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glDrawRangeElements(int mode, int start, int end, IntBuffer indices)
+    {
+        throw new NotImplementedException("glDrawRangeElements is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glDrawRangeElements(int mode, int start, int end, ShortBuffer indices)
+    {
+        throw new NotImplementedException("glDrawRangeElements is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, long pixels_buffer_offset)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, ByteBuffer pixels)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, DoubleBuffer pixels)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, FloatBuffer pixels)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, IntBuffer pixels)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexImage3D(int target, int level, int internalFormat, int width, int height, int depth, int border, int format, int type, ShortBuffer pixels)
+    {
+        throw new NotImplementedException("glTexImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, long pixels_buffer_offset)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, ByteBuffer pixels)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, DoubleBuffer pixels)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, FloatBuffer pixels)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, IntBuffer pixels)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+
+    default void glTexSubImage3D(int target, int level, int xoffset, int yoffset, int zoffset, int width, int height, int depth, int format, int type, ShortBuffer pixels)
+    {
+        throw new NotImplementedException("glTexSubImage3D is only avaliable for OpenGL 12 and above");
+    }
+    // </editor-fold>
     // <editor-fold desc="OpenGL 43">
     default void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
         throw new NotImplementedException("glBindVertexBuffer is only avaliable for OpenGL 43 and above");
