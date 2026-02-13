@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.storage;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
-public final class HeapPrimitiveArray implements IPrimitiveArray {
+public final class HeapPrimitiveArray implements PrimitiveArray {
     private final PrimitiveArrayType type;
     private final int length;
     private final int[] intArray;

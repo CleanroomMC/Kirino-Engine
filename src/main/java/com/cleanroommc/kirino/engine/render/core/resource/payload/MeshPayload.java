@@ -6,7 +6,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-public class MeshPayload implements IResourcePayload<MeshPayload> {
+public class MeshPayload implements ResourcePayload<MeshPayload> {
     public MeshPayload() {
     }
 

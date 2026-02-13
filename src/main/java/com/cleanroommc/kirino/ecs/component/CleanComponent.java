@@ -1,4 +1,4 @@
 package com.cleanroommc.kirino.ecs.component;
 
-public interface ICleanComponent {
+public interface CleanComponent {
 }

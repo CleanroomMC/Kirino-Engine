@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.entity;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 
 import java.util.List;
 
@@ -16,10 +16,10 @@ public class EntityCommand {
     public final int index;
     public final Type type;
 
-    List<ICleanComponent> newComponents;
-    ICleanComponent componentToSet;
-    ICleanComponent componentToAdd;
-    Class<? extends ICleanComponent> componentToRemove;
+    List<CleanComponent> newComponents;
+    CleanComponent componentToSet;
+    CleanComponent componentToAdd;
+    Class<? extends CleanComponent> componentToRemove;
 
     protected EntityCommand(int index, Type type) {
         this.index = index;

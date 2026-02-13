@@ -12,7 +12,7 @@ import org.joml.Vector3f;
 import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
 
-public class MinecraftCamera implements ICamera {
+public class MinecraftCamera implements Camera {
     public double getPartialTicks() {
         Minecraft minecraft = Minecraft.getMinecraft();
         return minecraft.isGamePaused() ? MethodHolder.getPartialTicksPaused(minecraft) : minecraft.getRenderPartialTicks();

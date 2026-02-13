@@ -14,7 +14,7 @@ public class TerrainCpuPipelineFSM {
     private final FiniteStateMachine<State, Integer> fsm;
 
     public TerrainCpuPipelineFSM() {
-        fsm = FiniteStateMachine.Builder.enumIntStateMachine(State.class, 0, 2)
+        fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 0, 2)
                 .initialState(State.IDLE)
                 .addTransition(State.IDLE, 1, State.CHUNK_PRIORITIZATION_TASK)
                 .addTransition(State.CHUNK_PRIORITIZATION_TASK, 0, State.MESHLET_GEN_TASK)

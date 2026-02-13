@@ -1,6 +1,6 @@
-package com.cleanroommc.kirino.api.render;
+package com.cleanroommc.kirino.experimental.api.render;
 
-public class RenderContext<T extends IRenderCommand> {
+public class RenderContext<T extends RenderCommand> {
     public final RenderQueueBuilder<T> builder;
 
     public RenderContext(RenderQueueBuilder<T> builder) {

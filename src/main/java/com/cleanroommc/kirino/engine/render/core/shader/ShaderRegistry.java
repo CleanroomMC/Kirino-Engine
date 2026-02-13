@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
-import com.cleanroommc.kirino.gl.shader.IShaderAnalyzer;
+import com.cleanroommc.kirino.gl.shader.ShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.ShaderType;
@@ -55,7 +55,7 @@ public class ShaderRegistry {
         }
     }
 
-    public void analyze(GLSLRegistry glslRegistry, IShaderAnalyzer analyzer) {
+    public void analyze(GLSLRegistry glslRegistry, ShaderAnalyzer analyzer) {
         for (Shader shader : shaders.values()) {
             shader.analyze(glslRegistry, analyzer);
         }

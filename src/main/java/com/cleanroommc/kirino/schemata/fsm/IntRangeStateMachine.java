@@ -99,7 +99,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
         }
     }
 
-    static class Builder implements IBuilder<Integer,Integer> {
+    static class BuilderImpl implements Builder<Integer,Integer> {
         private final int lowerStateBound, upperStateBound;
         private final int lowerInputBound, upperInputBound;
         private final int[] transitionMap;
@@ -110,7 +110,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
         private Integer initialState;
 
         @SuppressWarnings("unchecked")
-        Builder(int lowerStateBound, int upperStateBound, int lowerInputBound, int upperInputBound) {
+        BuilderImpl(int lowerStateBound, int upperStateBound, int lowerInputBound, int upperInputBound) {
             this.lowerStateBound = lowerStateBound;
             this.upperStateBound = upperStateBound;
             this.lowerInputBound = lowerInputBound;
@@ -132,7 +132,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> addTransition(@NonNull Integer state, @NonNull Integer input, @NonNull Integer nextState,
+        public Builder<Integer, Integer> addTransition(@NonNull Integer state, @NonNull Integer input, @NonNull Integer nextState,
                                                         @Nullable OnEnterStateCallback<Integer, Integer> onEnterStateCallback,
                                                         @Nullable OnExitStateCallback<Integer, Integer> onExitStateCallback,
                                                         @Nullable Rollback<Integer, Integer> rollbackCallback) {
@@ -157,7 +157,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, Integer> callback) {
+        public Builder<Integer, Integer> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, Integer> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
@@ -168,7 +168,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, Integer> callback) {
+        public Builder<Integer, Integer> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, Integer> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
@@ -179,7 +179,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> initialState(@NonNull Integer initialState) {
+        public Builder<Integer, Integer> initialState(@NonNull Integer initialState) {
             Preconditions.checkArgument(!(initialState < lowerStateBound || initialState > upperStateBound),
                     "State %s out of range [%s, %s].",
                     initialState, lowerStateBound, upperStateBound);
@@ -190,7 +190,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> error(@NonNull ErrorCallback<Integer, Integer> errorCallback) {
+        public Builder<Integer, Integer> error(@NonNull ErrorCallback<Integer, Integer> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
                     "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
 
@@ -200,7 +200,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
 
         @NonNull
         @Override
-        public IBuilder<Integer, Integer> validate() {
+        public Builder<Integer, Integer> validate() {
             final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();

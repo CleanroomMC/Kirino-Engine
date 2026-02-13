@@ -85,11 +85,11 @@ public final class ComponentScanningHelper {
         List<String> scanPackageNames = getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
                 scanPackageNames,
-                "com.cleanroommc.kirino.ecs.component.scan.CleanComponent");
+                "com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature");
 
         Map<String, List<FieldInfo>> components = new TreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
-            if (entry.getValue().implementsInterface("com.cleanroommc.kirino.ecs.component.ICleanComponent")) {
+            if (entry.getValue().implementsInterface("com.cleanroommc.kirino.ecs.component.CleanComponent")) {
                 components.put(entry.getKey(), getValidFields(entry.getValue(), fieldRegistry));
             }
         }

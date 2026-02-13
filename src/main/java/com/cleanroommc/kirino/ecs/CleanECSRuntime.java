@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs;
 import com.cleanroommc.kirino.ecs.component.ComponentDesc;
 import com.cleanroommc.kirino.ecs.component.ComponentDescFlattened;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.scan.ComponentRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.StructRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
@@ -16,7 +16,7 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.job.IParallelJob;
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobRegistry;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
@@ -83,12 +83,12 @@ public class CleanECSRuntime {
                     structClass,
                     new FieldDef(plan.structName()));
 
-            logger.info("Registered struct \"" + plan.structName() + "\". Loaded \"" + plan.structClass() + "\".");
+            logger.debug("Registered struct \"" + plan.structName() + "\". Loaded \"" + plan.structClass() + "\".");
         }
 
-        logger.info("Struct defs are as follows:" + (structRegistry.getStructDefMap().entrySet().isEmpty() ? " (Empty)" : ""));
+        logger.debug("Struct defs are as follows:" + (structRegistry.getStructDefMap().entrySet().isEmpty() ? " (Empty)" : ""));
         for (Map.Entry<String, StructDef> entry : structRegistry.getStructDefMap().entrySet()) {
-            logger.info("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
+            logger.debug("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
         }
 
         componentRegistry = new ComponentRegistry(fieldRegistry);
@@ -97,9 +97,9 @@ public class CleanECSRuntime {
         eventBus.post(componentScanningEvent);
         for (ComponentRegisterPlan plan : ComponentScanningHelper.scanComponentClasses(componentScanningEvent, fieldRegistry)) {
             // component class loading
-            Class<? extends ICleanComponent> componentClass;
+            Class<? extends CleanComponent> componentClass;
             try {
-                componentClass = Class.forName(plan.componentClass(), false, Thread.currentThread().getContextClassLoader()).asSubclass(ICleanComponent.class);
+                componentClass = Class.forName(plan.componentClass(), false, Thread.currentThread().getContextClassLoader()).asSubclass(CleanComponent.class);
             } catch (ClassNotFoundException e) { // impossible
                 throw new RuntimeException("Unexpected class not found.", e);
             }
@@ -116,15 +116,15 @@ public class CleanECSRuntime {
                     plan.memberLayout(),
                     plan.fieldTypeNames());
 
-            logger.info("Registered component \"" + plan.componentName() + "\". Loaded \"" + plan.componentClass() + "\".");
+            logger.debug("Registered component \"" + plan.componentName() + "\". Loaded \"" + plan.componentClass() + "\".");
         }
 
-        logger.info("Component descs are as follows:" + (componentRegistry.getComponentDescMap().entrySet().isEmpty() ? " (Empty)" : ""));
+        logger.debug("Component descs are as follows:" + (componentRegistry.getComponentDescMap().entrySet().isEmpty() ? " (Empty)" : ""));
         ImmutableMap<String, ComponentDescFlattened> componentDescFlattenedMap = componentRegistry.getComponentDescFlattenedMap();
         for (Map.Entry<String, ComponentDesc> entry : componentRegistry.getComponentDescMap().entrySet()) {
             ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(entry.getKey());
-            logger.info("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
-            logger.info("  - " + entry.getKey() + ": " + componentDescFlattened.toString());
+            logger.debug("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
+            logger.debug("  - " + entry.getKey() + ": " + componentDescFlattened.toString());
         }
 
         entityManager = new EntityManager(componentRegistry);
@@ -134,16 +134,16 @@ public class CleanECSRuntime {
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
-        List<Class<? extends IParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
-        for (Class<? extends IParallelJob> clazz : parallelJobs) {
+        List<Class<? extends ParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
+        for (Class<? extends ParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
-            logger.info("Parallel job \"" + clazz.getName() + "\" registered. Data queries are as follows:" +
+            logger.debug("Parallel job \"" + clazz.getName() + "\" registered. Data queries are as follows:" +
                     (jobRegistry.getParallelJobDataQueries(clazz).keySet().isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).keySet().isEmpty() ? " (Empty)" : ""));
 
             List<String> arrayQueries = new ArrayList<>();
             List<String> externalQueries = new ArrayList<>();
             for (JobDataQuery jobDataQuery : jobRegistry.getParallelJobDataQueries(clazz).keySet()) {
-                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(ICleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
+                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
             }
             for (String fieldName : jobRegistry.getParallelJobExternalDataQueries(clazz).keySet()) {
                 externalQueries.add(fieldName);
@@ -152,22 +152,22 @@ public class CleanECSRuntime {
             externalQueries = externalQueries.stream().sorted().toList();
 
             for (String query : arrayQueries) {
-                logger.info("  - Array query: " + query);
+                logger.debug("  - Array query: " + query);
             }
             for (String query : externalQueries) {
-                logger.info("  - External query: " +  query);
+                logger.debug("  - External query: " +  query);
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static List<Class<? extends IParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
+    private static List<Class<? extends ParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
         MethodHandle parallelJobClassesGetter = ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class);
         Preconditions.checkNotNull(parallelJobClassesGetter);
 
-        List<Class<? extends IParallelJob>> parallelJobs;
+        List<Class<? extends ParallelJob>> parallelJobs;
         try {
-            parallelJobs = (List<Class<? extends IParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
+            parallelJobs = (List<Class<? extends ParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }

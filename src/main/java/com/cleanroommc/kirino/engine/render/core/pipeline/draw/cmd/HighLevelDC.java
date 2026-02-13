@@ -5,7 +5,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
 
-public final class HighLevelDC implements IDrawCommand {
+public final class HighLevelDC implements DrawCommand {
 
     public enum CommandSource {
         PASS_INTERNAL,

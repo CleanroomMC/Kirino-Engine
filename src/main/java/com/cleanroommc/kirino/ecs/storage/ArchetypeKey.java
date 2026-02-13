@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.storage;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +23,7 @@ public final class ArchetypeKey {
     public final int id;
     public final String key;
 
-    public ArchetypeKey(List<Class<? extends ICleanComponent>> components) {
+    public ArchetypeKey(List<Class<? extends CleanComponent>> components) {
         List<String> names = components.stream().map(Class::getName).sorted().toList();
         String combined = String.join(",", names);
         id = getIdForKey(combined);
@@ -52,7 +52,7 @@ public final class ArchetypeKey {
         return "ArchetypeKey{ id=" + id + " }";
     }
 
-    public boolean contains(Class<? extends ICleanComponent> component) {
+    public boolean contains(Class<? extends CleanComponent> component) {
         return key.contains(component.getName());
     }
 }

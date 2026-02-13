@@ -447,6 +447,8 @@ public final class KirinoClientCore {
             return;
         }
 
+        LOGGER.info("---------- Kirino Client-Side Initialization ----------");
+
         //<editor-fold desc="client-side event listeners">
         // register client-side default event listeners
         try {
@@ -475,11 +477,7 @@ public final class KirinoClientCore {
 
         KirinoCommonCore.init();
 
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
-            return;
-        }
-
-        LOGGER.info("Kirino Client-Side Initialization");
+        LOGGER.info("---------- Kirino Client-Side Initialization ----------");
 
         //<editor-fold desc="gl version fetch">
         String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
@@ -522,10 +520,9 @@ public final class KirinoClientCore {
             return;
         }
 
-        LOGGER.info("Kirino Client-Side Post-Initialization");
+        LOGGER.info("---------- Kirino Client-Side Post-Initialization ----------");
 
         //<editor-fold desc="kirino engine">
-        LOGGER.info("---------------");
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -537,7 +534,6 @@ public final class KirinoClientCore {
 
         stopWatch.stop();
         LOGGER.info("Kirino Engine Post-Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
-        LOGGER.info("---------------");
         //</editor-fold>
     }
 

@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
 import com.cleanroommc.kirino.gl.texture.Texture2DView;
 import org.lwjgl.opengl.GL30;
 
-public class DepthStencilAttachment implements IFramebufferAttachment{
+public class DepthStencilAttachment implements FramebufferAttachment{
     public final Texture2DView texture2D;
     public final GLRenderBuffer renderBuffer;
     public final boolean isTexture;

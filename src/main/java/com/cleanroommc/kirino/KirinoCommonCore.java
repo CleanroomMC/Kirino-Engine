@@ -82,7 +82,7 @@ public final class KirinoCommonCore {
             return;
         }
 
-        LOGGER.info("Kirino Initialization Stage");
+        LOGGER.info("---------- Kirino Common Initialization ----------");
 
         //<editor-fold desc="event listeners">
         // register default event listeners
@@ -103,7 +103,6 @@ public final class KirinoCommonCore {
         //</editor-fold>
 
         //<editor-fold desc="ecs runtime">
-        LOGGER.info("---------------");
         LOGGER.info("Initializing ECS Runtime.");
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -121,7 +120,6 @@ public final class KirinoCommonCore {
         //</editor-fold>
 
         //<editor-fold desc="kirino engine">
-        LOGGER.info("---------------");
         LOGGER.info("Initializing Kirino Engine.");
         stopWatch = StopWatch.createStarted();
 
@@ -141,7 +139,6 @@ public final class KirinoCommonCore {
 
         stopWatch.stop();
         LOGGER.info("Kirino Engine Initialized. Time taken: {} ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
-        LOGGER.info("---------------");
         //</editor-fold>
     }
 
@@ -150,7 +147,7 @@ public final class KirinoCommonCore {
             return;
         }
 
-        LOGGER.info("Kirino Post-Initialization Stage");
+        LOGGER.info("---------- Kirino Common Post-Initialization ----------");
     }
 
     @SubscribeEvent

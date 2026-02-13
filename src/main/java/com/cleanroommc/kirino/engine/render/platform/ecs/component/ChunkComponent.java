@@ -1,10 +1,9 @@
 package com.cleanroommc.kirino.engine.render.platform.ecs.component;
 
-import com.cleanroommc.kirino.ecs.component.ICleanComponent;
-import com.cleanroommc.kirino.ecs.component.scan.CleanComponent;
+import com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature;
 
-@CleanComponent
-public class ChunkComponent implements ICleanComponent {
+@CleanComponentSignature
+public class ChunkComponent implements com.cleanroommc.kirino.ecs.component.CleanComponent {
     /**
      * X-coordinate under chunk coordinate system. (* 16 = world coordinate)
      */

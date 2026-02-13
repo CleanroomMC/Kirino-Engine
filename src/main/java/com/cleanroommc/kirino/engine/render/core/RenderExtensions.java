@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core;
 
-import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
@@ -30,7 +30,7 @@ public class RenderExtensions {
                     PipelineStateObject,
                     ResourceSlot<VAO>,
                     AbstractPostProcessingPass>>> postProcessingEntries;
-    public final List<IImmediateHUD> debugHuds;
+    public final List<ImmediateHUD> debugHuds;
 
     public final ResourceSlot<ShaderProgram> postProcessingDefaultProgram;
     public final ResourceSlot<ShaderProgram> terrainGpuPassProgram;

@@ -16,7 +16,7 @@ public class MeshletGpuPipelineFSM {
     private final FiniteStateMachine<MeshletGpuPipelineFSM.State, Integer> fsm;
 
     public MeshletGpuPipelineFSM() {
-        fsm = FiniteStateMachine.Builder.enumIntStateMachine(State.class, 0, 0)
+        fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 0, 0)
                 .initialState(State.INITIAL_WAIT)
                 .addTransition(State.INITIAL_WAIT, 0, State.PREPARE_MESHLET_INPUT)
                 .error((state, input) -> {

@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
 
-public final class LowLevelDC implements IDrawCommand {
+public final class LowLevelDC implements DrawCommand {
 
     public enum DrawType {
         ELEMENTS,                    // directly drawable

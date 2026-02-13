@@ -23,18 +23,18 @@ public class Framebuffer extends GLDisposable {
         return height;
     }
 
-    private final List<IFramebufferAttachment> colorAttachments = new ArrayList<>();
-    private IFramebufferAttachment depthAttachment = null;
+    private final List<FramebufferAttachment> colorAttachments = new ArrayList<>();
+    private FramebufferAttachment depthAttachment = null;
 
     @NonNull
-    public IFramebufferAttachment getColorAttachment(int index) {
+    public FramebufferAttachment getColorAttachment(int index) {
         Preconditions.checkElementIndex(index, colorAttachments.size());
 
         return colorAttachments.get(index);
     }
 
     @Nullable
-    public IFramebufferAttachment getDepthAttachment() {
+    public FramebufferAttachment getDepthAttachment() {
         return depthAttachment;
     }
 
@@ -81,7 +81,7 @@ public class Framebuffer extends GLDisposable {
     }
 
     // bind fbo first
-    public void attach(IFramebufferAttachment attachment) {
+    public void attach(FramebufferAttachment attachment) {
         switch (attachment.kind()) {
             case COLOR -> {
                 colorAttachments.add(attachment);
@@ -97,7 +97,7 @@ public class Framebuffer extends GLDisposable {
     public void resize(int width, int height) {
         this.width = width;
         this.height = height;
-        for (IFramebufferAttachment attachment : colorAttachments) {
+        for (FramebufferAttachment attachment : colorAttachments) {
             if (attachment != null) {
                 attachment.resize(width, height);
             }

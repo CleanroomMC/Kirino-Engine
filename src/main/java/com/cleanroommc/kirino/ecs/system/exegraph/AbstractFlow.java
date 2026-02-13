@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
-public abstract class AbstractFlow implements ISystemExeFlowGraph {
+import static com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph.*;
+
+public abstract class AbstractFlow implements SystemExeFlowGraph {
 
     public static final class BarrierNode {
         final String id;
@@ -60,7 +62,7 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
             for (BarrierNode node : topo) {
                 for (Transition edge : node.incoming) {
                     if (edge.system != null) {
-                        ISystemExeFlowGraph.joinSystem(edge.system);
+                        joinSystem(edge.system);
                     }
                 }
 
@@ -70,7 +72,7 @@ public abstract class AbstractFlow implements ISystemExeFlowGraph {
 
                 for (Transition edge : node.outgoing) {
                     if (edge.system != null) {
-                        ISystemExeFlowGraph.executeSystem(world, edge.system);
+                        executeSystem(world, edge.system);
                     }
                 }
             }

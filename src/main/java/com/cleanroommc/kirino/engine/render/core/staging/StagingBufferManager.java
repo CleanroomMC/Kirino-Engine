@@ -20,9 +20,9 @@ import java.util.*;
 // todo: explicit gpu synchronization via fence. ensure that a slice is truely free on gpu.
 //       "guarantees that it uploads to memory slices where GPU is no longer reading" -> actually false
 /**
- * <code>StagingBufferManager</code> is where we upload data to GPU. {@link #runStaging(IStagingCallback)} to be exact.
+ * <code>StagingBufferManager</code> is where we upload data to GPU. {@link #runStaging(StagingCallback)} to be exact.
  * <code>StagingBufferManager</code> guarantees that it uploads to memory slices where GPU is no longer reading by introducing a window period (instead of a ring buffer).
- * To illustrate, clients are only allowed to access <code>StagingBufferManager</code> and upload data during {@link #runStaging(IStagingCallback)}.
+ * To illustrate, clients are only allowed to access <code>StagingBufferManager</code> and upload data during {@link #runStaging(StagingCallback)}.
  */
 public class StagingBufferManager {
 
@@ -103,7 +103,7 @@ public class StagingBufferManager {
 
     private final StagingContext stagingContext = new StagingContext();
 
-    public void runStaging(IStagingCallback callback) {
+    public void runStaging(StagingCallback callback) {
         beginStaging();
         stagingContext.manager = this;
         callback.run(stagingContext);

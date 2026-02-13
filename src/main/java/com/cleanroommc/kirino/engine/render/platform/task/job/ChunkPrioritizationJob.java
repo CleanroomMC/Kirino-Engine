@@ -2,35 +2,35 @@ package com.cleanroommc.kirino.engine.render.platform.task.job;
 
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.IParallelJob;
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.ChunkComponent;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ChunkPrioritizationJob implements IParallelJob {
+public class ChunkPrioritizationJob implements ParallelJob {
     @JobExternalDataQuery
     AtomicInteger maxLodCounter;
 
     @JobExternalDataQuery
-    ICamera camera;
+    Camera camera;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
-    IPrimitiveArray chunkPosXArray;
+    PrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosY"})
-    IPrimitiveArray chunkPosYArray;
+    PrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosZ"})
-    IPrimitiveArray chunkPosZArray;
+    PrimitiveArray chunkPosZArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"lod"})
-    IPrimitiveArray lodArray;
+    PrimitiveArray lodArray;
 
     Vector3f worldOffset = null;
 

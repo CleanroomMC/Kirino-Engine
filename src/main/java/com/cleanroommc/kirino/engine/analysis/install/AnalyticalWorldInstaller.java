@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.analysis.install;
 
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.IImmediateHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
@@ -102,10 +102,10 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
         }
 
         @SuppressWarnings("unchecked")
-        static List<IImmediateHUD> getDebugHuds(DebugHUDRegistrationEvent debugHudRegistrationEvent) {
-            List<IImmediateHUD> debugHuds;
+        static List<ImmediateHUD> getDebugHuds(DebugHUDRegistrationEvent debugHudRegistrationEvent) {
+            List<ImmediateHUD> debugHuds;
             try {
-                debugHuds = (List<IImmediateHUD>) DELEGATE.debugHudsGetter.invokeExact(debugHudRegistrationEvent);
+                debugHuds = (List<ImmediateHUD>) DELEGATE.debugHudsGetter.invokeExact(debugHudRegistrationEvent);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }

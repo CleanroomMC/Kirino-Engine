@@ -22,7 +22,7 @@ public class ComponentRegistry {
         this.fieldRegistry = fieldRegistry;
     }
 
-    private final BiMap<String, Class<? extends ICleanComponent>> comNameClassMapping = HashBiMap.create();
+    private final BiMap<String, Class<? extends CleanComponent>> comNameClassMapping = HashBiMap.create();
     private final Map<String, ComponentDesc> componentDescMap = new HashMap<>();
     private final Map<String, ComponentDescFlattened> componentDescFlattenedMap = new HashMap<>();
     private final Map<String, MemberLayout> classMemberLayoutMap = new HashMap<>();
@@ -36,7 +36,7 @@ public class ComponentRegistry {
      * @param memberLayout The metadata of the component class
      * @param fieldTypeNames The field registry names of the component
      */
-    public void registerComponent(String name, Class<? extends ICleanComponent> clazz, MemberLayout memberLayout, String... fieldTypeNames) {
+    public void registerComponent(String name, Class<? extends CleanComponent> clazz, MemberLayout memberLayout, String... fieldTypeNames) {
         comNameClassMapping.put(name, clazz);
         classMemberLayoutMap.put(name, memberLayout);
 
@@ -62,7 +62,7 @@ public class ComponentRegistry {
         return ImmutableMap.copyOf(componentDescFlattenedMap);
     }
 
-    public boolean componentExists(Class<? extends ICleanComponent> clazz) {
+    public boolean componentExists(Class<? extends CleanComponent> clazz) {
         return comNameClassMapping.inverse().containsKey(clazz);
     }
 
@@ -76,12 +76,12 @@ public class ComponentRegistry {
     }
 
     @Nullable
-    public String getComponentName(Class<? extends ICleanComponent> clazz) {
+    public String getComponentName(Class<? extends CleanComponent> clazz) {
         return comNameClassMapping.inverse().get(clazz);
     }
 
     @Nullable
-    public Class<? extends ICleanComponent> getComponentClass(String name) {
+    public Class<? extends CleanComponent> getComponentClass(String name) {
         return comNameClassMapping.get(name);
     }
 
@@ -284,14 +284,14 @@ public class ComponentRegistry {
 
     @Nullable
     @SuppressWarnings("DataFlowIssue")
-    public ICleanComponent newComponent(String name, Object... args) {
+    public CleanComponent newComponent(String name, Object... args) {
         if (!componentExists(name)) {
             return null;
         }
 
         ComponentDesc componentDesc = getComponentDesc(name);
         ComponentDescFlattened componentDescFlattened = getComponentDescFlattened(name);
-        Class<? extends ICleanComponent> componentClass = getComponentClass(name);
+        Class<? extends CleanComponent> componentClass = getComponentClass(name);
         MemberLayout memberLayout = getClassMemberLayout(name);
 
         if (!componentAccessHandlePool.classRegistered(componentClass)) {
@@ -312,13 +312,13 @@ public class ComponentRegistry {
             componentAccessHandlePool.setFieldValue(componentClass, output, fieldName, value);
         }
 
-        return (ICleanComponent) output;
+        return (CleanComponent) output;
     }
 
     // -----Component Deconstruction-----
 
     @SuppressWarnings("DataFlowIssue")
-    public @NonNull Object[] flattenComponent(@NonNull ICleanComponent component) {
+    public @NonNull Object[] flattenComponent(@NonNull CleanComponent component) {
         Preconditions.checkNotNull(component);
         Preconditions.checkArgument(componentExists(component.getClass()),
                 "Component class %s isn't registered.", component.getClass().getName());

@@ -96,7 +96,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         }
     }
 
-    static class Builder<S, I> implements IBuilder<S, I> {
+    static class BuilderImpl<S, I> implements Builder<S, I> {
         private final ImmutableTable.Builder<I, S, S> builder = ImmutableTable.builder();
         private ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> entryCallbackMapBuilder = ImmutableMap.builder();
         private ImmutableMap.Builder<S, OnExitStateCallback<S, I>> exitCallbackMapBuilder = ImmutableMap.builder();
@@ -104,15 +104,15 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         private S initialState = null;
         private ErrorCallback<S, I> error = null;
 
-        Builder() {
+        BuilderImpl() {
         }
 
         @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S currentState, @NonNull I input, @NonNull S nextState,
-                                           @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
-                                           @Nullable OnExitStateCallback<S, I> onExitStateCallback,
-                                           FiniteStateMachine.@Nullable Rollback<S, I> rollback) {
+                                                                       @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
+                                                                       @Nullable OnExitStateCallback<S, I> onExitStateCallback,
+                                                                       FiniteStateMachine.@Nullable Rollback<S, I> rollback) {
             Preconditions.checkNotNull(currentState, "Parameter \"currentState\" can't be null.");
             Preconditions.checkNotNull(input, "Parameter \"input\" can't be null.");
             Preconditions.checkNotNull(nextState,  "Parameter \"nextState\" can't be null.");
@@ -137,13 +137,13 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *
          * @param state The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link IBuilder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
         @NonNull
         @Override
-        public IBuilder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
+        public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
             if (callback == null) {
@@ -167,13 +167,13 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *
          * @param state The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link IBuilder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
         @NonNull
         @Override
-        public IBuilder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
+        public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
             if (callback == null) {
@@ -191,7 +191,6 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
-        @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
@@ -202,7 +201,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
 
         @NonNull
         @Override
-        public IBuilder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
+        public Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
                     "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
 
@@ -212,7 +211,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
 
         @NonNull
         @Override
-        public IBuilder<S, I> validate() {
+        public Builder<S, I> validate() {
             Table<I, S, S> table = builder.build();
             Set<S> reachable = new HashSet<>();
             Deque<S> stack = new ArrayDeque<>();

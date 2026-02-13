@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.platform.task.system;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.platform.task.job.ChunkPrioritizationJob;
 import org.jspecify.annotations.NonNull;
 
@@ -18,7 +18,7 @@ public class ChunkPrioritizationSystem extends CleanSystem {
 
     private final Executor executor;
 
-    public ChunkPrioritizationSystem(ICamera camera, Executor executor) {
+    public ChunkPrioritizationSystem(Camera camera, Executor executor) {
         externalData = new HashMap<>();
         externalData.put("camera", camera);
         maxLodCounter = new AtomicInteger(-1);

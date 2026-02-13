@@ -1,9 +1,9 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.pass;
 
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
-import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.IDrawCommand;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.DrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
@@ -33,7 +33,7 @@ public abstract class Subpass {
     public final void render(
             @NonNull ResourceStorage storage,
             @NonNull DrawQueue drawQueue,
-            @Nullable ICamera camera,
+            @Nullable Camera camera,
             @NonNull GraphicResourceManager graphicResourceManager,
             @NonNull IndirectDrawBufferGenerator idbGenerator,
             @Nullable Object payload) {
@@ -53,13 +53,13 @@ public abstract class Subpass {
         execute(storage, dq, payload);
 
         // ensure that everything is cleaned at the end
-        IDrawCommand item;
+        DrawCommand item;
         while ((item = dq.dequeue()) != null) {
             item.recycle();
         }
     }
 
-    protected abstract void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable ICamera camera, @Nullable Object payload);
+    protected abstract void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload);
 
     /**
      * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(DrawQueue, Object)}.
@@ -85,7 +85,7 @@ public abstract class Subpass {
      *
      * @implSpec Default implementation: <br/><code>while (drawQueue.dequeue() instanceof LowLevelDC command) { ... }</code>
      * @param drawQueue The queue that stores <b>low-level</b> draw commands
-     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, ICamera, BiConsumer, Object[])}
+     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, Camera, BiConsumer, Object[])}
      */
     protected abstract void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload);
 
@@ -98,7 +98,7 @@ public abstract class Subpass {
      */
     public abstract void collectCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue);
 
-    public final void decorateCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @NonNull ISubpassDecorator decorator) {
+    public final void decorateCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @NonNull SubpassDecorator decorator) {
         // todo
     }
 }

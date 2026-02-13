@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
 import com.cleanroommc.kirino.gl.texture.Texture2DView;
 import org.lwjgl.opengl.GL30;
 
-public class ColorAttachment implements IFramebufferAttachment{
+public class ColorAttachment implements FramebufferAttachment{
     public final int index;
     public final Texture2DView texture2D;
 

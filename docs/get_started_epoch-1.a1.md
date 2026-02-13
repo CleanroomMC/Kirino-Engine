@@ -105,15 +105,15 @@ For scanning events, register package name so all classes under that directory w
 
 Regarding ECS-Job usage, see the example below:
 ```java
-public class ChunkMeshletGenJob implements IParallelJob {
+public class ChunkMeshletGenJob implements ParallelJob {
     @JobExternalDataQuery
     public ChunkProviderClient chunkProvider;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
-    public IPrimitiveArray chunkPosXArray;
+    public PrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosZ"})
-    public IPrimitiveArray chunkPosZArray;
+    public PrimitiveArray chunkPosZArray;
 
     @Override
     public void execute(int index) {

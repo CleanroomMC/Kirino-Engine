@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.engine.render.core.debug.data.impl;
 
-import com.cleanroommc.kirino.engine.render.core.debug.data.IDebugDataService;
+import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
 
-public class FpsHistory implements IDebugDataService {
+public class FpsHistory implements DebugDataService {
     private static final int CAP = 512;
     private int maxFps = -1;
     private final int[] ring = new int[CAP];

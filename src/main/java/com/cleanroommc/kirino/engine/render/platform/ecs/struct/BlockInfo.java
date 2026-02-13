@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.engine.render.platform.ecs.struct;
 
-import com.cleanroommc.kirino.ecs.component.scan.CleanStruct;
+import com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature;
 
-@CleanStruct
+@CleanStructSignature
 public class BlockInfo {
     /**
      * <p><b>0</b>: yz<1, 1></p>

@@ -50,7 +50,7 @@ public class Shader extends GLDisposable {
         this.shaderType = shaderType;
     }
 
-    public void analyze(GLSLRegistry glslRegistry, IShaderAnalyzer analyzer) {
+    public void analyze(GLSLRegistry glslRegistry, ShaderAnalyzer analyzer) {
         shaderMeta = analyzer.analyze(glslRegistry, shaderSource);
     }
 

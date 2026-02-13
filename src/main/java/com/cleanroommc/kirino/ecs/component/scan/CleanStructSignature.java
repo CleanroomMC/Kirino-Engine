@@ -6,9 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * CleanComponent must have a default constructor with no parameters.
+ * CleanStruct must have a default constructor with no parameters.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface CleanComponent {
+public @interface CleanStructSignature {
 }

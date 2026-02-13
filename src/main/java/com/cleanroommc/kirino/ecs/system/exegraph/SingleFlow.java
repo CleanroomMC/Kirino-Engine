@@ -11,7 +11,7 @@ import java.util.*;
 public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
 
     //<editor-fold desc="builder">
-    public static class Builder<TSys extends CleanSystem> implements IBuilder<SingleFlow<TSys>> {
+    public static class BuilderImpl<TSys extends CleanSystem> implements Builder<SingleFlow<TSys>> {
         private final CleanWorld world;
         private final Class<TSys> clazz;
         private final Map<String, BarrierNode> nodes = new HashMap<>();
@@ -20,7 +20,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         private TSys system = null;
         private @Nullable Runnable finishCallback;
 
-        Builder(CleanWorld world, Class<TSys> clazz) {
+        BuilderImpl(CleanWorld world, Class<TSys> clazz) {
             this.world = world;
             this.clazz = clazz;
             nodes.put(START_NODE, new BarrierNode(START_NODE, null));
@@ -28,7 +28,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback) {
+        public @NonNull Builder<SingleFlow<TSys>> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback) {
             Preconditions.checkNotNull(nodeID);
             Preconditions.checkArgument(!nodeID.equals(START_NODE),
                     "Must not use \"%s\" as the node ID. \"%s\" is a built-in node.", START_NODE, START_NODE);
@@ -40,7 +40,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID) {
+        public @NonNull Builder<SingleFlow<TSys>> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID) {
             Preconditions.checkNotNull(fromNodeID);
             Preconditions.checkNotNull(toNodeID);
 
@@ -49,7 +49,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
 
         @SuppressWarnings("unchecked")
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID) {
+        public @NonNull Builder<SingleFlow<TSys>> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID) {
             Preconditions.checkNotNull(task);
             Preconditions.checkNotNull(fromNodeID);
             Preconditions.checkNotNull(toNodeID);
@@ -62,7 +62,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             return addTransitionInternal(system, fromNodeID, toNodeID);
         }
 
-        private @NonNull IBuilder<SingleFlow<TSys>> addTransitionInternal(@Nullable CleanSystem task, String fromNodeID, String toNodeID) {
+        private @NonNull Builder<SingleFlow<TSys>> addTransitionInternal(@Nullable CleanSystem task, String fromNodeID, String toNodeID) {
             BarrierNode from = nodes.get(fromNodeID);
             BarrierNode to = nodes.get(toNodeID);
             Preconditions.checkNotNull(from, "From node not found: \"%s\".", fromNodeID);
@@ -73,19 +73,19 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> setStartNodeCallback(@Nullable Runnable callback) {
+        public @NonNull Builder<SingleFlow<TSys>> setStartNodeCallback(@Nullable Runnable callback) {
             nodes.get(START_NODE).callback = callback;
             return this;
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> setEndNodeCallback(@Nullable Runnable callback) {
+        public @NonNull Builder<SingleFlow<TSys>> setEndNodeCallback(@Nullable Runnable callback) {
             nodes.get(END_NODE).callback = callback;
             return this;
         }
 
         @Override
-        public @NonNull IBuilder<SingleFlow<TSys>> setFinishCallback(@Nullable Runnable callback) {
+        public @NonNull Builder<SingleFlow<TSys>> setFinishCallback(@Nullable Runnable callback) {
             finishCallback = callback;
             return this;
         }
@@ -170,7 +170,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
         this.system = system;
     }
 
-    public static <T extends CleanSystem> Builder<T> newBuilder(CleanWorld world, Class<T> clazz) {
-        return new Builder<>(world, clazz);
+    public static <T extends CleanSystem> BuilderImpl<T> newBuilder(CleanWorld world, Class<T> clazz) {
+        return new BuilderImpl<>(world, clazz);
     }
 }

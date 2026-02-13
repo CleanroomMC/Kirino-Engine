@@ -94,7 +94,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         }
     }
 
-    static class Builder<I extends Enum<I>> implements IBuilder<Integer, I> {
+    static class BuilderImpl<I extends Enum<I>> implements Builder<Integer, I> {
 
         private final int lowerStateBound, upperStateBound;
         private final I[] inputs;
@@ -106,7 +106,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         private Integer initialState;
 
         @SuppressWarnings("unchecked")
-        Builder(int lowerStateBound, int upperStateBound, Class<I> inputClass) {
+        BuilderImpl(int lowerStateBound, int upperStateBound, Class<I> inputClass) {
             this.lowerStateBound = lowerStateBound;
             this.upperStateBound = upperStateBound;
             inputs = inputClass.getEnumConstants();
@@ -126,7 +126,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> addTransition(@NonNull Integer state, @NonNull I input, @NonNull Integer nextState,
+        public Builder<Integer, I> addTransition(@NonNull Integer state, @NonNull I input, @NonNull Integer nextState,
                                                   @Nullable OnEnterStateCallback<Integer, I> onEnterStateCallback,
                                                   @Nullable OnExitStateCallback<Integer, I> onExitStateCallback,
                                                   @Nullable Rollback<Integer, I> rollbackCallback) {
@@ -149,7 +149,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, I> callback) {
+        public Builder<Integer, I> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, I> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
@@ -160,7 +160,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, I> callback) {
+        public Builder<Integer, I> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, I> callback) {
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound),
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
@@ -171,7 +171,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> initialState(@NonNull Integer initialState) {
+        public Builder<Integer, I> initialState(@NonNull Integer initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
 
             this.initialState = initialState;
@@ -180,7 +180,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> error(@NonNull ErrorCallback<Integer, I> errorCallback) {
+        public Builder<Integer, I> error(@NonNull ErrorCallback<Integer, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
                     "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
 
@@ -190,7 +190,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
 
         @NonNull
         @Override
-        public IBuilder<Integer, I> validate() {
+        public Builder<Integer, I> validate() {
             final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();

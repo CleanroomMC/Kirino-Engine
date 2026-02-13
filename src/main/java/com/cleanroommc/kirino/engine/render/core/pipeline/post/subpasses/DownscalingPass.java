@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses;
 
-import com.cleanroommc.kirino.engine.render.core.camera.ICamera;
+import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
@@ -22,7 +22,7 @@ public class DownscalingPass extends Subpass {
     }
 
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable ICamera camera, @Nullable Object payload) {
+    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
 
     }
 

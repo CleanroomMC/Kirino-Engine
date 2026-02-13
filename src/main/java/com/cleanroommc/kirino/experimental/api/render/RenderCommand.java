@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.api.render;
+package com.cleanroommc.kirino.experimental.api.render;
 
-public sealed class RenderCommand implements IRenderCommand permits RenderCommandSpecial {
+public sealed interface RenderCommand permits RenderCommandImpl, RenderCommandSpecialImpl {
 }

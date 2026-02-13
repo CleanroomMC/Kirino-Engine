@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.system;
 
-import com.cleanroommc.kirino.ecs.system.exegraph.ISystemExeFlowGraph;
+import com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -10,22 +10,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import static com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph.*;
+
 /**
- * It helps {@link ISystemExeFlowGraph} to guide the execution flow by providing the future handles.
+ * It helps {@link SystemExeFlowGraph} to guide the execution flow by providing the future handles.
  *
- * @see ISystemExeFlowGraph#joinSystem(CleanSystem)
+ * @see SystemExeFlowGraph#joinSystem(CleanSystem)
  */
 public class ExecutionContainer {
     ExecutionContainer() {
     }
 
     /**
-     * Accessed via reflection in {@link ISystemExeFlowGraph.MethodHolder}.
+     * Accessed via reflection in {@link MethodHolder}.
      */
     private final List<JobScheduler.ExecutionHandle> handles = new ArrayList<>();
 
     /**
-     * Accessed via reflection in {@link ISystemExeFlowGraph.MethodHolder}.
+     * Accessed via reflection in {@link MethodHolder}.
      */
     private final List<CompletableFuture<Void>> futures = new ArrayList<>();
 

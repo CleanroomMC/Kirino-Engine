@@ -21,9 +21,9 @@ import java.util.concurrent.Executor;
  * You're supposed to instantiate an instance in {@link CleanWorld} to help you manage the system execution.
  *
  * @implNote The flow graphs should be immutable once constructed, and
- *           the builder pattern ({@link IBuilder}) should be utilized to help constructing the flow graphs
+ *           the builder pattern ({@link Builder}) should be utilized to help constructing the flow graphs
  */
-public interface ISystemExeFlowGraph {
+public interface SystemExeFlowGraph {
     String START_NODE = "__START__";
     String END_NODE = "__END__";
 
@@ -56,7 +56,7 @@ public interface ISystemExeFlowGraph {
      * The builder of an execution flow graph.
      * The execution graph must be a DAG and everything must start from {@link #START_NODE} and ends in {@link #END_NODE}.
      */
-    interface IBuilder<TFlowGraph extends ISystemExeFlowGraph> {
+    interface Builder<TFlowGraph extends SystemExeFlowGraph> {
         /**
          * <p>Must not input {@link #START_NODE} or {@link #END_NODE}.</p>
          * <p>Inputting the same <code>nodeID</code> again overrides the old node.</p>
@@ -69,14 +69,14 @@ public interface ISystemExeFlowGraph {
          * @param nodeID The node ID
          */
         @NonNull
-        IBuilder<TFlowGraph> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback);
+        Builder<TFlowGraph> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback);
 
         /**
          * A dummy version of {@link #addTransition(CleanSystem, String, String)}.
          * No system will be executed but you can still have callbacks.
          */
         @NonNull
-        IBuilder<TFlowGraph> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID);
+        Builder<TFlowGraph> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID);
 
         /**
          * Must not input the nodes that don't exist. {@link #START_NODE} and {@link #END_NODE} are allowed as built-in nodes.
@@ -87,7 +87,7 @@ public interface ISystemExeFlowGraph {
          * @param toNodeID To
          */
         @NonNull
-        IBuilder<TFlowGraph> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID);
+        Builder<TFlowGraph> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID);
 
         /**
          * Set the callback of the {@link #START_NODE}.
@@ -95,7 +95,7 @@ public interface ISystemExeFlowGraph {
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
         @NonNull
-        IBuilder<TFlowGraph> setStartNodeCallback(@Nullable Runnable callback);
+        Builder<TFlowGraph> setStartNodeCallback(@Nullable Runnable callback);
 
         /**
          * Set the callback of the {@link #END_NODE}.
@@ -103,17 +103,17 @@ public interface ISystemExeFlowGraph {
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
         @NonNull
-        IBuilder<TFlowGraph> setEndNodeCallback(@Nullable Runnable callback);
+        Builder<TFlowGraph> setEndNodeCallback(@Nullable Runnable callback);
 
         /**
-         * Set the callback of the method <code>{@link ISystemExeFlowGraph#execute()} / {@link ISystemExeFlowGraph#executeAsync(Executor)}</code>.
+         * Set the callback of the method <code>{@link SystemExeFlowGraph#execute()} / {@link SystemExeFlowGraph#executeAsync(Executor)}</code>.
          * It's different from {@link #setEndNodeCallback(Runnable)} since the end node callback will be ran
          * before the finish callback.
          *
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
         @NonNull
-        IBuilder<TFlowGraph> setFinishCallback(@Nullable Runnable callback);
+        Builder<TFlowGraph> setFinishCallback(@Nullable Runnable callback);
 
         /**
          * @implNote Check the precondition that the execution graph is a DAG and

@@ -2,2444 +2,2444 @@ package com.cleanroommc.kirino.engine.render.platform.task.job;
 
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.IParallelJob;
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.IPrimitiveArray;
+import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuWriterContext;
 import org.jspecify.annotations.NonNull;
 
 import java.nio.ByteBuffer;
 
-public class MeshletBufferWriteJob implements IParallelJob {
+public class MeshletBufferWriteJob implements ParallelJob {
     @JobExternalDataQuery
     MeshletGpuWriterContext meshletGpuWriterContext;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"meshletId"})
-    IPrimitiveArray meshletIdArray;
+    PrimitiveArray meshletIdArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"blockCount"})
-    IPrimitiveArray blockCountArray;
+    PrimitiveArray blockCountArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosX"})
-    IPrimitiveArray chunkPosXArray;
+    PrimitiveArray chunkPosXArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosY"})
-    IPrimitiveArray chunkPosYArray;
+    PrimitiveArray chunkPosYArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosZ"})
-    IPrimitiveArray chunkPosZArray;
+    PrimitiveArray chunkPosZArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"normal", "x"})
-    IPrimitiveArray normalXArray;
+    PrimitiveArray normalXArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"normal", "y"})
-    IPrimitiveArray normalYArray;
+    PrimitiveArray normalYArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"normal", "z"})
-    IPrimitiveArray normalZArray;
+    PrimitiveArray normalZArray;
 
     //<editor-fold desc="32 block entries">
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "positionAndFaceMask"})
-    IPrimitiveArray block0PfArray;
+    PrimitiveArray block0PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block0Xp0Array;
+    PrimitiveArray block0Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block0Xp1Array;
+    PrimitiveArray block0Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block0Xp2Array;
+    PrimitiveArray block0Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block0Xp3Array;
+    PrimitiveArray block0Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block0Xm0Array;
+    PrimitiveArray block0Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block0Xm1Array;
+    PrimitiveArray block0Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block0Xm2Array;
+    PrimitiveArray block0Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block0Xm3Array;
+    PrimitiveArray block0Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block0Yp0Array;
+    PrimitiveArray block0Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block0Yp1Array;
+    PrimitiveArray block0Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block0Yp2Array;
+    PrimitiveArray block0Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block0Yp3Array;
+    PrimitiveArray block0Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block0Ym0Array;
+    PrimitiveArray block0Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block0Ym1Array;
+    PrimitiveArray block0Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block0Ym2Array;
+    PrimitiveArray block0Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block0Ym3Array;
+    PrimitiveArray block0Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block0Zp0Array;
+    PrimitiveArray block0Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block0Zp1Array;
+    PrimitiveArray block0Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block0Zp2Array;
+    PrimitiveArray block0Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block0Zp3Array;
+    PrimitiveArray block0Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block0Zm0Array;
+    PrimitiveArray block0Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block0Zm1Array;
+    PrimitiveArray block0Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block0Zm2Array;
+    PrimitiveArray block0Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block0", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block0Zm3Array;
+    PrimitiveArray block0Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "positionAndFaceMask"})
-    IPrimitiveArray block1PfArray;
+    PrimitiveArray block1PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block1Xp0Array;
+    PrimitiveArray block1Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block1Xp1Array;
+    PrimitiveArray block1Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block1Xp2Array;
+    PrimitiveArray block1Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block1Xp3Array;
+    PrimitiveArray block1Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block1Xm0Array;
+    PrimitiveArray block1Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block1Xm1Array;
+    PrimitiveArray block1Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block1Xm2Array;
+    PrimitiveArray block1Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block1Xm3Array;
+    PrimitiveArray block1Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block1Yp0Array;
+    PrimitiveArray block1Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block1Yp1Array;
+    PrimitiveArray block1Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block1Yp2Array;
+    PrimitiveArray block1Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block1Yp3Array;
+    PrimitiveArray block1Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block1Ym0Array;
+    PrimitiveArray block1Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block1Ym1Array;
+    PrimitiveArray block1Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block1Ym2Array;
+    PrimitiveArray block1Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block1Ym3Array;
+    PrimitiveArray block1Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block1Zp0Array;
+    PrimitiveArray block1Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block1Zp1Array;
+    PrimitiveArray block1Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block1Zp2Array;
+    PrimitiveArray block1Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block1Zp3Array;
+    PrimitiveArray block1Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block1Zm0Array;
+    PrimitiveArray block1Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block1Zm1Array;
+    PrimitiveArray block1Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block1Zm2Array;
+    PrimitiveArray block1Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block1", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block1Zm3Array;
+    PrimitiveArray block1Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "positionAndFaceMask"})
-    IPrimitiveArray block2PfArray;
+    PrimitiveArray block2PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block2Xp0Array;
+    PrimitiveArray block2Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block2Xp1Array;
+    PrimitiveArray block2Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block2Xp2Array;
+    PrimitiveArray block2Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block2Xp3Array;
+    PrimitiveArray block2Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block2Xm0Array;
+    PrimitiveArray block2Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block2Xm1Array;
+    PrimitiveArray block2Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block2Xm2Array;
+    PrimitiveArray block2Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block2Xm3Array;
+    PrimitiveArray block2Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block2Yp0Array;
+    PrimitiveArray block2Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block2Yp1Array;
+    PrimitiveArray block2Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block2Yp2Array;
+    PrimitiveArray block2Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block2Yp3Array;
+    PrimitiveArray block2Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block2Ym0Array;
+    PrimitiveArray block2Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block2Ym1Array;
+    PrimitiveArray block2Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block2Ym2Array;
+    PrimitiveArray block2Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block2Ym3Array;
+    PrimitiveArray block2Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block2Zp0Array;
+    PrimitiveArray block2Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block2Zp1Array;
+    PrimitiveArray block2Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block2Zp2Array;
+    PrimitiveArray block2Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block2Zp3Array;
+    PrimitiveArray block2Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block2Zm0Array;
+    PrimitiveArray block2Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block2Zm1Array;
+    PrimitiveArray block2Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block2Zm2Array;
+    PrimitiveArray block2Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block2", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block2Zm3Array;
+    PrimitiveArray block2Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "positionAndFaceMask"})
-    IPrimitiveArray block3PfArray;
+    PrimitiveArray block3PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block3Xp0Array;
+    PrimitiveArray block3Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block3Xp1Array;
+    PrimitiveArray block3Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block3Xp2Array;
+    PrimitiveArray block3Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block3Xp3Array;
+    PrimitiveArray block3Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block3Xm0Array;
+    PrimitiveArray block3Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block3Xm1Array;
+    PrimitiveArray block3Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block3Xm2Array;
+    PrimitiveArray block3Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block3Xm3Array;
+    PrimitiveArray block3Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block3Yp0Array;
+    PrimitiveArray block3Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block3Yp1Array;
+    PrimitiveArray block3Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block3Yp2Array;
+    PrimitiveArray block3Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block3Yp3Array;
+    PrimitiveArray block3Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block3Ym0Array;
+    PrimitiveArray block3Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block3Ym1Array;
+    PrimitiveArray block3Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block3Ym2Array;
+    PrimitiveArray block3Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block3Ym3Array;
+    PrimitiveArray block3Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block3Zp0Array;
+    PrimitiveArray block3Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block3Zp1Array;
+    PrimitiveArray block3Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block3Zp2Array;
+    PrimitiveArray block3Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block3Zp3Array;
+    PrimitiveArray block3Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block3Zm0Array;
+    PrimitiveArray block3Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block3Zm1Array;
+    PrimitiveArray block3Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block3Zm2Array;
+    PrimitiveArray block3Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block3", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block3Zm3Array;
+    PrimitiveArray block3Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "positionAndFaceMask"})
-    IPrimitiveArray block4PfArray;
+    PrimitiveArray block4PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block4Xp0Array;
+    PrimitiveArray block4Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block4Xp1Array;
+    PrimitiveArray block4Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block4Xp2Array;
+    PrimitiveArray block4Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block4Xp3Array;
+    PrimitiveArray block4Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block4Xm0Array;
+    PrimitiveArray block4Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block4Xm1Array;
+    PrimitiveArray block4Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block4Xm2Array;
+    PrimitiveArray block4Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block4Xm3Array;
+    PrimitiveArray block4Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block4Yp0Array;
+    PrimitiveArray block4Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block4Yp1Array;
+    PrimitiveArray block4Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block4Yp2Array;
+    PrimitiveArray block4Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block4Yp3Array;
+    PrimitiveArray block4Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block4Ym0Array;
+    PrimitiveArray block4Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block4Ym1Array;
+    PrimitiveArray block4Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block4Ym2Array;
+    PrimitiveArray block4Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block4Ym3Array;
+    PrimitiveArray block4Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block4Zp0Array;
+    PrimitiveArray block4Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block4Zp1Array;
+    PrimitiveArray block4Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block4Zp2Array;
+    PrimitiveArray block4Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block4Zp3Array;
+    PrimitiveArray block4Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block4Zm0Array;
+    PrimitiveArray block4Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block4Zm1Array;
+    PrimitiveArray block4Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block4Zm2Array;
+    PrimitiveArray block4Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block4", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block4Zm3Array;
+    PrimitiveArray block4Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "positionAndFaceMask"})
-    IPrimitiveArray block5PfArray;
+    PrimitiveArray block5PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block5Xp0Array;
+    PrimitiveArray block5Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block5Xp1Array;
+    PrimitiveArray block5Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block5Xp2Array;
+    PrimitiveArray block5Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block5Xp3Array;
+    PrimitiveArray block5Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block5Xm0Array;
+    PrimitiveArray block5Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block5Xm1Array;
+    PrimitiveArray block5Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block5Xm2Array;
+    PrimitiveArray block5Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block5Xm3Array;
+    PrimitiveArray block5Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block5Yp0Array;
+    PrimitiveArray block5Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block5Yp1Array;
+    PrimitiveArray block5Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block5Yp2Array;
+    PrimitiveArray block5Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block5Yp3Array;
+    PrimitiveArray block5Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block5Ym0Array;
+    PrimitiveArray block5Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block5Ym1Array;
+    PrimitiveArray block5Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block5Ym2Array;
+    PrimitiveArray block5Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block5Ym3Array;
+    PrimitiveArray block5Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block5Zp0Array;
+    PrimitiveArray block5Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block5Zp1Array;
+    PrimitiveArray block5Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block5Zp2Array;
+    PrimitiveArray block5Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block5Zp3Array;
+    PrimitiveArray block5Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block5Zm0Array;
+    PrimitiveArray block5Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block5Zm1Array;
+    PrimitiveArray block5Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block5Zm2Array;
+    PrimitiveArray block5Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block5", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block5Zm3Array;
+    PrimitiveArray block5Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "positionAndFaceMask"})
-    IPrimitiveArray block6PfArray;
+    PrimitiveArray block6PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block6Xp0Array;
+    PrimitiveArray block6Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block6Xp1Array;
+    PrimitiveArray block6Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block6Xp2Array;
+    PrimitiveArray block6Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block6Xp3Array;
+    PrimitiveArray block6Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block6Xm0Array;
+    PrimitiveArray block6Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block6Xm1Array;
+    PrimitiveArray block6Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block6Xm2Array;
+    PrimitiveArray block6Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block6Xm3Array;
+    PrimitiveArray block6Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block6Yp0Array;
+    PrimitiveArray block6Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block6Yp1Array;
+    PrimitiveArray block6Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block6Yp2Array;
+    PrimitiveArray block6Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block6Yp3Array;
+    PrimitiveArray block6Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block6Ym0Array;
+    PrimitiveArray block6Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block6Ym1Array;
+    PrimitiveArray block6Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block6Ym2Array;
+    PrimitiveArray block6Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block6Ym3Array;
+    PrimitiveArray block6Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block6Zp0Array;
+    PrimitiveArray block6Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block6Zp1Array;
+    PrimitiveArray block6Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block6Zp2Array;
+    PrimitiveArray block6Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block6Zp3Array;
+    PrimitiveArray block6Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block6Zm0Array;
+    PrimitiveArray block6Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block6Zm1Array;
+    PrimitiveArray block6Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block6Zm2Array;
+    PrimitiveArray block6Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block6", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block6Zm3Array;
+    PrimitiveArray block6Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "positionAndFaceMask"})
-    IPrimitiveArray block7PfArray;
+    PrimitiveArray block7PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block7Xp0Array;
+    PrimitiveArray block7Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block7Xp1Array;
+    PrimitiveArray block7Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block7Xp2Array;
+    PrimitiveArray block7Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block7Xp3Array;
+    PrimitiveArray block7Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block7Xm0Array;
+    PrimitiveArray block7Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block7Xm1Array;
+    PrimitiveArray block7Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block7Xm2Array;
+    PrimitiveArray block7Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block7Xm3Array;
+    PrimitiveArray block7Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block7Yp0Array;
+    PrimitiveArray block7Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block7Yp1Array;
+    PrimitiveArray block7Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block7Yp2Array;
+    PrimitiveArray block7Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block7Yp3Array;
+    PrimitiveArray block7Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block7Ym0Array;
+    PrimitiveArray block7Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block7Ym1Array;
+    PrimitiveArray block7Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block7Ym2Array;
+    PrimitiveArray block7Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block7Ym3Array;
+    PrimitiveArray block7Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block7Zp0Array;
+    PrimitiveArray block7Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block7Zp1Array;
+    PrimitiveArray block7Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block7Zp2Array;
+    PrimitiveArray block7Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block7Zp3Array;
+    PrimitiveArray block7Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block7Zm0Array;
+    PrimitiveArray block7Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block7Zm1Array;
+    PrimitiveArray block7Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block7Zm2Array;
+    PrimitiveArray block7Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block7", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block7Zm3Array;
+    PrimitiveArray block7Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "positionAndFaceMask"})
-    IPrimitiveArray block8PfArray;
+    PrimitiveArray block8PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block8Xp0Array;
+    PrimitiveArray block8Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block8Xp1Array;
+    PrimitiveArray block8Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block8Xp2Array;
+    PrimitiveArray block8Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block8Xp3Array;
+    PrimitiveArray block8Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block8Xm0Array;
+    PrimitiveArray block8Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block8Xm1Array;
+    PrimitiveArray block8Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block8Xm2Array;
+    PrimitiveArray block8Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block8Xm3Array;
+    PrimitiveArray block8Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block8Yp0Array;
+    PrimitiveArray block8Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block8Yp1Array;
+    PrimitiveArray block8Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block8Yp2Array;
+    PrimitiveArray block8Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block8Yp3Array;
+    PrimitiveArray block8Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block8Ym0Array;
+    PrimitiveArray block8Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block8Ym1Array;
+    PrimitiveArray block8Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block8Ym2Array;
+    PrimitiveArray block8Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block8Ym3Array;
+    PrimitiveArray block8Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block8Zp0Array;
+    PrimitiveArray block8Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block8Zp1Array;
+    PrimitiveArray block8Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block8Zp2Array;
+    PrimitiveArray block8Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block8Zp3Array;
+    PrimitiveArray block8Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block8Zm0Array;
+    PrimitiveArray block8Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block8Zm1Array;
+    PrimitiveArray block8Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block8Zm2Array;
+    PrimitiveArray block8Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block8", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block8Zm3Array;
+    PrimitiveArray block8Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "positionAndFaceMask"})
-    IPrimitiveArray block9PfArray;
+    PrimitiveArray block9PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block9Xp0Array;
+    PrimitiveArray block9Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block9Xp1Array;
+    PrimitiveArray block9Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block9Xp2Array;
+    PrimitiveArray block9Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block9Xp3Array;
+    PrimitiveArray block9Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block9Xm0Array;
+    PrimitiveArray block9Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block9Xm1Array;
+    PrimitiveArray block9Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block9Xm2Array;
+    PrimitiveArray block9Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block9Xm3Array;
+    PrimitiveArray block9Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block9Yp0Array;
+    PrimitiveArray block9Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block9Yp1Array;
+    PrimitiveArray block9Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block9Yp2Array;
+    PrimitiveArray block9Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block9Yp3Array;
+    PrimitiveArray block9Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block9Ym0Array;
+    PrimitiveArray block9Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block9Ym1Array;
+    PrimitiveArray block9Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block9Ym2Array;
+    PrimitiveArray block9Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block9Ym3Array;
+    PrimitiveArray block9Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block9Zp0Array;
+    PrimitiveArray block9Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block9Zp1Array;
+    PrimitiveArray block9Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block9Zp2Array;
+    PrimitiveArray block9Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block9Zp3Array;
+    PrimitiveArray block9Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block9Zm0Array;
+    PrimitiveArray block9Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block9Zm1Array;
+    PrimitiveArray block9Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block9Zm2Array;
+    PrimitiveArray block9Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block9", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block9Zm3Array;
+    PrimitiveArray block9Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "positionAndFaceMask"})
-    IPrimitiveArray block10PfArray;
+    PrimitiveArray block10PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block10Xp0Array;
+    PrimitiveArray block10Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block10Xp1Array;
+    PrimitiveArray block10Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block10Xp2Array;
+    PrimitiveArray block10Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block10Xp3Array;
+    PrimitiveArray block10Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block10Xm0Array;
+    PrimitiveArray block10Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block10Xm1Array;
+    PrimitiveArray block10Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block10Xm2Array;
+    PrimitiveArray block10Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block10Xm3Array;
+    PrimitiveArray block10Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block10Yp0Array;
+    PrimitiveArray block10Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block10Yp1Array;
+    PrimitiveArray block10Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block10Yp2Array;
+    PrimitiveArray block10Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block10Yp3Array;
+    PrimitiveArray block10Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block10Ym0Array;
+    PrimitiveArray block10Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block10Ym1Array;
+    PrimitiveArray block10Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block10Ym2Array;
+    PrimitiveArray block10Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block10Ym3Array;
+    PrimitiveArray block10Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block10Zp0Array;
+    PrimitiveArray block10Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block10Zp1Array;
+    PrimitiveArray block10Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block10Zp2Array;
+    PrimitiveArray block10Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block10Zp3Array;
+    PrimitiveArray block10Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block10Zm0Array;
+    PrimitiveArray block10Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block10Zm1Array;
+    PrimitiveArray block10Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block10Zm2Array;
+    PrimitiveArray block10Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block10", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block10Zm3Array;
+    PrimitiveArray block10Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "positionAndFaceMask"})
-    IPrimitiveArray block11PfArray;
+    PrimitiveArray block11PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block11Xp0Array;
+    PrimitiveArray block11Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block11Xp1Array;
+    PrimitiveArray block11Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block11Xp2Array;
+    PrimitiveArray block11Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block11Xp3Array;
+    PrimitiveArray block11Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block11Xm0Array;
+    PrimitiveArray block11Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block11Xm1Array;
+    PrimitiveArray block11Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block11Xm2Array;
+    PrimitiveArray block11Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block11Xm3Array;
+    PrimitiveArray block11Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block11Yp0Array;
+    PrimitiveArray block11Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block11Yp1Array;
+    PrimitiveArray block11Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block11Yp2Array;
+    PrimitiveArray block11Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block11Yp3Array;
+    PrimitiveArray block11Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block11Ym0Array;
+    PrimitiveArray block11Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block11Ym1Array;
+    PrimitiveArray block11Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block11Ym2Array;
+    PrimitiveArray block11Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block11Ym3Array;
+    PrimitiveArray block11Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block11Zp0Array;
+    PrimitiveArray block11Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block11Zp1Array;
+    PrimitiveArray block11Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block11Zp2Array;
+    PrimitiveArray block11Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block11Zp3Array;
+    PrimitiveArray block11Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block11Zm0Array;
+    PrimitiveArray block11Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block11Zm1Array;
+    PrimitiveArray block11Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block11Zm2Array;
+    PrimitiveArray block11Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block11", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block11Zm3Array;
+    PrimitiveArray block11Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "positionAndFaceMask"})
-    IPrimitiveArray block12PfArray;
+    PrimitiveArray block12PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block12Xp0Array;
+    PrimitiveArray block12Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block12Xp1Array;
+    PrimitiveArray block12Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block12Xp2Array;
+    PrimitiveArray block12Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block12Xp3Array;
+    PrimitiveArray block12Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block12Xm0Array;
+    PrimitiveArray block12Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block12Xm1Array;
+    PrimitiveArray block12Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block12Xm2Array;
+    PrimitiveArray block12Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block12Xm3Array;
+    PrimitiveArray block12Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block12Yp0Array;
+    PrimitiveArray block12Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block12Yp1Array;
+    PrimitiveArray block12Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block12Yp2Array;
+    PrimitiveArray block12Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block12Yp3Array;
+    PrimitiveArray block12Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block12Ym0Array;
+    PrimitiveArray block12Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block12Ym1Array;
+    PrimitiveArray block12Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block12Ym2Array;
+    PrimitiveArray block12Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block12Ym3Array;
+    PrimitiveArray block12Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block12Zp0Array;
+    PrimitiveArray block12Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block12Zp1Array;
+    PrimitiveArray block12Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block12Zp2Array;
+    PrimitiveArray block12Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block12Zp3Array;
+    PrimitiveArray block12Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block12Zm0Array;
+    PrimitiveArray block12Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block12Zm1Array;
+    PrimitiveArray block12Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block12Zm2Array;
+    PrimitiveArray block12Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block12", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block12Zm3Array;
+    PrimitiveArray block12Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "positionAndFaceMask"})
-    IPrimitiveArray block13PfArray;
+    PrimitiveArray block13PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block13Xp0Array;
+    PrimitiveArray block13Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block13Xp1Array;
+    PrimitiveArray block13Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block13Xp2Array;
+    PrimitiveArray block13Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block13Xp3Array;
+    PrimitiveArray block13Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block13Xm0Array;
+    PrimitiveArray block13Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block13Xm1Array;
+    PrimitiveArray block13Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block13Xm2Array;
+    PrimitiveArray block13Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block13Xm3Array;
+    PrimitiveArray block13Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block13Yp0Array;
+    PrimitiveArray block13Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block13Yp1Array;
+    PrimitiveArray block13Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block13Yp2Array;
+    PrimitiveArray block13Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block13Yp3Array;
+    PrimitiveArray block13Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block13Ym0Array;
+    PrimitiveArray block13Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block13Ym1Array;
+    PrimitiveArray block13Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block13Ym2Array;
+    PrimitiveArray block13Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block13Ym3Array;
+    PrimitiveArray block13Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block13Zp0Array;
+    PrimitiveArray block13Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block13Zp1Array;
+    PrimitiveArray block13Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block13Zp2Array;
+    PrimitiveArray block13Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block13Zp3Array;
+    PrimitiveArray block13Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block13Zm0Array;
+    PrimitiveArray block13Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block13Zm1Array;
+    PrimitiveArray block13Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block13Zm2Array;
+    PrimitiveArray block13Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block13", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block13Zm3Array;
+    PrimitiveArray block13Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "positionAndFaceMask"})
-    IPrimitiveArray block14PfArray;
+    PrimitiveArray block14PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block14Xp0Array;
+    PrimitiveArray block14Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block14Xp1Array;
+    PrimitiveArray block14Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block14Xp2Array;
+    PrimitiveArray block14Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block14Xp3Array;
+    PrimitiveArray block14Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block14Xm0Array;
+    PrimitiveArray block14Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block14Xm1Array;
+    PrimitiveArray block14Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block14Xm2Array;
+    PrimitiveArray block14Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block14Xm3Array;
+    PrimitiveArray block14Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block14Yp0Array;
+    PrimitiveArray block14Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block14Yp1Array;
+    PrimitiveArray block14Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block14Yp2Array;
+    PrimitiveArray block14Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block14Yp3Array;
+    PrimitiveArray block14Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block14Ym0Array;
+    PrimitiveArray block14Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block14Ym1Array;
+    PrimitiveArray block14Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block14Ym2Array;
+    PrimitiveArray block14Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block14Ym3Array;
+    PrimitiveArray block14Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block14Zp0Array;
+    PrimitiveArray block14Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block14Zp1Array;
+    PrimitiveArray block14Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block14Zp2Array;
+    PrimitiveArray block14Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block14Zp3Array;
+    PrimitiveArray block14Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block14Zm0Array;
+    PrimitiveArray block14Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block14Zm1Array;
+    PrimitiveArray block14Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block14Zm2Array;
+    PrimitiveArray block14Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block14", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block14Zm3Array;
+    PrimitiveArray block14Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "positionAndFaceMask"})
-    IPrimitiveArray block15PfArray;
+    PrimitiveArray block15PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block15Xp0Array;
+    PrimitiveArray block15Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block15Xp1Array;
+    PrimitiveArray block15Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block15Xp2Array;
+    PrimitiveArray block15Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block15Xp3Array;
+    PrimitiveArray block15Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block15Xm0Array;
+    PrimitiveArray block15Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block15Xm1Array;
+    PrimitiveArray block15Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block15Xm2Array;
+    PrimitiveArray block15Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block15Xm3Array;
+    PrimitiveArray block15Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block15Yp0Array;
+    PrimitiveArray block15Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block15Yp1Array;
+    PrimitiveArray block15Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block15Yp2Array;
+    PrimitiveArray block15Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block15Yp3Array;
+    PrimitiveArray block15Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block15Ym0Array;
+    PrimitiveArray block15Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block15Ym1Array;
+    PrimitiveArray block15Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block15Ym2Array;
+    PrimitiveArray block15Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block15Ym3Array;
+    PrimitiveArray block15Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block15Zp0Array;
+    PrimitiveArray block15Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block15Zp1Array;
+    PrimitiveArray block15Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block15Zp2Array;
+    PrimitiveArray block15Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block15Zp3Array;
+    PrimitiveArray block15Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block15Zm0Array;
+    PrimitiveArray block15Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block15Zm1Array;
+    PrimitiveArray block15Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block15Zm2Array;
+    PrimitiveArray block15Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block15", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block15Zm3Array;
+    PrimitiveArray block15Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "positionAndFaceMask"})
-    IPrimitiveArray block16PfArray;
+    PrimitiveArray block16PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block16Xp0Array;
+    PrimitiveArray block16Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block16Xp1Array;
+    PrimitiveArray block16Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block16Xp2Array;
+    PrimitiveArray block16Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block16Xp3Array;
+    PrimitiveArray block16Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block16Xm0Array;
+    PrimitiveArray block16Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block16Xm1Array;
+    PrimitiveArray block16Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block16Xm2Array;
+    PrimitiveArray block16Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block16Xm3Array;
+    PrimitiveArray block16Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block16Yp0Array;
+    PrimitiveArray block16Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block16Yp1Array;
+    PrimitiveArray block16Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block16Yp2Array;
+    PrimitiveArray block16Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block16Yp3Array;
+    PrimitiveArray block16Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block16Ym0Array;
+    PrimitiveArray block16Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block16Ym1Array;
+    PrimitiveArray block16Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block16Ym2Array;
+    PrimitiveArray block16Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block16Ym3Array;
+    PrimitiveArray block16Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block16Zp0Array;
+    PrimitiveArray block16Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block16Zp1Array;
+    PrimitiveArray block16Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block16Zp2Array;
+    PrimitiveArray block16Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block16Zp3Array;
+    PrimitiveArray block16Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block16Zm0Array;
+    PrimitiveArray block16Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block16Zm1Array;
+    PrimitiveArray block16Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block16Zm2Array;
+    PrimitiveArray block16Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block16", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block16Zm3Array;
+    PrimitiveArray block16Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "positionAndFaceMask"})
-    IPrimitiveArray block17PfArray;
+    PrimitiveArray block17PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block17Xp0Array;
+    PrimitiveArray block17Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block17Xp1Array;
+    PrimitiveArray block17Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block17Xp2Array;
+    PrimitiveArray block17Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block17Xp3Array;
+    PrimitiveArray block17Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block17Xm0Array;
+    PrimitiveArray block17Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block17Xm1Array;
+    PrimitiveArray block17Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block17Xm2Array;
+    PrimitiveArray block17Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block17Xm3Array;
+    PrimitiveArray block17Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block17Yp0Array;
+    PrimitiveArray block17Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block17Yp1Array;
+    PrimitiveArray block17Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block17Yp2Array;
+    PrimitiveArray block17Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block17Yp3Array;
+    PrimitiveArray block17Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block17Ym0Array;
+    PrimitiveArray block17Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block17Ym1Array;
+    PrimitiveArray block17Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block17Ym2Array;
+    PrimitiveArray block17Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block17Ym3Array;
+    PrimitiveArray block17Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block17Zp0Array;
+    PrimitiveArray block17Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block17Zp1Array;
+    PrimitiveArray block17Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block17Zp2Array;
+    PrimitiveArray block17Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block17Zp3Array;
+    PrimitiveArray block17Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block17Zm0Array;
+    PrimitiveArray block17Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block17Zm1Array;
+    PrimitiveArray block17Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block17Zm2Array;
+    PrimitiveArray block17Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block17", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block17Zm3Array;
+    PrimitiveArray block17Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "positionAndFaceMask"})
-    IPrimitiveArray block18PfArray;
+    PrimitiveArray block18PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block18Xp0Array;
+    PrimitiveArray block18Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block18Xp1Array;
+    PrimitiveArray block18Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block18Xp2Array;
+    PrimitiveArray block18Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block18Xp3Array;
+    PrimitiveArray block18Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block18Xm0Array;
+    PrimitiveArray block18Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block18Xm1Array;
+    PrimitiveArray block18Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block18Xm2Array;
+    PrimitiveArray block18Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block18Xm3Array;
+    PrimitiveArray block18Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block18Yp0Array;
+    PrimitiveArray block18Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block18Yp1Array;
+    PrimitiveArray block18Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block18Yp2Array;
+    PrimitiveArray block18Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block18Yp3Array;
+    PrimitiveArray block18Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block18Ym0Array;
+    PrimitiveArray block18Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block18Ym1Array;
+    PrimitiveArray block18Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block18Ym2Array;
+    PrimitiveArray block18Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block18Ym3Array;
+    PrimitiveArray block18Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block18Zp0Array;
+    PrimitiveArray block18Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block18Zp1Array;
+    PrimitiveArray block18Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block18Zp2Array;
+    PrimitiveArray block18Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block18Zp3Array;
+    PrimitiveArray block18Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block18Zm0Array;
+    PrimitiveArray block18Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block18Zm1Array;
+    PrimitiveArray block18Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block18Zm2Array;
+    PrimitiveArray block18Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block18", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block18Zm3Array;
+    PrimitiveArray block18Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "positionAndFaceMask"})
-    IPrimitiveArray block19PfArray;
+    PrimitiveArray block19PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block19Xp0Array;
+    PrimitiveArray block19Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block19Xp1Array;
+    PrimitiveArray block19Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block19Xp2Array;
+    PrimitiveArray block19Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block19Xp3Array;
+    PrimitiveArray block19Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block19Xm0Array;
+    PrimitiveArray block19Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block19Xm1Array;
+    PrimitiveArray block19Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block19Xm2Array;
+    PrimitiveArray block19Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block19Xm3Array;
+    PrimitiveArray block19Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block19Yp0Array;
+    PrimitiveArray block19Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block19Yp1Array;
+    PrimitiveArray block19Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block19Yp2Array;
+    PrimitiveArray block19Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block19Yp3Array;
+    PrimitiveArray block19Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block19Ym0Array;
+    PrimitiveArray block19Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block19Ym1Array;
+    PrimitiveArray block19Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block19Ym2Array;
+    PrimitiveArray block19Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block19Ym3Array;
+    PrimitiveArray block19Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block19Zp0Array;
+    PrimitiveArray block19Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block19Zp1Array;
+    PrimitiveArray block19Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block19Zp2Array;
+    PrimitiveArray block19Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block19Zp3Array;
+    PrimitiveArray block19Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block19Zm0Array;
+    PrimitiveArray block19Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block19Zm1Array;
+    PrimitiveArray block19Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block19Zm2Array;
+    PrimitiveArray block19Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block19", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block19Zm3Array;
+    PrimitiveArray block19Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "positionAndFaceMask"})
-    IPrimitiveArray block20PfArray;
+    PrimitiveArray block20PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block20Xp0Array;
+    PrimitiveArray block20Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block20Xp1Array;
+    PrimitiveArray block20Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block20Xp2Array;
+    PrimitiveArray block20Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block20Xp3Array;
+    PrimitiveArray block20Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block20Xm0Array;
+    PrimitiveArray block20Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block20Xm1Array;
+    PrimitiveArray block20Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block20Xm2Array;
+    PrimitiveArray block20Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block20Xm3Array;
+    PrimitiveArray block20Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block20Yp0Array;
+    PrimitiveArray block20Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block20Yp1Array;
+    PrimitiveArray block20Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block20Yp2Array;
+    PrimitiveArray block20Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block20Yp3Array;
+    PrimitiveArray block20Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block20Ym0Array;
+    PrimitiveArray block20Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block20Ym1Array;
+    PrimitiveArray block20Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block20Ym2Array;
+    PrimitiveArray block20Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block20Ym3Array;
+    PrimitiveArray block20Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block20Zp0Array;
+    PrimitiveArray block20Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block20Zp1Array;
+    PrimitiveArray block20Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block20Zp2Array;
+    PrimitiveArray block20Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block20Zp3Array;
+    PrimitiveArray block20Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block20Zm0Array;
+    PrimitiveArray block20Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block20Zm1Array;
+    PrimitiveArray block20Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block20Zm2Array;
+    PrimitiveArray block20Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block20", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block20Zm3Array;
+    PrimitiveArray block20Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "positionAndFaceMask"})
-    IPrimitiveArray block21PfArray;
+    PrimitiveArray block21PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block21Xp0Array;
+    PrimitiveArray block21Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block21Xp1Array;
+    PrimitiveArray block21Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block21Xp2Array;
+    PrimitiveArray block21Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block21Xp3Array;
+    PrimitiveArray block21Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block21Xm0Array;
+    PrimitiveArray block21Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block21Xm1Array;
+    PrimitiveArray block21Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block21Xm2Array;
+    PrimitiveArray block21Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block21Xm3Array;
+    PrimitiveArray block21Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block21Yp0Array;
+    PrimitiveArray block21Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block21Yp1Array;
+    PrimitiveArray block21Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block21Yp2Array;
+    PrimitiveArray block21Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block21Yp3Array;
+    PrimitiveArray block21Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block21Ym0Array;
+    PrimitiveArray block21Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block21Ym1Array;
+    PrimitiveArray block21Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block21Ym2Array;
+    PrimitiveArray block21Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block21Ym3Array;
+    PrimitiveArray block21Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block21Zp0Array;
+    PrimitiveArray block21Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block21Zp1Array;
+    PrimitiveArray block21Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block21Zp2Array;
+    PrimitiveArray block21Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block21Zp3Array;
+    PrimitiveArray block21Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block21Zm0Array;
+    PrimitiveArray block21Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block21Zm1Array;
+    PrimitiveArray block21Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block21Zm2Array;
+    PrimitiveArray block21Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block21", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block21Zm3Array;
+    PrimitiveArray block21Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "positionAndFaceMask"})
-    IPrimitiveArray block22PfArray;
+    PrimitiveArray block22PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block22Xp0Array;
+    PrimitiveArray block22Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block22Xp1Array;
+    PrimitiveArray block22Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block22Xp2Array;
+    PrimitiveArray block22Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block22Xp3Array;
+    PrimitiveArray block22Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block22Xm0Array;
+    PrimitiveArray block22Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block22Xm1Array;
+    PrimitiveArray block22Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block22Xm2Array;
+    PrimitiveArray block22Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block22Xm3Array;
+    PrimitiveArray block22Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block22Yp0Array;
+    PrimitiveArray block22Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block22Yp1Array;
+    PrimitiveArray block22Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block22Yp2Array;
+    PrimitiveArray block22Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block22Yp3Array;
+    PrimitiveArray block22Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block22Ym0Array;
+    PrimitiveArray block22Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block22Ym1Array;
+    PrimitiveArray block22Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block22Ym2Array;
+    PrimitiveArray block22Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block22Ym3Array;
+    PrimitiveArray block22Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block22Zp0Array;
+    PrimitiveArray block22Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block22Zp1Array;
+    PrimitiveArray block22Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block22Zp2Array;
+    PrimitiveArray block22Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block22Zp3Array;
+    PrimitiveArray block22Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block22Zm0Array;
+    PrimitiveArray block22Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block22Zm1Array;
+    PrimitiveArray block22Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block22Zm2Array;
+    PrimitiveArray block22Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block22", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block22Zm3Array;
+    PrimitiveArray block22Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "positionAndFaceMask"})
-    IPrimitiveArray block23PfArray;
+    PrimitiveArray block23PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block23Xp0Array;
+    PrimitiveArray block23Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block23Xp1Array;
+    PrimitiveArray block23Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block23Xp2Array;
+    PrimitiveArray block23Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block23Xp3Array;
+    PrimitiveArray block23Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block23Xm0Array;
+    PrimitiveArray block23Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block23Xm1Array;
+    PrimitiveArray block23Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block23Xm2Array;
+    PrimitiveArray block23Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block23Xm3Array;
+    PrimitiveArray block23Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block23Yp0Array;
+    PrimitiveArray block23Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block23Yp1Array;
+    PrimitiveArray block23Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block23Yp2Array;
+    PrimitiveArray block23Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block23Yp3Array;
+    PrimitiveArray block23Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block23Ym0Array;
+    PrimitiveArray block23Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block23Ym1Array;
+    PrimitiveArray block23Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block23Ym2Array;
+    PrimitiveArray block23Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block23Ym3Array;
+    PrimitiveArray block23Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block23Zp0Array;
+    PrimitiveArray block23Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block23Zp1Array;
+    PrimitiveArray block23Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block23Zp2Array;
+    PrimitiveArray block23Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block23Zp3Array;
+    PrimitiveArray block23Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block23Zm0Array;
+    PrimitiveArray block23Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block23Zm1Array;
+    PrimitiveArray block23Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block23Zm2Array;
+    PrimitiveArray block23Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block23", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block23Zm3Array;
+    PrimitiveArray block23Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "positionAndFaceMask"})
-    IPrimitiveArray block24PfArray;
+    PrimitiveArray block24PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block24Xp0Array;
+    PrimitiveArray block24Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block24Xp1Array;
+    PrimitiveArray block24Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block24Xp2Array;
+    PrimitiveArray block24Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block24Xp3Array;
+    PrimitiveArray block24Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block24Xm0Array;
+    PrimitiveArray block24Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block24Xm1Array;
+    PrimitiveArray block24Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block24Xm2Array;
+    PrimitiveArray block24Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block24Xm3Array;
+    PrimitiveArray block24Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block24Yp0Array;
+    PrimitiveArray block24Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block24Yp1Array;
+    PrimitiveArray block24Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block24Yp2Array;
+    PrimitiveArray block24Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block24Yp3Array;
+    PrimitiveArray block24Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block24Ym0Array;
+    PrimitiveArray block24Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block24Ym1Array;
+    PrimitiveArray block24Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block24Ym2Array;
+    PrimitiveArray block24Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block24Ym3Array;
+    PrimitiveArray block24Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block24Zp0Array;
+    PrimitiveArray block24Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block24Zp1Array;
+    PrimitiveArray block24Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block24Zp2Array;
+    PrimitiveArray block24Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block24Zp3Array;
+    PrimitiveArray block24Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block24Zm0Array;
+    PrimitiveArray block24Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block24Zm1Array;
+    PrimitiveArray block24Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block24Zm2Array;
+    PrimitiveArray block24Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block24", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block24Zm3Array;
+    PrimitiveArray block24Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "positionAndFaceMask"})
-    IPrimitiveArray block25PfArray;
+    PrimitiveArray block25PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block25Xp0Array;
+    PrimitiveArray block25Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block25Xp1Array;
+    PrimitiveArray block25Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block25Xp2Array;
+    PrimitiveArray block25Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block25Xp3Array;
+    PrimitiveArray block25Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block25Xm0Array;
+    PrimitiveArray block25Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block25Xm1Array;
+    PrimitiveArray block25Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block25Xm2Array;
+    PrimitiveArray block25Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block25Xm3Array;
+    PrimitiveArray block25Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block25Yp0Array;
+    PrimitiveArray block25Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block25Yp1Array;
+    PrimitiveArray block25Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block25Yp2Array;
+    PrimitiveArray block25Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block25Yp3Array;
+    PrimitiveArray block25Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block25Ym0Array;
+    PrimitiveArray block25Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block25Ym1Array;
+    PrimitiveArray block25Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block25Ym2Array;
+    PrimitiveArray block25Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block25Ym3Array;
+    PrimitiveArray block25Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block25Zp0Array;
+    PrimitiveArray block25Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block25Zp1Array;
+    PrimitiveArray block25Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block25Zp2Array;
+    PrimitiveArray block25Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block25Zp3Array;
+    PrimitiveArray block25Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block25Zm0Array;
+    PrimitiveArray block25Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block25Zm1Array;
+    PrimitiveArray block25Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block25Zm2Array;
+    PrimitiveArray block25Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block25", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block25Zm3Array;
+    PrimitiveArray block25Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "positionAndFaceMask"})
-    IPrimitiveArray block26PfArray;
+    PrimitiveArray block26PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block26Xp0Array;
+    PrimitiveArray block26Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block26Xp1Array;
+    PrimitiveArray block26Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block26Xp2Array;
+    PrimitiveArray block26Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block26Xp3Array;
+    PrimitiveArray block26Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block26Xm0Array;
+    PrimitiveArray block26Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block26Xm1Array;
+    PrimitiveArray block26Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block26Xm2Array;
+    PrimitiveArray block26Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block26Xm3Array;
+    PrimitiveArray block26Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block26Yp0Array;
+    PrimitiveArray block26Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block26Yp1Array;
+    PrimitiveArray block26Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block26Yp2Array;
+    PrimitiveArray block26Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block26Yp3Array;
+    PrimitiveArray block26Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block26Ym0Array;
+    PrimitiveArray block26Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block26Ym1Array;
+    PrimitiveArray block26Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block26Ym2Array;
+    PrimitiveArray block26Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block26Ym3Array;
+    PrimitiveArray block26Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block26Zp0Array;
+    PrimitiveArray block26Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block26Zp1Array;
+    PrimitiveArray block26Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block26Zp2Array;
+    PrimitiveArray block26Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block26Zp3Array;
+    PrimitiveArray block26Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block26Zm0Array;
+    PrimitiveArray block26Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block26Zm1Array;
+    PrimitiveArray block26Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block26Zm2Array;
+    PrimitiveArray block26Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block26", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block26Zm3Array;
+    PrimitiveArray block26Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "positionAndFaceMask"})
-    IPrimitiveArray block27PfArray;
+    PrimitiveArray block27PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block27Xp0Array;
+    PrimitiveArray block27Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block27Xp1Array;
+    PrimitiveArray block27Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block27Xp2Array;
+    PrimitiveArray block27Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block27Xp3Array;
+    PrimitiveArray block27Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block27Xm0Array;
+    PrimitiveArray block27Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block27Xm1Array;
+    PrimitiveArray block27Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block27Xm2Array;
+    PrimitiveArray block27Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block27Xm3Array;
+    PrimitiveArray block27Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block27Yp0Array;
+    PrimitiveArray block27Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block27Yp1Array;
+    PrimitiveArray block27Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block27Yp2Array;
+    PrimitiveArray block27Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block27Yp3Array;
+    PrimitiveArray block27Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block27Ym0Array;
+    PrimitiveArray block27Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block27Ym1Array;
+    PrimitiveArray block27Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block27Ym2Array;
+    PrimitiveArray block27Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block27Ym3Array;
+    PrimitiveArray block27Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block27Zp0Array;
+    PrimitiveArray block27Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block27Zp1Array;
+    PrimitiveArray block27Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block27Zp2Array;
+    PrimitiveArray block27Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block27Zp3Array;
+    PrimitiveArray block27Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block27Zm0Array;
+    PrimitiveArray block27Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block27Zm1Array;
+    PrimitiveArray block27Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block27Zm2Array;
+    PrimitiveArray block27Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block27", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block27Zm3Array;
+    PrimitiveArray block27Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "positionAndFaceMask"})
-    IPrimitiveArray block28PfArray;
+    PrimitiveArray block28PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block28Xp0Array;
+    PrimitiveArray block28Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block28Xp1Array;
+    PrimitiveArray block28Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block28Xp2Array;
+    PrimitiveArray block28Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block28Xp3Array;
+    PrimitiveArray block28Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block28Xm0Array;
+    PrimitiveArray block28Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block28Xm1Array;
+    PrimitiveArray block28Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block28Xm2Array;
+    PrimitiveArray block28Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block28Xm3Array;
+    PrimitiveArray block28Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block28Yp0Array;
+    PrimitiveArray block28Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block28Yp1Array;
+    PrimitiveArray block28Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block28Yp2Array;
+    PrimitiveArray block28Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block28Yp3Array;
+    PrimitiveArray block28Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block28Ym0Array;
+    PrimitiveArray block28Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block28Ym1Array;
+    PrimitiveArray block28Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block28Ym2Array;
+    PrimitiveArray block28Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block28Ym3Array;
+    PrimitiveArray block28Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block28Zp0Array;
+    PrimitiveArray block28Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block28Zp1Array;
+    PrimitiveArray block28Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block28Zp2Array;
+    PrimitiveArray block28Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block28Zp3Array;
+    PrimitiveArray block28Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block28Zm0Array;
+    PrimitiveArray block28Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block28Zm1Array;
+    PrimitiveArray block28Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block28Zm2Array;
+    PrimitiveArray block28Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block28", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block28Zm3Array;
+    PrimitiveArray block28Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "positionAndFaceMask"})
-    IPrimitiveArray block29PfArray;
+    PrimitiveArray block29PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block29Xp0Array;
+    PrimitiveArray block29Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block29Xp1Array;
+    PrimitiveArray block29Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block29Xp2Array;
+    PrimitiveArray block29Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block29Xp3Array;
+    PrimitiveArray block29Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block29Xm0Array;
+    PrimitiveArray block29Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block29Xm1Array;
+    PrimitiveArray block29Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block29Xm2Array;
+    PrimitiveArray block29Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block29Xm3Array;
+    PrimitiveArray block29Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block29Yp0Array;
+    PrimitiveArray block29Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block29Yp1Array;
+    PrimitiveArray block29Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block29Yp2Array;
+    PrimitiveArray block29Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block29Yp3Array;
+    PrimitiveArray block29Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block29Ym0Array;
+    PrimitiveArray block29Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block29Ym1Array;
+    PrimitiveArray block29Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block29Ym2Array;
+    PrimitiveArray block29Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block29Ym3Array;
+    PrimitiveArray block29Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block29Zp0Array;
+    PrimitiveArray block29Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block29Zp1Array;
+    PrimitiveArray block29Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block29Zp2Array;
+    PrimitiveArray block29Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block29Zp3Array;
+    PrimitiveArray block29Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block29Zm0Array;
+    PrimitiveArray block29Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block29Zm1Array;
+    PrimitiveArray block29Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block29Zm2Array;
+    PrimitiveArray block29Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block29", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block29Zm3Array;
+    PrimitiveArray block29Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "positionAndFaceMask"})
-    IPrimitiveArray block30PfArray;
+    PrimitiveArray block30PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block30Xp0Array;
+    PrimitiveArray block30Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block30Xp1Array;
+    PrimitiveArray block30Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block30Xp2Array;
+    PrimitiveArray block30Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block30Xp3Array;
+    PrimitiveArray block30Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block30Xm0Array;
+    PrimitiveArray block30Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block30Xm1Array;
+    PrimitiveArray block30Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block30Xm2Array;
+    PrimitiveArray block30Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block30Xm3Array;
+    PrimitiveArray block30Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block30Yp0Array;
+    PrimitiveArray block30Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block30Yp1Array;
+    PrimitiveArray block30Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block30Yp2Array;
+    PrimitiveArray block30Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block30Yp3Array;
+    PrimitiveArray block30Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block30Ym0Array;
+    PrimitiveArray block30Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block30Ym1Array;
+    PrimitiveArray block30Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block30Ym2Array;
+    PrimitiveArray block30Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block30Ym3Array;
+    PrimitiveArray block30Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block30Zp0Array;
+    PrimitiveArray block30Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block30Zp1Array;
+    PrimitiveArray block30Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block30Zp2Array;
+    PrimitiveArray block30Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block30Zp3Array;
+    PrimitiveArray block30Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block30Zm0Array;
+    PrimitiveArray block30Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block30Zm1Array;
+    PrimitiveArray block30Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block30Zm2Array;
+    PrimitiveArray block30Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block30", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block30Zm3Array;
+    PrimitiveArray block30Zm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "positionAndFaceMask"})
-    IPrimitiveArray block31PfArray;
+    PrimitiveArray block31PfArray;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xPlusFaceTexCoord0"})
-    IPrimitiveArray block31Xp0Array;
+    PrimitiveArray block31Xp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xPlusFaceTexCoord1"})
-    IPrimitiveArray block31Xp1Array;
+    PrimitiveArray block31Xp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xPlusFaceTexCoord2"})
-    IPrimitiveArray block31Xp2Array;
+    PrimitiveArray block31Xp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xPlusFaceTexCoord3"})
-    IPrimitiveArray block31Xp3Array;
+    PrimitiveArray block31Xp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xMinusFaceTexCoord0"})
-    IPrimitiveArray block31Xm0Array;
+    PrimitiveArray block31Xm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xMinusFaceTexCoord1"})
-    IPrimitiveArray block31Xm1Array;
+    PrimitiveArray block31Xm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xMinusFaceTexCoord2"})
-    IPrimitiveArray block31Xm2Array;
+    PrimitiveArray block31Xm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "xMinusFaceTexCoord3"})
-    IPrimitiveArray block31Xm3Array;
+    PrimitiveArray block31Xm3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yPlusFaceTexCoord0"})
-    IPrimitiveArray block31Yp0Array;
+    PrimitiveArray block31Yp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yPlusFaceTexCoord1"})
-    IPrimitiveArray block31Yp1Array;
+    PrimitiveArray block31Yp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yPlusFaceTexCoord2"})
-    IPrimitiveArray block31Yp2Array;
+    PrimitiveArray block31Yp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yPlusFaceTexCoord3"})
-    IPrimitiveArray block31Yp3Array;
+    PrimitiveArray block31Yp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yMinusFaceTexCoord0"})
-    IPrimitiveArray block31Ym0Array;
+    PrimitiveArray block31Ym0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yMinusFaceTexCoord1"})
-    IPrimitiveArray block31Ym1Array;
+    PrimitiveArray block31Ym1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yMinusFaceTexCoord2"})
-    IPrimitiveArray block31Ym2Array;
+    PrimitiveArray block31Ym2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "yMinusFaceTexCoord3"})
-    IPrimitiveArray block31Ym3Array;
+    PrimitiveArray block31Ym3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zPlusFaceTexCoord0"})
-    IPrimitiveArray block31Zp0Array;
+    PrimitiveArray block31Zp0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zPlusFaceTexCoord1"})
-    IPrimitiveArray block31Zp1Array;
+    PrimitiveArray block31Zp1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zPlusFaceTexCoord2"})
-    IPrimitiveArray block31Zp2Array;
+    PrimitiveArray block31Zp2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zPlusFaceTexCoord3"})
-    IPrimitiveArray block31Zp3Array;
+    PrimitiveArray block31Zp3Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zMinusFaceTexCoord0"})
-    IPrimitiveArray block31Zm0Array;
+    PrimitiveArray block31Zm0Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zMinusFaceTexCoord1"})
-    IPrimitiveArray block31Zm1Array;
+    PrimitiveArray block31Zm1Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zMinusFaceTexCoord2"})
-    IPrimitiveArray block31Zm2Array;
+    PrimitiveArray block31Zm2Array;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"block31", "blockInfo", "zMinusFaceTexCoord3"})
-    IPrimitiveArray block31Zm3Array;
+    PrimitiveArray block31Zm3Array;
     //</editor-fold>
 
     ByteBuffer byteBuffer = null;
