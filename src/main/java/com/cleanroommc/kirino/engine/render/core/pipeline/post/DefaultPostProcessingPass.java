@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses;
+package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;

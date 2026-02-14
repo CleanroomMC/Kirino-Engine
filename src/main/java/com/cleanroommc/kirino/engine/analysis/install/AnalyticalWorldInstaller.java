@@ -6,7 +6,7 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;

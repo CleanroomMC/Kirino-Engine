@@ -1,8 +1,8 @@
-package com.cleanroommc.kirino.engine.render.core.debug.hud.impl;
+package com.cleanroommc.kirino.engine.render.core.debug.hud.builtin;
 
 import com.cleanroommc.kirino.KirinoClientCore;
-import com.cleanroommc.kirino.engine.render.core.debug.data.impl.FpsHistory;
-import com.cleanroommc.kirino.engine.render.core.debug.data.impl.RenderStatsFrame;
+import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.FpsHistory;
+import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.google.common.base.Preconditions;

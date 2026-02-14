@@ -5,7 +5,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;

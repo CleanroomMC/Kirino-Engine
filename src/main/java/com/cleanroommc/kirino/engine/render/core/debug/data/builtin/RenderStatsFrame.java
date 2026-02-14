@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.core.debug.data.impl;
+package com.cleanroommc.kirino.engine.render.core.debug.data.builtin;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;

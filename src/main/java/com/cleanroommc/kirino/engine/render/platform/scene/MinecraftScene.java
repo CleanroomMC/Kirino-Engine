@@ -512,7 +512,7 @@ public class MinecraftScene extends CleanWorld {
                 meshletRenderPayload = new MeshletRenderPayload(
                         storage.get(meshletComputeSystem).getUintVertexCount(),
                         storage.get(meshletComputeSystem).getUintIndexCount());
-                // draw commands will be submitted subsequently. next update is definitely valid for the next compute (bind different bases)
+                // draw commands will be submitted subsequently. next update is definitely valid for the next compute (bind bases to different buffers)
                 // since the next bind base is strictly after the draw commands
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getVertexConsumeTarget().target(), 1, storage.get(meshletGpuRegistry).getVertexConsumeTarget().bufferID);
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getIndexConsumeTarget().target(), 2, storage.get(meshletGpuRegistry).getIndexConsumeTarget().bufferID);

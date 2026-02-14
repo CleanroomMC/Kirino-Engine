@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.core.debug.hud.impl;
+package com.cleanroommc.kirino.engine.render.core.debug.hud.builtin;
 
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;

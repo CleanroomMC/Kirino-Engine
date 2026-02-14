@@ -5,7 +5,6 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.SubpassDecorator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
