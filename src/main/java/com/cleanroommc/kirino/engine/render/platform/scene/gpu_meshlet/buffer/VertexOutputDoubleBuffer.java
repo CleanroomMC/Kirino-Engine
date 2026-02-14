@@ -17,8 +17,20 @@ public class VertexOutputDoubleBuffer {
     private int indexSsboSize0;
     private int indexSsboSize1;
 
+    // M * 32 block * 6 face * 4 vertex * 32 (vertex size) = 24576 M = 24 kb per meshlet
+    private int calcVertexSize(int meshletCount) {
+        return meshletCount * 24576;
+    }
+
+    // M * 32 block * 6 face * 6 index * 4 (index size) = 4608 M = 4.5 kb per meshlet
+    private int calcIndexSize(int meshletCount) {
+        return meshletCount * 4608;
+    }
+
     private final static int INITIAL_VERTEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
     private final static int INITIAL_INDEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
+
+    private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
 
     public VertexOutputDoubleBuffer() {
         vertexSsboSize0 = INITIAL_VERTEX_SSBO_SIZE;
@@ -51,6 +63,92 @@ public class VertexOutputDoubleBuffer {
 
         indexSsbo1.bind(0);
     }
+
+    //<editor-fold desc="grow utils">
+    /**
+     * Make sure that vertexSsbo0 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growVertexSsbo0(int meshletCount) {
+        int targetSize = calcVertexSize(meshletCount);
+        if (vertexSsboSize0 >= targetSize) {
+            return true;
+        }
+        if (targetSize > MAX_SSBO_SIZE) {
+            return false;
+        }
+
+        vertexSsboSize0 = targetSize;
+        resizeVertexSsbo0(vertexSsboSize0);
+
+        return true;
+    }
+
+    /**
+     * Make sure that vertexSsbo1 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growVertexSsbo1(int meshletCount) {
+        int targetSize = calcVertexSize(meshletCount);
+        if (vertexSsboSize1 >= targetSize) {
+            return true;
+        }
+        if (targetSize > MAX_SSBO_SIZE) {
+            return false;
+        }
+
+        vertexSsboSize1 = targetSize;
+        resizeVertexSsbo1(vertexSsboSize1);
+
+        return true;
+    }
+
+    /**
+     * Make sure that indexSsbo0 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growIndexSsbo0(int meshletCount) {
+        int targetSize = calcIndexSize(meshletCount);
+        if (indexSsboSize0 >= targetSize) {
+            return true;
+        }
+        if (targetSize > MAX_SSBO_SIZE) {
+            return false;
+        }
+
+        indexSsboSize0 = targetSize;
+        resizeIndexSsbo0(indexSsboSize0);
+
+        return true;
+    }
+
+    /**
+     * Make sure that indexSsbo1 isn't being used by gpu at the moment.
+     * Must only grow the current write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    private boolean growIndexSsbo1(int meshletCount) {
+        int targetSize = calcIndexSize(meshletCount);
+        if (indexSsboSize1 >= targetSize) {
+            return true;
+        }
+        if (targetSize > MAX_SSBO_SIZE) {
+            return false;
+        }
+
+        indexSsboSize1 = targetSize;
+        resizeIndexSsbo1(indexSsboSize1);
+
+        return true;
+    }
+    //</editor-fold>
 
     //<editor-fold desc="resize utils">
     /**
@@ -174,7 +272,7 @@ public class VertexOutputDoubleBuffer {
             return vertexSsboSize1;
         }
 
-        return -1; // impossible
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
     }
 
     /**
@@ -188,6 +286,38 @@ public class VertexOutputDoubleBuffer {
             return indexSsboSize1;
         }
 
-        return -1; // impossible
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
+    }
+
+    /**
+     * Grow the current vertex write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    public boolean growVertex(int meshletCount) {
+        if (index == 0) {
+            return growVertexSsbo0(meshletCount);
+        }
+        if (index == 1) {
+            return growVertexSsbo1(meshletCount);
+        }
+
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
+    }
+
+    /**
+     * Grow the current vertex write target.
+     *
+     * @return Whether successfully grew the buffer
+     */
+    public boolean growIndex(int meshletCount) {
+        if (index == 0) {
+            return growIndexSsbo0(meshletCount);
+        }
+        if (index == 1) {
+            return growIndexSsbo1(meshletCount);
+        }
+
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
     }
 }

@@ -208,15 +208,17 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 GL11.glLoadIdentity();
             }
             case RENDER_OPAQUE -> {
-                if (!debug) {
-                    return;
-                }
-
                 // test
                 glStateBackup.storeStates();
                 int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
 
-                rs().terrainGpuPass.render(storage, sceneViewState.camera);
+                if (sceneViewState.scene.isMeshletRenderReady()) {
+                    rs().terrainGpuPass.render(
+                            storage,
+                            sceneViewState.camera,
+                            null,
+                            new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
+                }
 //                rs().chunkCpuPass.render(sceneViewState.camera);
 
                 glStateBackup.restoreStates();
@@ -254,11 +256,6 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     // test
     private GLStateBackup glStateBackup = new GLStateBackup();
-
-    // test, temp
-    public static boolean debug = false;
-    public static int vertexCounter;
-    public static int indexCounter;
 
     @Override
     public void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<Graphics>> consumer) {

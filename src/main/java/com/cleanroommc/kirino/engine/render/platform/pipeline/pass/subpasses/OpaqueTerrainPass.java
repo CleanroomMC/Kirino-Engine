@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.core.pipeline.pass.subpasses;
+package com.cleanroommc.kirino.engine.render.platform.pipeline.pass.subpasses;
 
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletRenderPayload;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
@@ -73,7 +74,8 @@ public class OpaqueTerrainPass extends Subpass {
 
     @Override
     protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
-        storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, 3);
+        MeshletRenderPayload meshletRenderPayload = (MeshletRenderPayload) payload;
+        storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, (int) (meshletRenderPayload.uintIndexCount() & 0xFFFF_FFFFL));
     }
 
     @Override

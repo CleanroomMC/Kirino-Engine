@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletCompon
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletBufferSlotAllocator;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.VertexOutputDoubleBuffer;
+import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.google.common.base.Preconditions;
 
@@ -18,12 +19,13 @@ public class MeshletGpuRegistry {
     private int meshletIdCounter = 0;
     private final List<Integer> freeMeshletIds = new ArrayList<>();
     private final List<Integer> pendingMeshletIdRemoval = new ArrayList<>();
-    // begin writing is the synchronization point
+    // beginWriting is the synchronization point
     private final List<Integer> meshletIdAddedSinceLastBegin = new ArrayList<>();
     private final List<Integer> meshletIdRemovedSinceLastBegin = new ArrayList<>();
 
     private boolean writing = false;
     private boolean finishedWritingOnce = false;
+    private boolean computing = false;
 
     public MeshletGpuRegistry() {
         meshletInputBuffer = new MeshletInputDoubleBuffer();
@@ -124,9 +126,6 @@ public class MeshletGpuRegistry {
         pendingMeshletIdRemoval.clear();
 
         meshletInputBuffer.swap();
-        if (finishedWritingOnce) {
-            vertexOutputBuffer.swap();
-        }
 
         writing = false;
         if (!finishedWritingOnce) {
@@ -135,12 +134,45 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * Thread-safety is guaranteed.
+     * <p>Semantic Note: you only call begin computing right before {@link MeshletComputeSystem#startDispatch(ResourceStorage, MeshletGpuRegistry)}
+     * to prepare buffers (like grow buffers if needed).</p>
+     * <br>
+     * Should be called before an independent computing task.
+     */
+    public synchronized void beginComputing() {
+        Preconditions.checkState(finishedWritingOnce, "Must finished writing once so the compute shader can therefore consume the data.");
+        Preconditions.checkState(!computing, "Must not be computing already.");
+
+        computing = true;
+
+        // the meshlet count is up to date since last beginWriting
+        // which is valid at this phase. finishWriting --> beginComputing --> beginWriting
+        vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount());
+        vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
+    }
+
+    /**
+     * Thread-safety is guaranteed.
+     * <p>Semantic Note: you only call finish computing when {@link MeshletComputeSystem} finishes working to swap the buffers.</p>
+     * <br>
+     * Should be called after an independent computing task.
+     */
+    public synchronized void finishComputing() {
+        Preconditions.checkState(computing, "Must be computing already.");
+
+        computing = false;
+
+        vertexOutputBuffer.swap();
+    }
+
+    /**
      * The consume target is up to date since last {@link #finishWriting()}.
      * Must only retrieve the ssbo after {@link #finishWriting()} and before next {@link #finishWriting()}.
      *
      * <p>Be aware of the current phase when calling this method.</p>
      *
-     * @return The the ssbo to be consumed by compute shaders
+     * @return The ssbo to be consumed by the compute shader
      */
     public synchronized SSBOView getConsumeTarget() {
         Preconditions.checkState(finishedWritingOnce, "Must finished writing once.");
@@ -149,21 +181,35 @@ public class MeshletGpuRegistry {
     }
 
     /**
-     * @return The the vertex ssbo to be written by compute shaders
+     * @return The vertex ssbo to be written by the compute shader
      */
     public synchronized SSBOView getVertexWriteTarget() {
         return vertexOutputBuffer.getVertexWriteTarget();
     }
 
     /**
-     * @return The the index ssbo to be written by compute shaders
+     * @return The index ssbo to be written by the compute shader
      */
     public synchronized SSBOView getIndexWriteTarget() {
         return vertexOutputBuffer.getIndexWriteTarget();
     }
 
     /**
-     * The meshlet count is up to date since last begin.
+     * @return The vertex ssbo to be drawn
+     */
+    public synchronized SSBOView getVertexConsumeTarget() {
+        return vertexOutputBuffer.getVertexConsumeTarget();
+    }
+
+    /**
+     * @return The index ssbo to be drawn
+     */
+    public synchronized SSBOView getIndexConsumeTarget() {
+        return vertexOutputBuffer.getIndexConsumeTarget();
+    }
+
+    /**
+     * The meshlet count is up to date since last {@link #beginWriting()}.
      *
      * <p>Be aware of the current phase when calling this method.</p>
      *

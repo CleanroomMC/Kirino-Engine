@@ -12,8 +12,12 @@ public class MeshletGpuPipelineFSM {
         IDLE
     }
 
-    private boolean isPullResultReady = false;
+    private boolean pullResultReady = false;
     private final FiniteStateMachine<MeshletGpuPipelineFSM.State, Integer> fsm;
+
+    public boolean isPullResultReady() {
+        return pullResultReady;
+    }
 
     public MeshletGpuPipelineFSM() {
         fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 0, 0)
@@ -46,8 +50,8 @@ public class MeshletGpuPipelineFSM {
         }
 
         // first time of finishing compute; results are ready to be drawn
-        if (!isPullResultReady && fsm.state() == State.COMPUTABLE) {
-            isPullResultReady = true;
+        if (!pullResultReady && fsm.state() == State.COMPUTABLE) {
+            pullResultReady = true;
         }
 
         State oldState = fsm.state();
@@ -62,7 +66,7 @@ public class MeshletGpuPipelineFSM {
     }
 
     public void reset() {
-        isPullResultReady = false;
+        pullResultReady = false;
         // next state is INITIAL_WAIT; reset counter
         initialWaitFrameCounter = 0;
         fsm.reset();

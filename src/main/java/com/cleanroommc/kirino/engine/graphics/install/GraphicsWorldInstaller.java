@@ -221,6 +221,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         meshletGpuRegistry.lateInit();
 
         MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(context.ext().meshletComputeProgram);
+        meshletComputeSystem.lateInit();
 
         storage.put(context.sceneViewState().meshletGpuRegistry, meshletGpuRegistry);
         storage.put(context.sceneViewState().meshletComputeSystem, meshletComputeSystem);

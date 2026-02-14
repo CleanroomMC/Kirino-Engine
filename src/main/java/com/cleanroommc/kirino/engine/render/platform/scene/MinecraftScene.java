@@ -22,6 +22,7 @@ import com.cleanroommc.kirino.engine.render.platform.scene.fsm.WorldControlFSM;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuWriterContext;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletRenderPayload;
 import com.cleanroommc.kirino.engine.render.platform.task.system.*;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
@@ -37,6 +38,7 @@ import net.minecraft.world.chunk.Chunk;
 import org.joml.Vector3f;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL30;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
@@ -350,6 +352,18 @@ public class MinecraftScene extends CleanWorld {
     }
     //</editor-fold>
 
+    //<editor-fold desc="meshlet render info">
+    private MeshletRenderPayload meshletRenderPayload = new MeshletRenderPayload(0, 0);
+
+    public MeshletRenderPayload getMeshletRenderPayload() {
+        return meshletRenderPayload;
+    }
+
+    public boolean isMeshletRenderReady() {
+        return meshletFsm.isPullResultReady();
+    }
+    //</editor-fold>
+
     @Override
     public void update() {
         if (minecraftWorld == null) {
@@ -467,17 +481,20 @@ public class MinecraftScene extends CleanWorld {
         //<editor-fold desc="process COMPUTABLE -> IDLE">
         if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.COMPUTABLE) {
             // before dispatching compute, finish existing writing task if possible
+            // we always finish writing right before startDispatch
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isWriting()
                     && !meshletBufferWriteSystem.isExecuting()) {
                 storage.get(meshletGpuRegistry).finishWriting();
             }
 
+            // todo: fail safe
             // start dispatching if possible
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isFinishedWritingOnce()
                     && !storage.get(meshletGpuRegistry).isWriting()) {
-                storage.get(meshletComputeSystem).startDispatch(storage);
+                storage.get(meshletGpuRegistry).beginComputing();
+                storage.get(meshletComputeSystem).startDispatch(storage, storage.get(meshletGpuRegistry));
             }
 
             // start the next writing task right after the dispatch signal if needed. maximize throughput
@@ -485,10 +502,20 @@ public class MinecraftScene extends CleanWorld {
                     && !storage.get(meshletGpuRegistry).isWriting()
                     && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
                 storage.get(meshletGpuRegistry).beginWriting();
+                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
             }
 
             // pull compute result
-            if (storage.get(meshletComputeSystem).tryPullResult(storage)) {
+            if (storage.get(meshletComputeSystem).isShaderRunning()
+                    && storage.get(meshletComputeSystem).tryPullResult()) {
+                storage.get(meshletGpuRegistry).finishComputing();
+                meshletRenderPayload = new MeshletRenderPayload(
+                        storage.get(meshletComputeSystem).getUintVertexCount(),
+                        storage.get(meshletComputeSystem).getUintIndexCount());
+                // draw commands will be submitted subsequently. next update is definitely valid for the next compute (bind different bases)
+                // since the next bind base is strictly after the draw commands
+                GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getVertexConsumeTarget().target(), 1, storage.get(meshletGpuRegistry).getVertexConsumeTarget().bufferID);
+                GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getIndexConsumeTarget().target(), 2, storage.get(meshletGpuRegistry).getIndexConsumeTarget().bufferID);
                 meshletFsm.next(); // IDLE
             }
         }

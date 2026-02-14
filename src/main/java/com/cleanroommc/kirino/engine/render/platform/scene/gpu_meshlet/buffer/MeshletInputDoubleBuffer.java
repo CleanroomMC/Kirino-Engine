@@ -155,7 +155,7 @@ public class MeshletInputDoubleBuffer {
             return ssboSize1;
         }
 
-        return -1; // impossible
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
     }
 
     /**
@@ -171,7 +171,7 @@ public class MeshletInputDoubleBuffer {
             return growSsbo1();
         }
 
-        return false; // impossible
+        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
     }
 
     /**
@@ -184,6 +184,8 @@ public class MeshletInputDoubleBuffer {
                 resizeSsbo0(consumeSize);
             } else if (index == 1) {
                 resizeSsbo1(consumeSize);
+            } else {
+                throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
             }
         }
     }
