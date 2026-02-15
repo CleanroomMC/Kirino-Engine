@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.core.debug.data.builtin;
+package com.cleanroommc.kirino.engine.render.platform.debug.data.impl;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
@@ -6,11 +6,10 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager
 import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.CommonStatsHUD;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 
-public class RenderStatsFrame implements DebugDataService {
+public class MeshletGpuTimeline implements DebugDataService {
     private final ResourceSlot<InGameDebugHUDManager> hud;
-    private int drawCalls;
 
-    public RenderStatsFrame(ResourceSlot<InGameDebugHUDManager> hud) {
+    public MeshletGpuTimeline(ResourceSlot<InGameDebugHUDManager> hud) {
         this.hud = hud;
     }
 
@@ -25,17 +24,5 @@ public class RenderStatsFrame implements DebugDataService {
 
         return KirinoCommonCore.KIRINO_ENGINE.getStorage().get(hud).isEnabled()
                 && KirinoCommonCore.KIRINO_ENGINE.getStorage().get(hud).getCurrentHud() == CommonStatsHUD.class;
-    }
-
-    public void setDrawCalls(int drawCalls) {
-        this.drawCalls = drawCalls;
-    }
-
-    public int getDrawCalls() {
-        return drawCalls;
-    }
-
-    public void incrementDrawCalls() {
-        drawCalls++;
     }
 }

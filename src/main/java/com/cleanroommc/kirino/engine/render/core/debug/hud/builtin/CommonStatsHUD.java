@@ -15,6 +15,7 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 
 public class CommonStatsHUD implements ImmediateHUD {
+
     @SuppressWarnings("DataFlowIssue")
     @Override
     public void draw(@NonNull HUDContext hud) {

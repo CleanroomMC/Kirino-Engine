@@ -61,6 +61,13 @@ public class KirinoEngine {
 
     private final ResourceStorage storage;
 
+    /**
+     * Storage will be null before it's sealed.
+     * You can only expect non-null storage at runtime.
+     *
+     * <p>You're not supposed to get the storage in general! This method
+     * is meant to be accessed by engine kernel classes.</p>
+     */
     @Nullable
     public ResourceStorage getStorage() {
         if (storage.isStorageSealed()) {

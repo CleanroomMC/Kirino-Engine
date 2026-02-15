@@ -15,6 +15,8 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.FpsHUD;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
+import com.cleanroommc.kirino.engine.render.platform.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.platform.debug.hud.impl.MeshletGpuTimelineHUD;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -511,8 +513,10 @@ public final class KirinoClientCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
+        // it's a bad pratice to access resources like that, but i'd like to make an exception for debug services
         DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
+        DEBUG_SERVICE.register(MeshletGpuTimeline.class, new MeshletGpuTimeline(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
     }
 
     public static void postInit() {
@@ -562,6 +566,7 @@ public final class KirinoClientCore {
     public static void onDebugHudRegister(DebugHUDRegistrationEvent event) {
         event.register(new FpsHUD());
         event.register(new CommonStatsHUD());
+        event.register(new MeshletGpuTimelineHUD());
     }
 
     //<editor-fold desc="reflection">
