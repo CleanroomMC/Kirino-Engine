@@ -187,8 +187,8 @@ public final class KirinoClientCore {
      */
     @SuppressWarnings("DataFlowIssue")
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
-        KirinoDebug.recordFps(Minecraft.getDebugFPS());
-        KirinoDebug.resetDrawCalls();
+        KirinoClientDebug.recordFps(Minecraft.getDebugFPS());
+        KirinoClientDebug.resetDrawCalls();
 
         if (KIRINO_ENGINE.nextExpectedPhase() == FramePhase.PREPARE) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
@@ -516,7 +516,7 @@ public final class KirinoClientCore {
         // it's a bad pratice to access resources like that, but i'd like to make an exception for debug services
         DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
-        DEBUG_SERVICE.register(MeshletGpuTimeline.class, new MeshletGpuTimeline(MethodHolder2.getGraphicsRuntimeServices(KIRINO_ENGINE).debugHudManager));
+        DEBUG_SERVICE.register(MeshletGpuTimeline.class, new MeshletGpuTimeline());
     }
 
     public static void postInit() {

@@ -29,7 +29,7 @@ public class RenderExtensions {
                     ResourceSlot<Renderer>,
                     PipelineStateObject,
                     ResourceSlot<VAO>,
-                    AbstractPostProcessingPass>>> postProcessingEntries;
+                    AbstractPostProcessingPass>>> postProcessingEntries; // todo: definitely want to refactor
     public final List<ImmediateHUD> debugHuds;
 
     public final ResourceSlot<ShaderProgram> postProcessingDefaultProgram;

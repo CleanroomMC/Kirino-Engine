@@ -16,13 +16,13 @@ import org.lwjgl.opengl.GL11;
 
 public class CommonStatsHUD implements ImmediateHUD {
 
-    @SuppressWarnings("DataFlowIssue")
     @Override
     public void draw(@NonNull HUDContext hud) {
         var renderStatsFrame = KirinoClientCore.DEBUG_SERVICE.get(RenderStatsFrame.class);
         int drawCalls = -1;
-        if (renderStatsFrame.fetch() != null) {
-            drawCalls = renderStatsFrame.fetch().getDrawCalls();
+        var renderStatsFrameValue = renderStatsFrame.fetch();
+        if (renderStatsFrameValue != null) {
+            drawCalls = renderStatsFrameValue.getDrawCalls();
         }
 
         hud.text("Draw Calls via KE: " + ((drawCalls == -1) ? "UNKNOWN" : drawCalls));
@@ -33,12 +33,13 @@ public class CommonStatsHUD implements ImmediateHUD {
         int logicalFpsIndex = 0;
         int physicafFpsIndex = 0;
         int maxFps = 0;
-        if (fpsHistory.fetch() != null) {
+        var fpsHistoryValue = fpsHistory.fetch();
+        if (fpsHistoryValue != null) {
             fpsGraph = true;
-            fpsSnapshot = fpsHistory.fetch().snapshot();
-            logicalFpsIndex = fpsHistory.fetch().logicalIndex();
-            physicafFpsIndex = fpsHistory.fetch().physicalIndex();
-            maxFps = fpsHistory.fetch().maxFpsEver();
+            fpsSnapshot = fpsHistoryValue.snapshot();
+            logicalFpsIndex = fpsHistoryValue.logicalIndex();
+            physicafFpsIndex = fpsHistoryValue.physicalIndex();
+            maxFps = fpsHistoryValue.maxFpsEver();
         }
 
         if (fpsGraph) {

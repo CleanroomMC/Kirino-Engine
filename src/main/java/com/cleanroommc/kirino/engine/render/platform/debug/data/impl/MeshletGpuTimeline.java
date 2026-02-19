@@ -1,28 +1,107 @@
 package com.cleanroommc.kirino.engine.render.platform.debug.data.impl;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.CommonStatsHUD;
-import com.cleanroommc.kirino.engine.resource.ResourceSlot;
+import com.google.common.base.Preconditions;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MeshletGpuTimeline implements DebugDataService {
-    private final ResourceSlot<InGameDebugHUDManager> hud;
-
-    public MeshletGpuTimeline(ResourceSlot<InGameDebugHUDManager> hud) {
-        this.hud = hud;
-    }
 
     @Override
     public boolean isActive() {
-        if (KirinoCommonCore.KIRINO_ENGINE.getStorage() == null) {
-            return false;
-        }
-        if (!KirinoCommonCore.KIRINO_ENGINE.getStorage().has(hud)) {
-            return false;
+        return true;
+    }
+
+    private static final int RECORD_TICK_SPAN = 100;
+
+    public record Timeline(int start, int end) {
+    }
+
+    private int currTickIndex = -1;
+    private int writeTaskStartTime = -1; // -1 stands for not recording atm
+    private int computeTaskStartTime = -1; // -1 stands for not recording atm
+
+    private final List<Timeline> writeTimeline = new ArrayList<>();
+    private final List<Timeline> computeTimeline = new ArrayList<>();
+
+    public List<Timeline> getWriteTimeline() {
+        return writeTimeline;
+    }
+
+    public List<Timeline> getComputeTimeline() {
+        return computeTimeline;
+    }
+
+    public void loadInNewWorld() {
+        writeTimeline.clear();
+        computeTimeline.clear();
+        currTickIndex = 0; // activates the service
+    }
+
+    public void worldTick() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
         }
 
-        return KirinoCommonCore.KIRINO_ENGINE.getStorage().get(hud).isEnabled()
-                && KirinoCommonCore.KIRINO_ENGINE.getStorage().get(hud).getCurrentHud() == CommonStatsHUD.class;
+        if (currTickIndex < RECORD_TICK_SPAN) {
+            currTickIndex++;
+        } else {
+            // deactivates the service
+            currTickIndex = -1;
+        }
+    }
+
+    public void beginWriting() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        Preconditions.checkState(writeTaskStartTime == -1,
+                "Must not be recording write timeline already.");
+
+        writeTaskStartTime = currTickIndex;
+    }
+
+    public void finishWriting() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        Preconditions.checkState(writeTaskStartTime != -1,
+                "Must be recording write timeline already.");
+
+        writeTimeline.add(new Timeline(writeTaskStartTime, currTickIndex));
+
+        writeTaskStartTime = -1;
+    }
+
+    public void beginComputing() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        Preconditions.checkState(computeTaskStartTime == -1,
+                "Must not be recording compute timeline already.");
+
+        computeTaskStartTime = currTickIndex;
+    }
+
+    public void finishComputing() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        Preconditions.checkState(computeTaskStartTime != -1,
+                "Must be recording compute timeline already.");
+
+        computeTimeline.add(new Timeline(computeTaskStartTime, currTickIndex));
+
+        computeTaskStartTime = -1;
     }
 }

@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline;
 
-import com.cleanroommc.kirino.KirinoDebug;
+import com.cleanroommc.kirino.KirinoClientDebug;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.BlendState;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.DepthState;
@@ -101,7 +101,7 @@ public final class Renderer {
                 }
             }
 
-            KirinoDebug.incrementDrawCalls();
+            KirinoClientDebug.incrementDrawCalls();
         }
 
         command.recycle();
@@ -114,6 +114,6 @@ public final class Renderer {
         dummyVao.bind();
         GL11.glDrawArrays(mode, first, count);
 
-        KirinoDebug.incrementDrawCalls();
+        KirinoClientDebug.incrementDrawCalls();
     }
 }

@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.platform.scene;
 
 import com.cleanroommc.kirino.KirinoClientCore;
+import com.cleanroommc.kirino.KirinoClientDebug;
 import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ecs.entity.CleanEntityHandle;
 import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateCallback;
@@ -238,10 +239,11 @@ public class MinecraftScene extends CleanWorld {
      * @param minecraftWorld The world from <code>Minecraft.getMinecraft().world</code>
      */
     public void tryUpdateWorld(WorldClient minecraftWorld) {
-        // todo: investigate if switching dim will trigger this
+        // switching dim will trigger this too
         if (minecraftWorld != null && minecraftChunkProvider != minecraftWorld.getChunkProvider()) {
 
             // entrypoint: load in a new world
+            KirinoClientDebug.loadInNewWorld();
 
             worldFsm.reset(); // NO_WORLD
             this.minecraftWorld = minecraftWorld;
@@ -370,6 +372,8 @@ public class MinecraftScene extends CleanWorld {
             return;
         }
 
+        KirinoClientDebug.worldTick();
+
         //<editor-fold desc="process NEW_WORLD_REBUILD -> NEW_WORLD_INITIAL_WAIT">
         if (worldFsm.getState() == WorldControlFSM.State.NEW_WORLD_REBUILD) {
             rebuildWorld();
@@ -471,6 +475,7 @@ public class MinecraftScene extends CleanWorld {
             if (storage.get(meshletGpuRegistry).isWriting()) {
                 meshletFsm.next(); // COMPUTABLE
             } else {
+                KirinoClientDebug.beginWriting();
                 storage.get(meshletGpuRegistry).beginWriting();
                 meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
                 meshletFsm.next(); // COMPUTABLE
@@ -485,6 +490,7 @@ public class MinecraftScene extends CleanWorld {
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isWriting()
                     && !meshletBufferWriteSystem.isExecuting()) {
+                KirinoClientDebug.finishWriting();
                 storage.get(meshletGpuRegistry).finishWriting();
             }
 
@@ -493,6 +499,7 @@ public class MinecraftScene extends CleanWorld {
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isFinishedWritingOnce()
                     && !storage.get(meshletGpuRegistry).isWriting()) {
+                KirinoClientDebug.beginComputing();
                 storage.get(meshletGpuRegistry).beginComputing();
                 storage.get(meshletComputeSystem).startDispatch(storage, storage.get(meshletGpuRegistry));
             }
@@ -501,6 +508,7 @@ public class MinecraftScene extends CleanWorld {
             if (storage.get(meshletComputeSystem).isShaderRunning()
                     && !storage.get(meshletGpuRegistry).isWriting()
                     && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+                KirinoClientDebug.beginWriting();
                 storage.get(meshletGpuRegistry).beginWriting();
                 meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
             }
@@ -508,6 +516,7 @@ public class MinecraftScene extends CleanWorld {
             // pull compute result
             if (storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletComputeSystem).tryPullResult()) {
+                KirinoClientDebug.finishComputing();
                 storage.get(meshletGpuRegistry).finishComputing();
                 meshletRenderPayload = new MeshletRenderPayload(
                         storage.get(meshletComputeSystem).getUintVertexCount(),
