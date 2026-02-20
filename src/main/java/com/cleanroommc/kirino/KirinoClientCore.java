@@ -187,8 +187,8 @@ public final class KirinoClientCore {
      */
     @SuppressWarnings("DataFlowIssue")
     public static void EntityRenderer$renderWorld(long finishTimeNano) {
-        KirinoClientDebug.recordFps(Minecraft.getDebugFPS());
-        KirinoClientDebug.resetDrawCalls();
+        KirinoClientDebug.FpsHistory$recordFps(Minecraft.getDebugFPS());
+        KirinoClientDebug.RenderStatsFrame$resetDrawCalls();
 
         if (KIRINO_ENGINE.nextExpectedPhase() == FramePhase.PREPARE) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);

@@ -63,7 +63,7 @@ public class MeshletGpuRegistry {
 
         meshletIdAddedSinceLastBegin.add(meshletId);
 
-        KirinoClientDebug.hasMeshletUpdate();
+        KirinoClientDebug.MeshletGpuTimeline$hasMeshletUpdate();
 
         return meshletId;
     }
@@ -82,7 +82,7 @@ public class MeshletGpuRegistry {
         meshletIdRemovedSinceLastBegin.add(meshletId);
         pendingMeshletIdRemoval.add(meshletId);
 
-        KirinoClientDebug.hasMeshletUpdate();
+        KirinoClientDebug.MeshletGpuTimeline$hasMeshletUpdate();
     }
     //</editor-fold>
 

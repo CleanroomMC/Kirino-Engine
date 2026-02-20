@@ -101,7 +101,7 @@ public final class Renderer {
                 }
             }
 
-            KirinoClientDebug.incrementDrawCalls();
+            KirinoClientDebug.RenderStatsFrame$incrementDrawCalls();
         }
 
         command.recycle();
@@ -114,6 +114,6 @@ public final class Renderer {
         dummyVao.bind();
         GL11.glDrawArrays(mode, first, count);
 
-        KirinoClientDebug.incrementDrawCalls();
+        KirinoClientDebug.RenderStatsFrame$incrementDrawCalls();
     }
 }

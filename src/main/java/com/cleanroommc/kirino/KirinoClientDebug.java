@@ -37,7 +37,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link RenderStatsFrame}.
      */
-    public static void resetDrawCalls() {
+    public static void RenderStatsFrame$resetDrawCalls() {
         var temp = getRenderStatsFrame().fetch();
         if (temp != null) {
             temp.setDrawCalls(0);
@@ -47,7 +47,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link RenderStatsFrame}.
      */
-    public static void incrementDrawCalls() {
+    public static void RenderStatsFrame$incrementDrawCalls() {
         var temp = getRenderStatsFrame().fetch();
         if (temp != null) {
             temp.incrementDrawCalls();
@@ -70,7 +70,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link FpsHistory}.
      */
-    public static void recordFps(int fps) {
+    public static void FpsHistory$recordFps(int fps) {
         var temp = getFpsHistory().fetch();
         if (temp != null) {
             temp.record(fps);
@@ -93,7 +93,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void loadInNewWorld() {
+    public static void MeshletGpuTimeline$loadInNewWorld() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.loadInNewWorld();
@@ -103,7 +103,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void worldTick() {
+    public static void MeshletGpuTimeline$worldTick() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.worldTick();
@@ -113,7 +113,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void hasMeshletUpdate() {
+    public static void MeshletGpuTimeline$hasMeshletUpdate() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.hasMeshletUpdate();
@@ -123,7 +123,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void pushFrameState(MeshletGpuTimeline.State state) {
+    public static void MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State state) {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.pushFrameState(state);
@@ -133,7 +133,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void beginWriting() {
+    public static void MeshletGpuTimeline$beginWriting() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.beginWriting();
@@ -143,7 +143,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void finishWriting() {
+    public static void MeshletGpuTimeline$finishWriting() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.finishWriting();
@@ -153,7 +153,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void beginComputing() {
+    public static void MeshletGpuTimeline$beginComputing() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.beginComputing();
@@ -163,7 +163,7 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
-    public static void finishComputing() {
+    public static void MeshletGpuTimeline$finishComputing() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
             temp.finishComputing();
