@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
+import com.cleanroommc.kirino.KirinoClientDebug;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletBufferSlotAllocator;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
@@ -62,6 +63,8 @@ public class MeshletGpuRegistry {
 
         meshletIdAddedSinceLastBegin.add(meshletId);
 
+        KirinoClientDebug.hasMeshletUpdate();
+
         return meshletId;
     }
 
@@ -78,6 +81,8 @@ public class MeshletGpuRegistry {
     public synchronized void disposeMeshletID(int meshletId) {
         meshletIdRemovedSinceLastBegin.add(meshletId);
         pendingMeshletIdRemoval.add(meshletId);
+
+        KirinoClientDebug.hasMeshletUpdate();
     }
     //</editor-fold>
 

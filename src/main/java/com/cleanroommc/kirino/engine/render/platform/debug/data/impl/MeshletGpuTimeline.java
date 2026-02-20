@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
 import com.google.common.base.Preconditions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MeshletGpuTimeline implements DebugDataService {
@@ -27,6 +28,12 @@ public class MeshletGpuTimeline implements DebugDataService {
     private final List<TimeSpan> writeTimeline = new ArrayList<>();
     private final List<TimeSpan> computeTimeline = new ArrayList<>();
 
+    private final boolean[] meshletUpdates = new boolean[RECORD_TICK_SPAN];
+
+    public boolean[] getMeshletUpdates() {
+        return meshletUpdates;
+    }
+
     public int getTimelineViewStartIndex() {
         return timelineViewStartIndex;
     }
@@ -46,6 +53,7 @@ public class MeshletGpuTimeline implements DebugDataService {
     public void loadInNewWorld() {
         writeTimeline.clear();
         computeTimeline.clear();
+        Arrays.fill(meshletUpdates, false);
         timelineViewStartIndex = 0;
         writeTaskStartTime = -1;
         computeTaskStartTime = -1;
@@ -64,6 +72,15 @@ public class MeshletGpuTimeline implements DebugDataService {
             // deactivates the service
             currTickIndex = -1;
         }
+    }
+
+    public void hasMeshletUpdate() {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        meshletUpdates[currTickIndex] = true;
     }
 
     public void beginWriting() {

@@ -20,11 +20,13 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
         boolean drawTimeline = false;
         List<MeshletGpuTimeline.TimeSpan> writeTimeline = null;
         List<MeshletGpuTimeline.TimeSpan> computeTimeline = null;
+        boolean[] meshletUpdates = null;
         var meshletGpuTimelineValue = meshletGpuTimeline.fetch();
         if (meshletGpuTimelineValue != null) {
             drawTimeline = true;
             writeTimeline = meshletGpuTimelineValue.getWriteTimeline();
             computeTimeline = meshletGpuTimelineValue.getComputeTimeline();
+            meshletUpdates = meshletGpuTimelineValue.getMeshletUpdates();
         }
 
         if (drawTimeline) {
@@ -43,7 +45,8 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                     hud,
                     x + 5, y + 5, startIndex,
                     writeTimeline,
-                    computeTimeline);
+                    computeTimeline,
+                    meshletUpdates);
         }
     }
 
@@ -367,7 +370,8 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
             HUDContext hud,
             float x, float y, int startIndex,
             List<MeshletGpuTimeline.TimeSpan> writeTimeline,
-            List<MeshletGpuTimeline.TimeSpan> computeTimeline) {
+            List<MeshletGpuTimeline.TimeSpan> computeTimeline,
+            boolean[] meshletUpdates) {
 
         // panel width = 110, panel height = 35
 
@@ -462,6 +466,12 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
 
         for (int i = 0; i < 10; i++) {
             hud.drawRect(x + 10 * (i + 1), y, 1, 20, Color.GRAY.getRGB());
+        }
+
+        for (int i = 0; i < 11; i++) {
+            if (meshletUpdates[startIndex + i]) {
+                hud.drawRect(x + 10 * i + 2, y + 21, 7, 7, Color.RED.getRGB());
+            }
         }
 
         hud.drawText(Integer.toString(startIndex), x, y + 22, Color.WHITE.getRGB());

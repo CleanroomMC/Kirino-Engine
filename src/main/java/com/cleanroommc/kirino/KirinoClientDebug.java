@@ -113,6 +113,16 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
+    public static void hasMeshletUpdate() {
+        var temp = getMeshletGpuTimeline().fetch();
+        if (temp != null) {
+            temp.hasMeshletUpdate();
+        }
+    }
+
+    /**
+     * This method belongs to {@link MeshletGpuTimeline}.
+     */
     public static void beginWriting() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
