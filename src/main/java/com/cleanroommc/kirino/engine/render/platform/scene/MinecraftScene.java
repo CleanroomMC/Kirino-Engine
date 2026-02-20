@@ -13,6 +13,7 @@ import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
+import com.cleanroommc.kirino.engine.render.platform.debug.data.impl.MeshletGpuTimeline;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
@@ -469,16 +470,22 @@ public class MinecraftScene extends CleanWorld {
         //</editor-fold>
 
         //<editor-fold desc="trigger ARMED -> COMPUTABLE">
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.IDLE && !storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+            KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.IDLE_NO_UPDATE);
+        }
+
         if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.IDLE && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
             meshletFsm.next(); // ARMED
 
             if (storage.get(meshletGpuRegistry).isWriting()) {
                 meshletFsm.next(); // COMPUTABLE
+                KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.ARMED_ALREADY_WRITING);
             } else {
                 KirinoClientDebug.beginWriting();
                 storage.get(meshletGpuRegistry).beginWriting();
                 meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
                 meshletFsm.next(); // COMPUTABLE
+                KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.ARMED_BEGIN_WRITING);
             }
         }
         //</editor-fold>
@@ -492,6 +499,7 @@ public class MinecraftScene extends CleanWorld {
                     && !meshletBufferWriteSystem.isExecuting()) {
                 KirinoClientDebug.finishWriting();
                 storage.get(meshletGpuRegistry).finishWriting();
+                KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_FINISH_WRITING);
             }
 
             // todo: fail safe
@@ -502,15 +510,15 @@ public class MinecraftScene extends CleanWorld {
                 KirinoClientDebug.beginComputing();
                 storage.get(meshletGpuRegistry).beginComputing();
                 storage.get(meshletComputeSystem).startDispatch(storage, storage.get(meshletGpuRegistry));
-            }
+                KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_BEGIN_COMPUTING);
 
-            // start the next writing task right after the dispatch signal if needed. maximize throughput
-            if (storage.get(meshletComputeSystem).isShaderRunning()
-                    && !storage.get(meshletGpuRegistry).isWriting()
-                    && storage.get(meshletGpuRegistry).hasMeshletChanges()) {
-                KirinoClientDebug.beginWriting();
-                storage.get(meshletGpuRegistry).beginWriting();
-                meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+                // start the next writing task right after the dispatch signal if needed. maximize throughput
+                if (storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+                    KirinoClientDebug.beginWriting();
+                    storage.get(meshletGpuRegistry).beginWriting();
+                    meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+                    KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_BEGIN_WRITING);
+                }
             }
 
             // pull compute result
@@ -527,6 +535,7 @@ public class MinecraftScene extends CleanWorld {
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getVertexConsumeTarget().target(), 1, storage.get(meshletGpuRegistry).getVertexConsumeTarget().bufferID);
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getIndexConsumeTarget().target(), 2, storage.get(meshletGpuRegistry).getIndexConsumeTarget().bufferID);
                 meshletFsm.next(); // IDLE
+                KirinoClientDebug.pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_FINISH);
             }
         }
         //</editor-fold>

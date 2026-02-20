@@ -3,11 +3,33 @@ package com.cleanroommc.kirino.engine.render.platform.debug.data.impl;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
 import com.google.common.base.Preconditions;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class MeshletGpuTimeline implements DebugDataService {
+
+    public record TimeSpan(int start, int end) {
+    }
+
+    public enum State {
+        IDLE_NO_UPDATE("[IDLE] No Update", new Color(156, 75, 255, 140)),
+        ARMED_BEGIN_WRITING("[IDLE->ARMED] Begin Writing", new Color(240, 74, 246, 140)),
+        ARMED_ALREADY_WRITING("[IDLE->ARMED] Already Writing", new Color(255, 75, 102, 140)),
+        COMPUTABLE_FINISH_WRITING("[COMPUTABLE] Finish Writing", new Color(255, 117, 91, 140)),
+        COMPUTABLE_BEGIN_COMPUTING("[COMPUTABLE] Begin Computing", new Color(255, 160, 90, 140)),
+        COMPUTABLE_BEGIN_WRITING("[COMPUTABLE] Begin Writing", new Color(255, 217, 90, 140)),
+        COMPUTABLE_FINISH("[COMPUTABLE->IDLE] Finish", new Color(219, 255, 90, 140));
+
+        public final String name;
+        public final Color color;
+
+        State(String name, Color color) {
+            this.name = name;
+            this.color = color;
+        }
+    }
 
     @Override
     public boolean isActive() {
@@ -15,9 +37,6 @@ public class MeshletGpuTimeline implements DebugDataService {
     }
 
     public static final int RECORD_TICK_SPAN = 100;
-
-    public record TimeSpan(int start, int end) {
-    }
 
     private int currTickIndex = -1;
     private int writeTaskStartTime = -1; // -1 stands for not recording atm
@@ -30,8 +49,15 @@ public class MeshletGpuTimeline implements DebugDataService {
 
     private final boolean[] meshletUpdates = new boolean[RECORD_TICK_SPAN];
 
+    @SuppressWarnings("unchecked")
+    private final List<State>[] frameStateFlows = (List<State>[]) new List[RECORD_TICK_SPAN];
+
     public boolean[] getMeshletUpdates() {
         return meshletUpdates;
+    }
+
+    public List<State>[] getFrameStateFlows() {
+        return frameStateFlows;
     }
 
     public int getTimelineViewStartIndex() {
@@ -54,6 +80,7 @@ public class MeshletGpuTimeline implements DebugDataService {
         writeTimeline.clear();
         computeTimeline.clear();
         Arrays.fill(meshletUpdates, false);
+        Arrays.fill(frameStateFlows, null);
         timelineViewStartIndex = 0;
         writeTaskStartTime = -1;
         computeTaskStartTime = -1;
@@ -67,7 +94,10 @@ public class MeshletGpuTimeline implements DebugDataService {
         }
 
         if (currTickIndex < RECORD_TICK_SPAN) {
-            currTickIndex++;
+            if (++currTickIndex == RECORD_TICK_SPAN) {
+                // deactivates the service
+                currTickIndex = -1;
+            }
         } else {
             // deactivates the service
             currTickIndex = -1;
@@ -81,6 +111,19 @@ public class MeshletGpuTimeline implements DebugDataService {
         }
 
         meshletUpdates[currTickIndex] = true;
+    }
+
+    public void pushFrameState(State state) {
+        // proceed only if when active
+        if (currTickIndex == -1) {
+            return;
+        }
+
+        if (frameStateFlows[currTickIndex] == null) {
+            frameStateFlows[currTickIndex] = new ArrayList<>();
+        }
+
+        frameStateFlows[currTickIndex].add(state);
     }
 
     public void beginWriting() {

@@ -21,12 +21,25 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
         List<MeshletGpuTimeline.TimeSpan> writeTimeline = null;
         List<MeshletGpuTimeline.TimeSpan> computeTimeline = null;
         boolean[] meshletUpdates = null;
+        List<MeshletGpuTimeline.State>[] frameStateFlows = null;
         var meshletGpuTimelineValue = meshletGpuTimeline.fetch();
         if (meshletGpuTimelineValue != null) {
             drawTimeline = true;
             writeTimeline = meshletGpuTimelineValue.getWriteTimeline();
             computeTimeline = meshletGpuTimelineValue.getComputeTimeline();
             meshletUpdates = meshletGpuTimelineValue.getMeshletUpdates();
+            frameStateFlows = meshletGpuTimelineValue.getFrameStateFlows();
+        }
+
+        MeshletGpuTimeline.State[] states = MeshletGpuTimeline.State.values();
+        for (MeshletGpuTimeline.State state : states) {
+            hud.beginHorizontal();
+            float x = hud.getPivotX();
+            float y = hud.getPivotY();
+            hud.empty(12, 12);
+            hud.drawRect(x + 2, y + 2, 8, 8, state.color.getRGB());
+            hud.text(state.name);
+            hud.endHorizontal();
         }
 
         if (drawTimeline) {
@@ -34,19 +47,20 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
 
             int startIndex = meshletGpuTimelineValue.getTimelineViewStartIndex();
 
-            hud.text("[Row 1] Write Task Count: " + writeTimeline.size());
-            hud.text("[Row 2] Compute Task Count: " + computeTimeline.size());
+            hud.text("[Row 1] Writing Task; Count: " + writeTimeline.size());
+            hud.text("[Row 2] Computing Task; Count: " + computeTimeline.size());
 
             float x = hud.getPivotX();
             float y = hud.getPivotY();
-            hud.empty(120, 45);
+            hud.empty(120, 10 + 77);
 
             drawTimeline(
                     hud,
                     x + 5, y + 5, startIndex,
                     writeTimeline,
                     computeTimeline,
-                    meshletUpdates);
+                    meshletUpdates,
+                    frameStateFlows);
         }
     }
 
@@ -79,6 +93,7 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
         lastRight = rightDown;
     }
 
+    //<editor-fold desc="draw timeline">
     private static final Color EMPTY_SLOT_COLOR = new Color(28, 28, 28, 71);
     private static final Color START_SLOT_COLOR = new Color(191, 255, 75, 140);
     private static final Color END_SLOT_COLOR = new Color(255, 146, 79, 140);
@@ -371,9 +386,10 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
             float x, float y, int startIndex,
             List<MeshletGpuTimeline.TimeSpan> writeTimeline,
             List<MeshletGpuTimeline.TimeSpan> computeTimeline,
-            boolean[] meshletUpdates) {
+            boolean[] meshletUpdates,
+            List<MeshletGpuTimeline.State>[] frameStateFlows) {
 
-        // panel width = 110, panel height = 35
+        // panel width = 110, panel height = 35 + 6 * 7 = 77
 
         for (int i = 0; i < 11; i++) {
             writeTimelineSlots[i] = 0;
@@ -474,6 +490,15 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
             }
         }
 
+        for (int i = 0; i < 11; i++) {
+            if (frameStateFlows[startIndex + i] != null) {
+                List<MeshletGpuTimeline.State> list = frameStateFlows[startIndex + i];
+                for (int j = 0; j < list.size(); j++) {
+                    hud.drawRect(x + 10 * i + 2, y + 30 + 7 * j, 7, 7, list.get(j).color.getRGB());
+                }
+            }
+        }
+
         hud.drawText(Integer.toString(startIndex), x, y + 22, Color.WHITE.getRGB());
         hud.drawText(Integer.toString(startIndex + 10), x + 101, y + 22, Color.WHITE.getRGB());
 
@@ -497,4 +522,5 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
             }
         }
     }
+    //</editor-fold>
 }

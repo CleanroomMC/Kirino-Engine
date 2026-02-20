@@ -123,6 +123,16 @@ public final class KirinoClientDebug {
     /**
      * This method belongs to {@link MeshletGpuTimeline}.
      */
+    public static void pushFrameState(MeshletGpuTimeline.State state) {
+        var temp = getMeshletGpuTimeline().fetch();
+        if (temp != null) {
+            temp.pushFrameState(state);
+        }
+    }
+
+    /**
+     * This method belongs to {@link MeshletGpuTimeline}.
+     */
     public static void beginWriting() {
         var temp = getMeshletGpuTimeline().fetch();
         if (temp != null) {
