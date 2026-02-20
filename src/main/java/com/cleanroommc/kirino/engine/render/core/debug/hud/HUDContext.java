@@ -160,7 +160,7 @@ public class HUDContext {
         }
     }
 
-    private void drawRect(float x, float y, float width, float height, int color) {
+    public void drawRect(float x, float y, float width, float height, int color) {
         float a = (float) (color >> 24 & 255) / 255f;
         float r = (float) (color >> 16 & 255) / 255f;
         float g = (float) (color >> 8 & 255) / 255f;
@@ -187,7 +187,7 @@ public class HUDContext {
         tessellator.draw();
     }
 
-    private void drawText(String text, float x, float y, int color) {
+    public void drawText(String text, float x, float y, int color) {
         GlStateManager.disableCull();
         GlStateManager.enableTexture2D();
         GlStateManager.disableLighting();

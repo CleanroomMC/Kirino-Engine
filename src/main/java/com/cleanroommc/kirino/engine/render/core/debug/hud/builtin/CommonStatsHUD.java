@@ -5,7 +5,6 @@ import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.RenderStatsFrame;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
-import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -13,6 +12,8 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
+
+import java.util.Arrays;
 
 public class CommonStatsHUD implements ImmediateHUD {
 
@@ -28,23 +29,24 @@ public class CommonStatsHUD implements ImmediateHUD {
         hud.text("Draw Calls via KE: " + ((drawCalls == -1) ? "UNKNOWN" : drawCalls));
 
         var fpsHistory = KirinoClientCore.DEBUG_SERVICE.get(FpsHistory.class);
-        boolean fpsGraph = false;
+        boolean drawFpsGraph = false;
         int[] fpsSnapshot = null;
         int logicalFpsIndex = 0;
         int physicafFpsIndex = 0;
         int maxFps = 0;
         var fpsHistoryValue = fpsHistory.fetch();
         if (fpsHistoryValue != null) {
-            fpsGraph = true;
+            drawFpsGraph = true;
             fpsSnapshot = fpsHistoryValue.snapshot();
             logicalFpsIndex = fpsHistoryValue.logicalIndex();
             physicafFpsIndex = fpsHistoryValue.physicalIndex();
             maxFps = fpsHistoryValue.maxFpsEver();
         }
 
-        if (fpsGraph) {
+        if (drawFpsGraph) {
             hud.text("Curr FPS: " + Math.min(Minecraft.getDebugFPS(), fpsSnapshot[physicafFpsIndex]) +
-                    ", Max FPS: " + maxFps);
+                    ", Max FPS: " + maxFps +
+                    ", Rolling Avg: " + (int) Arrays.stream(fpsSnapshot).average().orElse(0));
 
             float x = hud.getPivotX();
             float y = hud.getPivotY();
@@ -60,17 +62,11 @@ public class CommonStatsHUD implements ImmediateHUD {
     }
 
     private static void drawFpsGraph(
-            @NonNull Tessellator tessellator,
-            float x,
-            float y,
-            float width,
-            float height,
+            Tessellator tessellator,
+            float x, float y, float width, float height,
             int fpsIndex,
-            int @NonNull [] fpsSnapshot,
-            int maxFps
-    ) {
-        Preconditions.checkNotNull(tessellator);
-        Preconditions.checkNotNull(fpsSnapshot);
+            int[] fpsSnapshot,
+            int maxFps) {
 
         GlStateManager.disableTexture2D();
         GlStateManager.enableBlend();

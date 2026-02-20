@@ -13,29 +13,42 @@ public class MeshletGpuTimeline implements DebugDataService {
         return true;
     }
 
-    private static final int RECORD_TICK_SPAN = 100;
+    public static final int RECORD_TICK_SPAN = 100;
 
-    public record Timeline(int start, int end) {
+    public record TimeSpan(int start, int end) {
     }
 
     private int currTickIndex = -1;
     private int writeTaskStartTime = -1; // -1 stands for not recording atm
     private int computeTaskStartTime = -1; // -1 stands for not recording atm
 
-    private final List<Timeline> writeTimeline = new ArrayList<>();
-    private final List<Timeline> computeTimeline = new ArrayList<>();
+    private int timelineViewStartIndex = 0;
 
-    public List<Timeline> getWriteTimeline() {
+    private final List<TimeSpan> writeTimeline = new ArrayList<>();
+    private final List<TimeSpan> computeTimeline = new ArrayList<>();
+
+    public int getTimelineViewStartIndex() {
+        return timelineViewStartIndex;
+    }
+
+    public void setTimelineViewStartIndex(int index) {
+        timelineViewStartIndex = index;
+    }
+
+    public List<TimeSpan> getWriteTimeline() {
         return writeTimeline;
     }
 
-    public List<Timeline> getComputeTimeline() {
+    public List<TimeSpan> getComputeTimeline() {
         return computeTimeline;
     }
 
     public void loadInNewWorld() {
         writeTimeline.clear();
         computeTimeline.clear();
+        timelineViewStartIndex = 0;
+        writeTaskStartTime = -1;
+        computeTaskStartTime = -1;
         currTickIndex = 0; // activates the service
     }
 
@@ -74,7 +87,7 @@ public class MeshletGpuTimeline implements DebugDataService {
         Preconditions.checkState(writeTaskStartTime != -1,
                 "Must be recording write timeline already.");
 
-        writeTimeline.add(new Timeline(writeTaskStartTime, currTickIndex));
+        writeTimeline.add(new TimeSpan(writeTaskStartTime, currTickIndex));
 
         writeTaskStartTime = -1;
     }
@@ -100,7 +113,7 @@ public class MeshletGpuTimeline implements DebugDataService {
         Preconditions.checkState(computeTaskStartTime != -1,
                 "Must be recording compute timeline already.");
 
-        computeTimeline.add(new Timeline(computeTaskStartTime, currTickIndex));
+        computeTimeline.add(new TimeSpan(computeTaskStartTime, currTickIndex));
 
         computeTaskStartTime = -1;
     }
