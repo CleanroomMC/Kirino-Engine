@@ -14,7 +14,8 @@ import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockMod
 import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockUnifier;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
-import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletCreateCallback;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletDestroyCallback;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.google.common.base.Preconditions;
@@ -51,10 +52,10 @@ public class ChunkMeshletGenJob implements ParallelJob {
     int lod;
 
     @JobExternalDataQuery
-    MinecraftScene.MeshletDestroyCallback meshletDestroyCallback;
+    MeshletDestroyCallback meshletDestroyCallback;
 
     @JobExternalDataQuery
-    MinecraftScene.MeshletCreateCallback meshletCreateCallback;
+    MeshletCreateCallback meshletCreateCallback;
 
     @JobExternalDataQuery
     ChunkProviderClient chunkProvider;

@@ -7,14 +7,14 @@ import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
 import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
-import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.ChunkPosKey;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.CallbackDrivenChunkDelta;
 import org.jspecify.annotations.NonNull;
 
-import java.util.List;
 
 public class MeshletDestroyJob implements ParallelJob {
     @JobExternalDataQuery
-    List<MinecraftScene.ChunkPosKey> chunksDestroyedLastFrame;
+    CallbackDrivenChunkDelta chunkDelta;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"chunkPosX"})
     PrimitiveArray chunkPosXArray;
@@ -30,7 +30,7 @@ public class MeshletDestroyJob implements ParallelJob {
         int chunkPosX = chunkPosXArray.getInt(index);
         int chunkPosY = chunkPosYArray.getInt(index);
         int chunkPosZ = chunkPosZArray.getInt(index);
-        for (MinecraftScene.ChunkPosKey chunkPos : chunksDestroyedLastFrame) {
+        for (ChunkPosKey chunkPos : chunkDelta.chunksDestroyedLastFrame) {
             if (chunkPosX == chunkPos.x() && chunkPosY == chunkPos.y() && chunkPosZ == chunkPos.z()) {
                 entityManager.destroyEntity(entityID);
                 break;
@@ -45,6 +45,6 @@ public class MeshletDestroyJob implements ParallelJob {
 
     @Override
     public int estimateWorkload(int index) {
-        return chunksDestroyedLastFrame.size();
+        return chunkDelta.chunksDestroyedLastFrame.size();
     }
 }

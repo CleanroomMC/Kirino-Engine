@@ -4,7 +4,8 @@ import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
-import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletCreateCallback;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletDestroyCallback;
 import com.cleanroommc.kirino.engine.render.platform.task.job.ChunkMeshletGenJob;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
@@ -26,8 +27,8 @@ public class ChunkMeshletGenSystem extends CleanSystem {
     public ChunkMeshletGenSystem(
             ResourceStorage storage,
             ResourceSlot<BlockMeshGenerator> blockMeshGenerator,
-            MinecraftScene.MeshletDestroyCallback meshletDestroyCallback,
-            MinecraftScene.MeshletCreateCallback meshletCreateCallback,
+            MeshletDestroyCallback meshletDestroyCallback,
+            MeshletCreateCallback meshletCreateCallback,
             Executor executor) {
 
         externalData = new HashMap<>();
