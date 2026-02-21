@@ -15,13 +15,13 @@ public class MeshletGpuTimeline implements DebugDataService {
 
     public enum State {
         IDLE_NO_MESHLET_UPDATE("[IDLE] No Meshlet Update", new Color(93, 75, 255, 140)),
-        ARMED_FINISH_WRITING("[IDLE->ARMED] Finish Writing", new Color(147, 75, 255, 140)),
-        ARMED_BEGIN_WRITING("[IDLE->ARMED] Begin Writing", new Color(240, 74, 246, 140)),
-        ARMED_ALREADY_WRITING("[IDLE->ARMED] Already Writing", new Color(255, 75, 102, 140)),
+        IDLE_FINISH_WRITING("[IDLE->COMP] Finish Writing", new Color(147, 75, 255, 140)),
+        IDLE_BEGIN_WRITING("[IDLE->COMP] Begin Writing", new Color(240, 74, 246, 140)),
+        IDLE_ALREADY_WRITING("[IDLE->COMP] Already Writing", new Color(255, 75, 102, 140)),
         COMPUTABLE_FINISH_WRITING("[COMPUTABLE] Finish Writing", new Color(255, 117, 91, 140)),
         COMPUTABLE_BEGIN_COMPUTING("[COMPUTABLE] Begin Computing", new Color(255, 160, 90, 140)),
         COMPUTABLE_BEGIN_WRITING("[COMPUTABLE] Begin Writing", new Color(255, 217, 90, 140)),
-        COMPUTABLE_FINISH("[COMPUTABLE->IDLE] Finish", new Color(219, 255, 90, 140));
+        COMPUTABLE_FINISH("[COMP->IDLE] Finish", new Color(219, 255, 90, 140));
 
         public final String name;
         public final Color color;

@@ -7,7 +7,6 @@ public class MeshletGpuPipelineFSM {
 
     public enum State {
         INITIAL_WAIT,
-        ARMED, // transitional state. last check before the computation
         COMPUTABLE, // when able to compute OR computing
         IDLE
     }
@@ -23,9 +22,8 @@ public class MeshletGpuPipelineFSM {
         fsm = FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 0, 0)
                 .initialState(State.INITIAL_WAIT)
                 .addTransition(State.INITIAL_WAIT, 0, State.IDLE)
-                .addTransition(State.ARMED, 0, State.COMPUTABLE)
+                .addTransition(State.IDLE, 0, State.COMPUTABLE)
                 .addTransition(State.COMPUTABLE, 0, State.IDLE)
-                .addTransition(State.IDLE, 0, State.ARMED)
                 .error((state, input) -> {
                     throw new RuntimeException(String.format(
                             "An error occurred inside MeshletGpuPipelineFSM. The input=%d leads to a non-existent route. Current state=%s.", input, state));

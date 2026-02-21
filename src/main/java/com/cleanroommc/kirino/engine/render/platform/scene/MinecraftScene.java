@@ -469,15 +469,13 @@ public class MinecraftScene extends CleanWorld {
         }
         //</editor-fold>
 
-        //<editor-fold desc="either process IDLE /OR/ trigger ARMED -> COMPUTABLE">
-        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.IDLE ) {
+        //<editor-fold desc="either process IDLE /OR/ trigger IDLE -> COMPUTABLE">
+        if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.IDLE) {
             if (storage.get(meshletGpuRegistry).hasMeshletChanges()) {
-                meshletFsm.next(); // ARMED
-
                 if (storage.get(meshletGpuRegistry).isWriting()) {
                     meshletFsm.next(); // COMPUTABLE
 
-                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.ARMED_ALREADY_WRITING);
+                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_ALREADY_WRITING);
                 } else {
                     KirinoClientDebug.MeshletGpuTimeline$beginWriting();
 
@@ -485,7 +483,7 @@ public class MinecraftScene extends CleanWorld {
                     meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
                     meshletFsm.next(); // COMPUTABLE
 
-                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.ARMED_BEGIN_WRITING);
+                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_BEGIN_WRITING);
                 }
             } else {
                 KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_NO_MESHLET_UPDATE);
@@ -493,14 +491,12 @@ public class MinecraftScene extends CleanWorld {
                 if (!storage.get(meshletComputeSystem).isShaderRunning()
                         && storage.get(meshletGpuRegistry).isWriting()
                         && !meshletBufferWriteSystem.isExecuting()) {
-                    meshletFsm.next(); // ARMED
-
                     KirinoClientDebug.MeshletGpuTimeline$finishWriting();
 
                     storage.get(meshletGpuRegistry).finishWriting();
                     meshletFsm.next(); // COMPUTABLE
 
-                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.ARMED_FINISH_WRITING);
+                    KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_FINISH_WRITING);
                 }
             }
         }
