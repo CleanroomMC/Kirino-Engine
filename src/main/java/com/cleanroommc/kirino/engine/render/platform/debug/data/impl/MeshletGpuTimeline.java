@@ -87,6 +87,20 @@ public class MeshletGpuTimeline implements DebugDataService {
         currTickIndex = 0; // activates the service
     }
 
+    private void deactivate() {
+        currTickIndex = -1;
+        if (writeTaskStartTime != -1) {
+            // unfinished
+            writeTimeline.add(new TimeSpan(writeTaskStartTime, RECORD_TICK_SPAN + 1));
+            writeTaskStartTime = -1;
+        }
+        if (computeTaskStartTime != -1) {
+            // unfinished
+            computeTimeline.add(new TimeSpan(computeTaskStartTime, RECORD_TICK_SPAN + 1));
+            computeTaskStartTime = -1;
+        }
+    }
+
     public void worldTick() {
         // proceed only if when active
         if (currTickIndex == -1) {
@@ -95,12 +109,10 @@ public class MeshletGpuTimeline implements DebugDataService {
 
         if (currTickIndex < RECORD_TICK_SPAN) {
             if (++currTickIndex == RECORD_TICK_SPAN) {
-                // deactivates the service
-                currTickIndex = -1;
+                deactivate();
             }
         } else {
-            // deactivates the service
-            currTickIndex = -1;
+            deactivate();
         }
     }
 

@@ -61,6 +61,7 @@ public class CommonStatsHUD implements ImmediateHUD {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static void drawFpsGraph(
             Tessellator tessellator,
             float x, float y, float width, float height,

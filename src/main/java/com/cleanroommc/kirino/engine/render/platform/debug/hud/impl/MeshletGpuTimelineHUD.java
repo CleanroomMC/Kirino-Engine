@@ -93,22 +93,27 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
         lastRight = rightDown;
     }
 
-    //<editor-fold desc="draw timeline">
+    //<editor-fold desc="draw timeline; independent helper method">
     private static final Color EMPTY_SLOT_COLOR = new Color(28, 28, 28, 71);
     private static final Color START_SLOT_COLOR = new Color(191, 255, 75, 140);
     private static final Color END_SLOT_COLOR = new Color(255, 146, 79, 140);
 
+    // temporary data (per draw call)
     private static final int[] writeTimelineSlots = new int[11];
     private static final int[] computeTimelineSlots = new int[11];
     private static final List<Vector2f> writeLineSegments = new ArrayList<>();
     private static final List<Vector2f> computeLineSegments = new ArrayList<>();
 
     // overcomplicated but works
+    @SuppressWarnings({"SameParameterValue", "ConstantConditions"})
     private static void genLineSegments(
-            List<Vector2f> writeLineSegments,
-            List<Vector2f> computeLineSegments,
-            int[] writeTimelineSlots,
-            int[] computeTimelineSlots) {
+            int startIndex, /* input */
+            List<MeshletGpuTimeline.TimeSpan> writeTimeline, /* input */
+            List<MeshletGpuTimeline.TimeSpan> computeTimeline, /* input */
+            int[] writeTimelineSlots, /* input */
+            int[] computeTimelineSlots, /* input */
+            List<Vector2f> writeLineSegments, /* output */
+            List<Vector2f> computeLineSegments /* output */) {
 
         float startPos = 0f;
         boolean waitingStart = true;
@@ -273,7 +278,7 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                             break;
                         }
 
-                        // hits "end/start" slot
+                    // hits "end/start" slot
                     } else if (computeTimelineSlots[index] == 4) {
                         computeLineSegments.add(new Vector2f(0, index + 0.25f));
                         startPos = index + 0.75f;
@@ -318,7 +323,7 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                     }
                     continue;
 
-                    // "start/end" slot
+                // "start/end" slot
                 } else if (computeTimelineSlots[index] == 3) {
                     computeLineSegments.add(new Vector2f(index + 0.25f, index + 0.75f));
                     startPos = 0f;
@@ -328,7 +333,7 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                     continue;
                 }
 
-                // get "end" or "end/start" slot
+            // get "end" or "end/start" slot
             } else if (waitingEnd && (computeTimelineSlots[index] == 2 || computeTimelineSlots[index] == 4)) {
                 // "end" slot
                 if (computeTimelineSlots[index] == 2) {
@@ -339,7 +344,7 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                     index++;
                     continue;
 
-                    // "end/start" slot
+                // "end/start" slot
                 } else if (computeTimelineSlots[index] == 4) {
                     computeLineSegments.add(new Vector2f(startPos, index + 0.25f));
                     startPos = index + 0.75f;
@@ -379,24 +384,52 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
 
             index++;
         }
+
+        // now "local" line segments are generated based on writeTimelineSlots & computeTimelineSlots
+        // we need to add back some "global" line segments too
+
+        boolean emptyTimeline = true;
+        for (int i = 0; i < 11; i++) {
+            if (writeTimelineSlots[i] != 0) {
+                emptyTimeline = false;
+                break;
+            }
+        }
+
+        if (emptyTimeline) {
+            for (MeshletGpuTimeline.TimeSpan span : writeTimeline) {
+                if (span.start() < startIndex && span.end() > startIndex + 10) {
+                    writeLineSegments.add(new Vector2f(0f, 11f));
+                    break;
+                }
+            }
+        }
+
+        emptyTimeline = true;
+        for (int i = 0; i < 11; i++) {
+            if (computeTimelineSlots[i] != 0) {
+                emptyTimeline = false;
+                break;
+            }
+        }
+
+        if (emptyTimeline) {
+            for (MeshletGpuTimeline.TimeSpan span : computeTimeline) {
+                if (span.start() < startIndex && span.end() > startIndex + 10) {
+                    computeLineSegments.add(new Vector2f(0f, 11f));
+                    break;
+                }
+            }
+        }
     }
 
-    private static void drawTimeline(
-            HUDContext hud,
-            float x, float y, int startIndex,
-            List<MeshletGpuTimeline.TimeSpan> writeTimeline,
-            List<MeshletGpuTimeline.TimeSpan> computeTimeline,
-            boolean[] meshletUpdates,
-            List<MeshletGpuTimeline.State>[] frameStateFlows) {
-
-        // panel width = 110, panel height = 35 + 6 * 7 = 77
-
-        for (int i = 0; i < 11; i++) {
-            writeTimelineSlots[i] = 0;
-            computeTimelineSlots[i] = 0;
-        }
-        writeLineSegments.clear();
-        computeLineSegments.clear();
+    @SuppressWarnings("SameParameterValue")
+    private static void genTimelineSlots(
+            int startIndex, /* input */
+            List<MeshletGpuTimeline.TimeSpan> writeTimeline, /* input */
+            List<MeshletGpuTimeline.TimeSpan> computeTimeline, /* input */
+            int[] writeTimelineSlots, /* output */
+            int[] computeTimelineSlots /* output */) {
 
         for (MeshletGpuTimeline.TimeSpan span : writeTimeline) {
             if (span.start() == span.end()) {
@@ -435,12 +468,40 @@ public class MeshletGpuTimelineHUD implements ImmediateHUD {
                 }
             }
         }
+    }
 
-        genLineSegments(
-                writeLineSegments,
-                computeLineSegments,
+    private static void drawTimeline(
+            HUDContext hud,
+            float x, float y, int startIndex,
+            List<MeshletGpuTimeline.TimeSpan> writeTimeline,
+            List<MeshletGpuTimeline.TimeSpan> computeTimeline,
+            boolean[] meshletUpdates,
+            List<MeshletGpuTimeline.State>[] frameStateFlows) {
+
+        // panel width = 110, panel height = 35 + 6 * 7 = 77
+
+        for (int i = 0; i < 11; i++) {
+            writeTimelineSlots[i] = 0;
+            computeTimelineSlots[i] = 0;
+        }
+        writeLineSegments.clear();
+        computeLineSegments.clear();
+
+        genTimelineSlots(
+                startIndex,
+                writeTimeline,
+                computeTimeline,
                 writeTimelineSlots,
                 computeTimelineSlots);
+
+        genLineSegments(
+                startIndex,
+                writeTimeline,
+                computeTimeline,
+                writeTimelineSlots,
+                computeTimelineSlots,
+                writeLineSegments,
+                computeLineSegments);
 
         for (int i = 0; i < 11; i++) {
             if (writeTimelineSlots[i] == 0) {
