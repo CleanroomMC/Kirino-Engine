@@ -14,7 +14,8 @@ public class MeshletGpuTimeline implements DebugDataService {
     }
 
     public enum State {
-        IDLE_NO_UPDATE("[IDLE] No Update", new Color(156, 75, 255, 140)),
+        IDLE_NO_MESHLET_UPDATE("[IDLE] No Meshlet Update", new Color(93, 75, 255, 140)),
+        ARMED_FINISH_WRITING("[IDLE->ARMED] Finish Writing", new Color(147, 75, 255, 140)),
         ARMED_BEGIN_WRITING("[IDLE->ARMED] Begin Writing", new Color(240, 74, 246, 140)),
         ARMED_ALREADY_WRITING("[IDLE->ARMED] Already Writing", new Color(255, 75, 102, 140)),
         COMPUTABLE_FINISH_WRITING("[COMPUTABLE] Finish Writing", new Color(255, 117, 91, 140)),
