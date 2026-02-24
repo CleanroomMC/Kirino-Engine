@@ -15,6 +15,7 @@ public final class KirinoConfigHub {
 
         public int targetWorkloadPerThread = 5000;
 
+        public boolean compileToMdiCommands = true;
         public int maxMultiDrawIndirectUnitCount = 5000;
 
         public int highLevelDrawCommandPoolSize = 2000;
@@ -53,6 +54,10 @@ public final class KirinoConfigHub {
 
     public int getTargetWorkloadPerThread() {
         return requiresRestart.targetWorkloadPerThread;
+    }
+
+    public boolean isCompileToMdiCommands() {
+        return requiresRestart.compileToMdiCommands;
     }
 
     public int getMaxMultiDrawIndirectUnitCount() {

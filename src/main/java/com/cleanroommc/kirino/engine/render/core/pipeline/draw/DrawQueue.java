@@ -70,24 +70,36 @@ public class DrawQueue {
 
                 MeshReceipt meshReceipt = optional.get().getReceipt();
 
-                int elementSize = 0;
+                int elementSize;
                 if (highLevelDC.elementType == GL11.GL_UNSIGNED_BYTE) {
                     elementSize = 1;
                 } else if (highLevelDC.elementType == GL11.GL_UNSIGNED_SHORT) {
                     elementSize = 2;
                 } else if (highLevelDC.elementType == GL11.GL_UNSIGNED_INT) {
                     elementSize = 4;
+                } else {
+                    throw new RuntimeException("Invalid element type=" + highLevelDC.elementType + ".");
                 }
 
-                deque2.offerLast(LowLevelDC.acquire().fillMultiElementIndirectUnit(
-                        meshReceipt.vao,
-                        highLevelDC.mode,
-                        highLevelDC.elementType,
-                        meshReceipt.eboLength / elementSize,
-                        1,
-                        meshReceipt.eboOffset / elementSize,
-                        meshReceipt.baseVertex,
-                        0));
+                if (KirinoCommonCore.KIRINO_CONFIG_HUB.isCompileToMdiCommands()) {
+                    deque2.offerLast(LowLevelDC.acquire().fillMultiElementIndirectUnit(
+                            meshReceipt.vao,
+                            highLevelDC.mode,
+                            highLevelDC.elementType,
+                            meshReceipt.eboLength / elementSize,
+                            1,
+                            meshReceipt.eboOffset / elementSize,
+                            meshReceipt.baseVertex,
+                            0));
+                } else {
+                    // todo: buggy; fix
+                    deque2.offerLast(LowLevelDC.acquire().fillElement(
+                            meshReceipt.vao,
+                            highLevelDC.mode,
+                            meshReceipt.eboLength / elementSize,
+                            highLevelDC.elementType,
+                            meshReceipt.eboOffset));
+                }
 
                 highLevelDC.recycle();
             }

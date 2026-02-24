@@ -70,6 +70,7 @@ public class IndirectDrawBufferGenerator {
         Optional<ByteBuffer> optional = idbView.getPersistentMappedBuffer();
         Preconditions.checkState(optional.isPresent()); // impossible to throw
 
+        // todo: pipeline stall?
         ByteBuffer persistent = optional.get();
         persistent.position(offset);
         persistent.limit(offset + idbBufferSize);
