@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl;
 
 public abstract class GLDisposable implements Comparable<GLDisposable> {
+
     public final String getName() {
         return getResourceIdentifier() + "@" + this.hashCode();
     }

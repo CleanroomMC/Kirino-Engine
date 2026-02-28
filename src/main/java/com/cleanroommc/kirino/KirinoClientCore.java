@@ -16,6 +16,7 @@ import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
+import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.block.material.Material;
@@ -448,6 +449,9 @@ public final class KirinoClientCore {
         }
 
         LOGGER.info("---------- Kirino Client-Side Initialization ----------");
+
+        GLResourceManager.turnOn();
+        LOGGER.info("GLResourceManager is now active.");
 
         //<editor-fold desc="client-side event listeners">
         // register client-side default event listeners
