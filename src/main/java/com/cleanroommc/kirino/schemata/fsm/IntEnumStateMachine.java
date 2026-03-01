@@ -55,11 +55,11 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         int idx = index(input, state);
         if (transitionMap[idx] != -1) {
             backlog.push(new FSMBacklogPair<>(state, input));
-            if (exitCallbacks[state] != null) {
-                exitCallbacks[state].transition(state, input, transitionMap[idx]);
+            if (exitCallbacks[state-lowerStateBound] != null) {
+                exitCallbacks[state-lowerStateBound].transition(state, input, transitionMap[idx]);
             }
-            if (entryCallbacks[transitionMap[idx]] != null) {
-                entryCallbacks[transitionMap[idx]].transition(state, input, transitionMap[idx]);
+            if (entryCallbacks[transitionMap[idx]-lowerStateBound] != null) {
+                entryCallbacks[transitionMap[idx]-lowerStateBound].transition(state, input, transitionMap[idx]);
             }
             state = transitionMap[idx];
         } else if (error != null) {
@@ -138,10 +138,10 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             int index = index(input,state);
             transitionMap[index] = nextState;
             if (onExitStateCallback != null) {
-                exitCallbacks[state] = onExitStateCallback;
+                exitCallbacks[state-lowerStateBound] = onExitStateCallback;
             }
             if (onEnterStateCallback != null) {
-                entryCallbacks[nextState] = onEnterStateCallback;
+                entryCallbacks[nextState-lowerStateBound] = onEnterStateCallback;
             }
             rollbacks[index] = rollbackCallback;
             return this;
@@ -154,7 +154,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            entryCallbacks[state] = callback;
+            entryCallbacks[state-lowerStateBound] = callback;
             return this;
         }
 
@@ -165,7 +165,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            exitCallbacks[state] = callback;
+            exitCallbacks[state-lowerStateBound] = callback;
             return this;
         }
 
