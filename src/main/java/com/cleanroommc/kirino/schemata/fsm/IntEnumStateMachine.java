@@ -55,11 +55,11 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         int idx = index(input, state);
         if (transitionMap[idx] != -1) {
             backlog.push(new FSMBacklogPair<>(state, input));
-            if (exitCallbacks[state-lowerStateBound] != null) {
-                exitCallbacks[state-lowerStateBound].transition(state, input, transitionMap[idx]);
+            if (exitCallbacks[state - lowerStateBound] != null) {
+                exitCallbacks[state - lowerStateBound].transition(state, input, transitionMap[idx]);
             }
-            if (entryCallbacks[transitionMap[idx]-lowerStateBound] != null) {
-                entryCallbacks[transitionMap[idx]-lowerStateBound].transition(state, input, transitionMap[idx]);
+            if (entryCallbacks[transitionMap[idx] - lowerStateBound] != null) {
+                entryCallbacks[transitionMap[idx] - lowerStateBound].transition(state, input, transitionMap[idx]);
             }
             state = transitionMap[idx];
         } else if (error != null) {
@@ -76,12 +76,12 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return Optional.empty();
         }
 
-        FSMBacklogPair<Integer,I> pair = backlog.pop();
-        Rollback<Integer,I> rollback = rollbacks[index(pair.input(), pair.state())];
+        FSMBacklogPair<Integer, I> pair = backlog.pop();
+        Rollback<Integer, I> rollback = rollbacks[index(pair.input(), pair.state())];
         if (rollback != null) {
             rollback.rollback(state, pair.input(), pair.state());
         }
-        FSMBacklogPair<Integer,I> result = new FSMBacklogPair<>(state, pair.input());
+        FSMBacklogPair<Integer, I> result = new FSMBacklogPair<>(state, pair.input());
         state = pair.state();
         return Optional.of(result);
     }
@@ -99,10 +99,10 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         private final int lowerStateBound, upperStateBound;
         private final I[] inputs;
         private final int[] transitionMap;
-        private final OnEnterStateCallback<Integer,I>[] entryCallbacks;
+        private final OnEnterStateCallback<Integer, I>[] entryCallbacks;
         private final OnExitStateCallback<Integer, I>[] exitCallbacks;
-        private final Rollback<Integer,I>[] rollbacks;
-        private ErrorCallback<Integer,I> error;
+        private final Rollback<Integer, I>[] rollbacks;
+        private ErrorCallback<Integer, I> error;
         private Integer initialState;
 
         @SuppressWarnings("unchecked")
@@ -115,8 +115,8 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             for (int i = 0; i < length; i++) {
                 transitionMap[i] = -1;
             }
-            entryCallbacks = new OnEnterStateCallback[(upperStateBound-lowerStateBound+1)];
-            exitCallbacks = new OnExitStateCallback[(upperStateBound-lowerStateBound+1)];
+            entryCallbacks = new OnEnterStateCallback[(upperStateBound - lowerStateBound + 1)];
+            exitCallbacks = new OnExitStateCallback[(upperStateBound - lowerStateBound + 1)];
             rollbacks = new Rollback[length];
         }
 
@@ -127,21 +127,21 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         @NonNull
         @Override
         public Builder<Integer, I> addTransition(@NonNull Integer state, @NonNull I input, @NonNull Integer nextState,
-                                                  @Nullable OnEnterStateCallback<Integer, I> onEnterStateCallback,
-                                                  @Nullable OnExitStateCallback<Integer, I> onExitStateCallback,
-                                                  @Nullable Rollback<Integer, I> rollbackCallback) {
+                                                 @Nullable OnEnterStateCallback<Integer, I> onEnterStateCallback,
+                                                 @Nullable OnExitStateCallback<Integer, I> onExitStateCallback,
+                                                 @Nullable Rollback<Integer, I> rollbackCallback) {
             Preconditions.checkNotNull(input, "Parameter \"input\" must not be null.");
             Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound || nextState < lowerStateBound || nextState > upperStateBound),
                     "State %s out of range [%s, %s].",
                     initialState, lowerStateBound, upperStateBound);
 
-            int index = index(input,state);
+            int index = index(input, state);
             transitionMap[index] = nextState;
             if (onExitStateCallback != null) {
-                exitCallbacks[state-lowerStateBound] = onExitStateCallback;
+                exitCallbacks[state - lowerStateBound] = onExitStateCallback;
             }
             if (onEnterStateCallback != null) {
-                entryCallbacks[nextState-lowerStateBound] = onEnterStateCallback;
+                entryCallbacks[nextState - lowerStateBound] = onEnterStateCallback;
             }
             rollbacks[index] = rollbackCallback;
             return this;
@@ -154,7 +154,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            entryCallbacks[state-lowerStateBound] = callback;
+            entryCallbacks[state - lowerStateBound] = callback;
             return this;
         }
 
@@ -165,7 +165,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            exitCallbacks[state-lowerStateBound] = callback;
+            exitCallbacks[state - lowerStateBound] = callback;
             return this;
         }
 
