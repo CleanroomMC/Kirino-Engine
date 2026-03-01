@@ -197,7 +197,7 @@ public class EnumFSMTest {
                     .initialState(State.STATE1).validate();
         });
 
-        assertDoesNotThrow(() -> {
+        assertThrows(IllegalStateException.class, () -> {
             FiniteStateMachine.BuilderImpl.<State, Input>enumStateMachine(State.class, Input.class)
                     .addTransition(State.STATE1, Input.SECOND, State.STATE2)
                     .addTransition(State.STATE2, Input.FIRST, State.STATE1)
