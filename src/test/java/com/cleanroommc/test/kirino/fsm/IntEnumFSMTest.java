@@ -192,3 +192,4 @@ public class IntEnumFSMTest {
         FIRST, SECOND, THIRD;
     }
 }
+

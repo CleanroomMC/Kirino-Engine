@@ -24,13 +24,18 @@ import java.util.Optional;
  * Whenever possible, cache the results in a {@code static final} field. Another way to cache it is to store them in a {@code record}
  * and store that reference in a {@code static final} field.
  *
- * @see KirinoClientCore.MethodHolder An example of inlinable cached handles
+ * @see KirinoClientCore.MethodHolder1 An example of inlinable cached handles
  * @see <a href="https://jornvernee.github.io/methodhandles/2024/01/19/methodhandle-primer.html#method-handle-inlining">For more details about caching/inlining</a>
  */
 public final class ReflectionUtils {
+
     private static final boolean isDeobf = FMLLaunchHandler.isDeobfuscatedEnvironment();
     // Consider using ImagineBreaker if this lookup isn't privileged enough
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
+
+    public static MethodHandles.Lookup getLookup() {
+        return LOOKUP;
+    }
 
     /**
      * Get a lookup allowing private access.
