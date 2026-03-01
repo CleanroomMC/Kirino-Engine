@@ -104,7 +104,7 @@ public final class KirinoImmutableMap<K,V> implements Map<K, V>, Serializable {
         }
         try {
             return values[indices[Arrays.binarySearch(this.keys, key)]];
-        } catch (ArrayIndexOutOfBoundsException _) {
+        } catch (ArrayIndexOutOfBoundsException ignored) {
             return null;
         }
     }
