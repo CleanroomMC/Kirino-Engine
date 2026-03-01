@@ -181,12 +181,12 @@ public class IntRangeFSMTest {
                     .initialState(1).validate();
         });
 
-        assertDoesNotThrow(() -> {
+        assertThrows(IllegalStateException.class, () -> {
             FiniteStateMachine.BuilderImpl.intRangeStateMachine(1, 3, 4, 6)
                     .addTransition(1, 5, 2)
                     .addTransition(2, 4, 1)
-                    .addTransition(2, 6, 3)
-                    .addTransition(3, 4, 1)
+                    .addTransition(2, 6, 2)
+                    .addTransition(3, 4, 2)
                     .initialState(1).validate();
         });
     }
