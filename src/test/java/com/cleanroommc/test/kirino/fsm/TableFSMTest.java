@@ -19,15 +19,21 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1")
                 .initialState("state1")
                 .build();
+
         assertEquals("state1", FSM.state());
+
         FSM.accept(2);
         assertEquals("state2", FSM.state());
+
         FSM.accept(3);
         assertEquals("state3", FSM.state());
+
         FSM.accept(1);
         assertEquals("state1", FSM.state());
+
         FSM.accept(2);
         assertEquals("state2", FSM.state());
+
         FSM.accept(1);
         assertEquals("state1", FSM.state());
     }
@@ -45,14 +51,19 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1", callback)
                 .initialState("state1")
                 .build();
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(3);
         assertEquals(3, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
     }
@@ -70,14 +81,19 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1", callback)
                 .initialState("state1")
                 .build();
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(3);
         assertEquals(3, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
     }
@@ -91,11 +107,13 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1")
                 .initialState("state1")
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(1);
         FSM.accept(2);
         FSM.accept(1);
+
         String[] expectedStates = {"state1", "state2", "state1", "state3", "state2"};
         int[] inputs = {1, 2, 1, 3, 2};
         for (int i = 0; i < 5; i++) {
@@ -119,11 +137,13 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1", rollback)
                 .initialState("state1")
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(1);
         FSM.accept(2);
         FSM.accept(1);
+
         int[] inputs = {1, 2, 1, 3, 2};
         for (int i = 0; i < 5; i++) {
             FSM.backtrack();
@@ -142,12 +162,15 @@ public class TableFSMTest {
                 .addTransition("state3", 1, "state1")
                 .initialState("state1").error(errorCallback)
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(2);
+
         assertEquals(2, tester.get());
         FSM.accept(1);
         FSM.accept(3);
+
         assertEquals(3, tester.get());
         FSM.accept(2);
         FSM.accept(1);
@@ -155,16 +178,21 @@ public class TableFSMTest {
 
     @Test
     void validateTest() {
-//        assertTrue(FiniteStateMachine.Builder.<String, Integer>tableStateMachine()
-//                .addTransition("state1",2,"state2")
-//                .addTransition("state2",1,"state1")
-//                .addTransition("state2",3,"state3")
-//                .addTransition("state3",1,"state1")
-//                .initialState("state1").validate());
-//        assertFalse(FiniteStateMachine.Builder.<String, Integer>tableStateMachine()
-//                .addTransition("state1",2,"state2")
-//                .addTransition("state2",1,"state1")
-//                .addTransition("state3",1,"state1")
-//                .initialState("state1").validate());
+        assertDoesNotThrow(() -> {
+            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+                    .addTransition("state1", 2, "state2")
+                    .addTransition("state2", 1, "state1")
+                    .addTransition("state2", 3, "state3")
+                    .addTransition("state3", 1, "state1")
+                    .initialState("state1").validate();
+        });
+
+        assertDoesNotThrow(() -> {
+            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+                    .addTransition("state1", 2, "state2")
+                    .addTransition("state2", 1, "state1")
+                    .addTransition("state3", 1, "state1")
+                    .initialState("state1").validate();
+        });
     }
 }

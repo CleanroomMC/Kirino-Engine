@@ -19,15 +19,21 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1)
                 .initialState(State.STATE1)
                 .build();
+
         assertEquals(State.STATE1, FSM.state());
+
         FSM.accept(2);
         assertEquals(State.STATE2, FSM.state());
+
         FSM.accept(3);
         assertEquals(State.STATE3, FSM.state());
+
         FSM.accept(1);
         assertEquals(State.STATE1, FSM.state());
+
         FSM.accept(2);
         assertEquals(State.STATE2, FSM.state());
+
         FSM.accept(1);
         assertEquals(State.STATE1, FSM.state());
     }
@@ -43,14 +49,19 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1, callback)
                 .initialState(State.STATE1)
                 .build();
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(3);
         assertEquals(3, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
     }
@@ -66,14 +77,19 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1, callback)
                 .initialState(State.STATE1)
                 .build();
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(3);
         assertEquals(3, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
+
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(1);
         assertEquals(1, tester.get());
     }
@@ -87,11 +103,13 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1)
                 .initialState(State.STATE1)
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(1);
         FSM.accept(2);
         FSM.accept(1);
+
         State[] expectedStates = {State.STATE1, State.STATE2, State.STATE1, State.STATE3, State.STATE2, State.STATE1};
         int[] expectedInputs = {1, 2, 1, 3, 2};
         for (int i = 0; i < 5; i++) {
@@ -113,11 +131,13 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1, rollback)
                 .initialState(State.STATE1)
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(1);
         FSM.accept(2);
         FSM.accept(1);
+
         int[] expectedInputs = {1, 2, 1, 3, 2};
         for (int i = 0; i < 5; i++) {
             FSM.backtrack();
@@ -136,10 +156,12 @@ public class EnumIntFSMTest {
                 .addTransition(State.STATE2, 1, State.STATE1)
                 .initialState(State.STATE1).error(errorCallback)
                 .build();
+
         FSM.accept(2);
         FSM.accept(3);
         FSM.accept(2);
         assertEquals(2, tester.get());
+
         FSM.accept(1);
         FSM.accept(2);
         FSM.accept(1);
@@ -149,16 +171,21 @@ public class EnumIntFSMTest {
 
     @Test
     void validateTest() {
-//        assertTrue(FiniteStateMachine.Builder.enumIntStateMachine(State.class, 1, 3)
-//                .addTransition(State.STATE1, 2, State.STATE2)
-//                .addTransition(State.STATE2, 3, State.STATE3)
-//                .addTransition(State.STATE3, 1, State.STATE1)
-//                .addTransition(State.STATE2, 1, State.STATE1)
-//                .initialState(State.STATE1).validate());
-//        assertFalse(FiniteStateMachine.Builder.enumIntStateMachine(State.class, 1, 3)
-//                .addTransition(State.STATE1, 2, State.STATE2)
-//                .addTransition(State.STATE2, 1, State.STATE1)
-//                .initialState(State.STATE1).validate());
+        assertDoesNotThrow(() -> {
+            FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 1, 3)
+                    .addTransition(State.STATE1, 2, State.STATE2)
+                    .addTransition(State.STATE2, 3, State.STATE3)
+                    .addTransition(State.STATE3, 1, State.STATE1)
+                    .addTransition(State.STATE2, 1, State.STATE1)
+                    .initialState(State.STATE1).validate();
+        });
+
+        assertDoesNotThrow(() -> {
+            FiniteStateMachine.BuilderImpl.enumIntStateMachine(State.class, 1, 3)
+                    .addTransition(State.STATE1, 2, State.STATE2)
+                    .addTransition(State.STATE2, 1, State.STATE1)
+                    .initialState(State.STATE1).validate();
+        });
     }
 
     private enum State {
