@@ -187,7 +187,7 @@ public class TableFSMTest {
                     .initialState("state1").validate();
         });
 
-        assertDoesNotThrow(() -> {
+        assertThrows(IllegalStateException.class, () -> {
             FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
                     .addTransition("state1", 2, "state2")
                     .addTransition("state2", 1, "state1")
