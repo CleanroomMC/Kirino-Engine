@@ -17,6 +17,7 @@ public interface FiniteStateMachine<S, I> {
 
     /**
      * State getter
+     *
      * @return Current State
      */
     @NonNull
@@ -24,6 +25,7 @@ public interface FiniteStateMachine<S, I> {
 
     /**
      * Accept input
+     *
      * @param input Input to the state machine
      * @return Next state the FSM transitions to
      * @implSpec If state transition is successful, execute the {@link OnEnterStateCallback} and {@link OnExitStateCallback}.
@@ -34,6 +36,7 @@ public interface FiniteStateMachine<S, I> {
 
     /**
      * Backtrack the state machine to its previous state
+     *
      * @return The current state (the one that is backtracked from) and input leading towards it.
      * @implSpec The state machine has to store all it's previous inputs and states for backtracking purpose.
      * Execute rollback callback during backtracking.
@@ -43,11 +46,12 @@ public interface FiniteStateMachine<S, I> {
 
     /**
      * Sets the state to the initial state and clears the backlog
+     *
      * @implSpec <code>
-     *     if (!stack.isEmpty()) {<br/>
-     *     &emsp;    state = stack.pollLast().state();<br/>
-     *     &emsp;    stack.clear();<br/>
-     *     }
+     * if (!stack.isEmpty()) {<br/>
+     * &emsp;    state = stack.pollLast().state();<br/>
+     * &emsp;    stack.clear();<br/>
+     * }
      * </code>
      */
     void reset();
@@ -56,15 +60,16 @@ public interface FiniteStateMachine<S, I> {
      * A quick way to undo all the actions taken by the entire state machine
      */
     default void rewind() {
-        while (backtrack().isPresent());
+        while (backtrack().isPresent()) ;
     }
 
     @FunctionalInterface
     interface Rollback<S, I> {
         /**
          * Undo the changes made by the {@link OnEnterStateCallback} and {@link OnExitStateCallback}
+         *
          * @param prevState State from which the function backtracks
-         * @param input The input that caused the backtracked transition
+         * @param input     The input that caused the backtracked transition
          * @param currState The state that the FSM backtracks to
          */
         void rollback(@NonNull S prevState, @NonNull I input, @NonNull S currState);
@@ -74,6 +79,7 @@ public interface FiniteStateMachine<S, I> {
     interface ErrorCallback<S, I> {
         /**
          * Transition failure callback
+         *
          * @param state The current state
          * @param input The input that caused the failure
          */
@@ -84,8 +90,9 @@ public interface FiniteStateMachine<S, I> {
     interface OnEnterStateCallback<S, I> {
         /**
          * Called while transitioning to a state
+         *
          * @param prevState The state the FSM is transitioning from
-         * @param input The input causing the transition
+         * @param input     The input causing the transition
          * @param nextState The state the input is transitioning towards
          * @apiNote Executed after {@link OnExitStateCallback}
          */
@@ -96,8 +103,9 @@ public interface FiniteStateMachine<S, I> {
     interface OnExitStateCallback<S, I> {
         /**
          * Called while exiting a state
+         *
          * @param currState The state the FSM is transitioning from
-         * @param input The input causing the transition
+         * @param input     The input causing the transition
          * @param nextState The state the input is transitioning towards
          * @apiNote Executed before {@link OnEnterStateCallback}
          */
@@ -107,49 +115,52 @@ public interface FiniteStateMachine<S, I> {
     interface Builder<S, I> {
         /**
          * Adds a possible transition to the FSM
-         * @param state From
-         * @param input The input causing the transition
-         * @param nextState To
+         *
+         * @param state                From
+         * @param input                The input causing the transition
+         * @param nextState            To
          * @param onEnterStateCallback Executed during transition to nextState.
          *                             If null is passed to this parameter. Nothing will change.
          *                             If a value is passed to this parameter. The {@link OnEnterStateCallback}
          *                             for this state will be changed. <b>This callback is stored per state</b>
-         * @param onExitStateCallback Executed during transition from state.
-         *                            If null is passed to this parameter. Nothing will change.
-         *                            If a value is passed to this parameter. The {@link OnExitStateCallback}
-         *                            for this state will be changed. <b>This callback is stored per state</b>
-         * @param rollbackCallback Executed during {@link FiniteStateMachine#backtrack()} to reverse changes caused by the other callbacks.
-         *                         <b>This callback is stored per transition,
-         *                         it is different for each state and input combination.</b>
-         * @throws IllegalStateException If the state or input are non-existent in the set of states/inputs this exception will be thrown.
+         * @param onExitStateCallback  Executed during transition from state.
+         *                             If null is passed to this parameter. Nothing will change.
+         *                             If a value is passed to this parameter. The {@link OnExitStateCallback}
+         *                             for this state will be changed. <b>This callback is stored per state</b>
+         * @param rollbackCallback     Executed during {@link FiniteStateMachine#backtrack()} to reverse changes caused by the other callbacks.
+         *                             <b>This callback is stored per transition,
+         *                             it is different for each state and input combination.</b>
          * @return the builder
+         * @throws IllegalStateException If the state or input are non-existent in the set of states/inputs this exception will be thrown.
          */
         @NonNull
-        Builder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
+        Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                     @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
                                     @Nullable OnExitStateCallback<S, I> onExitStateCallback,
                                     @Nullable Rollback<S, I> rollbackCallback);
 
         /**
          * Sets the entry callback for a state
-         * @param state The state for which the callback will be set.
+         *
+         * @param state    The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         *                 {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
-         * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          * @return The builder
+         * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
         @NonNull
         Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback);
 
         /**
          * Sets the exit callback for a state
-         * @param state The state for which the callback will be set.
+         *
+         * @param state    The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         *                 {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
-         * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          * @return The builder
+         * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
         @NonNull
         Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback);
@@ -157,6 +168,7 @@ public interface FiniteStateMachine<S, I> {
         /**
          * Sets the initial state, that the FSM will start in. <br/>
          * <b>MUST BE CALLED BEFORE {@link Builder#build()}!!!</b>
+         *
          * @param initialState The initial state
          * @return The builder
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
@@ -168,6 +180,7 @@ public interface FiniteStateMachine<S, I> {
          * Sets the error callback which will be executed if and only if a transition fails
          * due to an input that leads to a non-existent route. An exception will be thrown if
          * the input itself is invalid.
+         *
          * @param errorCallback The error callback
          * @return The builder
          */
@@ -184,6 +197,7 @@ public interface FiniteStateMachine<S, I> {
         /**
          * Finish instantiating the FSM. <br/>
          * <b>{@link Builder#initialState(Object)} must be called before this!!!</b>
+         *
          * @return the FSM
          */
         @NonNull
@@ -197,8 +211,8 @@ public interface FiniteStateMachine<S, I> {
 
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
-                                             @NonNull OnEnterStateCallback<S, I> onEnterStateCallback,
-                                             @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
+                                            @NonNull OnEnterStateCallback<S, I> onEnterStateCallback,
+                                            @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
             Preconditions.checkNotNull(onEnterStateCallback);
             Preconditions.checkNotNull(onExitStateCallback);
 
@@ -207,7 +221,7 @@ public interface FiniteStateMachine<S, I> {
 
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
-                                             @NonNull OnEnterStateCallback<S, I> onEnterStateCallback) {
+                                            @NonNull OnEnterStateCallback<S, I> onEnterStateCallback) {
             Preconditions.checkNotNull(onEnterStateCallback);
 
             return addTransition(state, input, nextState, onEnterStateCallback, null, null);
@@ -215,15 +229,15 @@ public interface FiniteStateMachine<S, I> {
 
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
-                                             @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
+                                            @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
             Preconditions.checkNotNull(onExitStateCallback);
 
             return addTransition(state, input, nextState, null, onExitStateCallback, null);
         }
 
         @NonNull
-        default Builder<S, I> addTransition(@NonNull S state,@NonNull I input,@NonNull S nextState,
-                                             @NonNull Rollback<S, I> rollbackCallback) {
+        default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
+                                            @NonNull Rollback<S, I> rollbackCallback) {
             Preconditions.checkNotNull(rollbackCallback);
 
             return addTransition(state, input, nextState, null, null, rollbackCallback);
@@ -235,8 +249,12 @@ public interface FiniteStateMachine<S, I> {
             return new EnumStateMachine.BuilderImpl<>(stateClass, inputClass);
         }
 
-        public static <S, I> Builder<S, I> tableStateMachine() {
-            return new TableFiniteStateMachine.BuilderImpl<>();
+        public static <S, I> Builder<S, I> tableStateMachine(Class<S> stateClass) {
+            return new TableFiniteStateMachine.BuilderImpl<>(stateClass, null, null);
+        }
+
+        public static <S, I> Builder<S, I> tableStateMachine(Class<S> stateClass, Class<OnEnterStateCallback<S, I>> entryCallbackClass, Class<OnExitStateCallback<S, I>> exitCallbackClass) {
+            return new TableFiniteStateMachine.BuilderImpl<>(stateClass, entryCallbackClass, exitCallbackClass);
         }
 
         public static Builder<Integer, Integer> intRangeStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
@@ -250,7 +268,7 @@ public interface FiniteStateMachine<S, I> {
         }
 
         public static <I extends Enum<I>> Builder<Integer, I> enumIntStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,
-                                                                                   Class<I> inputClass) {
+                                                                                  Class<I> inputClass) {
             return new IntEnumStateMachine.BuilderImpl<>(lowerStateBoundInclusive, upperStateBoundInclusive, inputClass);
         }
     }

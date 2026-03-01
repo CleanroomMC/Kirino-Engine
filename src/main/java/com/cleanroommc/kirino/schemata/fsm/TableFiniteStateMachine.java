@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.kirino.schemata.immutable.KirinoImmutableMap;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.jspecify.annotations.NonNull;
@@ -22,7 +22,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     TableFiniteStateMachine(@NonNull Table<I, S, S> transitionMap,
                             @NonNull Map<S, OnEnterStateCallback<S, I>> entryCallbacks,
                             @NonNull Map<S, OnExitStateCallback<S, I>> exitCallbacks,
-                            @NonNull Table<I, S,Rollback<S, I>> rollbackTable,
+                            @NonNull Table<I, S, Rollback<S, I>> rollbackTable,
                             @Nullable ErrorCallback<S, I> errorCallback,
                             @NonNull S initialState) {
         this.transitionMap = transitionMap;
@@ -97,32 +97,51 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     }
 
     static class BuilderImpl<S, I> implements Builder<S, I> {
+        private final Class<S> stateClass;
+        private final Class<OnEnterStateCallback<S, I>> entryCallbackClass;
+        private final Class<OnExitStateCallback<S, I>> exitCallbackClass;
         private final ImmutableTable.Builder<I, S, S> builder = ImmutableTable.builder();
-        private ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> entryCallbackMapBuilder = ImmutableMap.builder();
-        private ImmutableMap.Builder<S, OnExitStateCallback<S, I>> exitCallbackMapBuilder = ImmutableMap.builder();
+        private KirinoImmutableMap.Builder<S, OnEnterStateCallback<S, I>> entryCallbackMapBuilder = null;
+        private KirinoImmutableMap.Builder<S, OnExitStateCallback<S, I>> exitCallbackMapBuilder = null;
         private final ImmutableTable.Builder<I, S, Rollback<S, I>> rollbackTable = ImmutableTable.builder();
         private S initialState = null;
         private ErrorCallback<S, I> error = null;
 
-        BuilderImpl() {
+        BuilderImpl(Class<S> stateClass, @Nullable Class<OnEnterStateCallback<S, I>> entryCallbackClass, @Nullable Class<OnExitStateCallback<S, I>> exitCallbackClass) {
+            if (entryCallbackClass != null) {
+                this.entryCallbackMapBuilder = new KirinoImmutableMap.Builder<>(stateClass, entryCallbackClass);
+            }
+            if (exitCallbackClass != null) {
+                this.exitCallbackMapBuilder = new KirinoImmutableMap.Builder<>(stateClass, exitCallbackClass);
+            }
+
+            this.stateClass = stateClass;
+            this.entryCallbackClass = entryCallbackClass;
+            this.exitCallbackClass = exitCallbackClass;
         }
 
         @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S currentState, @NonNull I input, @NonNull S nextState,
-                                                                       @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
-                                                                       @Nullable OnExitStateCallback<S, I> onExitStateCallback,
-                                                                       FiniteStateMachine.@Nullable Rollback<S, I> rollback) {
+                                           @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
+                                           @Nullable OnExitStateCallback<S, I> onExitStateCallback,
+                                           FiniteStateMachine.@Nullable Rollback<S, I> rollback) {
             Preconditions.checkNotNull(currentState, "Parameter \"currentState\" can't be null.");
             Preconditions.checkNotNull(input, "Parameter \"input\" can't be null.");
-            Preconditions.checkNotNull(nextState,  "Parameter \"nextState\" can't be null.");
+            Preconditions.checkNotNull(nextState, "Parameter \"nextState\" can't be null.");
 
-            builder.put(input, currentState,nextState);
-            if (onEnterStateCallback != null) {
-                entryCallbackMapBuilder.put(nextState, onEnterStateCallback);
+            builder.put(input, currentState, nextState);
+            if (onEnterStateCallback != null && entryCallbackMapBuilder != null) {
+                try {
+                    entryCallbackMapBuilder.insert(nextState, onEnterStateCallback);
+                } catch (IllegalArgumentException ignored) {
+                }
             }
-            if (onExitStateCallback != null) {
-                exitCallbackMapBuilder.put(nextState, onExitStateCallback);
+            if (onExitStateCallback != null && exitCallbackMapBuilder != null) {
+                try {
+                    exitCallbackMapBuilder.insert(nextState, onExitStateCallback);
+                } catch (IllegalArgumentException ignored) {
+                }
             }
             if (rollback != null) {
                 rollbackTable.put(input, currentState, rollback);
@@ -135,9 +154,9 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          * Sets the entry callback for a state. It's not recommended to delete a callback by passing null because
          * it violates the immutable pattern and is performance heavy.
          *
-         * @param state The state for which the callback will be set.
+         * @param state    The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         *                 {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
@@ -146,17 +165,21 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
+            if (entryCallbackMapBuilder == null) {
+                return this;
+            }
+
             if (callback == null) {
-                ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                ImmutableMap<S, OnEnterStateCallback<S, I>> map = entryCallbackMapBuilder.build();
+                KirinoImmutableMap.Builder<S, OnEnterStateCallback<S, I>> newBuilder = new KirinoImmutableMap.Builder<>(stateClass, entryCallbackClass);
+                KirinoImmutableMap<S, OnEnterStateCallback<S, I>> map = entryCallbackMapBuilder.build();
                 for (Map.Entry<S, OnEnterStateCallback<S, I>> entry : map.entrySet()) {
                     if (entry.getKey() != state) {
-                        newBuilder.put(entry);
+                        newBuilder.insert(entry.getKey(), entry.getValue());
                     }
                 }
                 entryCallbackMapBuilder = newBuilder;
             } else {
-                entryCallbackMapBuilder.put(state, callback);
+                entryCallbackMapBuilder.insert(state, callback);
             }
             return this;
         }
@@ -165,9 +188,9 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          * Sets the exit callback for a state. It's not recommended to delete a callback by passing null because
          * it violates the immutable pattern and is performance heavy.
          *
-         * @param state The state for which the callback will be set.
+         * @param state    The state for which the callback will be set.
          * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
+         *                 {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
@@ -176,21 +199,26 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
+            if (exitCallbackMapBuilder == null) {
+                return this;
+            }
+
             if (callback == null) {
-                ImmutableMap.Builder<S, OnExitStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                ImmutableMap<S, OnExitStateCallback<S, I>> map = exitCallbackMapBuilder.build();
+                KirinoImmutableMap.Builder<S, OnExitStateCallback<S, I>> newBuilder = new KirinoImmutableMap.Builder(stateClass, exitCallbackClass);
+                KirinoImmutableMap<S, OnExitStateCallback<S, I>> map = exitCallbackMapBuilder.build();
                 for (Map.Entry<S, OnExitStateCallback<S, I>> entry : map.entrySet()) {
                     if (entry.getKey() != state) {
-                        newBuilder.put(entry);
+                        newBuilder.insert(entry.getKey(), entry.getValue());
                     }
                 }
                 exitCallbackMapBuilder = newBuilder;
             } else {
-                exitCallbackMapBuilder.put(state, callback);
+                exitCallbackMapBuilder.insert(state, callback);
             }
             return this;
         }
 
+        @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
@@ -222,7 +250,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
                     reachable.add(state);
                     for (I input : table.rowKeySet()) {
                         if (table.contains(input, state)) {
-                            stack.push(table.get(input,state));
+                            stack.push(table.get(input, state));
                         }
                     }
                 }
@@ -240,8 +268,8 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
 
             return new TableFiniteStateMachine<>(builder.buildOrThrow(),
-                    entryCallbackMapBuilder.build(),
-                    exitCallbackMapBuilder.build(),
+                    entryCallbackMapBuilder != null ? entryCallbackMapBuilder.build() : Map.of(),
+                    exitCallbackMapBuilder != null ? exitCallbackMapBuilder.build() : Map.of(),
                     rollbackTable.buildOrThrow(), error, initialState);
         }
     }
