@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class JobRegistry {
-    private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
 
     private final Map<Class<? extends ParallelJob>, Map<JobDataQuery, JobDataInjector>> parallelJobDataQueryMap = new HashMap<>();
     private final Map<Class<? extends ParallelJob>, Map<String, JobDataInjector>> parallelJobExternalDataQueryMap = new HashMap<>();
@@ -39,7 +38,7 @@ public class JobRegistry {
 
         CallSite callSite;
         try {
-            callSite = LambdaMetafactory.metafactory(LOOKUP, "inject",
+            callSite = LambdaMetafactory.metafactory(ReflectionUtils.getLookup(), "inject",
                     MethodType.methodType(JobDataInjector.class, MethodHandle.class),
                     setterType.erase(),
                     MethodHandles.exactInvoker(setter.type()),
@@ -62,7 +61,7 @@ public class JobRegistry {
         MethodType ctorType = ctor.type();
         CallSite callSite;
         try {
-            callSite = LambdaMetafactory.metafactory(LOOKUP, "instantiate",
+            callSite = LambdaMetafactory.metafactory(ReflectionUtils.getLookup(), "instantiate",
                     MethodType.methodType(JobInstantiator.class, MethodHandle.class),
                     ctorType.erase(),
                     MethodHandles.exactInvoker(ctorType),
@@ -81,7 +80,7 @@ public class JobRegistry {
         try {
             clazz.getConstructor();
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException("Parallel job class " + clazz.getName() + " is missing a default constructor with no parameters.", e);
+            throw new RuntimeException("Parallel job class \"" + clazz.getName() + "\" is missing a default constructor with no parameters.", e);
         }
 
         parallelJobInstantiatorMap.computeIfAbsent(clazz, this::genParallelJobInstantiator);
@@ -89,25 +88,25 @@ public class JobRegistry {
         Map<JobDataQuery, JobDataInjector> dataQueryMap = parallelJobDataQueryMap.computeIfAbsent(clazz, k -> new HashMap<>());
         Map<String, JobDataInjector> externalDataQueryMap = parallelJobExternalDataQueryMap.computeIfAbsent(clazz, k -> new HashMap<>());
 
-        String exceptionText = "Parallel job class " + clazz.getName() + " contains invalid annotation entries.";
+        String exceptionText = "Parallel job class \"" + clazz.getName() + "\" contains invalid annotation entries.";
 
         for (Field field : clazz.getDeclaredFields()) {
             // scan JobDataQuery
             if (field.isAnnotationPresent(JobDataQuery.class) && !Modifier.isStatic(field.getModifiers())) {
                 if (PrimitiveArray.class != field.getType()) {
-                    throw new RuntimeException(exceptionText, new IllegalStateException("PrimitiveArray must be the type of the JobDataQuery-annotated field " + field.getName() + "."));
+                    throw new RuntimeException(exceptionText, new IllegalStateException("PrimitiveArray must be the type of the JobDataQuery-annotated field \"" + field.getName() + "\"."));
                 }
 
                 JobDataQuery jobDataQuery = field.getAnnotation(JobDataQuery.class);
 
                 if (!CleanComponent.class.isAssignableFrom(jobDataQuery.componentClass())) {
-                    throw new RuntimeException(exceptionText, new IllegalStateException("CleanComponent must be assignable from JobDataQuery#componentClass() " + jobDataQuery.componentClass().getName() + "."));
+                    throw new RuntimeException(exceptionText, new IllegalStateException("CleanComponent must be assignable from JobDataQuery#componentClass() \"" + jobDataQuery.componentClass().getName() + "\"."));
                 }
                 if (jobDataQuery.componentClass() == CleanComponent.class) {
-                    throw new RuntimeException(exceptionText, new IllegalStateException("JobDataQuery#componentClass() " + jobDataQuery.componentClass().getName() + " must not be CleanComponent itself."));
+                    throw new RuntimeException(exceptionText, new IllegalStateException("JobDataQuery#componentClass() \"" + jobDataQuery.componentClass().getName() + "\" must not be CleanComponent itself."));
                 }
                 if (!componentRegistry.componentExists(jobDataQuery.componentClass().asSubclass(CleanComponent.class))) {
-                    throw new RuntimeException(exceptionText, new IllegalStateException("JobDataQuery#componentClass() " + jobDataQuery.componentClass().getName() + " isn't registered in the component registry."));
+                    throw new RuntimeException(exceptionText, new IllegalStateException("JobDataQuery#componentClass() \"" + jobDataQuery.componentClass().getName() + "\" isn't registered in the component registry."));
                 }
                 String componentName = componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class));
                 try {
