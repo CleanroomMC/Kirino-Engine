@@ -235,8 +235,12 @@ public interface FiniteStateMachine<S, I> {
             return new EnumStateMachine.BuilderImpl<>(stateClass, inputClass);
         }
 
-        public static <S, I> Builder<S, I> tableStateMachine() {
-            return new TableFiniteStateMachine.BuilderImpl<>();
+        public static <S,I> Builder<S, I> tableStateMachine(Class<S> stateClass) {
+            return new TableFiniteStateMachine.BuilderImpl<>(stateClass, null, null);
+        }
+
+        public static <S, I> Builder<S, I> tableStateMachine(Class<S> stateClass, Class<OnEnterStateCallback<S,I>> entryCallbackClass, Class<OnExitStateCallback<S,I>> exitCallbackClass) {
+            return new TableFiniteStateMachine.BuilderImpl<>(stateClass, entryCallbackClass, exitCallbackClass);
         }
 
         public static Builder<Integer, Integer> intRangeStateMachine(int lowerStateBoundInclusive, int upperStateBoundInclusive,

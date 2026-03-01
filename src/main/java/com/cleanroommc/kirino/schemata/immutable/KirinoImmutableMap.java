@@ -58,7 +58,19 @@ public final class KirinoImmutableMap<K,V> implements Map<K, V>, Serializable {
         Preconditions.checkNotNull(key);
         if (!keyClass.isInstance(key))
             return false;
-        return Arrays.binarySearch(this.keys, key) >= 0;
+        if (key instanceof Comparable)
+            return Arrays.binarySearch(this.keys, key) >= 0;
+        else {
+            return bruteForceSearch(this.keys, key) >= 0;
+        }
+    }
+
+    private static int bruteForceSearch(Object[] arr, Object val) {
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i].equals(val))
+                return i;
+        }
+        return -1;
     }
 
     @Override
@@ -66,7 +78,11 @@ public final class KirinoImmutableMap<K,V> implements Map<K, V>, Serializable {
         Preconditions.checkNotNull(value);
         if (!valueClass.isInstance(value))
             return false;
-        return Arrays.binarySearch(this.values, value) >= 0;
+        if (value instanceof Comparable)
+            return Arrays.binarySearch(this.values, value) >= 0;
+        else {
+            return bruteForceSearch(this.values, value) >= 0;
+        }
     }
 
     @Override
@@ -203,15 +219,16 @@ public final class KirinoImmutableMap<K,V> implements Map<K, V>, Serializable {
         }
 
         public KirinoImmutableMap<K,V> build() {
-            K[] ks = keys.toArray((i) -> (K[]) Array.newInstance(keyClass, keys.size()));
+            K[] ks = keys.toArray((K[])Array.newInstance(keyClass, 0));
             short[] indices = new short[keys.size()];
-            V[] vs = keys.toArray((i) -> (V[]) Array.newInstance(valueClass, values.size()));
+            V[] vs = values.toArray((V[])Array.newInstance(valueClass, 0));
 
             Arrays.sort(ks);
             Arrays.sort(vs);
 
             for(var entry : this.mappings)
-                indices[Arrays.binarySearch(ks, entry.getKey())] = (short)Arrays.binarySearch(vs, entry.getValue());
+                indices[(ks[0] instanceof Comparable) ? Arrays.binarySearch(ks, entry.getKey()) : bruteForceSearch(ks, entry.getKey())]
+                        = (short)((vs[0] instanceof Comparable) ? Arrays.binarySearch(vs, entry.getValue()) : bruteForceSearch(vs, entry.getValue()));
 
             return new KirinoImmutableMap<K,V>(this.keyClass, ks, indices, vs, this.valueClass);
         }

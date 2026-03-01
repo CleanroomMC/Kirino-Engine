@@ -12,7 +12,7 @@ public class TableFSMTest {
 
     @Test
     void transitionTest() {
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                 .addTransition("state1", 2, "state2")
                 .addTransition("state2", 1, "state1")
                 .addTransition("state2", 3, "state3")
@@ -44,7 +44,7 @@ public class TableFSMTest {
         FiniteStateMachine.OnEnterStateCallback<String, Integer> callback = (currState, input, nextState) -> {
             tester.set(input);
         };
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class, (Class<FiniteStateMachine.OnEnterStateCallback<String, Integer>>) callback.getClass(), null)
                 .addTransition("state1", 2, "state2", callback)
                 .addTransition("state2", 1, "state1", callback)
                 .addTransition("state2", 3, "state3", callback)
@@ -74,7 +74,7 @@ public class TableFSMTest {
         FiniteStateMachine.OnExitStateCallback<String, Integer> callback = (currState, input, nextState) -> {
             tester.set(input);
         };
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class, (Class<FiniteStateMachine.OnEnterStateCallback<String, Integer>>) null, (Class<FiniteStateMachine.OnExitStateCallback<String, Integer>>) callback.getClass())
                 .addTransition("state1", 2, "state2", callback)
                 .addTransition("state2", 1, "state1", callback)
                 .addTransition("state2", 3, "state3", callback)
@@ -100,7 +100,7 @@ public class TableFSMTest {
 
     @Test
     void backtrackTest() {
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                 .addTransition("state1", 2, "state2")
                 .addTransition("state2", 1, "state1")
                 .addTransition("state2", 3, "state3")
@@ -130,7 +130,7 @@ public class TableFSMTest {
         FiniteStateMachine.Rollback<String, Integer> rollback = (prevState, input, currState) -> {
             tester.set(input);
         };
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                 .addTransition("state1", 2, "state2", rollback)
                 .addTransition("state2", 1, "state1", rollback)
                 .addTransition("state2", 3, "state3", rollback)
@@ -155,7 +155,7 @@ public class TableFSMTest {
     void errorTest() {
         AtomicInteger tester = new AtomicInteger(0);
         FiniteStateMachine.ErrorCallback<String, Integer> errorCallback = (state, input) -> tester.set(input);
-        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+        FiniteStateMachine<String, Integer> FSM = FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                 .addTransition("state1", 2, "state2")
                 .addTransition("state2", 1, "state1")
                 .addTransition("state2", 3, "state3")
@@ -179,7 +179,7 @@ public class TableFSMTest {
     @Test
     void validateTest() {
         assertDoesNotThrow(() -> {
-            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                     .addTransition("state1", 2, "state2")
                     .addTransition("state2", 1, "state1")
                     .addTransition("state2", 3, "state3")
@@ -188,7 +188,7 @@ public class TableFSMTest {
         });
 
         assertThrows(IllegalStateException.class, () -> {
-            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine()
+            FiniteStateMachine.BuilderImpl.<String, Integer>tableStateMachine(String.class)
                     .addTransition("state1", 2, "state2")
                     .addTransition("state2", 1, "state1")
                     .addTransition("state3", 1, "state1")
