@@ -61,11 +61,11 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
         int idx = index(input, state);
         if (transitionMap[idx] != -1) {
             backlog.push(new FSMBacklogPair<>(state, input));
-            if (exitCallbacks[state] != null) {
-                exitCallbacks[state].transition(state, input, transitionMap[idx]);
+            if (exitCallbacks[state-1] != null) {
+                exitCallbacks[state-1].transition(state, input, transitionMap[idx]);
             }
-            if (entryCallbacks[transitionMap[idx]] != null) {
-                entryCallbacks[transitionMap[idx]].transition(state, input, transitionMap[idx]);
+            if (entryCallbacks[transitionMap[idx]-1] != null) {
+                entryCallbacks[transitionMap[idx]-1].transition(state, input, transitionMap[idx]);
             }
             state = transitionMap[idx];
         } else if (errorCallback != null){
@@ -146,10 +146,10 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             int idx = index(input, state);
             transitionMap[idx] = nextState;
             if (onEnterStateCallback != null) {
-                entryCallbacks[nextState] = onEnterStateCallback;
+                entryCallbacks[nextState-1] = onEnterStateCallback;
             }
             if (onExitStateCallback != null) {
-                exitCallbacks[state] = onExitStateCallback;
+                exitCallbacks[state-1] = onExitStateCallback;
             }
             rollbacks[idx] = rollbackCallback;
             return this;
