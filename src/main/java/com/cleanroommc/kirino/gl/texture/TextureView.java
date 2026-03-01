@@ -30,7 +30,7 @@ public abstract class TextureView {
 
     public void alloc(@Nullable ByteBuffer byteBuffer, TextureFormat format) {
         texture.currentFormat = format;
-        GL11.glTexImage2D(target(), 0, format.internalFormat, texture.width, texture.height, 0, format.format, format.type, byteBuffer);
+        GL11.glTexImage2D(target(), 0, format.internalFormat, texture.extentX, texture.extentY, 0, format.format, format.type, byteBuffer);
     }
 
     public void alloc(@Nullable ByteBuffer byteBuffer) {
@@ -49,8 +49,8 @@ public abstract class TextureView {
     }
 
     public void resizeAndAllocNull(int width, int height) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         if (texture.currentFormat == null) {
             alloc(null);
         } else {
@@ -59,14 +59,14 @@ public abstract class TextureView {
     }
 
     public void resizeAndAllocNull(int width, int height, TextureFormat format) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         alloc(null, format);
     }
 
     public void resizeAndAlloc(int width, int height, ByteBuffer byteBuffer) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         if (texture.currentFormat == null) {
             alloc(byteBuffer);
         } else {
@@ -75,8 +75,8 @@ public abstract class TextureView {
     }
 
     public void resizeAndAlloc(int width, int height, ByteBuffer byteBuffer, TextureFormat format) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         alloc(byteBuffer, format);
     }
 }

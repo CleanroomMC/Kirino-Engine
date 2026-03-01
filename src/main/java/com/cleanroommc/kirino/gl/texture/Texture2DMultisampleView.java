@@ -47,7 +47,7 @@ public class Texture2DMultisampleView extends TextureView {
 
     public void alloc(TextureFormat format) {
         texture.currentFormat = format;
-        GL32.glTexImage2DMultisample(target(), samples, format.internalFormat, texture.width, texture.height, true);
+        GL32.glTexImage2DMultisample(target(), samples, format.internalFormat, texture.extentX, texture.extentY, true);
     }
 
     public void alloc() {
@@ -56,8 +56,8 @@ public class Texture2DMultisampleView extends TextureView {
 
     @Override
     public void resizeAndAllocNull(int width, int height) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         if (texture.currentFormat == null) {
             alloc();
         } else {
@@ -67,8 +67,8 @@ public class Texture2DMultisampleView extends TextureView {
 
     @Override
     public void resizeAndAllocNull(int width, int height, TextureFormat format) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         alloc(format);
     }
 
@@ -83,8 +83,8 @@ public class Texture2DMultisampleView extends TextureView {
     }
 
     public void resizeAndAllocNull(int width, int height, int samples) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         this.samples = samples;
         if (texture.currentFormat == null) {
             alloc();
@@ -94,8 +94,8 @@ public class Texture2DMultisampleView extends TextureView {
     }
 
     public void resizeAndAllocNull(int width, int height, int samples, TextureFormat format) {
-        texture.width = width;
-        texture.height = height;
+        texture.extentX = width;
+        texture.extentY = height;
         this.samples = samples;
         alloc(format);
     }
