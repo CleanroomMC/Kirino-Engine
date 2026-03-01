@@ -180,7 +180,7 @@ public class IntEnumFSMTest {
                     .initialState(1).validate();
         });
 
-        assertDoesNotThrow(() -> {
+        assertThrows(IllegalStateException.class, () -> {
             FiniteStateMachine.BuilderImpl.enumIntStateMachine(1, 3, Input.class)
                     .addTransition(1, Input.SECOND, 2)
                     .addTransition(2, Input.FIRST, 1)
