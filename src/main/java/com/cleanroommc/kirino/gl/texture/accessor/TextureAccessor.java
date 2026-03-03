@@ -12,6 +12,17 @@ import org.lwjgl.opengl.*;
 import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 
+/**
+ * <p>Note: this API performs <i><b>no validation or protection against illegal
+ * OpenGL and driver-level behavior</b></i>. Clients are fully responsible for ensuring correctness.</p>
+ *
+ * <p>This class aims high usability and strong interoperability with raw GL calls,
+ * and it allows direct interaction with underlying GL states. You can expect nearly no defensive guards around
+ * GL specifications.</p>
+ *
+ * <p>Highlevel abstractions are also provided, allowing users to finish common tasks in shorter
+ * and simpler calls.</p>
+ */
 public interface TextureAccessor {
 
     int textureID();
