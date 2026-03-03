@@ -1,11 +1,15 @@
 package com.cleanroommc.kirino.gl.texture.accessor;
 
+import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.TextureType;
+import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
+import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
 
+import java.lang.invoke.MethodHandle;
 import java.nio.ByteBuffer;
 
 public interface TextureAccessor {
@@ -25,7 +29,7 @@ public interface TextureAccessor {
         bind(textureID());
     }
 
-    default int fetchCurrentBoundBufferID() {
+    default int fetchCurrentBoundTexID() {
         return GL11.glGetInteger(bindingTarget());
     }
 
@@ -187,7 +191,7 @@ public interface TextureAccessor {
             int zOffset,
             int width,
             int height,
-            int depthOrLayerCount,
+            int depthOrLayer,
             int format,
             int type,
             @Nullable ByteBuffer data) {
@@ -257,7 +261,7 @@ public interface TextureAccessor {
             int zOffset,
             int width,
             int height,
-            int depthOrLayerCount,
+            int depthOrLayers,
             int format,
             @Nullable ByteBuffer data) {
 
@@ -394,5 +398,95 @@ public interface TextureAccessor {
 
     default void texBufferRange(int internalFormat, int bufferID, long offset, long size) {
         throw new UnsupportedOperationException("\"texBufferRange\" not supported by this texture type " + type().name() + ".");
+    }
+
+    class MethodHolder {
+        static final Delegate DELEGATE;
+
+        static {
+            DELEGATE = new Delegate(
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "currentFormat", TextureFormat.class),
+                    ReflectionUtils.getFieldGetter(GLTexture.class, "currentFormat", TextureFormat.class),
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "extentX", int.class),
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "extentY", int.class),
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "extentZ", int.class),
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "layers", int.class),
+                    ReflectionUtils.getFieldSetter(GLTexture.class, "samples", int.class));
+
+            Preconditions.checkNotNull(DELEGATE.currentFormatSetter);
+            Preconditions.checkNotNull(DELEGATE.currentFormatGetter);
+            Preconditions.checkNotNull(DELEGATE.extentXSetter);
+            Preconditions.checkNotNull(DELEGATE.extentYSetter);
+            Preconditions.checkNotNull(DELEGATE.extentZSetter);
+            Preconditions.checkNotNull(DELEGATE.layersSetter);
+            Preconditions.checkNotNull(DELEGATE.samplesSetter);
+        }
+
+        static void setCurrentFormat(GLTexture texture, TextureFormat format) {
+            try {
+                DELEGATE.currentFormatSetter.invokeExact(texture, format);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Nullable
+        static TextureFormat getCurrentFormat(GLTexture texture) {
+            try {
+                return (TextureFormat) DELEGATE.currentFormatGetter.invokeExact(texture);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setExtentX(GLTexture texture, int extentX) {
+            try {
+                DELEGATE.extentXSetter.invokeExact(texture, extentX);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setExtentY(GLTexture texture, int extentY) {
+            try {
+                DELEGATE.extentYSetter.invokeExact(texture, extentY);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setExtentZ(GLTexture texture, int extentZ) {
+            try {
+                DELEGATE.extentZSetter.invokeExact(texture, extentZ);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setLayers(GLTexture texture, int layers) {
+            try {
+                DELEGATE.layersSetter.invokeExact(texture, layers);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void setSamples(GLTexture texture, int samples) {
+            try {
+                DELEGATE.samplesSetter.invokeExact(texture, samples);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(
+                MethodHandle currentFormatSetter,
+                MethodHandle currentFormatGetter,
+                MethodHandle extentXSetter,
+                MethodHandle extentYSetter,
+                MethodHandle extentZSetter,
+                MethodHandle layersSetter,
+                MethodHandle samplesSetter) {
+        }
     }
 }

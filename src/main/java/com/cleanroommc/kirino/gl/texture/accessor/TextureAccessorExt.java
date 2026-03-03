@@ -1,18 +1,21 @@
 package com.cleanroommc.kirino.gl.texture.accessor;
 
+import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
+import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL45;
 import org.lwjgl.opengl.GL45C;
 
 import java.nio.ByteBuffer;
 
-public abstract class TextureDSAAccessor implements TextureAccessor {
+public abstract class TextureAccessorExt implements TextureAccessor {
 
     protected final boolean dsa;
 
-    TextureDSAAccessor(boolean dsa) {
+    TextureAccessorExt(boolean dsa) {
         this.dsa = dsa;
     }
 
@@ -155,6 +158,13 @@ public abstract class TextureDSAAccessor implements TextureAccessor {
         } else {
             TextureAccessor.super.getCompressedTexImage(level, data);
         }
+    }
+
+    public final void setParam(FilterMode filterModeMin, FilterMode filterModeMag, WrapMode wrapModeS, WrapMode wrapModeT) {
+        texParamI(GL11.GL_TEXTURE_MIN_FILTER, filterModeMin.glValue);
+        texParamI(GL11.GL_TEXTURE_MAG_FILTER, filterModeMag.glValue);
+        texParamI(GL11.GL_TEXTURE_WRAP_S, wrapModeS.glValue);
+        texParamI(GL11.GL_TEXTURE_WRAP_T, wrapModeT.glValue);
     }
 
     // todo: move to tbo accessor

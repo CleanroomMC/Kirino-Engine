@@ -19,6 +19,7 @@ public class GLTexture extends GLDisposable {
     protected int extentZ = 0;
     protected int layers = 0;
     protected int samples = 0;
+    protected TextureFormat currentFormat = null;
 
     /**
      * @return Width; x-dim
@@ -48,8 +49,6 @@ public class GLTexture extends GLDisposable {
     public int samples() {
         return samples;
     }
-
-    protected TextureFormat currentFormat = null;
 
     private GLTexture(int textureID, TextureType type) {
         this.textureID = textureID;

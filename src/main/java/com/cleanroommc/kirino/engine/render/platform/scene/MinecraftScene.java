@@ -230,12 +230,12 @@ public class MinecraftScene extends CleanWorld {
 //            // todo: integrate MinecraftCulling
 //        }
 
-        // test
-        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 20 && !meshletDebugSystem.isExecuting()) {
-            counter = 0;
-            storage.get(gizmosManager).clearMeshlets();
-            meshletDebugSystem.execute();
-        }
+//        // test
+//        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && ++counter == 20 && !meshletDebugSystem.isExecuting()) {
+//            counter = 0;
+//            storage.get(gizmosManager).clearMeshlets();
+//            meshletDebugSystem.execute();
+//        }
 
         if (meshletScheduler.update(meshletScheduler.computeResult)) {
             super.update();

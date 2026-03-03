@@ -9,7 +9,7 @@ import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
-import com.cleanroommc.kirino.gl.texture.Texture2DView;
+import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
@@ -159,17 +159,17 @@ public class FrameFinalizer {
         {
             mainFramebuffer.framebuffer.bind();
 
-            Texture2DView color0Tex = new Texture2DView(GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
+            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
             color0Tex.bind();
-            color0Tex.alloc(null, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.set(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
+            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             mainFramebuffer.framebuffer.attach(new ColorAttachment(0, color0Tex));
 
-            Texture2DView depthTex = new Texture2DView(GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
+            Texture2DAccessor depthTex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
             depthTex.bind();
-            depthTex.alloc(null, TextureFormat.D24S8);
-            depthTex.set(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            depthTex.highlevel().allocEmpty(true, TextureFormat.D24S8);
+            depthTex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             depthTex.bind(0);
             mainFramebuffer.framebuffer.attach(new DepthStencilAttachment(depthTex));
 
@@ -189,10 +189,10 @@ public class FrameFinalizer {
         if (useIntermediate) {
             intermediateFramebuffer.bind();
 
-            Texture2DView color0Tex = new Texture2DView(GLTexture.newTex2D(false, false, intermediateFramebuffer.width(), intermediateFramebuffer.height()));
+            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, intermediateFramebuffer.width(), intermediateFramebuffer.height()));
             color0Tex.bind();
-            color0Tex.alloc(null, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.set(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
+            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             intermediateFramebuffer.attach(new ColorAttachment(0, color0Tex));
 
@@ -210,10 +210,10 @@ public class FrameFinalizer {
         if (usePingPong) {
             pingPongFramebuffer.framebufferA().bind();
 
-            Texture2DView color0Tex = new Texture2DView(GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
+            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
             color0Tex.bind();
-            color0Tex.alloc(null, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.set(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
+            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             pingPongFramebuffer.framebufferA().attach(new ColorAttachment(0, color0Tex));
 
@@ -231,10 +231,10 @@ public class FrameFinalizer {
         if (usePingPong) {
             pingPongFramebuffer.framebufferB().bind();
 
-            Texture2DView color0Tex = new Texture2DView(GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
+            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
             color0Tex.bind();
-            color0Tex.alloc(null, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.set(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
+            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             pingPongFramebuffer.framebufferB().attach(new ColorAttachment(0, color0Tex));
 
