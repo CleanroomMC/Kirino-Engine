@@ -2183,6 +2183,415 @@ public sealed interface OpenGL permits OGL11 {
         throw new NotImplementedException("glUniformMatrix4x3 is only avaliable for OpenGL 21 and above");
     }
     // </editor-fold>
+    // <editor-fold desc="OpenGL 30">
+    default void glBeginConditionalRender(int id, int mode) {
+        throw new NotImplementedException("glBeginConditionalRender is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBeginTransformFeedback(int primitiveMode) {
+        throw new NotImplementedException("glBeginTransformFeedback is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindBufferBase(int target, int index, int buffer) {
+        throw new NotImplementedException("glBindBufferBase is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindBufferRange(int target, int index, int buffer, long offset, long size) {
+        throw new NotImplementedException("glBindBufferRange is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindFragDataLocation(int program, int colorNumber, CharSequence name) {
+        throw new NotImplementedException("glBindFragDataLocation is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindFragDataLocation(int program, int colorNumber, ByteBuffer name) {
+        throw new NotImplementedException("glBindFragDataLocation is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindFramebuffer(int target, int framebuffer) {
+        throw new NotImplementedException("glBindFramebuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindRenderbuffer(int target, int renderbuffer) {
+        throw new NotImplementedException("glBindRenderbuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBindVertexArray(int array) {
+        throw new NotImplementedException("glBindVertexArray is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glBlitFramebuffer(int srcX0, int srcY0, int srcX1, int srcY1, int dstX0, int dstY0, int dstX1, int dstY1, int mask, int filter) {
+        throw new NotImplementedException("glBlitFramebuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glCheckFramebufferStatus(int target) {
+        throw new NotImplementedException("glCheckFramebufferStatus is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glClampColor(int target, int clamp) {
+        throw new NotImplementedException("glClampColor is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glClearBuffer(int buffer, int drawbuffer, FloatBuffer value) {
+        throw new NotImplementedException("glClearBuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glClearBuffer(int buffer, int drawbuffer, IntBuffer value) {
+        throw new NotImplementedException("glClearBuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glClearBufferfi(int buffer, int drawbuffer, float depth, int stencil) {
+        throw new NotImplementedException("glClearBufferfi is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glClearBufferu(int buffer, int drawbuffer, IntBuffer value) {
+        throw new NotImplementedException("glClearBufferu is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glColorMaski(int buf, boolean r, boolean g, boolean b, boolean a) {
+        throw new NotImplementedException("glColorMaski is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteFramebuffers(int framebuffer) {
+        throw new NotImplementedException("glDeleteFramebuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteFramebuffers(IntBuffer framebuffers) {
+        throw new NotImplementedException("glDeleteFramebuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteRenderbuffers(int renderbuffer) {
+        throw new NotImplementedException("glDeleteRenderbuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteRenderbuffers(IntBuffer renderbuffers) {
+        throw new NotImplementedException("glDeleteRenderbuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteVertexArrays(int array) {
+        throw new NotImplementedException("glDeleteVertexArrays is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDeleteVertexArrays(IntBuffer arrays) {
+        throw new NotImplementedException("glDeleteVertexArrays is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glDisablei(int target, int index) {
+        throw new NotImplementedException("glDisablei is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glEnablei(int target, int index) {
+        throw new NotImplementedException("glEnablei is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glEndConditionalRender() {
+        throw new NotImplementedException("glEndConditionalRender is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glEndTransformFeedback() {
+        throw new NotImplementedException("glEndTransformFeedback is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFlushMappedBufferRange(int target, long offset, long length) {
+        throw new NotImplementedException("glFlushMappedBufferRange is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFramebufferRenderbuffer(int target, int attachment, int renderbuffertarget, int renderbuffer) {
+        throw new NotImplementedException("glFramebufferRenderbuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFramebufferTexture1D(int target, int attachment, int textarget, int texture, int level) {
+        throw new NotImplementedException("glFramebufferTexture1D is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFramebufferTexture2D(int target, int attachment, int textarget, int texture, int level) {
+        throw new NotImplementedException("glFramebufferTexture2D is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFramebufferTexture3D(int target, int attachment, int textarget, int texture, int level, int zoffset) {
+        throw new NotImplementedException("glFramebufferTexture3D is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glFramebufferTextureLayer(int target, int attachment, int texture, int level, int layer) {
+        throw new NotImplementedException("glFramebufferTextureLayer is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGenFramebuffers() {
+        throw new NotImplementedException("glGenFramebuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGenFramebuffers(IntBuffer framebuffers) {
+        throw new NotImplementedException("glGenFramebuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGenRenderbuffers() {
+        throw new NotImplementedException("glGenRenderbuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGenRenderbuffers(IntBuffer renderbuffers) {
+        throw new NotImplementedException("glGenRenderbuffers is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGenVertexArrays() {
+        throw new NotImplementedException("glGenVertexArrays is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGenVertexArrays(IntBuffer arrays) {
+        throw new NotImplementedException("glGenVertexArrays is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGenerateMipmap(int target) {
+        throw new NotImplementedException("glGenerateMipmap is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetBoolean(int value, int index, ByteBuffer data) {
+        throw new NotImplementedException("glGetBoolean is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetFragDataLocation(int program, CharSequence name) {
+        throw new NotImplementedException("glGetFragDataLocation is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetFragDataLocation(int program, ByteBuffer name) {
+        throw new NotImplementedException("glGetFragDataLocation is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetFramebufferAttachmentParameter(int target, int attachment, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetFramebufferAttachmentParameter is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetFramebufferAttachmentParameteri(int target, int attachment, int pname) {
+        throw new NotImplementedException("glGetFramebufferAttachmentParameteri is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetInteger(int value, int index, IntBuffer data) {
+        throw new NotImplementedException("glGetInteger is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetRenderbufferParameter(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetRenderbufferParameter is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetRenderbufferParameteri(int target, int pname) {
+        throw new NotImplementedException("glGetRenderbufferParameteri is only avaliable for OpenGL 30 and above");
+    }
+
+    default String glGetStringi(int name, int index) {
+        throw new NotImplementedException("glGetStringi is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetTexParameterI(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexParameterI is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetTexParameterIi(int target, int pname) {
+        throw new NotImplementedException("glGetTexParameterIi is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetTexParameterIu(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetTexParameterIu is only avaliable for OpenGL 30 and above");
+    }
+
+    default int glGetTexParameterIui(int target, int pname) {
+        throw new NotImplementedException("glGetTexParameterIui is only avaliable for OpenGL 30 and above");
+    }
+
+    default String glGetTransformFeedbackVarying(int program, int index, int bufSize, IntBuffer size, IntBuffer type) {
+        throw new NotImplementedException("glGetTransformFeedbackVarying is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetTransformFeedbackVarying(int program, int index, IntBuffer length, IntBuffer size, IntBuffer type, ByteBuffer name) {
+        throw new NotImplementedException("glGetTransformFeedbackVarying is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetUniformu(int program, int location, IntBuffer params) {
+        throw new NotImplementedException("glGetUniformu is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetVertexAttribI(int index, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetVertexAttribI is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glGetVertexAttribIu(int index, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetVertexAttribIu is only avaliable for OpenGL 30 and above");
+    }
+
+    default boolean glIsEnabledi(int target, int index) {
+        throw new NotImplementedException("glIsEnabledi is only avaliable for OpenGL 30 and above");
+    }
+
+    default boolean glIsFramebuffer(int framebuffer) {
+        throw new NotImplementedException("glIsFramebuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default boolean glIsRenderbuffer(int renderbuffer) {
+        throw new NotImplementedException("glIsRenderbuffer is only avaliable for OpenGL 30 and above");
+    }
+
+    default boolean glIsVertexArray(int array) {
+        throw new NotImplementedException("glIsVertexArray is only avaliable for OpenGL 30 and above");
+    }
+
+    default ByteBuffer glMapBufferRange(int target, long offset, long length, int access, ByteBuffer old_buffer) {
+        throw new NotImplementedException("glMapBufferRange is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glRenderbufferStorage(int target, int internalformat, int width, int height) {
+        throw new NotImplementedException("glRenderbufferStorage is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glRenderbufferStorageMultisample(int target, int samples, int internalformat, int width, int height) {
+        throw new NotImplementedException("glRenderbufferStorageMultisample is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glTexParameterI(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glTexParameterI is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glTexParameterIi(int target, int pname, int param) {
+        throw new NotImplementedException("glTexParameterIi is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glTexParameterIu(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glTexParameterIu is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glTexParameterIui(int target, int pname, int param) {
+        throw new NotImplementedException("glTexParameterIui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glTransformFeedbackVaryings(int program, CharSequence[] varyings, int bufferMode) {
+        throw new NotImplementedException("glTransformFeedbackVaryings is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform1u(int location, IntBuffer value) {
+        throw new NotImplementedException("glUniform1u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform1ui(int location, int v0) {
+        throw new NotImplementedException("glUniform1ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform2u(int location, IntBuffer value) {
+        throw new NotImplementedException("glUniform2u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform2ui(int location, int v0, int v1) {
+        throw new NotImplementedException("glUniform2ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform3u(int location, IntBuffer value) {
+        throw new NotImplementedException("glUniform3u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform3ui(int location, int v0, int v1, int v2) {
+        throw new NotImplementedException("glUniform3ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform4u(int location, IntBuffer value) {
+        throw new NotImplementedException("glUniform4u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glUniform4ui(int location, int v0, int v1, int v2, int v3) {
+        throw new NotImplementedException("glUniform4ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI1(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI1 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI1i(int index, int x) {
+        throw new NotImplementedException("glVertexAttribI1i is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI1u(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI1u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI1ui(int index, int x) {
+        throw new NotImplementedException("glVertexAttribI1ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI2(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI2 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI2i(int index, int x, int y) {
+        throw new NotImplementedException("glVertexAttribI2i is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI2u(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI2u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI2ui(int index, int x, int y) {
+        throw new NotImplementedException("glVertexAttribI2ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI3(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI3 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI3i(int index, int x, int y, int z) {
+        throw new NotImplementedException("glVertexAttribI3i is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI3u(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI3u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI3ui(int index, int x, int y, int z) {
+        throw new NotImplementedException("glVertexAttribI3ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4(int index, ByteBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4(int index, ShortBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4 is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4i(int index, int x, int y, int z, int w) {
+        throw new NotImplementedException("glVertexAttribI4i is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4u(int index, ByteBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4u(int index, IntBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4u(int index, ShortBuffer v) {
+        throw new NotImplementedException("glVertexAttribI4u is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribI4ui(int index, int x, int y, int z, int w) {
+        throw new NotImplementedException("glVertexAttribI4ui is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribIPointer(int index, int size, int type, int stride, long buffer_buffer_offset) {
+        throw new NotImplementedException("glVertexAttribIPointer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribIPointer(int index, int size, int type, int stride, ByteBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribIPointer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribIPointer(int index, int size, int type, int stride, IntBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribIPointer is only avaliable for OpenGL 30 and above");
+    }
+
+    default void glVertexAttribIPointer(int index, int size, int type, int stride, ShortBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribIPointer is only avaliable for OpenGL 30 and above");
+    }
+    // </editor-fold>
     // <editor-fold desc="OpenGL 43">
     default void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
         throw new NotImplementedException("glBindVertexBuffer is only avaliable for OpenGL 43 and above");

@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.gl.dispatch;
 
 import java.nio.FloatBuffer;
 
-sealed class OGL21 extends OGL20 permits OGL43 {
+sealed class OGL21 extends OGL20 permits OGL30 {
     @Override
     public void glUniformMatrix2x3(int location, boolean transpose, FloatBuffer matrices) {
         org.lwjgl.opengl.GL21.glUniformMatrix2x3(location, transpose, matrices);
