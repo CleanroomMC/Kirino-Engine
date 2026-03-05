@@ -2158,6 +2158,31 @@ public sealed interface OpenGL permits OGL11 {
         throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
     }
     // </editor-fold>
+    // <editor-fold desc="OpenGL 21">
+    default void glUniformMatrix2x3(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix2x3 is only avaliable for OpenGL 21 and above");
+    }
+
+    default void glUniformMatrix2x4(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix2x4 is only avaliable for OpenGL 21 and above");
+    }
+
+    default void glUniformMatrix3x2(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix3x2 is only avaliable for OpenGL 21 and above");
+    }
+
+    default void glUniformMatrix3x4(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix3x4 is only avaliable for OpenGL 21 and above");
+    }
+
+    default void glUniformMatrix4x2(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix4x2 is only avaliable for OpenGL 21 and above");
+    }
+
+    default void glUniformMatrix4x3(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix4x3 is only avaliable for OpenGL 21 and above");
+    }
+    // </editor-fold>
     // <editor-fold desc="OpenGL 43">
     default void glBindVertexBuffer(int bindingindex, int buffer, long offset, int stride) {
         throw new NotImplementedException("glBindVertexBuffer is only avaliable for OpenGL 43 and above");

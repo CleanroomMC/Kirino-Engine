@@ -4,7 +4,7 @@ import org.lwjgl.MemoryUtil;
 
 import java.nio.*;
 
-sealed class OGL20 extends OGL15 permits OGL43 {
+sealed class OGL20 extends OGL15 permits OGL21 {
     @Override
     public void glAttachShader(int program, int shader) {
         org.lwjgl.opengl.GL20.glAttachShader(program, shader);
