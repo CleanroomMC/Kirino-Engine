@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.gl.dispatch;
 
 import java.nio.*;
 
-sealed class OGL15 extends OGL14 permits OGL43 {
+sealed class OGL15 extends OGL14 permits OGL20 {
     @Override
     public void glBeginQuery(int target, int id) {
         org.lwjgl.opengl.GL15.glBeginQuery(target, id);

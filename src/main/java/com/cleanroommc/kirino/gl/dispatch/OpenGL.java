@@ -1648,7 +1648,7 @@ public sealed interface OpenGL permits OGL11 {
         throw new NotImplementedException("glWindowPos3i is only avaliable for OpenGL 13 and above");
     }
     // </editor-fold>
-    // <editor-fold desc-"OpenGL 15">
+    // <editor-fold desc="OpenGL 15">
     default void glBeginQuery(int target, int id) {
         throw new NotImplementedException("glBeginQuery is only avaliable for OpenGL 15 and above");
     }
@@ -1807,6 +1807,355 @@ public sealed interface OpenGL permits OGL11 {
 
     default boolean glUnmapBuffer(int target) {
         throw new NotImplementedException("glUnmapBuffer is only avaliable for OpenGL 15 and above");
+    }
+    // </editor-fold>
+    // <editor-fold desc="OpenGL 20">
+    default void glAttachShader(int program, int shader) {
+        throw new NotImplementedException("glAttachShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glBindAttribLocation(int program, int index, CharSequence name) {
+        throw new NotImplementedException("glBindAttribLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glBindAttribLocation(int program, int index, ByteBuffer name) {
+        throw new NotImplementedException("glBindAttribLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glBlendEquationSeparate(int modeRGB, int modeAlpha) {
+        throw new NotImplementedException("glBlendEquationSeparate is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glCompileShader(int shader) {
+        throw new NotImplementedException("glCompileShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glCreateProgram() {
+        throw new NotImplementedException("glCreateProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glCreateShader(int type) {
+        throw new NotImplementedException("glCreateShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDeleteProgram(int program) {
+        throw new NotImplementedException("glDeleteProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDeleteShader(int shader) {
+        throw new NotImplementedException("glDeleteShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDetachShader(int program, int shader) {
+        throw new NotImplementedException("glDetachShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDisableVertexAttribArray(int index) {
+        throw new NotImplementedException("glDisableVertexAttribArray is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDrawBuffers(int buffer) {
+        throw new NotImplementedException("glDrawBuffers is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glDrawBuffers(IntBuffer buffers) {
+        throw new NotImplementedException("glDrawBuffers is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glEnableVertexAttribArray(int index) {
+        throw new NotImplementedException("glEnableVertexAttribArray is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetActiveAttrib(int program, int index, IntBuffer length, IntBuffer size, IntBuffer type, ByteBuffer name) {
+        throw new NotImplementedException("glGetActiveAttrib is only avaliable for OpenGL 20 and above");
+    }
+
+    default String glGetActiveUniform(int program, int index, int maxLength) {
+        throw new NotImplementedException("glGetActiveAttrib is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetActiveUniform(int program, int index, IntBuffer length, IntBuffer size, IntBuffer type, ByteBuffer name) {
+        throw new NotImplementedException("glGetActiveUniform is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetAttachedShaders(int program, IntBuffer count, IntBuffer shaders) {
+        throw new NotImplementedException("glGetAttachedShaders is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetAttribLocation(int program, CharSequence name) {
+        throw new NotImplementedException("glGetAttribLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetAttribLocation(int program, ByteBuffer name) {
+        throw new NotImplementedException("glGetAttribLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetProgram(int program, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default String glGetProgramInfoLog(int program, int maxLength) {
+        throw new NotImplementedException("glGetProgramInfoLog is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetProgramInfoLog(int program, IntBuffer length, ByteBuffer infoLog) {
+        throw new NotImplementedException("glGetProgramInfoLog is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetProgrami(int program, int pname) {
+        throw new NotImplementedException("glGetProgrami is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetShader(int shader, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default String glGetShaderInfoLog(int shader, int maxLength) {
+        throw new NotImplementedException("glGetShaderInfoLog is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetShaderInfoLog(int shader, IntBuffer length, ByteBuffer infoLog) {
+        throw new NotImplementedException("glGetShaderInfoLog is only avaliable for OpenGL 20 and above");
+    }
+
+    default String glGetShaderSource(int shader, int maxLength) {
+        throw new NotImplementedException("glGetShaderSource is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetShaderSource(int shader, IntBuffer length, ByteBuffer source) {
+        throw new NotImplementedException("glGetShaderSource is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetShaderi(int shader, int pname) {
+        throw new NotImplementedException("glGetShaderi is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetUniform(int program, int location, FloatBuffer params) {
+        throw new NotImplementedException("glGetUniform is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetUniform(int program, int location, IntBuffer params) {
+        throw new NotImplementedException("glGetUniform is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetUniformLocation(int program, CharSequence name) {
+        throw new NotImplementedException("glGetUniformLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default int glGetUniformLocation(int program, ByteBuffer name) {
+        throw new NotImplementedException("glGetUniformLocation is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetVertexAttrib(int index, int pname, DoubleBuffer params) {
+        throw new NotImplementedException("glGetVertexAttrib is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetVertexAttrib(int index, int pname, FloatBuffer params) {
+        throw new NotImplementedException("glGetVertexAttrib is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glGetVertexAttrib(int index, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetVertexAttrib is only avaliable for OpenGL 20 and above");
+    }
+
+    default boolean glIsProgram(int program) {
+        throw new NotImplementedException("glIsProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default boolean glIsShader(int shader) {
+        throw new NotImplementedException("glIsShader is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glLinkProgram(int program) {
+        throw new NotImplementedException("glLinkProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glShaderSource(int shader, CharSequence string) {
+        throw new NotImplementedException("glShaderSource is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glShaderSource(int shader, ByteBuffer string) {
+        throw new NotImplementedException("glShaderSource is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glShaderSource(int shader, CharSequence[] strings) {
+        throw new NotImplementedException("glShaderSource is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glStencilFuncSeparate(int face, int func, int ref, int mask) {
+        throw new NotImplementedException("glStencilFuncSeparate is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glStencilMaskSeparate(int face, int mask) {
+        throw new NotImplementedException("glStencilMaskSeparate is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glStencilOpSeparate(int face, int sfail, int dpfail, int dppass) {
+        throw new NotImplementedException("glStencilOpSeparate is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform1(int location, FloatBuffer values) {
+        throw new NotImplementedException("glUniform1 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform1(int location, IntBuffer values) {
+        throw new NotImplementedException("glUniform1 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform1f(int location, float v0) {
+        throw new NotImplementedException("glUniform1f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform1i(int location, int v0) {
+        throw new NotImplementedException("glUniform1i is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform2(int location, FloatBuffer values) {
+        throw new NotImplementedException("glUniform2 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform2(int location, IntBuffer values) {
+        throw new NotImplementedException("glUniform2 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform2f(int location, float v0, float v1) {
+        throw new NotImplementedException("glUniform2f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform2i(int location, int v0, int v1) {
+        throw new NotImplementedException("glUniform2i is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform3(int location, FloatBuffer values) {
+        throw new NotImplementedException("glUniform3 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform3(int location, IntBuffer values) {
+        throw new NotImplementedException("glUniform3 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform3f(int location, float v0, float v1, float v2) {
+        throw new NotImplementedException("glUniform3f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform3i(int location, int v0, int v1, int v2) {
+        throw new NotImplementedException("glUniform3i is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform4(int location, FloatBuffer values) {
+        throw new NotImplementedException("glUniform4 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform4(int location, IntBuffer values) {
+        throw new NotImplementedException("glUniform4 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform4f(int location, float v0, float v1, float v2, float v3) {
+        throw new NotImplementedException("glUniform4f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniform4i(int location, int v0, int v1, int v2, int v3) {
+        throw new NotImplementedException("glUniform4i is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniformMatrix2(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix2 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniformMatrix3(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix3 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUniformMatrix4(int location, boolean transpose, FloatBuffer matrices) {
+        throw new NotImplementedException("glUniformMatrix4 is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glUseProgram(int program) {
+        throw new NotImplementedException("glUseProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glValidateProgram(int program) {
+        throw new NotImplementedException("glValidateProgram is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib1d(int index, double x) {
+        throw new NotImplementedException("glVertexAttrib1d is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib1f(int index, float x) {
+        throw new NotImplementedException("glVertexAttrib1f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib1s(int index, short x) {
+        throw new NotImplementedException("glVertexAttrib1s is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib2d(int index, double x, double y) {
+        throw new NotImplementedException("glVertexAttrib2d is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib2f(int index, float x, float y) {
+        throw new NotImplementedException("glVertexAttrib2f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib2s(int index, short x, short y) {
+        throw new NotImplementedException("glVertexAttrib2s is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib3d(int index, double x, double y, double z) {
+        throw new NotImplementedException("glVertexAttrib3d is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib3f(int index, float x, float y, float z) {
+        throw new NotImplementedException("glVertexAttrib3f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib3s(int index, short x, short y, short z) {
+        throw new NotImplementedException("glVertexAttrib3s is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib4Nub(int index, byte x, byte y, byte z, byte w) {
+        throw new NotImplementedException("glVertexAttrib4Nub is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib4d(int index, double x, double y, double z, double w) {
+        throw new NotImplementedException("glVertexAttrib4d is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib4f(int index, float x, float y, float z, float w) {
+        throw new NotImplementedException("glVertexAttrib4f is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttrib4s(int index, short x, short y, short z, short w) {
+        throw new NotImplementedException("glVertexAttrib4s is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, int type, boolean normalized, int stride, long buffer_buffer_offset) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, int type, boolean normalized, int stride, ByteBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, boolean normalized, int stride, DoubleBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, boolean normalized, int stride, FloatBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, boolean unsigned, boolean normalized, int stride, ByteBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, boolean unsigned, boolean normalized, int stride, IntBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
+    }
+
+    default void glVertexAttribPointer(int index, int size, boolean unsigned, boolean normalized, int stride, ShortBuffer buffer) {
+        throw new NotImplementedException("glVertexAttribPointer is only avaliable for OpenGL 20 and above");
     }
     // </editor-fold>
     // <editor-fold desc="OpenGL 43">
