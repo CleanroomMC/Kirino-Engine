@@ -8,7 +8,7 @@ import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-sealed class OGL14 extends OGL13 permits OGL43 {
+sealed class OGL14 extends OGL13 permits OGL15 {
     @Override
     public void glBlendColor(float red, float green, float blue, float alpha) {
         GL14.glBlendColor(red, green, blue, alpha);

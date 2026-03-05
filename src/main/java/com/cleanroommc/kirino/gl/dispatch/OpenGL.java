@@ -2,8 +2,6 @@ package com.cleanroommc.kirino.gl.dispatch;
 
 import org.apache.commons.lang3.NotImplementedException;
 import org.lwjgl.opengl.KHRDebugCallback;
-import org.lwjglx.MemoryUtil;
-import org.lwjglx.lwjgl3ify.BufferCasts;
 
 import java.nio.*;
 
@@ -1648,6 +1646,167 @@ public sealed interface OpenGL permits OGL11 {
     default void glWindowPos3i(int x, int y, int z)
     {
         throw new NotImplementedException("glWindowPos3i is only avaliable for OpenGL 13 and above");
+    }
+    // </editor-fold>
+    // <editor-fold desc-"OpenGL 15">
+    default void glBeginQuery(int target, int id) {
+        throw new NotImplementedException("glBeginQuery is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBindBuffer(int target, int buffer) {
+        throw new NotImplementedException("glBindBuffer is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, long data_size, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, ByteBuffer data, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, DoubleBuffer data, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, FloatBuffer data, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, IntBuffer data, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferData(int target, ShortBuffer data, int usage) {
+        throw new NotImplementedException("glBufferData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferSubData(int target, long offset, ByteBuffer data) {
+        throw new NotImplementedException("glBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferSubData(int target, long offset, DoubleBuffer data) {
+        throw new NotImplementedException("glBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferSubData(int target, long offset, FloatBuffer data) {
+        throw new NotImplementedException("glBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferSubData(int target, long offset, IntBuffer data) {
+        throw new NotImplementedException("glBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glBufferSubData(int target, long offset, ShortBuffer data) {
+        throw new NotImplementedException("glBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glDeleteBuffers(int buffer) {
+        throw new NotImplementedException("glDeleteBuffers is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glDeleteBuffers(IntBuffer buffers) {
+        throw new NotImplementedException("glDeleteBuffers is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glDeleteQueries(int id) {
+        throw new NotImplementedException("glDeleteQueries is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glDeleteQueries(IntBuffer ids) {
+        throw new NotImplementedException("glDeleteQueries is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glEndQuery(int target) {
+        throw new NotImplementedException("glEndQuery is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGenBuffers() {
+        throw new NotImplementedException("glGenBuffers is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGenBuffers(IntBuffer buffers) {
+        throw new NotImplementedException("glGenBuffers is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGenQueries() {
+        throw new NotImplementedException("glGenQueries is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGenQueries(IntBuffer ids) {
+        throw new NotImplementedException("glGenQueries is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferParameter(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetBufferParameter is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGetBufferParameteri(int target, int pname) {
+        throw new NotImplementedException("glGetBufferParameteri is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferSubData(int target, long offset, ByteBuffer data) {
+        throw new NotImplementedException("glGetBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferSubData(int target, long offset, DoubleBuffer data) {
+        throw new NotImplementedException("glGetBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferSubData(int target, long offset, FloatBuffer data) {
+        throw new NotImplementedException("glGetBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferSubData(int target, long offset, IntBuffer data) {
+        throw new NotImplementedException("glGetBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetBufferSubData(int target, long offset, ShortBuffer data) {
+        throw new NotImplementedException("glGetBufferSubData is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetQuery(int target, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetQuery is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetQueryObject(int id, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetQueryObject is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGetQueryObjecti(int id, int pname) {
+        throw new NotImplementedException("glGetQueryObjecti is only avaliable for OpenGL 15 and above");
+    }
+
+    default void glGetQueryObjectu(int id, int pname, IntBuffer params) {
+        throw new NotImplementedException("glGetQueryObjectu is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGetQueryObjectui(int id, int pname) {
+        throw new NotImplementedException("glGetQueryObjectui is only avaliable for OpenGL 15 and above");
+    }
+
+    default int glGetQueryi(int target, int pname) {
+        throw new NotImplementedException("glGetQueryi is only avaliable for OpenGL 15 and above");
+    }
+
+    default boolean glIsBuffer(int buffer) {
+        throw new NotImplementedException("glIsBuffer is only avaliable for OpenGL 15 and above");
+    }
+
+    default boolean glIsQuery(int id) {
+        throw new NotImplementedException("glIsQuery is only avaliable for OpenGL 15 and above");
+    }
+
+    default ByteBuffer glMapBuffer(int target, int access, long length, ByteBuffer old_buffer) {
+        throw new NotImplementedException("glMapBuffer is only avaliable for OpenGL 15 and above");
+    }
+
+    default ByteBuffer glMapBuffer(int target, int access, ByteBuffer old_buffer) {
+        throw new NotImplementedException("glMapBuffer is only avaliable for OpenGL 15 and above");
+    }
+
+    default boolean glUnmapBuffer(int target) {
+        throw new NotImplementedException("glUnmapBuffer is only avaliable for OpenGL 15 and above");
     }
     // </editor-fold>
     // <editor-fold desc="OpenGL 43">
