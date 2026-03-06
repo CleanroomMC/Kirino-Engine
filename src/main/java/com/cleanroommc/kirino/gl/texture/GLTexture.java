@@ -14,12 +14,12 @@ public class GLTexture extends GLDisposable {
     public final int textureID;
     public final TextureType type;
 
-    protected int extentX = 0;
-    protected int extentY = 0;
-    protected int extentZ = 0;
-    protected int layers = 0;
-    protected int samples = 0;
-    protected TextureFormat currentFormat = null;
+    private int extentX = 0;
+    private int extentY = 0;
+    private int extentZ = 0;
+    private int layers = 0;
+    private int samples = 0;
+    private TextureFormat currentFormat = null;
 
     /**
      * @return Width; x-dim
