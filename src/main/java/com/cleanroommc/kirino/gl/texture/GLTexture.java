@@ -428,7 +428,7 @@ public class GLTexture extends GLDisposable {
      * @see #newTexBuffer(boolean, boolean)
      */
     @NonNull
-    public static GLTexture newDsaTexBuffe() {
+    public static GLTexture newDsaTexBuffer() {
         return newTexBuffer(true, false);
     }
 

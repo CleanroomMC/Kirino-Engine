@@ -17,8 +17,10 @@ public class MeshletComputeSystem {
     private final ResourceSlot<ShaderProgram> computeShader;
     private boolean shaderRunning = false;
     private long fence;
+
     private Texture1DAccessor counterTex; // vertexCounter & indexCounter
     private ByteBuffer texTempBuffer;
+
     private int rawVertexCount = 0;
     private int rawIndexCount = 0;
 

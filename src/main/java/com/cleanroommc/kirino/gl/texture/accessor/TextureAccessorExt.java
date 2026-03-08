@@ -166,23 +166,4 @@ public abstract class TextureAccessorExt implements TextureAccessor {
         texParamI(GL11.GL_TEXTURE_WRAP_S, wrapModeS.glValue);
         texParamI(GL11.GL_TEXTURE_WRAP_T, wrapModeT.glValue);
     }
-
-    // todo: move to tbo accessor
-//    @Override
-//    public void texBuffer(int internalFormat, int bufferID) {
-//        if (dsa) {
-//            GL45C.glTextureBuffer(textureID(), internalFormat, bufferID);
-//        } else {
-//            TextureAccessor.super.texBuffer(internalFormat, bufferID);
-//        }
-//    }
-//
-//    @Override
-//    public void texBufferRange(int internalFormat, int bufferID, long offset, long size) {
-//        if (dsa) {
-//            GL45C.glTextureBufferRange(textureID(), internalFormat, bufferID, offset, size);
-//        } else {
-//            TextureAccessor.super.texBufferRange(internalFormat, bufferID, offset, size);
-//        }
-//    }
 }

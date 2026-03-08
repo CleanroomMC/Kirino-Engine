@@ -24,6 +24,8 @@ public class MeshletGpuRegistry {
     private final List<Integer> meshletIdAddedSinceLastBegin = new ArrayList<>();
     private final List<Integer> meshletIdRemovedSinceLastBegin = new ArrayList<>();
 
+    private final MeshletDirtySlotTracker dirtySlotTracker = new MeshletDirtySlotTracker();
+
     private boolean writing = false;
     private boolean finishedWritingOnce = false;
     private boolean computing = false;
@@ -108,10 +110,23 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(!writing, "Must not be writing already.");
 
         // handle side effects, modify id -> slot mapping to be exact
-        meshletBufferSlotAllocator.syncMeshletIdAddition(meshletIdAddedSinceLastBegin);
-        meshletBufferSlotAllocator.syncMeshletIdRemoval(meshletIdRemovedSinceLastBegin);
+        List<MeshletBufferSlotAllocator.MeshletAdditionResult> additionResults = meshletBufferSlotAllocator.syncMeshletIdAddition(meshletIdAddedSinceLastBegin);
+        List<MeshletBufferSlotAllocator.MeshletRemovalResult> removalResults = meshletBufferSlotAllocator.syncMeshletIdRemoval(meshletIdRemovedSinceLastBegin);
+
         meshletIdAddedSinceLastBegin.clear();
         meshletIdRemovedSinceLastBegin.clear();
+
+        // mark added meshlets dirty
+        for (var result : additionResults) {
+            dirtySlotTracker.markDirty(result.slot());
+        }
+
+        // mark swapped meshlets dirty
+        for (var result : removalResults) {
+            if (result.swappedMeshletId() != null) {
+                dirtySlotTracker.markDirty(result.removedSlot());
+            }
+        }
 
         meshletBufferSlotAllocator.growBufferIfNeeded();
 
@@ -149,12 +164,12 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(finishedWritingOnce, "Must finished writing once so the compute shader can therefore consume the data.");
         Preconditions.checkState(!computing, "Must not be computing already.");
 
-        computing = true;
-
         // the meshlet count is up to date since last beginWriting
         // which is valid at this phase. finishWriting --> beginComputing --> beginWriting
         vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount());
         vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
+
+        computing = true;
     }
 
     /**
@@ -166,14 +181,16 @@ public class MeshletGpuRegistry {
     public synchronized void finishComputing() {
         Preconditions.checkState(computing, "Must be computing already.");
 
-        computing = false;
-
         vertexOutputBuffer.swap();
+        dirtySlotTracker.clear();
+
+        computing = false;
     }
 
     /**
      * The consume target is up to date since last {@link #finishWriting()}.
-     * Must only retrieve the ssbo after {@link #finishWriting()} and before next {@link #finishWriting()}.
+     * Must only retrieve the consume target after {@link #finishWriting()} and before next {@link #finishWriting()}
+     * (should be retrieved right before the compute task).
      *
      * <p>Be aware of the current phase when calling this method.</p>
      *
@@ -186,6 +203,8 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * Must be retrieved right before the compute task.
+     *
      * @return The vertex ssbo to be written by the compute shader
      */
     public synchronized SSBOView getVertexWriteTarget() {
@@ -193,6 +212,8 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * Must be retrieved right before the compute task.
+     *
      * @return The index ssbo to be written by the compute shader
      */
     public synchronized SSBOView getIndexWriteTarget() {
@@ -200,6 +221,8 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * Must be retrieved after the compute task.
+     *
      * @return The vertex ssbo to be drawn
      */
     public synchronized SSBOView getVertexConsumeTarget() {
@@ -207,6 +230,8 @@ public class MeshletGpuRegistry {
     }
 
     /**
+     * Must be retrieved after the compute task.
+     *
      * @return The index ssbo to be drawn
      */
     public synchronized SSBOView getIndexConsumeTarget() {
@@ -217,10 +242,26 @@ public class MeshletGpuRegistry {
      * The meshlet count is up to date since last {@link #beginWriting()}.
      *
      * <p>Be aware of the current phase when calling this method.</p>
+     * <p>The value is synchronized during {@link #beginWriting()} and remains
+     * stable until the next {@link #beginWriting()}.</p>
      *
      * @return The meshlet count
      */
     public synchronized int getMeshletCount() {
         return meshletBufferSlotAllocator.getMeshletCount();
+    }
+
+    /**
+     * The dirty slots are valid after {@link #beginWriting()} until {@link #finishComputing()}.
+     *
+     * <p>Be aware of the current phase when calling this method.</p>
+     *
+     * @return The dirty slots
+     */
+    public synchronized List<Integer> getDirtySlots() {
+        Preconditions.checkState(writing || computing,
+                "Dirty slots are only valid after \"beginWriting\" and before \"finishComputing\".");
+
+        return dirtySlotTracker.snapshot();
     }
 }

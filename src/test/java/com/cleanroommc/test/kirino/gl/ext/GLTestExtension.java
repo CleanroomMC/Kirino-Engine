@@ -23,6 +23,10 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
     private static long window;
     private static ExecutorService glThread = null;
 
+    public static Logger logger() {
+        return LOGGER;
+    }
+
     private void initGL() {
         glThread = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "GL Test Thread");
