@@ -99,7 +99,6 @@ public class ComputeImageIOTest {
             assertTrue(GL20.glGetProgrami(programID, GL20.GL_LINK_STATUS) != GL11.GL_FALSE);
 
             Texture1DAccessor texture1DAccessor = new Texture1DAccessor(true, GLTexture.newDsaTex1D(1));
-            texture1DAccessor.bind();
             texture1DAccessor.highlevel().alloc(
                     false,
                     BufferUtils.createByteBuffer(4).putInt(0).flip(),

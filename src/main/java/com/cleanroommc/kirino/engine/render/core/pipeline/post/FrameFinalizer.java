@@ -271,6 +271,7 @@ public class FrameFinalizer {
         }
     }
 
+    // todo: fix pipeline stall
     /**
      * <p><b>Input Framebuffer</b>: {@link #mainFramebuffer}</p>
      * <p><b>Output Framebuffer</b>: {@link #minecraftFramebuffer}</p>

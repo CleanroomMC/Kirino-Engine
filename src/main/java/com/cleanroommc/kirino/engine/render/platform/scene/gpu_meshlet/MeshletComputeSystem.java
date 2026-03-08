@@ -1,13 +1,13 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
-import com.cleanroommc.kirino.gl.buffer.GLBuffer;
-import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
-import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.cleanroommc.kirino.gl.texture.GLTexture;
+import com.cleanroommc.kirino.gl.texture.accessor.Texture1DAccessor;
+import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
@@ -17,7 +17,8 @@ public class MeshletComputeSystem {
     private final ResourceSlot<ShaderProgram> computeShader;
     private boolean shaderRunning = false;
     private long fence;
-    private SSBOView counterSsbo; // vertexCounter & indexCounter
+    private Texture1DAccessor counterTex; // vertexCounter & indexCounter
+    private ByteBuffer texTempBuffer;
     private int rawVertexCount = 0;
     private int rawIndexCount = 0;
 
@@ -44,21 +45,13 @@ public class MeshletComputeSystem {
     }
 
     public void lateInit() {
-        counterSsbo = new SSBOView(new GLBuffer());
+        counterTex = new Texture1DAccessor(true, GLTexture.newDsaTex1D(2));
+        counterTex.highlevel().alloc(
+                false,
+                BufferUtils.createByteBuffer(8).putInt(0).putInt(0).flip(),
+                TextureFormat.R32UI);
 
-        int size = 8; // two integers
-
-        counterSsbo.bind();
-        counterSsbo.allocPersistent(size, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        counterSsbo.mapPersistent(0, size, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        counterSsbo.bind(0);
-
-        ByteBuffer byteBuffer = counterSsbo
-                .getPersistentMappedBuffer()
-                .orElseThrow(() -> new IllegalStateException("SSBO not mapped."));
-
-        byteBuffer.putInt(0, 0);
-        byteBuffer.putInt(4, 0);
+        texTempBuffer = BufferUtils.createByteBuffer(8);
     }
 
     public void startDispatch(ResourceStorage storage, MeshletGpuRegistry meshletGpuRegistry) {
@@ -67,16 +60,16 @@ public class MeshletComputeSystem {
         shaderRunning = true;
         ShaderProgram program = storage.get(computeShader);
 
+        // todo: abstract shader setup
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getVertexWriteTarget().target(), 1, meshletGpuRegistry.getVertexWriteTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getIndexWriteTarget().target(), 2, meshletGpuRegistry.getIndexWriteTarget().bufferID);
-        GL30.glBindBufferBase(counterSsbo.target(), 3, counterSsbo.bufferID);
+        GL42.glBindImageTexture(3, counterTex.textureID(), 0, false, 0, GL15.GL_READ_WRITE, TextureFormat.R32UI.internalFormat);
 
         program.use();
 
-        GL42.glMemoryBarrier(GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT); // make persistently mapped buffer visible (just finished the writing task)
         GL43.glDispatchCompute(meshletGpuRegistry.getMeshletCount(), 1, 1);
-        GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT); // needed for subsequent ssbo reading in shaders
+        GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // make image write visible to subsequent read
 
         fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     }
@@ -87,19 +80,22 @@ public class MeshletComputeSystem {
         int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 0L);
         if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
             GL32C.glDeleteSync(fence);
-            GL42.glMemoryBarrier(GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
 
-            KirinoCommonCore.LOGGER.info("finished compute");
+            texTempBuffer.clear();
+            counterTex.getTexImage(
+                    0,
+                    TextureFormat.R32UI.format,
+                    TextureFormat.R32UI.type,
+                    texTempBuffer);
 
-            ByteBuffer byteBuffer = counterSsbo
-                    .getPersistentMappedBuffer()
-                    .orElseThrow(() -> new IllegalStateException("SSBO not mapped."));
+            rawVertexCount = texTempBuffer.getInt(0);
+            rawIndexCount = texTempBuffer.getInt(4);
 
-            rawVertexCount = byteBuffer.getInt(0);
-            rawIndexCount = byteBuffer.getInt(4);
-
-            byteBuffer.putInt(0, 0);
-            byteBuffer.putInt(4, 0);
+            counterTex.clearTexImage(
+                    0,
+                    TextureFormat.R32UI.format,
+                    TextureFormat.R32UI.type,
+                    null);
 
             shaderRunning = false;
             return true;
