@@ -1,16 +1,22 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.gl.buffer.GLBuffer;
+import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
+import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture1DAccessor;
+import com.cleanroommc.kirino.gl.texture.accessor.TextureBufferAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public class MeshletComputeSystem {
 
@@ -19,7 +25,14 @@ public class MeshletComputeSystem {
     private long fence;
 
     private Texture1DAccessor counterTex; // vertexCounter & indexCounter
-    private ByteBuffer texTempBuffer;
+    private ByteBuffer texTempByteBuffer;
+
+    private TextureBufferAccessor dirtyListTbo;
+    private VBOView tboWorkspace;
+    private ByteBuffer tboTempByteBuffer;
+    private int currentTboWorkspaceSize = 1024 * 4; // 1024 ints
+
+    private final static int MAX_DIRTY_LIST_BYTES = 512 * 1024; // 512KB; 131072 ints
 
     private int rawVertexCount = 0;
     private int rawIndexCount = 0;
@@ -53,7 +66,53 @@ public class MeshletComputeSystem {
                 BufferUtils.createByteBuffer(8).putInt(0).putInt(0).flip(),
                 TextureFormat.R32UI);
 
-        texTempBuffer = BufferUtils.createByteBuffer(8);
+        texTempByteBuffer = BufferUtils.createByteBuffer(8);
+
+        dirtyListTbo = new TextureBufferAccessor(true, GLTexture.newDsaTexBuffer());
+        tboTempByteBuffer = BufferUtils.createByteBuffer(MAX_DIRTY_LIST_BYTES);
+        tboWorkspace = new VBOView(new GLBuffer());
+        tboWorkspace.bind();
+        tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+        tboWorkspace.bind(0);
+    }
+
+    /**
+     * @return The compute dispatch count
+     */
+    private int prepareTbo(List<Integer> dirtyList) {
+        int padding = 1;
+        int size = dirtyList.size() + 1 + padding; // header=1 int + extra padding
+        if (size * 4 > currentTboWorkspaceSize) {
+            currentTboWorkspaceSize = size * 4;
+            Preconditions.checkState(currentTboWorkspaceSize <= MAX_DIRTY_LIST_BYTES,
+                    "Dirty list TBO workspace overflow. %s bytes exceeds 512KB.", currentTboWorkspaceSize);
+
+            int prevID = tboWorkspace.fetchCurrentBoundBufferID();
+            tboWorkspace.bind();
+            tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+            tboWorkspace.bind(prevID);
+        }
+
+        tboTempByteBuffer.clear();
+        tboTempByteBuffer.putInt(dirtyList.size());
+        for (int dirtyIndex : dirtyList) {
+            tboTempByteBuffer.putInt(dirtyIndex);
+        }
+        tboTempByteBuffer.flip();
+
+        int prevID = tboWorkspace.fetchCurrentBoundBufferID();
+        tboWorkspace.bind();
+        tboWorkspace.uploadBySubData(0, tboTempByteBuffer);
+        tboWorkspace.bind(prevID);
+
+        // note: 0 = 0 (mod n) for all n=alignment
+        dirtyListTbo.texBufferRange(
+                TextureFormat.R32UI.internalFormat,
+                tboWorkspace.bufferID,
+                0,
+                size * 4L);
+
+        return dirtyList.size();
     }
 
     public void startDispatch(ResourceStorage storage, MeshletGpuRegistry meshletGpuRegistry) {
@@ -61,6 +120,16 @@ public class MeshletComputeSystem {
 
         shaderRunning = true;
         ShaderProgram program = storage.get(computeShader);
+
+        int dispatchCount = prepareTbo(meshletGpuRegistry.getDirtySlots());
+
+//        KirinoCommonCore.LOGGER.info("debug dirty count: " + dispatchCount);
+//        KirinoCommonCore.LOGGER.info("debug meshlet count: " + meshletGpuRegistry.getMeshletCount());
+//        StringBuilder builder = new StringBuilder();
+//        for (int dirtyIndex : meshletGpuRegistry.getDirtySlots()) {
+//            builder.append(dirtyIndex).append(",");
+//        }
+//        KirinoCommonCore.LOGGER.info(builder);
 
         // todo: abstract shader setup
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
@@ -70,7 +139,10 @@ public class MeshletComputeSystem {
 
         program.use();
 
-        GL43.glDispatchCompute(meshletGpuRegistry.getMeshletCount(), 1, 1);
+        GL20.glUniform1i(GL20.glGetUniformLocation(program.getProgramID(), "dirtyList"), 4);
+        dirtyListTbo.unit(4); // no one is using 4 atm; temp
+
+        GL43.glDispatchCompute(dispatchCount, 1, 1);
         GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // make image write visible to subsequent read
 
         fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
@@ -83,21 +155,21 @@ public class MeshletComputeSystem {
         if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
             GL32C.glDeleteSync(fence);
 
-            texTempBuffer.clear();
+            texTempByteBuffer.clear();
             counterTex.getTexImage(
                     0,
                     TextureFormat.R32UI.format,
                     TextureFormat.R32UI.type,
-                    texTempBuffer);
+                    texTempByteBuffer);
 
-            rawVertexCount = texTempBuffer.getInt(0);
-            rawIndexCount = texTempBuffer.getInt(4);
+            rawVertexCount = texTempByteBuffer.getInt(0);
+            rawIndexCount = texTempByteBuffer.getInt(4);
 
-            counterTex.clearTexImage(
-                    0,
-                    TextureFormat.R32UI.format,
-                    TextureFormat.R32UI.type,
-                    null);
+//            counterTex.clearTexImage(
+//                    0,
+//                    TextureFormat.R32UI.format,
+//                    TextureFormat.R32UI.type,
+//                    null);
 
             shaderRunning = false;
             return true;

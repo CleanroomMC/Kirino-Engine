@@ -116,6 +116,8 @@ public class MeshletGpuRegistry {
         meshletIdAddedSinceLastBegin.clear();
         meshletIdRemovedSinceLastBegin.clear();
 
+        dirtySlotTracker.clear();
+
         // mark added meshlets dirty
         for (var result : additionResults) {
             dirtySlotTracker.markDirty(result.slot());
@@ -182,7 +184,6 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(computing, "Must be computing already.");
 
         vertexOutputBuffer.swap();
-        dirtySlotTracker.clear();
 
         computing = false;
     }
@@ -252,16 +253,15 @@ public class MeshletGpuRegistry {
     }
 
     /**
-     * The dirty slots are valid after {@link #beginWriting()} until {@link #finishComputing()}.
+     * The dirty slots are up to date since last {@link #beginWriting()}.
      *
      * <p>Be aware of the current phase when calling this method.</p>
+     * <p>The value is synchronized during {@link #beginWriting()} and remains
+     * stable until the next {@link #beginWriting()}.</p>
      *
      * @return The dirty slots
      */
     public synchronized List<Integer> getDirtySlots() {
-        Preconditions.checkState(writing || computing,
-                "Dirty slots are only valid after \"beginWriting\" and before \"finishComputing\".");
-
         return dirtySlotTracker.snapshot();
     }
 }
