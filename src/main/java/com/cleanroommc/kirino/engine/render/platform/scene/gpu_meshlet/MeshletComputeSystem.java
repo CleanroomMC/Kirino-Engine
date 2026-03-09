@@ -1,10 +1,13 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletConstants;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
+import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
+import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
@@ -14,6 +17,7 @@ import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -24,15 +28,25 @@ public class MeshletComputeSystem {
     private boolean shaderRunning = false;
     private long fence;
 
+    // record global vertex/index count
     private Texture1DAccessor counterTex; // vertexCounter & indexCounter
     private ByteBuffer texTempByteBuffer;
 
+    // record dirty meshlet slot indices
     private TextureBufferAccessor dirtyListTbo;
     private VBOView tboWorkspace;
     private ByteBuffer tboTempByteBuffer;
     private int currentTboWorkspaceSize = 1024 * 4; // 1024 ints
 
-    private final static int MAX_DIRTY_LIST_BYTES = 512 * 1024; // 512KB; 131072 ints
+    // record meshlet ranges of output vertex/index
+    private SSBOView rangeSsbo;
+
+    public SSBOView getRangeSsbo() {
+        return rangeSsbo;
+    }
+
+    private final static int MAX_DIRTY_LIST_BYTES = 4 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+    private final static int MAX_RANGE_BYTES = 12 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
 
     private int rawVertexCount = 0;
     private int rawIndexCount = 0;
@@ -74,6 +88,15 @@ public class MeshletComputeSystem {
         tboWorkspace.bind();
         tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
         tboWorkspace.bind(0);
+
+        rangeSsbo = new SSBOView(new GLBuffer());
+        rangeSsbo.bind();
+        rangeSsbo.allocPersistent(MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        rangeSsbo.mapPersistent(0, MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        rangeSsbo.bind(0);
+
+        ByteBuffer byteBuffer = rangeSsbo.getPersistentMappedBuffer().orElseThrow();
+        MemoryUtil.memSet(byteBuffer, 0);
     }
 
     /**
@@ -123,19 +146,12 @@ public class MeshletComputeSystem {
 
         int dispatchCount = prepareTbo(meshletGpuRegistry.getDirtySlots());
 
-//        KirinoCommonCore.LOGGER.info("debug dirty count: " + dispatchCount);
-//        KirinoCommonCore.LOGGER.info("debug meshlet count: " + meshletGpuRegistry.getMeshletCount());
-//        StringBuilder builder = new StringBuilder();
-//        for (int dirtyIndex : meshletGpuRegistry.getDirtySlots()) {
-//            builder.append(dirtyIndex).append(",");
-//        }
-//        KirinoCommonCore.LOGGER.info(builder);
-
         // todo: abstract shader setup
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getVertexWriteTarget().target(), 1, meshletGpuRegistry.getVertexWriteTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getIndexWriteTarget().target(), 2, meshletGpuRegistry.getIndexWriteTarget().bufferID);
         GL42.glBindImageTexture(3, counterTex.textureID(), 0, false, 0, GL15.GL_READ_WRITE, TextureFormat.R32UI.internalFormat);
+        GL30.glBindBufferBase(rangeSsbo.target(), 4, rangeSsbo.bufferID);
 
         program.use();
 
@@ -143,7 +159,7 @@ public class MeshletComputeSystem {
         dirtyListTbo.unit(4); // no one is using 4 atm; temp
 
         GL43.glDispatchCompute(dispatchCount, 1, 1);
-        GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT); // make image write visible to subsequent read
+        GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
 
         fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
     }
@@ -165,11 +181,8 @@ public class MeshletComputeSystem {
             rawVertexCount = texTempByteBuffer.getInt(0);
             rawIndexCount = texTempByteBuffer.getInt(4);
 
-//            counterTex.clearTexImage(
-//                    0,
-//                    TextureFormat.R32UI.format,
-//                    TextureFormat.R32UI.type,
-//                    null);
+            KirinoCommonCore.LOGGER.info("global vertex count: " + rawVertexCount);
+            KirinoCommonCore.LOGGER.info("global index count: " + rawIndexCount);
 
             shaderRunning = false;
             return true;

@@ -17,14 +17,12 @@ public class VertexOutputDoubleBuffer {
     private int indexSsboSize0;
     private int indexSsboSize1;
 
-    // M * 32 block * 6 face * 4 vertex * 32 (vertex size) = 24576 M = 24 kb per meshlet
-    private int calcVertexSize(int meshletCount) {
-        return meshletCount * 24576;
+    private int calcWorstCaseVertexBytes(int meshletCount) {
+        return meshletCount * MeshletConstants.WORST_CASE_MESHLET_VERTEX_BYTES + 4; // padding: 4
     }
 
-    // M * 32 block * 6 face * 6 index * 4 (index size) = 4608 M = 4.5 kb per meshlet
-    private int calcIndexSize(int meshletCount) {
-        return meshletCount * 4608;
+    private int calcWorstCaseIndexBytes(int meshletCount) {
+        return meshletCount * MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES + 4; // padding: 4
     }
 
     private final static int INITIAL_VERTEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
@@ -72,7 +70,7 @@ public class VertexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growVertexSsbo0(int meshletCount) {
-        int targetSize = calcVertexSize(meshletCount);
+        int targetSize = calcWorstCaseVertexBytes(meshletCount);
         if (vertexSsboSize0 >= targetSize) {
             return true;
         }
@@ -93,7 +91,7 @@ public class VertexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growVertexSsbo1(int meshletCount) {
-        int targetSize = calcVertexSize(meshletCount);
+        int targetSize = calcWorstCaseVertexBytes(meshletCount);
         if (vertexSsboSize1 >= targetSize) {
             return true;
         }
@@ -114,7 +112,7 @@ public class VertexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growIndexSsbo0(int meshletCount) {
-        int targetSize = calcIndexSize(meshletCount);
+        int targetSize = calcWorstCaseIndexBytes(meshletCount);
         if (indexSsboSize0 >= targetSize) {
             return true;
         }
@@ -135,7 +133,7 @@ public class VertexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growIndexSsbo1(int meshletCount) {
-        int targetSize = calcIndexSize(meshletCount);
+        int targetSize = calcWorstCaseIndexBytes(meshletCount);
         if (indexSsboSize1 >= targetSize) {
             return true;
         }
