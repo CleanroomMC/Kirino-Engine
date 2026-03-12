@@ -1,0 +1,32 @@
+
+## Feb 2026
+**Want To Implement:**
+- Terrain meshlet double buffering
+- Meshlet write → compute → fully programmable vertex pulling _(i)_
+- Expand the _(i)_ pipeline to opaque/transparent/cutout
+- Block udpate notify
+- On demand compute; in place rewrite
+
+**Follow-up Tasks:**
+- GL test framework
+- Full texture abstraction including DSA and 1D 2D 3D 2DArray etc.
+- Shader debug framework including macro injection etc.
+
+**Future To-Dos:**
+- Migrate to visibility buffer for terrain rendering
+- SDF AO
+
+**Done:**
+- Implement the terrain meshlet double buffering pipeline
+  - 2 buffers for meshlet data read (read by compute) and write (write from cpu)
+  - 2 buffers for compute data read (read by draw calls) and write (write from gpu)
+- Fix terrain meshlet double buffering lifecycle issue
+- Add terrain meshlet double buffering lifecycle debug hud
+  ![](gallery/2026-02-21.png)
+- Remove interface `I` prefix
+- Implement GL junit test extensions
+
+## March 2026
+**Done:**
+- Refactor & implement texture abstraction: `GLTexture` + `Accessor`
+- Replace SSBO counter by uimage1D
