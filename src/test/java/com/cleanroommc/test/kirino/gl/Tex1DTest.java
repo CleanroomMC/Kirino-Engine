@@ -18,6 +18,8 @@ public class Tex1DTest {
     @Test
     public void testRead() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             Texture1DAccessor texture1DAccessor = new Texture1DAccessor(false, GLTexture.newTex1D(false, false, 1));
             texture1DAccessor.bind();
             texture1DAccessor.highlevel().alloc(
@@ -39,6 +41,8 @@ public class Tex1DTest {
     @Test
     public void testDsaRead() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             Texture1DAccessor texture1DAccessor = new Texture1DAccessor(true, GLTexture.newDsaTex1D(1));
             texture1DAccessor.highlevel().alloc(
                     false,

@@ -15,6 +15,8 @@ public class VBOBufferSizeTest {
     @Test
     void testBufferSize() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             VBOView view = new VBOView(new GLBuffer());
             view.bind();
             view.alloc(123, BufferUploadHint.STATIC_DRAW);

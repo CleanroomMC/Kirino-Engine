@@ -29,6 +29,8 @@ public class TBOTest {
     @Test
     public void testIO() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             TextureBufferAccessor tbo = new TextureBufferAccessor(true, GLTexture.newDsaTexBuffer());
 
             VBOView vbo = new VBOView(new GLBuffer());
@@ -59,6 +61,8 @@ public class TBOTest {
     @Test
     public void testAlignment() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             int alignment = GL11.glGetInteger(GL43.GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT);
             assumeTrue(alignment == 16);
 
@@ -116,6 +120,8 @@ public class TBOTest {
     @Test
     public void testComputeTBO() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             int shaderID = GL20.glCreateShader(ShaderType.COMPUTE.glValue);
             GL20.glShaderSource(shaderID, SHADER_SRC);
             GL20.glCompileShader(shaderID);

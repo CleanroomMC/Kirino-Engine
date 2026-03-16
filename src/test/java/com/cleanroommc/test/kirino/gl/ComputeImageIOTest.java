@@ -34,6 +34,8 @@ public class ComputeImageIOTest {
     @Test
     public void testComputeIO() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             int shaderID = GL20.glCreateShader(ShaderType.COMPUTE.glValue);
             GL20.glShaderSource(shaderID, SHADER_SRC);
             GL20.glCompileShader(shaderID);
@@ -86,6 +88,8 @@ public class ComputeImageIOTest {
     @Test
     public void testDsaComputeIO() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             int shaderID = GL20.glCreateShader(ShaderType.COMPUTE.glValue);
             GL20.glShaderSource(shaderID, SHADER_SRC);
             GL20.glCompileShader(shaderID);

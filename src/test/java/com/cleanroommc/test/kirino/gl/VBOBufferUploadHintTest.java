@@ -15,6 +15,8 @@ public class VBOBufferUploadHintTest {
     @Test
     void testBufferUploadHint() {
         GLTestExtension.submit(() -> {
+            GLTestExtension.assumeGL46();
+
             VBOView view = new VBOView(new GLBuffer());
             view.bind();
             view.alloc(1, BufferUploadHint.DYNAMIC_DRAW);
