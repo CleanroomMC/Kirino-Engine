@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftEntityRendering;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftTESRRendering;
@@ -47,6 +48,8 @@ import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
@@ -162,11 +165,11 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
         ShaderRegistry shaderRegistry = new ShaderRegistry();
 
-        for (ResourceLocation rl : context.ext().shaderRLs) {
-            Shader shader = shaderRegistry.register(rl);
-            context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + rl + "\".");
+        for (Map.Entry<ResourceLocation, Optional<ShaderCompileOptions>> entry : context.ext().rawShaders.entrySet()) {
+            Shader shader = shaderRegistry.register(entry.getKey(), entry.getValue().isPresent() ? entry.getValue().get() : null);
+            context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + entry.getKey() + "\".");
             if (shader.getShaderSource().isEmpty()) {
-                context.logger().info("Warning! \"" + rl + "\" is empty.");
+                context.logger().info("Warning! \"" + entry.getKey() + "\" is empty.");
             }
         }
         shaderRegistry.compile();

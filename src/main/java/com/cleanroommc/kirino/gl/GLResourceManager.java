@@ -26,15 +26,23 @@ public final class GLResourceManager {
      * (see {@link KirinoClientCore#init()})
      */
     public static void addDisposable(GLDisposable disposable) {
-        if (active) {
-            disposables.add(disposable);
+        if (!active) {
+            return;
         }
+
+        disposables.add(disposable);
     }
 
     /**
      * Remove the tracked GL resource from the queue and dispose it manually.
+     *
+     * <p>Only runs when <code>{@link #isActive()} == true</code>.</p>
      */
     public static void disposeEarly(GLDisposable disposable) {
+        if (!active) {
+            return;
+        }
+
         if (disposables.remove(disposable)) {
             disposable.dispose();
         } else {
@@ -44,8 +52,14 @@ public final class GLResourceManager {
 
     /**
      * Turn off the service and dispose all tracked GL resources.
+     *
+     * <p>Only runs when <code>{@link #isActive()} == true</code>.</p>
      */
     public static void disposeAll() {
+        if (!active) {
+            return;
+        }
+
         active = false;
         KirinoCommonCore.LOGGER.info("Starts disposing OpenGL resources.");
         while (!disposables.isEmpty()) {

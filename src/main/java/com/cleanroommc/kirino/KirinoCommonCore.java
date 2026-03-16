@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -158,7 +159,7 @@ public final class KirinoCommonCore {
         event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
         event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
         event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
-        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"));
+        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"), ShaderDebugInjection.COMPUTE_FRAME_DEBUG_VEC3F);
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.vert"));
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
     }

@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.utils;
 
+import com.google.common.base.Preconditions;
 import net.minecraft.client.resources.AbstractResourcePack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.client.FMLFolderResourcePack;
@@ -10,8 +11,15 @@ import java.io.*;
 import java.lang.reflect.Field;
 
 public final class MinecraftResourceUtils {
+
+    private static FMLFolderResourcePack resourcePackDevEnv = null;
+
     @SuppressWarnings("DataFlowIssue")
     private static FMLFolderResourcePack resourcePackDevEnvHack() {
+        if (resourcePackDevEnv != null) {
+            return resourcePackDevEnv;
+        }
+
         FMLFolderResourcePack resourcePack = new FMLFolderResourcePack(Loader.instance().getIndexedModList().get("forge"));
         try {
             Field field = ReflectionUtils.findDeclaredField(AbstractResourcePack.class, "resourcePackFile", "field_110597_b");
@@ -26,10 +34,19 @@ public final class MinecraftResourceUtils {
         } catch (Throwable throwable) {
             throw new RuntimeException(throwable);
         }
+
+        resourcePackDevEnv = resourcePack;
+
         return resourcePack;
     }
 
+    private static Boolean devEnv = null;
+
     private static boolean isDevEnv() {
+        if (devEnv != null) {
+            return devEnv;
+        }
+
         try {
             String path = System.getProperty("user.dir");
             File current = new File(path);
@@ -37,33 +54,49 @@ public final class MinecraftResourceUtils {
                 current = current.getParentFile();
             }
             if (current == null) {
+                devEnv = false;
                 return false;
             }
             File repo = current.getParentFile();
             File resources = new File(repo, "src/main/resources");
-            return resources.exists() && resources.isDirectory();
+            devEnv = resources.exists() && resources.isDirectory();
+            return devEnv;
         } catch (Exception e) {
+            devEnv = false;
             return false;
         }
     }
 
+    public enum NewLineType {
+        BACK_SLASH_N,
+        OS_DEPENDENT,
+        NONE
+    }
+
     @NonNull
-    public static String readText(ResourceLocation rl, boolean keepNewLineSymbol) {
+    public static String readText(@NonNull ResourceLocation rl, @NonNull NewLineType newLine) {
+        Preconditions.checkNotNull(rl);
+        Preconditions.checkNotNull(newLine);
+
         InputStream stream;
         try {
-            FMLFolderResourcePack resourcePack = isDevEnv() ? resourcePackDevEnvHack() : new FMLFolderResourcePack(Loader.instance().getIndexedModList().get(rl.getNamespace()));
+            FMLFolderResourcePack resourcePack = (isDevEnv() && rl.getNamespace().equals("forge")) ?
+                    resourcePackDevEnvHack() : new FMLFolderResourcePack(Loader.instance().getIndexedModList().get(rl.getNamespace()));
+
             stream = resourcePack.getInputStream(rl);
         } catch (Exception exception) {
             throw new RuntimeException(exception);
         }
+
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
             StringBuilder builder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
                 builder.append(line);
-                if (keepNewLineSymbol) {
-                    builder.append('\n');
+                switch (newLine) {
+                    case BACK_SLASH_N -> builder.append('\n');
+                    case OS_DEPENDENT -> builder.append(System.lineSeparator());
                 }
             }
             reader.close();

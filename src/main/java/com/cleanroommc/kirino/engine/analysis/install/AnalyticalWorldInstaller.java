@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
@@ -25,6 +26,8 @@ import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
 
@@ -33,8 +36,8 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
     private void initRenderExtensions(AnalyticalWorldView context) {
         ShaderRegistrationEvent shaderRegistrationEvent = new ShaderRegistrationEvent();
         context.bus().post(shaderRegistrationEvent);
-        context.ext().shaderRLs.clear();
-        context.ext().shaderRLs.addAll(MethodHolder.getShaderResourceLocations(shaderRegistrationEvent));
+        context.ext().rawShaders.clear();
+        context.ext().rawShaders.putAll(MethodHolder.getRawShaders(shaderRegistrationEvent));
 
         if (context.rs().enablePostProcessing) {
             PostProcessingRegistrationEvent postProcessingRegistrationEvent = new PostProcessingRegistrationEvent();
@@ -66,11 +69,11 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
     }
 
     private static class MethodHolder {
-        static final MethodHolder.Delegate DELEGATE;
+        static final Delegate DELEGATE;
 
         static {
-            DELEGATE = new MethodHolder.Delegate(
-                    ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "shaderResourceLocations", List.class),
+            DELEGATE = new Delegate(
+                    ReflectionUtils.getFieldGetter(ShaderRegistrationEvent.class, "rawShaders", Map.class),
                     ReflectionUtils.getFieldGetter(PostProcessingRegistrationEvent.class, "postProcessingEntries", List.class),
                     ReflectionUtils.getFieldGetter(DebugHUDRegistrationEvent.class, "debugHuds", List.class));
 
@@ -80,14 +83,14 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
         }
 
         @SuppressWarnings("unchecked")
-        static List<ResourceLocation> getShaderResourceLocations(ShaderRegistrationEvent shaderRegistrationEvent) {
-            List<ResourceLocation> shaderResourceLocations;
+        static Map<ResourceLocation, Optional<ShaderCompileOptions>> getRawShaders(ShaderRegistrationEvent shaderRegistrationEvent) {
+            Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders;
             try {
-                shaderResourceLocations = (List<ResourceLocation>) DELEGATE.shaderResourceLocationsGetter.invokeExact(shaderRegistrationEvent);
+                rawShaders = (Map<ResourceLocation, Optional<ShaderCompileOptions>>) DELEGATE.shaderResourceLocationsGetter.invokeExact(shaderRegistrationEvent);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
-            return shaderResourceLocations;
+            return rawShaders;
         }
 
         @SuppressWarnings("unchecked")

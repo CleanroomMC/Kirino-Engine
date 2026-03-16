@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPas
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -15,13 +16,12 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.function.TriFunction;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RenderExtensions {
     public final PostProcessingPass postProcessingPass;
 
-    public final List<ResourceLocation> shaderRLs;
+    public final Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders;
     public final List<Triple<
             String,
             String[],
@@ -69,7 +69,7 @@ public class RenderExtensions {
                 renderer,
                 fullscreenTriangleVao);
 
-        shaderRLs = new ArrayList<>();
+        rawShaders = new HashMap<>();
         postProcessingEntries = new ArrayList<>();
         debugHuds = new ArrayList<>();
     }

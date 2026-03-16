@@ -18,6 +18,7 @@ import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
 import com.cleanroommc.kirino.engine.render.platform.debug.data.impl.MeshletGpuTimeline;
 import com.cleanroommc.kirino.engine.render.platform.debug.hud.impl.MeshletGpuTimelineHUD;
 import com.cleanroommc.kirino.engine.render.platform.task.job.*;
+import com.cleanroommc.kirino.gl.GLDeviceInfo;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -54,6 +55,7 @@ public final class KirinoClientCore {
 
     private static final Minecraft MINECRAFT;
     public static final DebugDataServiceLocator DEBUG_SERVICE;
+    public static final GLDeviceInfo GL_DEVICE_INFO;
 
     private static boolean RENDER_UNSUPPORTED;
 
@@ -69,6 +71,8 @@ public final class KirinoClientCore {
         } catch (Throwable e) {
             throw new RuntimeException(e);
         }
+
+        GL_DEVICE_INFO = GLDeviceInfo.captureSnapshot();
 
         RENDER_UNSUPPORTED = false;
     }
@@ -485,34 +489,9 @@ public final class KirinoClientCore {
 
         LOGGER.info("---------- Kirino Client-Side Initialization ----------");
 
-        //<editor-fold desc="gl version fetch">
-        String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
-        int majorGLVersion = -1;
-        int minorGLVersion = -1;
+        LOGGER.info("\n" + GL_DEVICE_INFO.toString());
 
-        if (rawGLVersion != null) {
-            String[] parts = rawGLVersion.split("\\s+")[0].split("\\.");
-            if (parts.length >= 2) {
-                try {
-                    majorGLVersion = Integer.parseInt(parts[0]);
-                    minorGLVersion = Integer.parseInt(parts[1]);
-                } catch (NumberFormatException ignored) {
-                }
-            }
-        } else {
-            rawGLVersion = "";
-        }
-
-        LOGGER.info("OpenGL version: {}", rawGLVersion);
-
-        if (rawGLVersion.isEmpty() || majorGLVersion == -1 || minorGLVersion == -1) {
-            throw new RuntimeException("Failed to parse the OpenGL version.");
-        }
-
-        LOGGER.info("Parsed OpenGL version: {}.{}", majorGLVersion, minorGLVersion);
-        //</editor-fold>
-
-        if (!(majorGLVersion == 4 && minorGLVersion == 6)) {
+        if (!(GL_DEVICE_INFO.getVersionMajor() == 4 && GL_DEVICE_INFO.getVersionMinor() == 6)) {
             RENDER_UNSUPPORTED = true;
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
