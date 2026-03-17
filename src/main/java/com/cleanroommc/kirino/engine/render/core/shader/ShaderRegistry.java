@@ -1,7 +1,9 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderRemapHelper;
 import com.cleanroommc.kirino.gl.shader.ShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
@@ -15,10 +17,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ShaderRegistry {
 
@@ -42,12 +41,22 @@ public class ShaderRegistry {
 
         String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
 
-        // todo: integrate ksmlc
+        Map<String, String> remap = new HashMap<>();
+
+        // early debug infra injection
         List<ShaderDebugInjection.Type> debugTypes;
         if (options != null && !(debugTypes = ShaderDebugInjection.parse(options.debugFlags)).isEmpty()) {
             verifyDebugFlags(rl, shaderType, debugTypes);
-            shaderSource = injectDebug(shaderSource, debugTypes);
+            Set<String> remapFields = new HashSet<>();
+            shaderSource = ShaderDebugInjection.injectDebugInfra(shaderSource, debugTypes, remapFields);
+            remap.putAll(ShaderDebugInjection.resolveDebugRemap(remapFields));
         }
+
+        // todo: integrate ksmlc here
+
+        shaderSource = ShaderRemapHelper.remap(shaderSource, remap);
+        KirinoCommonCore.LOGGER.info("shader debug:\n" + shaderSource);
+
         Shader shader = MethodHolder.initShader(shaderSource, rawRl, shaderType);
 
         shaders.put(rawRl, shader);
@@ -70,12 +79,6 @@ public class ShaderRegistry {
                 throw new IllegalStateException(shaderType.toString() + " shader \"" + rl.toString() + "\" must not have the debug flag " + type + ".");
             }
         }
-    }
-
-    private String injectDebug(String shaderSource, List<ShaderDebugInjection.Type> debugTypes) {
-        // todo
-
-        return shaderSource;
     }
 
     public void compile() {

@@ -1,11 +1,13 @@
 package com.cleanroommc.kirino.engine.render.core.shader.compile;
 
+import com.cleanroommc.kirino.KirinoClientCore;
+import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.google.common.base.Preconditions;
+import net.minecraft.util.ResourceLocation;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
-public class ShaderDebugInjection {
+public final class ShaderDebugInjection {
 
     public static final int COMPUTE_FRAME_DEBUG_VEC3F = 1;
     public static final int COMPUTE_INVOCATION_LIMIT = 1 << 1;
@@ -72,6 +74,105 @@ public class ShaderDebugInjection {
 
         if ((flags & VERTEX_STAGE_DEBUG) != 0) {
             result.add(Type.VERTEX_STAGE_DEBUG);
+        }
+
+        return result;
+    }
+
+    public static String injectDebugInfra(String shaderSource, List<Type> debugTypes, Set<String> outDebugRemapFields) {
+        outDebugRemapFields.clear();
+
+        StringBuilder infra = new StringBuilder();
+        infra.append("\n// ===== Kirino Debug Infra Begin =====\n");
+
+        Set<String> glslSet = new HashSet<>();
+        glslSet.add("1_kirino_debug_invalidity.glsl");
+
+        for (Type type : debugTypes) {
+            switch (type) {
+                case COMPUTE_FRAME_DEBUG_VEC3F -> {
+                    glslSet.add("2_kirino_debug_counter.glsl");
+                    glslSet.add("2_kirino_debug_vec3f_record.glsl");
+                    outDebugRemapFields.add("counter_binding");
+                    outDebugRemapFields.add("max_counter");
+                    outDebugRemapFields.add("vec3f_record_binding");
+                    outDebugRemapFields.add("max_vec3f_record");
+                }
+                // other cases
+            }
+        }
+
+        for (String glsl : new ArrayList<>(glslSet).stream().sorted().toArray(String[]::new)) {
+            infra.append("\n").append(MinecraftResourceUtils.readText(
+                    new ResourceLocation("forge:shaders/debug/lowlevel/" + glsl),
+                    MinecraftResourceUtils.NewLineType.BACK_SLASH_N)).append("\n");
+        }
+
+        infra.append("// ===== Kirino Debug Infra End =====\n\n");
+
+        int insertPos = findVersionInsertPos(shaderSource);
+        return shaderSource.substring(0, insertPos) + infra + shaderSource.substring(insertPos);
+    }
+
+    private static int findVersionInsertPos(String source) {
+        int i = 0;
+        int len = source.length();
+
+        // bom header
+        if (len >= 1 && source.charAt(0) == '\uFEFF') {
+            i = 1;
+        }
+
+        while (i < len) {
+            while (i < len && Character.isWhitespace(source.charAt(i))) {
+                i++;
+            }
+
+            if (i >= len) {
+                break;
+            }
+
+            if (i + 1 < len && source.charAt(i) == '/' && source.charAt(i + 1) == '/') {
+                i += 2;
+                while (i < len && source.charAt(i) != '\n') {
+                    i++;
+                }
+                continue;
+            }
+
+            if (i + 1 < len && source.charAt(i) == '/' && source.charAt(i + 1) == '*') {
+                i += 2;
+                while (i + 1 < len && !(source.charAt(i) == '*' && source.charAt(i + 1) == '/')) {
+                    i++;
+                }
+                i += 2;
+                continue;
+            }
+
+            if (source.startsWith("#version", i)) {
+                int lineEnd = i;
+                while (lineEnd < len && source.charAt(lineEnd) != '\n') {
+                    lineEnd++;
+                }
+                return (lineEnd < len) ? lineEnd + 1 : len;
+            }
+
+            break;
+        }
+
+        return 0;
+    }
+
+    public static Map<String, String> resolveDebugRemap(Set<String> debugRemapFields) {
+        Map<String, String> result = new HashMap<>();
+
+        for (String field : debugRemapFields) {
+            switch (field) {
+                case "counter_binding" -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 1));
+                case "max_counter" -> result.put(field, String.valueOf(1024));
+                case "vec3f_record_binding" -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 2));
+                case "max_vec3f_record" -> result.put(field, String.valueOf(4096));
+            }
         }
 
         return result;
