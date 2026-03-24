@@ -3,6 +3,8 @@ package com.cleanroommc.kirino.engine.render.core.shader.compile;
 import java.util.Map;
 
 public final class ShaderRemapHelper {
+    private ShaderRemapHelper() {
+    }
 
     public static String remap(String shaderSource, Map<String, String> remap) {
         int len = shaderSource.length();

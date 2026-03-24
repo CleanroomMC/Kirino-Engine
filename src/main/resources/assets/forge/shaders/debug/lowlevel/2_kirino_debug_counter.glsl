@@ -29,6 +29,7 @@
         return (_index < maxCount) ? _index : maxCount;
     }
 
+    // no limit on counter addition; no limit on return value
     uint KirinoDebug_alloc(uint index)
     {
         if (index >= KIRINO_DEBUG_MAX_COUNTER) return KirinoDebug_invalidUint();
@@ -36,6 +37,7 @@
         return atomicAdd(KirinoDebug_counters[index], 1u);
     }
 
+    // no limit on counter addition; return value will be clamped
     uint KirinoDebug_allocSafe(uint index, uint maxCount)
     {
         if (index >= KIRINO_DEBUG_MAX_COUNTER) return KirinoDebug_invalidUint();
@@ -44,6 +46,7 @@
         return (_index < maxCount) ? _index : KirinoDebug_invalidUint();
     }
 
+    // no limit on counter addition; return value will be clamped
     uint KirinoDebug_allocBlockSafe(uint index, uint count, uint maxCount)
     {
         if (index >= KIRINO_DEBUG_MAX_COUNTER) return KirinoDebug_invalidUint();
@@ -52,6 +55,7 @@
         return (base + count <= maxCount) ? base : KirinoDebug_invalidUint();
     }
 
+    // counter addition will be clamped; return value will be clamped
     uint KirinoDebug_allocClampSafe(uint index, uint maxCount)
     {
         if (index >= KIRINO_DEBUG_MAX_COUNTER) return KirinoDebug_invalidUint();

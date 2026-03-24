@@ -166,13 +166,13 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         ShaderRegistry shaderRegistry = new ShaderRegistry();
 
         for (Map.Entry<ResourceLocation, Optional<ShaderCompileOptions>> entry : context.ext().rawShaders.entrySet()) {
-            Shader shader = shaderRegistry.register(entry.getKey(), entry.getValue().isPresent() ? entry.getValue().get() : null);
+            Shader shader = shaderRegistry.register(context.logger(), entry.getKey(), entry.getValue().isPresent() ? entry.getValue().get() : null);
             context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + entry.getKey() + "\".");
             if (shader.getShaderSource().isEmpty()) {
                 context.logger().info("Warning! \"" + entry.getKey() + "\" is empty.");
             }
         }
-        shaderRegistry.compile();
+        shaderRegistry.submitToGL();
         context.logger().info("Shader compilation passed.");
 
         shaderRegistry.analyze(

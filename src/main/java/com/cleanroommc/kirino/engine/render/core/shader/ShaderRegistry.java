@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderRemapHelper;
@@ -13,6 +12,7 @@ import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -24,8 +24,12 @@ public class ShaderRegistry {
     // key: rl.toString
     private final Map<String, Shader> shaders = new HashMap<>();
 
+    /**
+     * This step is purely string manipulation and parsing. No GL submissions involved.
+     */
     @NonNull
-    public Shader register(@NonNull ResourceLocation rl, @Nullable ShaderCompileOptions options) {
+    public Shader register(@NonNull Logger logger, @NonNull ResourceLocation rl, @Nullable ShaderCompileOptions options) {
+        Preconditions.checkNotNull(logger);
         Preconditions.checkNotNull(rl);
 
         String rawRl = rl.toString();
@@ -41,21 +45,26 @@ public class ShaderRegistry {
 
         String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
 
+        // todo: integrate ksmlc here
+
         Map<String, String> remap = new HashMap<>();
 
-        // early debug infra injection
+        // debug infra injection
         List<ShaderDebugInjection.Type> debugTypes;
         if (options != null && !(debugTypes = ShaderDebugInjection.parse(options.debugFlags)).isEmpty()) {
-            verifyDebugFlags(rl, shaderType, debugTypes);
             Set<String> remapFields = new HashSet<>();
             shaderSource = ShaderDebugInjection.injectDebugInfra(shaderSource, debugTypes, remapFields);
             remap.putAll(ShaderDebugInjection.resolveDebugRemap(remapFields));
         }
 
-        // todo: integrate ksmlc here
+        if (!remap.isEmpty()) {
+            shaderSource = ShaderRemapHelper.remap(shaderSource, remap);
+        }
 
-        shaderSource = ShaderRemapHelper.remap(shaderSource, remap);
-        KirinoCommonCore.LOGGER.info("shader debug:\n" + shaderSource);
+        logger.debug("{} Shader \"{}\" assembled:\n{}",
+                shaderType.toString(),
+                rawRl,
+                shaderSource);
 
         Shader shader = MethodHolder.initShader(shaderSource, rawRl, shaderType);
 
@@ -63,31 +72,13 @@ public class ShaderRegistry {
         return shader;
     }
 
-    private void verifyDebugFlags(ResourceLocation rl, ShaderType shaderType, List<ShaderDebugInjection.Type> debugTypes) {
-        for (ShaderDebugInjection.Type type : debugTypes) {
-            if (shaderType != ShaderType.COMPUTE && (
-                    type == ShaderDebugInjection.Type.COMPUTE_FRAME_DEBUG_VEC3F
-                    || type == ShaderDebugInjection.Type.COMPUTE_INVOCATION_LIMIT
-                    || type == ShaderDebugInjection.Type.COMPUTE_SPECIFIED_INVOCATION
-                    || type == ShaderDebugInjection.Type.COMPUTE_STAGE_DEBUG
-                    || type == ShaderDebugInjection.Type.COMPUTE_IMAGE_DEBUG)) {
-                throw new IllegalStateException(shaderType.toString() + " shader \"" + rl.toString() + "\" must not have the debug flag " + type + ".");
-            }
-            if (shaderType != ShaderType.VERTEX && (
-                    type == ShaderDebugInjection.Type.VERTEX_FRAME_DEBUG_VEC3F
-                    || type == ShaderDebugInjection.Type.VERTEX_STAGE_DEBUG)) {
-                throw new IllegalStateException(shaderType.toString() + " shader \"" + rl.toString() + "\" must not have the debug flag " + type + ".");
-            }
-        }
-    }
-
-    public void compile() {
+    public void submitToGL() {
         for (Shader shader : shaders.values()) {
             shader.compile();
         }
         boolean invalid = false;
         StringBuilder builder = new StringBuilder();
-        builder.append("Shader Compilation Error:\n");
+        builder.append("GLSL Shader Compilation Error:\n");
         for (Shader shader : shaders.values()) {
             if (!shader.isValid()) {
                 invalid = true;
@@ -166,6 +157,7 @@ public class ShaderRegistry {
 
         record ShaderDelegate(
                 MethodHandle shaderCtor,
-                MethodHandle shaderProgramCtor) {}
+                MethodHandle shaderProgramCtor) {
+        }
     }
 }

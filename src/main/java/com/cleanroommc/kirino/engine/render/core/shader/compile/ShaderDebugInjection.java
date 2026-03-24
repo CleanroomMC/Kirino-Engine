@@ -8,32 +8,28 @@ import net.minecraft.util.ResourceLocation;
 import java.util.*;
 
 public final class ShaderDebugInjection {
+    private ShaderDebugInjection() {
+    }
 
-    public static final int COMPUTE_FRAME_DEBUG_VEC3F = 1;
-    public static final int COMPUTE_INVOCATION_LIMIT = 1 << 1;
-    public static final int COMPUTE_SPECIFIED_INVOCATION = 1 << 2;
-    public static final int COMPUTE_STAGE_DEBUG = 1 << 3;
-    public static final int COMPUTE_IMAGE_DEBUG = 1 << 4;
-    public static final int VERTEX_FRAME_DEBUG_VEC3F = 1 << 5;
-    public static final int VERTEX_STAGE_DEBUG = 1 << 6;
+    public static final int FRAME_DEBUG_VEC3F = 1;
+    public static final int INVOCATION_LIMIT = 1 << 1;
+    public static final int SPECIFIED_INVOCATION = 1 << 2;
+    public static final int STAGE_DEBUG = 1 << 3;
+    public static final int IMAGE_DEBUG = 1 << 4;
 
     private static final int ALL_FLAGS =
-            COMPUTE_FRAME_DEBUG_VEC3F
-            | COMPUTE_INVOCATION_LIMIT
-            | COMPUTE_SPECIFIED_INVOCATION
-            | COMPUTE_STAGE_DEBUG
-            | COMPUTE_IMAGE_DEBUG
-            | VERTEX_FRAME_DEBUG_VEC3F
-            | VERTEX_STAGE_DEBUG;
+            FRAME_DEBUG_VEC3F
+            | INVOCATION_LIMIT
+            | SPECIFIED_INVOCATION
+            | STAGE_DEBUG
+            | IMAGE_DEBUG;
 
     public enum Type {
-        COMPUTE_FRAME_DEBUG_VEC3F,
-        COMPUTE_INVOCATION_LIMIT,
-        COMPUTE_SPECIFIED_INVOCATION,
-        COMPUTE_STAGE_DEBUG,
-        COMPUTE_IMAGE_DEBUG,
-        VERTEX_FRAME_DEBUG_VEC3F,
-        VERTEX_STAGE_DEBUG
+        FRAME_DEBUG_VEC3F,
+        INVOCATION_LIMIT,
+        SPECIFIED_INVOCATION,
+        STAGE_DEBUG,
+        IMAGE_DEBUG,
     }
 
     public static List<Type> parse(int flags) {
@@ -48,32 +44,24 @@ public final class ShaderDebugInjection {
             return result;
         }
 
-        if ((flags & COMPUTE_FRAME_DEBUG_VEC3F) != 0) {
-            result.add(Type.COMPUTE_FRAME_DEBUG_VEC3F);
+        if ((flags & FRAME_DEBUG_VEC3F) != 0) {
+            result.add(Type.FRAME_DEBUG_VEC3F);
         }
 
-        if ((flags & COMPUTE_INVOCATION_LIMIT) != 0) {
-            result.add(Type.COMPUTE_INVOCATION_LIMIT);
+        if ((flags & INVOCATION_LIMIT) != 0) {
+            result.add(Type.INVOCATION_LIMIT);
         }
 
-        if ((flags & COMPUTE_SPECIFIED_INVOCATION) != 0) {
-            result.add(Type.COMPUTE_SPECIFIED_INVOCATION);
+        if ((flags & SPECIFIED_INVOCATION) != 0) {
+            result.add(Type.SPECIFIED_INVOCATION);
         }
 
-        if ((flags & COMPUTE_STAGE_DEBUG) != 0) {
-            result.add(Type.COMPUTE_STAGE_DEBUG);
+        if ((flags & STAGE_DEBUG) != 0) {
+            result.add(Type.STAGE_DEBUG);
         }
 
-        if ((flags & COMPUTE_IMAGE_DEBUG) != 0) {
-            result.add(Type.COMPUTE_IMAGE_DEBUG);
-        }
-
-        if ((flags & VERTEX_FRAME_DEBUG_VEC3F) != 0) {
-            result.add(Type.VERTEX_FRAME_DEBUG_VEC3F);
-        }
-
-        if ((flags & VERTEX_STAGE_DEBUG) != 0) {
-            result.add(Type.VERTEX_STAGE_DEBUG);
+        if ((flags & IMAGE_DEBUG) != 0) {
+            result.add(Type.IMAGE_DEBUG);
         }
 
         return result;
@@ -86,19 +74,17 @@ public final class ShaderDebugInjection {
         infra.append("\n// ===== Kirino Debug Infra Begin =====\n");
 
         Set<String> glslSet = new HashSet<>();
-        glslSet.add("1_kirino_debug_invalidity.glsl");
+        glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_INVALIDITY);
 
         for (Type type : debugTypes) {
             switch (type) {
-                case COMPUTE_FRAME_DEBUG_VEC3F -> {
-                    glslSet.add("2_kirino_debug_counter.glsl");
-                    glslSet.add("2_kirino_debug_vec3f_record.glsl");
-                    outDebugRemapFields.add("counter_binding");
-                    outDebugRemapFields.add("max_counter");
-                    outDebugRemapFields.add("vec3f_record_binding");
-                    outDebugRemapFields.add("max_vec3f_record");
+                case FRAME_DEBUG_VEC3F -> {
+                    glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_COUNTER);
+                    glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_VEC3F_RECORD);
+                    outDebugRemapFields.addAll(ShaderDebugSnippet.REMAP_KIRINO_DEBUG_COUNTER);
+                    outDebugRemapFields.addAll(ShaderDebugSnippet.REMAP_KIRINO_DEBUG_VEC3F_RECORD);
                 }
-                // other cases
+                // todo: other cases
             }
         }
 
@@ -168,10 +154,10 @@ public final class ShaderDebugInjection {
 
         for (String field : debugRemapFields) {
             switch (field) {
-                case "counter_binding" -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 1));
-                case "max_counter" -> result.put(field, String.valueOf(1024));
-                case "vec3f_record_binding" -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 2));
-                case "max_vec3f_record" -> result.put(field, String.valueOf(4096));
+                case ShaderDebugSnippet.REMAP_FIELD_COUNTER_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 1));
+                case ShaderDebugSnippet.REMAP_FIELD_MAX_COUNTER -> result.put(field, String.valueOf(1024));
+                case ShaderDebugSnippet.REMAP_FIELD_VEC3F_RECORD_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 2));
+                case ShaderDebugSnippet.REMAP_FIELD_MAX_VEC3F_RECORD -> result.put(field, String.valueOf(4096));
             }
         }
 
