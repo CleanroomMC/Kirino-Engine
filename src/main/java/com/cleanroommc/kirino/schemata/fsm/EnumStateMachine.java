@@ -102,7 +102,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
         private S initialState;
 
         @SuppressWarnings("unchecked")
-        BuilderImpl(Class<S> stateClass, Class<I> inputClass){
+        BuilderImpl(Class<S> stateClass, Class<I> inputClass) {
             states = stateClass.getEnumConstants();
             inputs = inputClass.getEnumConstants();
             int length = states.length * inputs.length;
@@ -122,9 +122,9 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
         @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
-                                            @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
-                                            @Nullable OnExitStateCallback<S, I> onExitStateCallback,
-                                            @Nullable Rollback<S, I> rollbackCallback) {
+                                           @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
+                                           @Nullable OnExitStateCallback<S, I> onExitStateCallback,
+                                           @Nullable Rollback<S, I> rollbackCallback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
             Preconditions.checkNotNull(input, "Parameter \"input\" must not be null.");
             Preconditions.checkNotNull(nextState, "Parameter \"nextState\" must not be null.");

@@ -240,8 +240,8 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
 
             return new TableFiniteStateMachine<>(builder.buildOrThrow(),
-                    entryCallbackMapBuilder.build(),
-                    exitCallbackMapBuilder.build(),
+                    entryCallbackMapBuilder.buildKeepingLast(),
+                    exitCallbackMapBuilder.buildKeepingLast(),
                     rollbackTable.buildOrThrow(), error, initialState);
         }
     }
