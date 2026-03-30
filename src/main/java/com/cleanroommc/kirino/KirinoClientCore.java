@@ -189,7 +189,7 @@ public final class KirinoClientCore {
         KirinoDebug.recordFps(Minecraft.getDebugFPS());
         KirinoDebug.resetDrawCalls();
 
-        if (KIRINO_ENGINE.nextExpectedPhase() == FramePhase.PREPARE) {
+        if (KIRINO_ENGINE.isAfterFirstPrepare()) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
         }
 
