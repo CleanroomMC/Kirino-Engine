@@ -106,7 +106,7 @@ public class ShaderDebugInfraTest {
             GL20.glUseProgram(programID);
 
             GL43.glDispatchCompute(1, 1, 1);
-            GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT | GL44.GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
+            GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
 
             long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
