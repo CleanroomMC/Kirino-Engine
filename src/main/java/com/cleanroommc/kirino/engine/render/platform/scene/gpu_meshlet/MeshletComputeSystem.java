@@ -86,7 +86,6 @@ public class MeshletComputeSystem {
         tboWorkspace = new VBOView(new GLBuffer());
         tboWorkspace.bind();
         tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
-        tboWorkspace.clearUint0();
         tboWorkspace.bind(0);
 
         rangeSsbo = new SSBOView(new GLBuffer());
@@ -111,7 +110,6 @@ public class MeshletComputeSystem {
             int prevID = tboWorkspace.fetchCurrentBoundBufferID();
             tboWorkspace.bind();
             tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
-            tboWorkspace.clearUint0();
             tboWorkspace.bind(prevID);
         }
 

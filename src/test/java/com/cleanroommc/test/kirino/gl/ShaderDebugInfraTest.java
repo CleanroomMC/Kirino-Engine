@@ -102,6 +102,9 @@ public class ShaderDebugInfraTest {
 
             ssbo1.bind(0);
 
+            // make sure clear is visible
+            GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+
             GL30.glBindBufferBase(ssbo0.target(), b0, ssbo0.bufferID);
             GL30.glBindBufferBase(ssbo1.target(), b1, ssbo1.bufferID);
 

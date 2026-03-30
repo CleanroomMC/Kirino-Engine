@@ -40,6 +40,9 @@ import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.commons.lang3.time.StopWatch;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL32C;
+import org.lwjgl.opengl.GL42;
 import org.lwjgl.util.glu.Project;
 
 import java.lang.invoke.MethodHandle;
@@ -523,6 +526,15 @@ public final class KirinoClientCore {
 
         if (KIRINO_CONFIG_HUB.isEnableRenderDelegate() && !RENDER_UNSUPPORTED) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
+
+            // force finish gl related initialization
+            StopWatch glStopWatch = StopWatch.createStarted();
+            GL42.glMemoryBarrier(GL42.GL_ALL_BARRIER_BITS);
+            long fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+            GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 1_000_000L);
+            glStopWatch.stop();
+
+            LOGGER.info("Time taken on GL force sync: {} ms", glStopWatch.getTime(TimeUnit.MILLISECONDS));
         } else {
             KIRINO_ENGINE.runHeadlessly(FramePhase.PREPARE);
         }

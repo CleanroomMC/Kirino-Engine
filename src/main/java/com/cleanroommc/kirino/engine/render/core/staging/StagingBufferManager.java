@@ -240,7 +240,6 @@ public class StagingBufferManager {
         vboView.turnOffValidation();
         vboView.bind();
         vboView.alloc(size, BufferUploadHint.STATIC_DRAW);
-        vboView.clearUint0();
         vboView.bind(0);
         temporaryVbos.add(vboView);
         return new TemporaryVBOHandle(this, handleGeneration, size, vboView);
@@ -260,7 +259,6 @@ public class StagingBufferManager {
         eboView.turnOffValidation();
         eboView.bind();
         eboView.alloc(size, BufferUploadHint.STATIC_DRAW);
-        eboView.clearUint0();
         eboView.bind(0);
         temporaryEbos.add(eboView);
         return new TemporaryEBOHandle(this, handleGeneration, size, eboView);
