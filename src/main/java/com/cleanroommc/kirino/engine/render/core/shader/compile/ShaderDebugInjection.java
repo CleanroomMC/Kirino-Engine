@@ -11,21 +11,21 @@ public final class ShaderDebugInjection {
     private ShaderDebugInjection() {
     }
 
-    public static final int FRAME_DEBUG_VEC3F = 1;
+    public static final int VEC3F_DEBUG = 1;
     public static final int INVOCATION_LIMIT = 1 << 1;
     public static final int SPECIFIED_INVOCATION = 1 << 2;
     public static final int STAGE_DEBUG = 1 << 3;
     public static final int IMAGE_DEBUG = 1 << 4;
 
     private static final int ALL_FLAGS =
-            FRAME_DEBUG_VEC3F
+            VEC3F_DEBUG
             | INVOCATION_LIMIT
             | SPECIFIED_INVOCATION
             | STAGE_DEBUG
             | IMAGE_DEBUG;
 
     public enum Type {
-        FRAME_DEBUG_VEC3F,
+        VEC3F_DEBUG,
         INVOCATION_LIMIT,
         SPECIFIED_INVOCATION,
         STAGE_DEBUG,
@@ -44,8 +44,8 @@ public final class ShaderDebugInjection {
             return result;
         }
 
-        if ((flags & FRAME_DEBUG_VEC3F) != 0) {
-            result.add(Type.FRAME_DEBUG_VEC3F);
+        if ((flags & VEC3F_DEBUG) != 0) {
+            result.add(Type.VEC3F_DEBUG);
         }
 
         if ((flags & INVOCATION_LIMIT) != 0) {
@@ -67,6 +67,34 @@ public final class ShaderDebugInjection {
         return result;
     }
 
+    public static Map<String, String> resolveDebugRemap(Set<String> debugRemapFields) {
+        Map<String, String> result = new HashMap<>();
+
+        for (String field : debugRemapFields) {
+            switch (field) {
+                case ShaderDebugSnippet.REMAP_FIELD_COUNTER_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 1));
+                case ShaderDebugSnippet.REMAP_FIELD_MAX_COUNTER -> result.put(field, String.valueOf(1024));
+                case ShaderDebugSnippet.REMAP_FIELD_VEC3F_RECORD_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 2));
+                case ShaderDebugSnippet.REMAP_FIELD_MAX_VEC3F_RECORD -> result.put(field, String.valueOf(4096));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Inject the content after comments and the <code>#version</code> line if they existed.
+     */
+    public static String inject(String shaderSource, String content) {
+        int insertPos = findVersionInsertPos(shaderSource);
+        return shaderSource.substring(0, insertPos) + content + shaderSource.substring(insertPos);
+    }
+
+    /**
+     * Inject the debug infrastructure.
+     *
+     * @see #inject(String, String)
+     */
     public static String injectDebugInfra(String shaderSource, List<Type> debugTypes, Set<String> outDebugRemapFields) {
         outDebugRemapFields.clear();
 
@@ -78,7 +106,7 @@ public final class ShaderDebugInjection {
 
         for (Type type : debugTypes) {
             switch (type) {
-                case FRAME_DEBUG_VEC3F -> {
+                case VEC3F_DEBUG -> {
                     glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_COUNTER);
                     glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_VEC3F_RECORD);
                     outDebugRemapFields.addAll(ShaderDebugSnippet.REMAP_KIRINO_DEBUG_COUNTER);
@@ -96,8 +124,7 @@ public final class ShaderDebugInjection {
 
         infra.append("// ===== Kirino Debug Infra End =====\n\n");
 
-        int insertPos = findVersionInsertPos(shaderSource);
-        return shaderSource.substring(0, insertPos) + infra + shaderSource.substring(insertPos);
+        return inject(shaderSource, infra.toString());
     }
 
     private static int findVersionInsertPos(String source) {
@@ -147,20 +174,5 @@ public final class ShaderDebugInjection {
         }
 
         return 0;
-    }
-
-    public static Map<String, String> resolveDebugRemap(Set<String> debugRemapFields) {
-        Map<String, String> result = new HashMap<>();
-
-        for (String field : debugRemapFields) {
-            switch (field) {
-                case ShaderDebugSnippet.REMAP_FIELD_COUNTER_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 1));
-                case ShaderDebugSnippet.REMAP_FIELD_MAX_COUNTER -> result.put(field, String.valueOf(1024));
-                case ShaderDebugSnippet.REMAP_FIELD_VEC3F_RECORD_BINDING -> result.put(field, String.valueOf(KirinoClientCore.GL_DEVICE_INFO.getMaxSsboBlocksCompute() - 2));
-                case ShaderDebugSnippet.REMAP_FIELD_MAX_VEC3F_RECORD -> result.put(field, String.valueOf(4096));
-            }
-        }
-
-        return result;
     }
 }

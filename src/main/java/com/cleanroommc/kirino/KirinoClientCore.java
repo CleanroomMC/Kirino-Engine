@@ -53,16 +53,22 @@ public final class KirinoClientCore {
     private KirinoClientCore() {
     }
 
-    private static final Minecraft MINECRAFT;
-    public static final DebugDataServiceLocator DEBUG_SERVICE;
+    // to isolate static initialization that involves Minecraft
+    final static class MC {
+        private static final Minecraft MINECRAFT;
+
+        static {
+            MINECRAFT = Minecraft.getMinecraft();
+        }
+    }
+
     public static final GLDeviceInfo GL_DEVICE_INFO;
+    public static final DebugDataServiceLocator DEBUG_SERVICE;
 
     private static boolean RENDER_UNSUPPORTED;
 
     //<editor-fold desc="static init">
     static {
-        MINECRAFT = Minecraft.getMinecraft();
-
         Constructor<DebugDataServiceLocator> debugServiceCtor;
         try {
             debugServiceCtor = DebugDataServiceLocator.class.getDeclaredConstructor();
@@ -205,11 +211,11 @@ public final class KirinoClientCore {
         MethodHolder2.getSceneViewState(KIRINO_ENGINE).camera.getProjectionBuffer().clear();
         MethodHolder2.getSceneViewState(KIRINO_ENGINE).camera.getViewRotationBuffer().clear();
         float partialTicks = (float) MethodHolder2.getSceneViewState(KIRINO_ENGINE).camera.getPartialTicks();
-        MethodHolder1.updateLightmap(MINECRAFT.entityRenderer, partialTicks);
-        if (MINECRAFT.getRenderViewEntity() == null) {
-            MINECRAFT.setRenderViewEntity(Minecraft.getMinecraft().player);
+        MethodHolder1.updateLightmap(MC.MINECRAFT.entityRenderer, partialTicks);
+        if (MC.MINECRAFT.getRenderViewEntity() == null) {
+            MC.MINECRAFT.setRenderViewEntity(Minecraft.getMinecraft().player);
         }
-        MINECRAFT.entityRenderer.getMouseOver(partialTicks);
+        MC.MINECRAFT.entityRenderer.getMouseOver(partialTicks);
         GlStateManager.enableDepth();
         GlStateManager.enableAlpha();
         GlStateManager.alphaFunc(516, 0.5F);
@@ -217,22 +223,22 @@ public final class KirinoClientCore {
 
         // ========== clear ==========
         // note: update fog color; bottom part of the sky
-        MINECRAFT.profiler.startSection("clear");
-        MethodHolder1.updateFogColor(MINECRAFT.entityRenderer, partialTicks);
+        MC.MINECRAFT.profiler.startSection("clear");
+        MethodHolder1.updateFogColor(MC.MINECRAFT.entityRenderer, partialTicks);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 
         // ========== camera ==========
-        MINECRAFT.profiler.endStartSection("camera");
-        MethodHolder1.setupCameraTransform(MINECRAFT.entityRenderer, partialTicks, 2);
-        ActiveRenderInfo.updateRenderInfo(MINECRAFT.getRenderViewEntity(), MINECRAFT.gameSettings.thirdPersonView == 2);
+        MC.MINECRAFT.profiler.endStartSection("camera");
+        MethodHolder1.setupCameraTransform(MC.MINECRAFT.entityRenderer, partialTicks, 2);
+        ActiveRenderInfo.updateRenderInfo(MC.MINECRAFT.getRenderViewEntity(), MC.MINECRAFT.gameSettings.thirdPersonView == 2);
 
         // ========== frustum ==========
-        MINECRAFT.profiler.endStartSection("frustum");
+        MC.MINECRAFT.profiler.endStartSection("frustum");
         ClippingHelperImpl.getInstance();
 
         // ========== culling ==========
-        MINECRAFT.profiler.endStartSection("culling");
-        Entity renderViewEntity = MINECRAFT.getRenderViewEntity();
+        MC.MINECRAFT.profiler.endStartSection("culling");
+        Entity renderViewEntity = MC.MINECRAFT.getRenderViewEntity();
         double d0 = renderViewEntity.lastTickPosX + (renderViewEntity.posX - renderViewEntity.lastTickPosX) * (double) partialTicks;
         double d1 = renderViewEntity.lastTickPosY + (renderViewEntity.posY - renderViewEntity.lastTickPosY) * (double) partialTicks;
         double d2 = renderViewEntity.lastTickPosZ + (renderViewEntity.posZ - renderViewEntity.lastTickPosZ) * (double) partialTicks;
@@ -240,29 +246,29 @@ public final class KirinoClientCore {
         cameraFrustum.setPosition(d0, d1, d2);
 
         // ========== sky ==========
-        MINECRAFT.profiler.endStartSection("sky");
+        MC.MINECRAFT.profiler.endStartSection("sky");
         // note: sun and moon etc.
-        if (MINECRAFT.gameSettings.renderDistanceChunks >= 4) {
-            MethodHolder1.setupFog(MINECRAFT.entityRenderer, -1, partialTicks);
+        if (MC.MINECRAFT.gameSettings.renderDistanceChunks >= 4) {
+            MethodHolder1.setupFog(MC.MINECRAFT.entityRenderer, -1, partialTicks);
             GlStateManager.matrixMode(5889);
             GlStateManager.loadIdentity();
-            float fovModifier = MethodHolder1.getFOVModifier(MINECRAFT.entityRenderer, partialTicks, true);
-            Project.gluPerspective(fovModifier, (float) MINECRAFT.displayWidth / (float) MINECRAFT.displayHeight, 0.05F, MethodHolder1.getFarPlaneDistance(MINECRAFT.entityRenderer) * 2.0F);
+            float fovModifier = MethodHolder1.getFOVModifier(MC.MINECRAFT.entityRenderer, partialTicks, true);
+            Project.gluPerspective(fovModifier, (float) MC.MINECRAFT.displayWidth / (float) MC.MINECRAFT.displayHeight, 0.05F, MethodHolder1.getFarPlaneDistance(MC.MINECRAFT.entityRenderer) * 2.0F);
             GlStateManager.matrixMode(5888);
-            MINECRAFT.renderGlobal.renderSky(partialTicks, 2);
+            MC.MINECRAFT.renderGlobal.renderSky(partialTicks, 2);
             GlStateManager.matrixMode(5889);
             GlStateManager.loadIdentity();
-            Project.gluPerspective(fovModifier, (float) MINECRAFT.displayWidth / (float) MINECRAFT.displayHeight, 0.05F, MethodHolder1.getFarPlaneDistance(MINECRAFT.entityRenderer) * MathHelper.SQRT_2);
+            Project.gluPerspective(fovModifier, (float) MC.MINECRAFT.displayWidth / (float) MC.MINECRAFT.displayHeight, 0.05F, MethodHolder1.getFarPlaneDistance(MC.MINECRAFT.entityRenderer) * MathHelper.SQRT_2);
             GlStateManager.matrixMode(5888);
         }
 
         // note: cloud
-        MethodHolder1.setupFog(MINECRAFT.entityRenderer, 0, partialTicks);
+        MethodHolder1.setupFog(MC.MINECRAFT.entityRenderer, 0, partialTicks);
         GlStateManager.shadeModel(7425);
-        if (MINECRAFT.getRenderViewEntity().posY + (double) MINECRAFT.getRenderViewEntity().getEyeHeight() < 128.0D) {
-            MethodHolder1.renderCloudsCheck(MINECRAFT.entityRenderer, MINECRAFT.renderGlobal, partialTicks, 2, d0, d1, d2);
+        if (MC.MINECRAFT.getRenderViewEntity().posY + (double) MC.MINECRAFT.getRenderViewEntity().getEyeHeight() < 128.0D) {
+            MethodHolder1.renderCloudsCheck(MC.MINECRAFT.entityRenderer, MC.MINECRAFT.renderGlobal, partialTicks, 2, d0, d1, d2);
         }
-        MINECRAFT.profiler.endSection();
+        MC.MINECRAFT.profiler.endSection();
 
         // note: skybox and basic stuff are done
         //</editor-fold>
@@ -274,145 +280,145 @@ public final class KirinoClientCore {
         KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).cullingPatch).collectEntitiesInView(
                 renderViewEntity,
                 cameraFrustum,
-                MINECRAFT.world.getChunkProvider(),
+                MC.MINECRAFT.world.getChunkProvider(),
                 partialTicks);
 
-        boolean flag = MethodHolder1.isDrawBlockOutline(MINECRAFT.entityRenderer);
+        boolean flag = MethodHolder1.isDrawBlockOutline(MC.MINECRAFT.entityRenderer);
 
         // ========== entities ==========
-        MINECRAFT.profiler.startSection("entities");
+        MC.MINECRAFT.profiler.startSection("entities");
         GlStateManager.shadeModel(7424);
         GlStateManager.enableAlpha();
         GlStateManager.alphaFunc(516, 0.1F);
         // note: default value of debugView == false
-        if (!MethodHolder1.isDebugView(MINECRAFT.entityRenderer)) {
+        if (!MethodHolder1.isDebugView(MC.MINECRAFT.entityRenderer)) {
             GlStateManager.matrixMode(5888);
             GlStateManager.pushMatrix();
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(0);
             KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
-                    MINECRAFT.getRenderViewEntity(),
-                    MINECRAFT.pointedEntity,
-                    MINECRAFT.player,
+                    MC.MINECRAFT.getRenderViewEntity(),
+                    MC.MINECRAFT.pointedEntity,
+                    MC.MINECRAFT.player,
                     cameraFrustum,
-                    MINECRAFT.gameSettings,
-                    MINECRAFT.world,
-                    MINECRAFT.fontRenderer,
-                    MINECRAFT.getRenderManager(),
-                    MINECRAFT.entityRenderer,
+                    MC.MINECRAFT.gameSettings,
+                    MC.MINECRAFT.world,
+                    MC.MINECRAFT.fontRenderer,
+                    MC.MINECRAFT.getRenderManager(),
+                    MC.MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
             KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
-                    MINECRAFT.getRenderViewEntity(),
+                    MC.MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
-                    MINECRAFT.world,
-                    MINECRAFT.fontRenderer,
-                    MINECRAFT.entityRenderer,
-                    MINECRAFT.getTextureManager(),
-                    MINECRAFT.objectMouseOver,
-                    MINECRAFT.renderGlobal,
+                    MC.MINECRAFT.world,
+                    MC.MINECRAFT.fontRenderer,
+                    MC.MINECRAFT.entityRenderer,
+                    MC.MINECRAFT.getTextureManager(),
+                    MC.MINECRAFT.objectMouseOver,
+                    MC.MINECRAFT.renderGlobal,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
             ForgeHooksClient.setRenderPass(0);
             RenderHelper.disableStandardItemLighting();
-            MINECRAFT.entityRenderer.disableLightmap();
+            MC.MINECRAFT.entityRenderer.disableLightmap();
             GlStateManager.matrixMode(5888);
             GlStateManager.popMatrix();
         }
         GlStateManager.matrixMode(5888);
 
         // ========== outline ==========
-        MINECRAFT.profiler.endStartSection("outline");
+        MC.MINECRAFT.profiler.endStartSection("outline");
         // note: block select box; on by default
-        if (flag && MINECRAFT.objectMouseOver != null && !renderViewEntity.isInsideOfMaterial(Material.WATER)) {
+        if (flag && MC.MINECRAFT.objectMouseOver != null && !renderViewEntity.isInsideOfMaterial(Material.WATER)) {
             EntityPlayer entityplayer = (EntityPlayer) renderViewEntity;
             GlStateManager.disableAlpha();
-            if (!ForgeHooksClient.onDrawBlockHighlight(MINECRAFT.renderGlobal, entityplayer, MINECRAFT.objectMouseOver, 0, partialTicks)) {
-                MINECRAFT.renderGlobal.drawSelectionBox(entityplayer, MINECRAFT.objectMouseOver, 0, partialTicks);
+            if (!ForgeHooksClient.onDrawBlockHighlight(MC.MINECRAFT.renderGlobal, entityplayer, MC.MINECRAFT.objectMouseOver, 0, partialTicks)) {
+                MC.MINECRAFT.renderGlobal.drawSelectionBox(entityplayer, MC.MINECRAFT.objectMouseOver, 0, partialTicks);
             }
             GlStateManager.enableAlpha();
         }
         // note: debug visuals; off by default
-        if (MINECRAFT.debugRenderer.shouldRender()) {
-            MINECRAFT.debugRenderer.renderDebug(partialTicks, finishTimeNano);
+        if (MC.MINECRAFT.debugRenderer.shouldRender()) {
+            MC.MINECRAFT.debugRenderer.renderDebug(partialTicks, finishTimeNano);
         }
 
         // ========== destroyProgress ==========
-        MINECRAFT.profiler.endStartSection("destroyProgress");
+        MC.MINECRAFT.profiler.endStartSection("destroyProgress");
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        MINECRAFT.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
-        MINECRAFT.renderGlobal.drawBlockDamageTexture(Tessellator.getInstance(), Tessellator.getInstance().getBuffer(), renderViewEntity, partialTicks);
-        MINECRAFT.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
+        MC.MINECRAFT.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).setBlurMipmap(false, false);
+        MC.MINECRAFT.renderGlobal.drawBlockDamageTexture(Tessellator.getInstance(), Tessellator.getInstance().getBuffer(), renderViewEntity, partialTicks);
+        MC.MINECRAFT.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).restoreLastBlurMipmap();
         GlStateManager.disableBlend();
-        MINECRAFT.profiler.endSection();
+        MC.MINECRAFT.profiler.endSection();
 
         // note: default value of debugView == false
-        if (!MethodHolder1.isDebugView(MINECRAFT.entityRenderer)) {
+        if (!MethodHolder1.isDebugView(MC.MINECRAFT.entityRenderer)) {
             // ========== litParticles ==========
-            MINECRAFT.profiler.startSection("litParticles");
-            MINECRAFT.entityRenderer.enableLightmap();
-            MINECRAFT.effectRenderer.renderLitParticles(renderViewEntity, partialTicks);
+            MC.MINECRAFT.profiler.startSection("litParticles");
+            MC.MINECRAFT.entityRenderer.enableLightmap();
+            MC.MINECRAFT.effectRenderer.renderLitParticles(renderViewEntity, partialTicks);
             RenderHelper.disableStandardItemLighting();
-            MethodHolder1.setupFog(MINECRAFT.entityRenderer, 0, partialTicks);
+            MethodHolder1.setupFog(MC.MINECRAFT.entityRenderer, 0, partialTicks);
 
             // ========== particles ==========
-            MINECRAFT.profiler.endStartSection("particles");
-            MINECRAFT.effectRenderer.renderParticles(renderViewEntity, partialTicks);
-            MINECRAFT.entityRenderer.disableLightmap();
-            MINECRAFT.profiler.endSection();
+            MC.MINECRAFT.profiler.endStartSection("particles");
+            MC.MINECRAFT.effectRenderer.renderParticles(renderViewEntity, partialTicks);
+            MC.MINECRAFT.entityRenderer.disableLightmap();
+            MC.MINECRAFT.profiler.endSection();
         }
 
         // ========== weather ==========
-        MINECRAFT.profiler.startSection("weather");
+        MC.MINECRAFT.profiler.startSection("weather");
         // note: weather like rain etc.
         GlStateManager.depthMask(false);
         GlStateManager.enableCull();
-        MethodHolder1.renderRainSnow(MINECRAFT.entityRenderer, partialTicks);
+        MethodHolder1.renderRainSnow(MC.MINECRAFT.entityRenderer, partialTicks);
         GlStateManager.depthMask(true);
-        MINECRAFT.renderGlobal.renderWorldBorder(renderViewEntity, partialTicks);
+        MC.MINECRAFT.renderGlobal.renderWorldBorder(renderViewEntity, partialTicks);
         GlStateManager.disableBlend();
         GlStateManager.enableCull();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.alphaFunc(516, 0.1F);
-        MethodHolder1.setupFog(MINECRAFT.entityRenderer, 0, partialTicks);
+        MethodHolder1.setupFog(MC.MINECRAFT.entityRenderer, 0, partialTicks);
         GlStateManager.enableBlend();
         GlStateManager.depthMask(false);
-        MINECRAFT.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        MC.MINECRAFT.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.shadeModel(7425);
-        MINECRAFT.profiler.endSection();
+        MC.MINECRAFT.profiler.endSection();
         //</editor-fold>
 
         KIRINO_ENGINE.run(FramePhase.RENDER_TRANSPARENT);
 
         //<editor-fold desc="vanilla logic">
         // ========== entities ==========
-        MINECRAFT.profiler.startSection("entities");
+        MC.MINECRAFT.profiler.startSection("entities");
         // note: default value of debugView == false
-        if (!MethodHolder1.isDebugView(MINECRAFT.entityRenderer)) {
+        if (!MethodHolder1.isDebugView(MC.MINECRAFT.entityRenderer)) {
             RenderHelper.enableStandardItemLighting();
             ForgeHooksClient.setRenderPass(1);
             KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).entityRenderingPatch).renderEntities(
-                    MINECRAFT.getRenderViewEntity(),
-                    MINECRAFT.pointedEntity,
-                    MINECRAFT.player,
+                    MC.MINECRAFT.getRenderViewEntity(),
+                    MC.MINECRAFT.pointedEntity,
+                    MC.MINECRAFT.player,
                     cameraFrustum,
-                    MINECRAFT.gameSettings,
-                    MINECRAFT.world,
-                    MINECRAFT.fontRenderer,
-                    MINECRAFT.getRenderManager(),
-                    MINECRAFT.entityRenderer,
+                    MC.MINECRAFT.gameSettings,
+                    MC.MINECRAFT.world,
+                    MC.MINECRAFT.fontRenderer,
+                    MC.MINECRAFT.getRenderManager(),
+                    MC.MINECRAFT.entityRenderer,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
             KirinoCommonCore.KIRINO_ENGINE.getStorage().get(MethodHolder2.getMinecraftIntegration(KIRINO_ENGINE).tesrRenderingPatch).renderTESRs(
-                    MINECRAFT.getRenderViewEntity(),
+                    MC.MINECRAFT.getRenderViewEntity(),
                     cameraFrustum,
-                    MINECRAFT.world,
-                    MINECRAFT.fontRenderer,
-                    MINECRAFT.entityRenderer,
-                    MINECRAFT.getTextureManager(),
-                    MINECRAFT.objectMouseOver,
-                    MINECRAFT.renderGlobal,
+                    MC.MINECRAFT.world,
+                    MC.MINECRAFT.fontRenderer,
+                    MC.MINECRAFT.entityRenderer,
+                    MC.MINECRAFT.getTextureManager(),
+                    MC.MINECRAFT.objectMouseOver,
+                    MC.MINECRAFT.renderGlobal,
                     partialTicks,
                     MinecraftForgeClient.getRenderPass());
             GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -426,22 +432,22 @@ public final class KirinoClientCore {
         GlStateManager.disableFog();
 
         // ========== aboveClouds ==========
-        MINECRAFT.profiler.endStartSection("aboveClouds");
+        MC.MINECRAFT.profiler.endStartSection("aboveClouds");
         if (renderViewEntity.posY + (double) renderViewEntity.getEyeHeight() >= 128.0D) {
-            MethodHolder1.renderCloudsCheck(MINECRAFT.entityRenderer, MINECRAFT.renderGlobal, partialTicks, 2, d0, d1, d2);
+            MethodHolder1.renderCloudsCheck(MC.MINECRAFT.entityRenderer, MC.MINECRAFT.renderGlobal, partialTicks, 2, d0, d1, d2);
         }
 
         // ========== forge_render_last ==========
-        MINECRAFT.profiler.endStartSection("forge_render_last");
-        ForgeHooksClient.dispatchRenderLast(MINECRAFT.renderGlobal, partialTicks);
+        MC.MINECRAFT.profiler.endStartSection("forge_render_last");
+        ForgeHooksClient.dispatchRenderLast(MC.MINECRAFT.renderGlobal, partialTicks);
 
         // ========== hand ==========
-        MINECRAFT.profiler.endStartSection("hand");
-        if (MethodHolder1.isRenderHand(MINECRAFT.entityRenderer)) {
+        MC.MINECRAFT.profiler.endStartSection("hand");
+        if (MethodHolder1.isRenderHand(MC.MINECRAFT.entityRenderer)) {
             GlStateManager.clear(256);
-            MethodHolder1.renderHand(MINECRAFT.entityRenderer, partialTicks, 2);
+            MethodHolder1.renderHand(MC.MINECRAFT.entityRenderer, partialTicks, 2);
         }
-        MINECRAFT.profiler.endSection();
+        MC.MINECRAFT.profiler.endSection();
         //</editor-fold>
 
         KIRINO_ENGINE.run(FramePhase.POST_UPDATE);

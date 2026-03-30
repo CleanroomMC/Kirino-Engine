@@ -12,7 +12,7 @@ public class MinecraftResourceUtilsTest {
     public void testRead() {
         assertDoesNotThrow(() -> {
             MinecraftResourceUtils.readText(
-                    new ResourceLocation("forge:shaders/test.vert"),
+                    new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
                     MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
         });
     }

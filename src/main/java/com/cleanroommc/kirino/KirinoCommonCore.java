@@ -158,7 +158,7 @@ public final class KirinoCommonCore {
         event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
         event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
         event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
-        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"), ShaderDebugInjection.FRAME_DEBUG_VEC3F);
+        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"), ShaderDebugInjection.VEC3F_DEBUG);
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.vert"));
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
     }

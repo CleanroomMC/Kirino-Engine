@@ -112,6 +112,7 @@ public final class MinecraftResourceUtils {
         Preconditions.checkNotNull(newLine);
 
         InputStream stream;
+        // specific dev env path for unit tests
         if (isDevEnv() && rl.getNamespace().equals("forge")) {
             String path = findResource(rl);
             Preconditions.checkNotNull(path,
