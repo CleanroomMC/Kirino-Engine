@@ -13,6 +13,8 @@ public final class KirinoConfigHub {
         public boolean enableHDR = true;
         public boolean enablePostProcessing = false;
 
+        public boolean enableShaderDebug = false;
+
         public int targetWorkloadPerThread = 5000;
 
         public boolean compileToMdiCommands = true;
@@ -50,6 +52,10 @@ public final class KirinoConfigHub {
 
     public boolean isEnablePostProcessing() {
         return requiresRestart.enablePostProcessing;
+    }
+
+    public boolean isEnableShaderDebug() {
+        return requiresRestart.enableShaderDebug;
     }
 
     public int getTargetWorkloadPerThread() {

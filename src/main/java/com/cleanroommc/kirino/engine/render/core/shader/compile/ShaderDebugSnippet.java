@@ -6,6 +6,7 @@ public final class ShaderDebugSnippet {
     private ShaderDebugSnippet() {
     }
 
+    public static final String KIRINO_DEBUG = "0_kirino_debug.glsl";
     public static final String KIRINO_DEBUG_INVALIDITY = "1_kirino_debug_invalidity.glsl";
     public static final String KIRINO_DEBUG_COUNTER = "2_kirino_debug_counter.glsl";
     public static final String KIRINO_DEBUG_VEC3F_RECORD = "2_kirino_debug_vec3f_record.glsl";

@@ -33,6 +33,7 @@ public class ShaderDebugInfraTest {
             
             void main()
             {
+            #ifdef KIRINO_DEBUG
                 uint index = KirinoDebug_beginVec3Stream();
                 KirinoDebug_putVec3(index, vec3(1.0, 1.0, 1.0));
                 KirinoDebug_putVec3(index, vec3(2.0, 2.0, 2.0));
@@ -40,6 +41,7 @@ public class ShaderDebugInfraTest {
                 index = KirinoDebug_beginVec3Stream();
                 KirinoDebug_putVec3(index, vec3(4.0, 4.0, 4.0));
                 KirinoDebug_putVec3(index, vec3(5.0, 5.0, 5.0));
+            #endif
             }
             """;
 

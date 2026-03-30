@@ -102,6 +102,7 @@ public final class ShaderDebugInjection {
         infra.append("\n// ===== Kirino Debug Infra Begin =====\n");
 
         Set<String> glslSet = new HashSet<>();
+        glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG);
         glslSet.add(ShaderDebugSnippet.KIRINO_DEBUG_INVALIDITY);
 
         for (Type type : debugTypes) {

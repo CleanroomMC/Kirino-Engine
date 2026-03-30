@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderRemapHelper;
@@ -45,13 +46,24 @@ public class ShaderRegistry {
 
         String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
 
+        List<ShaderDebugInjection.Type> debugTypes = null;
+        if (KirinoCommonCore.KIRINO_CONFIG_HUB.isEnableShaderDebug() && options != null) {
+            debugTypes = ShaderDebugInjection.parse(options.debugFlags);
+        }
+
         // todo: integrate ksmlc here
+
+        // todo: temp; to be refactored
+        if (debugTypes != null && debugTypes.contains(ShaderDebugInjection.Type.VEC3F_DEBUG)) {
+            shaderSource = ShaderDebugInjection.inject(shaderSource, MinecraftResourceUtils.readText(
+                    new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
+                    MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+        }
 
         Map<String, String> remap = new HashMap<>();
 
         // debug infra injection
-        List<ShaderDebugInjection.Type> debugTypes;
-        if (options != null && !(debugTypes = ShaderDebugInjection.parse(options.debugFlags)).isEmpty()) {
+        if (debugTypes != null && !debugTypes.isEmpty()) {
             Set<String> remapFields = new HashSet<>();
             shaderSource = ShaderDebugInjection.injectDebugInfra(shaderSource, debugTypes, remapFields);
             remap.putAll(ShaderDebugInjection.resolveDebugRemap(remapFields));
