@@ -26,10 +26,12 @@ public class MeshletInputDoubleBuffer {
 
         ssbo0.bind();
         ssbo0.allocPersistent(ssboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo0.clearUint0();
         ssbo0.mapPersistent(0, ssboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         ssbo1.bind();
         ssbo1.allocPersistent(ssboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo1.clearUint0();
         ssbo1.mapPersistent(0, ssboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         ssbo1.bind(0);
@@ -91,6 +93,7 @@ public class MeshletInputDoubleBuffer {
 
         ssbo0.bind();
         ssbo0.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo0.clearUint0();
         ssbo0.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         ssbo0.bind(prevID);
@@ -111,6 +114,7 @@ public class MeshletInputDoubleBuffer {
 
         ssbo1.bind();
         ssbo1.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        ssbo1.clearUint0();
         ssbo1.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         ssbo1.bind(prevID);

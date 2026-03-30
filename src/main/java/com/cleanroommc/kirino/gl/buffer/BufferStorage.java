@@ -43,6 +43,7 @@ public class BufferStorage<T extends BufferView> {
         int currentBufferID = view.fetchCurrentBoundBufferID();
         view.bind();
         view.allocPersistent(pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        view.clearUint0();
         view.mapPersistent(0, pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
         view.bind(currentBufferID);
 

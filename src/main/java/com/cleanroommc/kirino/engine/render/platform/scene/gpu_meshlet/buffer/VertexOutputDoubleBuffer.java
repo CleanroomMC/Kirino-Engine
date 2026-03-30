@@ -45,18 +45,22 @@ public class VertexOutputDoubleBuffer {
 
         vertexSsbo0.bind();
         vertexSsbo0.allocPersistent(vertexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        vertexSsbo0.clearUint0();
         vertexSsbo0.mapPersistent(0, vertexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         vertexSsbo1.bind();
         vertexSsbo1.allocPersistent(vertexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        vertexSsbo1.clearUint0();
         vertexSsbo1.mapPersistent(0, vertexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo0.bind();
         indexSsbo0.allocPersistent(indexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        indexSsbo0.clearUint0();
         indexSsbo0.mapPersistent(0, indexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo1.bind();
         indexSsbo1.allocPersistent(indexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        indexSsbo1.clearUint0();
         indexSsbo1.mapPersistent(0, indexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo1.bind(0);
@@ -164,6 +168,7 @@ public class VertexOutputDoubleBuffer {
 
         vertexSsbo0.bind();
         vertexSsbo0.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        vertexSsbo0.clearUint0();
         vertexSsbo0.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         vertexSsbo0.bind(prevID);
@@ -184,6 +189,7 @@ public class VertexOutputDoubleBuffer {
 
         vertexSsbo1.bind();
         vertexSsbo1.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        vertexSsbo1.clearUint0();
         vertexSsbo1.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         vertexSsbo1.bind(prevID);
@@ -204,6 +210,7 @@ public class VertexOutputDoubleBuffer {
 
         indexSsbo0.bind();
         indexSsbo0.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        indexSsbo0.clearUint0();
         indexSsbo0.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo0.bind(prevID);
@@ -224,6 +231,7 @@ public class VertexOutputDoubleBuffer {
 
         indexSsbo1.bind();
         indexSsbo1.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        indexSsbo1.clearUint0();
         indexSsbo1.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo1.bind(prevID);

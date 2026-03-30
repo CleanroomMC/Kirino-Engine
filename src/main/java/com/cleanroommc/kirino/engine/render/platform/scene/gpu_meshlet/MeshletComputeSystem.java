@@ -17,7 +17,6 @@ import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.*;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -87,16 +86,15 @@ public class MeshletComputeSystem {
         tboWorkspace = new VBOView(new GLBuffer());
         tboWorkspace.bind();
         tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+        tboWorkspace.clearUint0();
         tboWorkspace.bind(0);
 
         rangeSsbo = new SSBOView(new GLBuffer());
         rangeSsbo.bind();
         rangeSsbo.allocPersistent(MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        rangeSsbo.clearUint0();
         rangeSsbo.mapPersistent(0, MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
         rangeSsbo.bind(0);
-
-        ByteBuffer byteBuffer = rangeSsbo.getPersistentMappedBuffer().orElseThrow();
-        MemoryUtil.memSet(byteBuffer, 0);
     }
 
     /**
@@ -113,6 +111,7 @@ public class MeshletComputeSystem {
             int prevID = tboWorkspace.fetchCurrentBoundBufferID();
             tboWorkspace.bind();
             tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+            tboWorkspace.clearUint0();
             tboWorkspace.bind(prevID);
         }
 

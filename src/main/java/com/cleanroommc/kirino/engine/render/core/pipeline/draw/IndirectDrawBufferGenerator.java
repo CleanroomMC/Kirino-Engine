@@ -31,6 +31,7 @@ public class IndirectDrawBufferGenerator {
         idbView = new IDBView(new GLBuffer());
         idbView.bind();
         idbView.allocPersistent(bufferSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        idbView.clearUint0();
         idbView.mapPersistent(0, bufferSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
         idbView.bind(0);
     }
