@@ -14,6 +14,7 @@ public class VBOBufferUploadHintTest {
 
     @Test
     void testBufferUploadHint() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 

@@ -14,6 +14,7 @@ public class VBOBufferSizeTest {
 
     @Test
     void testBufferSize() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 

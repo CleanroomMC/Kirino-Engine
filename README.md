@@ -4,7 +4,6 @@
 ![Platform](https://img.shields.io/badge/Platform-Minecraft%201.12.2-brightgreen.svg)
 ![Status](https://img.shields.io/badge/Status-WIP-yellow.svg)
 [![License](https://img.shields.io/badge/License-Custom%20(Mod%20Permissions)-orange.svg)](LICENSE)
-[![CodeFactor](https://www.codefactor.io/repository/github/cleanroommc/kirino-engine/badge/main)](https://www.codefactor.io/repository/github/cleanroommc/kirino-engine/overview/main)
 
 Kirino-Engine combines an ECS-based data-oriented architecture,
 explicit modern OpenGL abstractions,
@@ -19,7 +18,8 @@ Looking further ahead, the long-term goal is to evolve into a general-purpose en
 while keeping the main focus on rendering. To illustrate, we will pay more attention to lifecycles, phases, and systems, 
 rather than features, compatibility with legacy solutions, or similar concerns.
 
-> The project is highly WIP - contributions are welcome to help accelerate development!
+> The project is highly WIP - contributions are welcome to help accelerate development!<br>
+> Currently working on the terrain rendering pipeline.
 
 > Want a deeper look right away? Jump to "**How Everything Works?**"
 
@@ -39,8 +39,8 @@ rather than features, compatibility with legacy solutions, or similar concerns.
 <details>
 <summary>Click to Expand</summary>
 
-- Data-oriented SoA archetypes as the core data model, 
-  designed for predictable memory layout and efficient iteration
+- Data-oriented SoA archetypes as the data model, 
+  designed for predictable memory layout
 - Strict separation of entity identity, component storage, and system execution
 - Designed to integrate with other data-oriented tech stacks like
   job systems, execution graphs
@@ -56,15 +56,9 @@ The project provides a low-level, semantic abstraction layer over modern OpenGL.
 Rather than acting as a black-box wrapper, this layer aims to preserve the
 meaning of OpenGL operations, **_and_** explain the implicit and subtle assumptions clearly. (WIP; partially usable)
 
-Note: this part is partially coupled with the engine implementation
+You may find those abstractions handy if you know/use GL already.
 
-This abstraction focuses on:
-- Explicit GPU resource management, ctor allocation & explicit disposability & auto disposability
-- Shader and program registry
-- Clear separation between resource description and usage, a buffer-view pattern to be exact
-- OpenGL debug instrumentation
-
-The goal of this layer is not to hide OpenGL, **but to clarify it**.
+The goal of this layer is not to hide OpenGL, but to **clarify** it.
 
 </details>
 
@@ -79,15 +73,8 @@ concrete rendering engine implementation. (WIP)
 The engine is designed around a hybrid CPU-GPU pipeline, where high-level
 orchestration remains on the CPU while some jobs like culling, data processing are delegated to the GPU.
 
-Note: Minecraft is mostly used as a data source and constraint, rather
-than as a strict compatibility target
-
-Key characteristics include:
-- A pass-based rendering architecture with explicit `RenderPass` and `Subpass`
-  composition
-- Immutable pipeline state descriptions to reduce state ambiguity and CPU-GPU stall (when fetching states)
-- Support for advanced rendering techniques like meshlet-based virtual geometry, GPU-driven draw submission
-- Leave rooms to experimental features like multi-resolution rendering, super-sampling
+> **Note**: Minecraft is mostly used as a data source and constraint, rather
+> than as a strict compatibility target.
 
 </details>
 
@@ -106,7 +93,7 @@ To keep discussions productive, please read the guidelines below.
 Before proposing changes or opening discussions, please:
 
 - Treat/Assume the current design choices as intentional and valid start points
-  (that is, reason within the given assumption space; feel free to do contradictions or contrapositives)
+  (that is, reason within the given assumption space; feel free to do contradictions)
 - Base your reasoning on the assumptions implied by the existing docs
 - Focus on internal consistency, trade-offs, and constructive outcomes
 
@@ -184,7 +171,7 @@ where you can understand our implicit assumptions and build the mental model gra
 <br>
 
 - What's the most exciting features in dev?
-  - GPU-Driven Meshlet Rendering & Virtual Geometry
+  - GPU-Driven Meshlet Rendering
   - Modern Rendering Paradigms (like Multi-Draw Indirect, Pipeline State Objects, etc.)
   - Semi-Static Global Illumination Driven by Surface Cards & Temporal Accumulation
   - ECS, Parallel Job, and Execution Graph (a Multithread-Friendly Architecture)

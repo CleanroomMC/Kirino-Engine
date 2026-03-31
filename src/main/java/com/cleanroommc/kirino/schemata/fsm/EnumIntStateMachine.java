@@ -14,17 +14,17 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
     private final int lowerInputBound, upperInputBound;
     private final S[] states;
     private final int[] transitionMap;
-    private final OnEnterStateCallback<S,Integer>[] stateEnterCallbackMap;
-    private final OnExitStateCallback<S,Integer>[] stateExitCallbackMap;
-    private final Rollback<S,Integer>[] rollbacks;
-    private final ErrorCallback<S,Integer> error;
+    private final OnEnterStateCallback<S, Integer>[] stateEnterCallbackMap;
+    private final OnExitStateCallback<S, Integer>[] stateExitCallbackMap;
+    private final Rollback<S, Integer>[] rollbacks;
+    private final ErrorCallback<S, Integer> error;
     private int state;
-    private final Deque<FSMBacklogPair<S,Integer>> backlog = new ArrayDeque<>();
+    private final Deque<FSMBacklogPair<S, Integer>> backlog = new ArrayDeque<>();
 
     EnumIntStateMachine(int lowerInputBound, int upperInputBound,
                         @NonNull S[] states, int @NonNull [] transitionMap,
                         OnEnterStateCallback<S, Integer> @NonNull [] stateEnterCallbackMap,
-                        OnExitStateCallback<S,Integer> @NonNull [] stateExitCallbackMap,
+                        OnExitStateCallback<S, Integer> @NonNull [] stateExitCallbackMap,
                         Rollback<S, Integer> @NonNull [] rollbacks,
                         @Nullable ErrorCallback<S, Integer> error,
                         @NonNull S initialState) {
@@ -78,12 +78,12 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return Optional.empty();
         }
 
-        FSMBacklogPair<S,Integer> pair = backlog.pop();
-        Rollback<S,Integer> rollback = rollbacks[index(pair.input(), pair.state().ordinal())];
+        FSMBacklogPair<S, Integer> pair = backlog.pop();
+        Rollback<S, Integer> rollback = rollbacks[index(pair.input(), pair.state().ordinal())];
         if (rollback != null) {
             rollback.rollback(states[state], pair.input(), pair.state());
         }
-        FSMBacklogPair<S,Integer> result = new FSMBacklogPair<>(states[state], pair.input());
+        FSMBacklogPair<S, Integer> result = new FSMBacklogPair<>(states[state], pair.input());
         state = pair.state().ordinal();
         return Optional.of(result);
     }
@@ -111,7 +111,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             this.lowerInputBound = lowerInputBound;
             this.upperInputBound = upperInputBound;
             states = stateClass.getEnumConstants();
-            final int size = states.length*(upperInputBound-lowerInputBound+1);
+            final int size = states.length * (upperInputBound - lowerInputBound + 1);
             transitionMap = new int[size];
             for (int i = 0; i < size; i++) {
                 transitionMap[i] = -1;
@@ -128,9 +128,9 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @NonNull
         @Override
         public Builder<S, Integer> addTransition(@NonNull S state, @NonNull Integer input, @NonNull S nextState,
-                                                  @Nullable OnEnterStateCallback<S, Integer> onEnterStateCallback,
-                                                  @Nullable OnExitStateCallback<S, Integer> onExitStateCallback,
-                                                  @Nullable Rollback<S, Integer> rollbackCallback) {
+                                                 @Nullable OnEnterStateCallback<S, Integer> onEnterStateCallback,
+                                                 @Nullable OnExitStateCallback<S, Integer> onExitStateCallback,
+                                                 @Nullable Rollback<S, Integer> rollbackCallback) {
             Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
             Preconditions.checkNotNull(nextState, "Parameter \"nextState\" must not be null.");
             Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound), "Input %s is out of range [%s, %s].", input, lowerInputBound, upperInputBound);
@@ -214,7 +214,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         public FiniteStateMachine<S, Integer> build() {
             Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
 
-            return new EnumIntStateMachine<S>(lowerInputBound,upperInputBound,
+            return new EnumIntStateMachine<S>(lowerInputBound, upperInputBound,
                     states, transitionMap, stateEnterCallbackMap, stateExitCallbackMap, rollbacks, error, initialState);
         }
     }

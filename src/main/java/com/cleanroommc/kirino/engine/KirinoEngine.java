@@ -260,11 +260,17 @@ public class KirinoEngine {
 
     private final FramePhaseFSM framePhaseFsm = new FramePhaseFSM();
 
-    public FramePhase nextExpectedPhase() {
-        return framePhaseFsm.getState();
+    private boolean firstPrepareFinished = false;
+    private boolean afterFirstPrepare = false;
+
+    public boolean isAfterFirstPrepare() {
+        return afterFirstPrepare;
     }
 
     /**
+     * The {@link FramePhase} execution order is explicitly guaranteed by the FSM.
+     * An error will be thrown on violations.
+     *
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public void run(@NonNull FramePhase phase) {
@@ -274,6 +280,17 @@ public class KirinoEngine {
         if (!modeChosen) {
             modeChosen = true;
             headlessMode = false;
+        }
+
+        Preconditions.checkState(firstPrepareFinished || phase == FramePhase.PREPARE,
+                "First phase to be run must be \"PREPARE\".");
+
+        if (firstPrepareFinished && !afterFirstPrepare) {
+            afterFirstPrepare = true;
+        }
+
+        if (!firstPrepareFinished) {
+            firstPrepareFinished = true;
         }
 
         Preconditions.checkState(framePhaseFsm.getState() == phase,
@@ -290,6 +307,11 @@ public class KirinoEngine {
     }
 
     /**
+     * The {@link FramePhase} execution order is <i>not</i> guaranteed by the FSM
+     * since <code>runHeadlessly</code> is injected to a heavily mixin'd method instead of
+     * the methods maintained by us.
+     * No error will be thrown on violations.
+     *
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public void runHeadlessly(@NonNull FramePhase phase) {
@@ -301,10 +323,16 @@ public class KirinoEngine {
             headlessMode = true;
         }
 
-        Preconditions.checkState(framePhaseFsm.getState() == phase,
-                "Expect to run \"%s\" but got \"%s\".", framePhaseFsm.getState(), phase);
+        Preconditions.checkState(firstPrepareFinished || phase == FramePhase.PREPARE,
+                "First phase to be run must be \"PREPARE\".");
 
-        framePhaseFsm.next();
+        if (firstPrepareFinished && !afterFirstPrepare) {
+            afterFirstPrepare = true;
+        }
+
+        if (!firstPrepareFinished) {
+            firstPrepareFinished = true;
+        }
 
         headlessWorld.run(phase);
 

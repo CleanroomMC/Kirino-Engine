@@ -43,6 +43,12 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
         Assumptions.assumeTrue(versionMajor == 4 && versionMinor == 6);
     }
 
+    private static boolean initialized = false;
+
+    public static void assumeInitialized() {
+        Assumptions.assumeTrue(initialized);
+    }
+
     private void initGL() {
         versionMajor = -1;
         versionMinor = -1;
@@ -141,10 +147,11 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
     public void beforeAll(@NonNull ExtensionContext context) throws Exception {
         GLOBAL_GL_LOCK.lock();
         try {
+            initialized = false;
             initGL();
+            initialized = true;
         } catch (Throwable t) {
-            GLOBAL_GL_LOCK.unlock();
-            throw t;
+            LOGGER.error("Failed to initialize GL test environment.", t);
         }
     }
 
@@ -152,6 +159,7 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
     public void afterAll(@NonNull ExtensionContext context) throws Exception {
         try {
             destroyGL();
+            initialized = false;
         } finally {
             GLOBAL_GL_LOCK.unlock();
         }
