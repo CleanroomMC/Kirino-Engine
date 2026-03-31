@@ -3,6 +3,7 @@ package com.cleanroommc.test.kirino.gl.ext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -13,16 +14,45 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
 
 import java.util.concurrent.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static final Logger LOGGER = LogManager.getLogger("JUnit GL Test");
+    private static final ReentrantLock GLOBAL_GL_LOCK = new ReentrantLock(true);
 
     private static long window;
     private static ExecutorService glThread = null;
 
-    @Override
-    public void beforeAll(@NonNull ExtensionContext context) throws Exception {
+    public static Logger logger() {
+        return LOGGER;
+    }
+
+    private static int versionMajor = -1;
+    private static int versionMinor = -1;
+
+    public static int getVersionMajor() {
+        return versionMajor;
+    }
+
+    public static int getVersionMinor() {
+        return versionMinor;
+    }
+
+    public static void assumeGL46() {
+        Assumptions.assumeTrue(versionMajor == 4 && versionMinor == 6);
+    }
+
+    private static boolean initialized = false;
+
+    public static void assumeInitialized() {
+        Assumptions.assumeTrue(initialized);
+    }
+
+    private void initGL() {
+        versionMajor = -1;
+        versionMinor = -1;
+
         glThread = Executors.newSingleThreadExecutor(r -> {
             Thread t = new Thread(r, "GL Test Thread");
             t.setDaemon(true);
@@ -33,7 +63,7 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
             GLFWErrorCallback.createPrint(System.err).set();
 
             if (!GLFW.glfwInit()) {
-                throw new IllegalStateException("[JUnit GL Test] glfwInit failed.");
+                throw new IllegalStateException("\"GLFW.glfwInit\" failed.");
             }
 
             GLFW.glfwDefaultWindowHints();
@@ -46,7 +76,7 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
                     MemoryUtil.NULL);
 
             if (window == MemoryUtil.NULL) {
-                throw new IllegalStateException("[JUnit GL Test] glfwCreateWindow failed.");
+                throw new IllegalStateException("\"GLFW.glfwCreateWindow\" failed.");
             }
 
             GLFW.glfwMakeContextCurrent(window);
@@ -57,15 +87,13 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
             LOGGER.info("GL context initialized.");
 
             String rawGLVersion = GL11.glGetString(GL11.GL_VERSION);
-            int majorGLVersion = -1;
-            int minorGLVersion = -1;
 
             if (rawGLVersion != null) {
                 String[] parts = rawGLVersion.split("\\s+")[0].split("\\.");
                 if (parts.length >= 2) {
                     try {
-                        majorGLVersion = Integer.parseInt(parts[0]);
-                        minorGLVersion = Integer.parseInt(parts[1]);
+                        versionMajor = Integer.parseInt(parts[0]);
+                        versionMinor = Integer.parseInt(parts[1]);
                     } catch (NumberFormatException ignored) {
                     }
                 }
@@ -75,16 +103,15 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
 
             LOGGER.info("OpenGL version: {}", rawGLVersion);
 
-            if (rawGLVersion.isEmpty() || majorGLVersion == -1 || minorGLVersion == -1) {
-                throw new RuntimeException("[JUnit GL Test] Failed to parse the OpenGL version.");
+            if (rawGLVersion.isEmpty() || versionMajor == -1 || versionMinor == -1) {
+                throw new RuntimeException("Failed to parse the OpenGL version.");
             }
 
-            LOGGER.info("Parsed OpenGL version: {}.{}", majorGLVersion, minorGLVersion);
+            LOGGER.info("Parsed OpenGL version: {}.{}", versionMajor, versionMinor);
         }).join();
     }
 
-    @Override
-    public void afterAll(@NonNull ExtensionContext context) throws Exception {
+    private void destroyGL() {
         if (glThread == null) {
             return;
         }
@@ -100,6 +127,9 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
             LOGGER.info("GL context destroyed.");
         }).join();
 
+        versionMajor = -1;
+        versionMinor = -1;
+
         glThread.shutdown();
         try {
             if (!glThread.awaitTermination(2, TimeUnit.SECONDS)) {
@@ -110,6 +140,28 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
             Thread.currentThread().interrupt();
         } finally {
             LOGGER.info("GL thread shutdown.");
+        }
+    }
+
+    @Override
+    public void beforeAll(@NonNull ExtensionContext context) throws Exception {
+        GLOBAL_GL_LOCK.lock();
+        try {
+            initialized = false;
+            initGL();
+            initialized = true;
+        } catch (Throwable t) {
+            LOGGER.error("Failed to initialize GL test environment.", t);
+        }
+    }
+
+    @Override
+    public void afterAll(@NonNull ExtensionContext context) throws Exception {
+        try {
+            destroyGL();
+            initialized = false;
+        } finally {
+            GLOBAL_GL_LOCK.unlock();
         }
     }
 
