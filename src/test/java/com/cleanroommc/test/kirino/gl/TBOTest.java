@@ -28,6 +28,7 @@ public class TBOTest {
     @Order(1)
     @Test
     public void testIO() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 
@@ -60,6 +61,7 @@ public class TBOTest {
     @Order(2)
     @Test
     public void testAlignment() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 
@@ -119,6 +121,7 @@ public class TBOTest {
     @Order(3)
     @Test
     public void testComputeTBO() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 

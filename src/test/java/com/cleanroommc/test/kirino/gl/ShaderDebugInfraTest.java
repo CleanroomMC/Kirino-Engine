@@ -47,6 +47,7 @@ public class ShaderDebugInfraTest {
 
     @Test
     public void testVec3f() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 

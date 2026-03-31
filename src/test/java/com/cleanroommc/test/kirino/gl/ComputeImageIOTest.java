@@ -33,6 +33,7 @@ public class ComputeImageIOTest {
 
     @Test
     public void testComputeIO() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 
@@ -87,6 +88,7 @@ public class ComputeImageIOTest {
 
     @Test
     public void testDsaComputeIO() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 

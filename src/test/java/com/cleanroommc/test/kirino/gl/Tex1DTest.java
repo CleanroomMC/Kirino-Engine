@@ -17,6 +17,7 @@ public class Tex1DTest {
 
     @Test
     public void testRead() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 
@@ -40,6 +41,7 @@ public class Tex1DTest {
 
     @Test
     public void testDsaRead() {
+        GLTestExtension.assumeInitialized();
         GLTestExtension.submit(() -> {
             GLTestExtension.assumeGL46();
 
