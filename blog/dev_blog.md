@@ -36,3 +36,13 @@
 - Crash due to compute shader debug
 - Why `Meshlet.blockCount == 0` for some compute shader calls
 - Whether GPU side meshlet vertex/index data follow the slot layout
+
+**3.31 Snapshot:**
+- Currently working on the "On demand compute; in place rewrite"
+  - In order reduce the amount of compute shader's work, 
+    meshlet vertex/index output will follow a slot memory layout 
+    (`|Slot 0: data ... padding|Slot 1: ...` where every slot has the same length, so in place rewrite will be possible)
+- Issue: `Meshlet.blockCount == 0` for some compute invocations while there's no empty meshlet on CPU side
+- Issue: shader debug infra causes crash (system freeze) due to an unknown issue
+- Need to verify that meshlet vertex/index output is working correctly and following a slot layout
+- Need another SSBO to record indices to guide VS vertex pulling
