@@ -30,3 +30,9 @@
 **Done:**
 - Refactor & implement texture abstraction: `GLTexture` + `Accessor`
 - Replace SSBO counter by uimage1D
+- Basic shader debug infra
+
+**Want To Investigate:**
+- Crash due to compute shader debug
+- Why `Meshlet.blockCount == 0` for some compute shader calls
+- Whether GPU side meshlet vertex/index data follow the slot layout

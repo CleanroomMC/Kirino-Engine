@@ -225,4 +225,11 @@ void main()
 
     imageAtomicAdd(counters, 0, uint(vertexDelta));
     imageAtomicAdd(counters, 1, uint(indexDelta));
+
+#ifdef KIRINO_DEBUG
+    uint index = KirinoDebug_beginVec3Stream();
+    KirinoDebug_putVec3(index, vec3(dirtyIndex, oldIndexCount, oldVertexCount));
+    KirinoDebug_putVec3(index, vec3(ranges[dirtyIndex].firstIndex, ranges[dirtyIndex].indexCount, ranges[dirtyIndex].vertexCount));
+    KirinoDebug_putVec3(index, vec3(imageLoad(counters, 0).r, imageLoad(counters, 1).r, blockCount));
+#endif
 }

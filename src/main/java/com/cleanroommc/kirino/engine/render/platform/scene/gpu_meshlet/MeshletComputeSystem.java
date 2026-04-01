@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.engine.render.core.debug.shader.ShaderDebugResource;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletConstants;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
@@ -150,10 +151,15 @@ public class MeshletComputeSystem {
         GL42.glBindImageTexture(3, counterTex.textureID(), 0, false, 0, GL15.GL_READ_WRITE, TextureFormat.R32UI.internalFormat);
         GL30.glBindBufferBase(rangeSsbo.target(), 4, rangeSsbo.bufferID);
 
+        GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);
+        GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboVec3().target(), 14, ShaderDebugResource.RESOURCE.getSsboVec3().bufferID);
+
         program.use();
 
         GL20.glUniform1i(GL20.glGetUniformLocation(program.getProgramID(), "dirtyList"), 4);
         dirtyListTbo.unit(4); // no one is using 4 atm; temp
+
+        KirinoCommonCore.LOGGER.info("dispatch " + dispatchCount);
 
         GL43.glDispatchCompute(dispatchCount, 1, 1);
         GL42.glMemoryBarrier(GL42.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
@@ -177,9 +183,6 @@ public class MeshletComputeSystem {
 
             rawVertexCount = texTempByteBuffer.getInt(0);
             rawIndexCount = texTempByteBuffer.getInt(4);
-
-            KirinoCommonCore.LOGGER.info("global vertex count: " + rawVertexCount);
-            KirinoCommonCore.LOGGER.info("global index count: " + rawIndexCount);
 
             shaderRunning = false;
             return true;

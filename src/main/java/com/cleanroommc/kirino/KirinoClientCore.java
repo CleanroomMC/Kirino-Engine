@@ -12,6 +12,7 @@ import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataServiceLoca
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.CommonStatsHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.FpsHUD;
+import com.cleanroommc.kirino.engine.render.core.debug.shader.ShaderDebugResource;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
@@ -526,6 +527,9 @@ public final class KirinoClientCore {
 
         if (KIRINO_CONFIG_HUB.isEnableRenderDelegate() && !RENDER_UNSUPPORTED) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
+
+            // init. todo: temp; refactor
+            ShaderDebugResource.RESOURCE.getSsboCounter();
 
             // force finish gl related initialization
             StopWatch glStopWatch = StopWatch.createStarted();
