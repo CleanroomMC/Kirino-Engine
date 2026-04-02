@@ -153,12 +153,14 @@ public class MeshletComputeSystem {
 
         GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);
         GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboVec3().target(), 14, ShaderDebugResource.RESOURCE.getSsboVec3().bufferID);
+        GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboTemp().target(), 13, ShaderDebugResource.RESOURCE.getSsboTemp().bufferID);
 
         program.use();
 
         GL20.glUniform1i(GL20.glGetUniformLocation(program.getProgramID(), "dirtyList"), 4);
         dirtyListTbo.unit(4); // no one is using 4 atm; temp
 
+        ShaderDebugResource.RESOURCE.setDispatchCount(dispatchCount);
         KirinoCommonCore.LOGGER.info("dispatch " + dispatchCount);
 
         GL43.glDispatchCompute(dispatchCount, 1, 1);
@@ -183,6 +185,8 @@ public class MeshletComputeSystem {
 
             rawVertexCount = texTempByteBuffer.getInt(0);
             rawIndexCount = texTempByteBuffer.getInt(4);
+
+            ShaderDebugResource.RESOURCE.readAndPrint();
 
             shaderRunning = false;
             return true;

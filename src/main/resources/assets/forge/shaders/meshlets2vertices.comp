@@ -107,6 +107,13 @@ void emitQuad(
     iCursor += 6u;
 }
 
+#ifdef KIRINO_DEBUG
+layout(std430, binding = 13) buffer TempBuffer
+{
+    vec4 temp[];
+};
+#endif
+
 void main()
 {
     uint dirtyCount = texelFetch(dirtyList, 0).r;
@@ -227,9 +234,24 @@ void main()
     imageAtomicAdd(counters, 1, uint(indexDelta));
 
 #ifdef KIRINO_DEBUG
-    uint index = KirinoDebug_beginVec3Stream();
-    KirinoDebug_putVec3(index, vec3(dirtyIndex, oldIndexCount, oldVertexCount));
-    KirinoDebug_putVec3(index, vec3(ranges[dirtyIndex].firstIndex, ranges[dirtyIndex].indexCount, ranges[dirtyIndex].vertexCount));
-    KirinoDebug_putVec3(index, vec3(imageLoad(counters, 0).r, imageLoad(counters, 1).r, blockCount));
+    temp[dispatchIndex * 4].x = dirtyIndex;
+    temp[dispatchIndex * 4].y = oldIndexCount;
+    temp[dispatchIndex * 4].z = oldVertexCount;
+    temp[dispatchIndex * 4].w = 0;
+
+    temp[dispatchIndex * 4 + 1].x = ranges[dirtyIndex].firstIndex;
+    temp[dispatchIndex * 4 + 1].y = ranges[dirtyIndex].indexCount;
+    temp[dispatchIndex * 4 + 1].z = ranges[dirtyIndex].vertexCount;
+    temp[dispatchIndex * 4 + 1].w = 0;
+
+    temp[dispatchIndex * 4 + 2].x = imageLoad(counters, 0).r;
+    temp[dispatchIndex * 4 + 2].y = imageLoad(counters, 1).r;
+    temp[dispatchIndex * 4 + 2].z = blockCount;
+    temp[dispatchIndex * 4 + 2].w = 0;
+
+    temp[dispatchIndex * 4 + 3].x = m.chunkPosAndBlockCount.x;
+    temp[dispatchIndex * 4 + 3].y = m.chunkPosAndBlockCount.y;
+    temp[dispatchIndex * 4 + 3].z = m.chunkPosAndBlockCount.z;
+    temp[dispatchIndex * 4 + 3].w = 0;
 #endif
 }
