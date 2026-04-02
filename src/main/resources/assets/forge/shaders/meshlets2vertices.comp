@@ -246,7 +246,7 @@ void main()
 
     temp[dispatchIndex * 4 + 2].x = imageLoad(counters, 0).r;
     temp[dispatchIndex * 4 + 2].y = imageLoad(counters, 1).r;
-    temp[dispatchIndex * 4 + 2].z = blockCount;
+    temp[dispatchIndex * 4 + 2].z = m.chunkPosAndBlockCount.w;
     temp[dispatchIndex * 4 + 2].w = 0;
 
     temp[dispatchIndex * 4 + 3].x = m.chunkPosAndBlockCount.x;
