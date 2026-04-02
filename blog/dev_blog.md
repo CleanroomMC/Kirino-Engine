@@ -50,10 +50,10 @@
 ## April 2026
 
 **Debugging**:
-- **Actual cause**: UNKNOWN<br>
+- (i) **Actual cause**: UNKNOWN<br>
   `MeshletBufferWriteJob.execute` didn't run (due to the lack of data) for the first write task; therefore `Meshlet.blockCount == 0` for the first compute dispatch.
   However, a `write --> then --> compute` lifecycle is guaranteed. Issue might be stemmed from the ECS job related stuff.
-- **Potential race condition**<br>
+- (ii) **Potential race condition**<br>
   `CleanWorld.update`, which is flushing the ecs commands, may run while `job.executeAsync` is running.
   As a result, archetype data may be modified while a job is reading it.
   Creating snapshots might be too expensive, so I may delay `CleanWorld.update` based on the current job status
@@ -68,6 +68,96 @@
   The potential ECS race condition might be the cause of `Meshlet.blockCount == 0` but
   the empty meshlet issue only happens for the first compute dispatch. The consistency makes this thing more suspicious.
   Race conditions might not be consistent like that.
-- **Guess**<br>
+- (iii) **Guess**<br>
   Shader debug was causing system freeze and crash likely because I didn't allocate enough
   storage for buffers? Btw I shouldn't assume that debug data stay together for every frame since `append log` was called async.
+- **Fixed (i)!!!**
+  - Firstly, there was a common pool starvation issue that slightly pauses my ECS system flow execution.
+    Now, I've switched to my dedicated fork join pool. Resolved.
+  - For the empty meshlet issue, the culprit was essentially this line from `SystemExeFlowGraph`
+    ```java
+    /**
+    * Async version of {@link #execute()}.
+    */
+    default CompletableFuture<Void> executeAsync(Executor executor) {
+        return CompletableFuture.runAsync(this::execute, executor);
+    }
+    ```
+    So `executing=false` is slightly delayed due to the async execution, creating a submit-start gap.
+    When it comes to `MeshletGpuPipelineScheduler`
+    ```java
+    if (storage.get(meshletGpuRegistry).hasMeshletChanges()) {
+        if (storage.get(meshletGpuRegistry).isWriting()) {
+            meshletFsm.next(); // COMPUTABLE
+
+            KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_ALREADY_WRITING);
+        } else {
+            KirinoClientDebug.MeshletGpuTimeline$beginWriting();
+
+            storage.get(meshletGpuRegistry).beginWriting();
+            meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+            meshletFsm.next(); // COMPUTABLE
+
+            KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_BEGIN_WRITING);
+        }
+    } else ...
+    ```
+    FSM advances to `COMPUTABLE` from `IDLE` immediately but `executing` is still `false` due to the submit-start.
+    The compute system therefore thinks that the write task has finished, messing up the first compute dispatch.
+    Here's the log that verifies the correctness of the fix.
+    <details>
+    <summary>Click to Expand</summary>
+    [01:16:27] [Client thread/INFO] [Kirino Core]: dispatch 4
+    [01:16:27] [ForkJoinPool-1-worker-3/INFO] [Kirino Core]: callback start meshletBufferWriteSystem
+    [01:16:27] [ForkJoinPool-1-worker-3/INFO] [Kirino Core]: callback finish meshletBufferWriteSystem
+    [01:16:27] [Client thread/INFO] [Kirino Core]: ---------------------------------
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f10 (first index): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 512
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 768
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): -1
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 1
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f10 (first index): 1152
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 128
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 192
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): -1
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 2
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f10 (first index): 2304
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 384
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 576
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): -1
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): -1
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 3
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f10 (first index): 3456
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 256
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 384
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+    [01:16:27] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): 0
+    </details>
+

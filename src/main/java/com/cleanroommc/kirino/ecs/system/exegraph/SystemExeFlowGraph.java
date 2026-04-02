@@ -42,9 +42,7 @@ public interface SystemExeFlowGraph {
     /**
      * Async version of {@link #execute()}.
      */
-    default CompletableFuture<Void> executeAsync(Executor executor) {
-        return CompletableFuture.runAsync(this::execute, executor);
-    }
+    void executeAsync(Executor executor);
 
     /**
      * @return Whether the execution is ongoing

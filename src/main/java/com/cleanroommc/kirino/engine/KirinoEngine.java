@@ -153,6 +153,29 @@ public class KirinoEngine {
                 shaderRegistry);
 
         MinecraftCamera camera = new MinecraftCamera();
+
+        int parallelism = Runtime.getRuntime().availableProcessors();
+
+        // system flow executor
+        ForkJoinPool systemFlowPool = new ForkJoinPool(
+                parallelism,
+                ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                null,
+                true);
+
+        // system executor
+        ForkJoinPool systemPool = new ForkJoinPool(
+                parallelism,
+                ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                null,
+                true);
+
+        // todo: refactor
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            systemFlowPool.shutdown();
+            systemPool.shutdown();
+        }));
+
         MinecraftScene scene = new MinecraftScene(
                 storage,
                 ecsRuntime.entityManager,
@@ -162,8 +185,8 @@ public class KirinoEngine {
                 camera,
                 meshletGpuRegistry,
                 meshletComputeSystem,
-                ForkJoinPool.commonPool(),
-                ForkJoinPool.commonPool());
+                systemFlowPool,
+                systemPool);
 
         sceneViewState = new SceneViewState(
                 camera,
