@@ -90,15 +90,16 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
         }
     }
 
+    @NonNull
     @Override
-    public void executeAsync(Executor executor) {
+    public CompletableFuture<Void> executeAsync(Executor executor) {
         if (!lock.tryLock()) {
             throw new IllegalStateException("Must not execute while executing!");
         }
 
         executing = true;
         try {
-            CompletableFuture.runAsync(() -> {
+            return CompletableFuture.runAsync(() -> {
                 try {
                     for (BarrierNode node : topo) {
                         for (Transition edge : node.incoming) {

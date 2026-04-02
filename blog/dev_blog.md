@@ -102,11 +102,13 @@
         }
     } else ...
     ```
-    FSM advances to `COMPUTABLE` from `IDLE` immediately but `executing` is still `false` due to the submit-start.
+    FSM advances to `COMPUTABLE` from `IDLE` immediately but `executing` is still `false` due to the submit-start gap.
     The compute system therefore thinks that the write task has finished, messing up the first compute dispatch.
     Here's the log that verifies the correctness of the fix.
     <details>
     <summary>Click to Expand</summary>
+
+    ```log
     [01:16:27] [Client thread/INFO] [Kirino Core]: dispatch 4
     [01:16:27] [ForkJoinPool-1-worker-3/INFO] [Kirino Core]: callback start meshletBufferWriteSystem
     [01:16:27] [ForkJoinPool-1-worker-3/INFO] [Kirino Core]: callback finish meshletBufferWriteSystem
@@ -159,5 +161,10 @@
     [01:16:27] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): 0
     [01:16:27] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
     [01:16:27] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): 0
+    ```
+
     </details>
+
+**Follow-up Tasks:**
+- Must provide multiple ECS runtimes since ECS flush timing is per `CleanWorld`
 

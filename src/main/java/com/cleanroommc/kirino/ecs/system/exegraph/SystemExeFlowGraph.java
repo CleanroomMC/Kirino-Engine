@@ -42,7 +42,8 @@ public interface SystemExeFlowGraph {
     /**
      * Async version of {@link #execute()}.
      */
-    void executeAsync(Executor executor);
+    @NonNull
+    CompletableFuture<Void> executeAsync(Executor executor);
 
     /**
      * @return Whether the execution is ongoing
