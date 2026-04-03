@@ -5,53 +5,29 @@ import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 
-public class VertexOutputDoubleBuffer {
-
-    private SSBOView vertexSsbo0 = null;
-    private SSBOView vertexSsbo1 = null;
-    private int vertexSsboSize0;
-    private int vertexSsboSize1;
+public class DrawIndexOutputDoubleBuffer {
 
     private SSBOView indexSsbo0 = null;
     private SSBOView indexSsbo1 = null;
     private int indexSsboSize0;
     private int indexSsboSize1;
 
-    private int calcWorstCaseVertexBytes(int meshletCount) {
-        return meshletCount * MeshletConstants.WORST_CASE_MESHLET_VERTEX_BYTES + 4; // padding: 4
-    }
-
     private int calcWorstCaseIndexBytes(int meshletCount) {
         return meshletCount * MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES + 4; // padding: 4
     }
 
-    private final static int INITIAL_VERTEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
     private final static int INITIAL_INDEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
 
     private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
 
-    public VertexOutputDoubleBuffer() {
-        vertexSsboSize0 = INITIAL_VERTEX_SSBO_SIZE;
-        vertexSsboSize1 = INITIAL_VERTEX_SSBO_SIZE;
+    public DrawIndexOutputDoubleBuffer() {
         indexSsboSize0 = INITIAL_INDEX_SSBO_SIZE;
         indexSsboSize1 = INITIAL_INDEX_SSBO_SIZE;
     }
 
     public void lateInit() {
-        vertexSsbo0 = new SSBOView(new GLBuffer());
-        vertexSsbo1 = new SSBOView(new GLBuffer());
         indexSsbo0 = new SSBOView(new GLBuffer());
         indexSsbo1 = new SSBOView(new GLBuffer());
-
-        vertexSsbo0.bind();
-        vertexSsbo0.allocPersistent(vertexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        vertexSsbo0.clearUint0();
-        vertexSsbo0.mapPersistent(0, vertexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-
-        vertexSsbo1.bind();
-        vertexSsbo1.allocPersistent(vertexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        vertexSsbo1.clearUint0();
-        vertexSsbo1.mapPersistent(0, vertexSsboSize1, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
 
         indexSsbo0.bind();
         indexSsbo0.allocPersistent(indexSsboSize0, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
@@ -67,48 +43,6 @@ public class VertexOutputDoubleBuffer {
     }
 
     //<editor-fold desc="grow utils">
-    /**
-     * Make sure that vertexSsbo0 isn't being used by gpu at the moment.
-     * Must only grow the current write target.
-     *
-     * @return Whether successfully grew the buffer
-     */
-    private boolean growVertexSsbo0(int meshletCount) {
-        int targetSize = calcWorstCaseVertexBytes(meshletCount);
-        if (vertexSsboSize0 >= targetSize) {
-            return true;
-        }
-        if (targetSize > MAX_SSBO_SIZE) {
-            return false;
-        }
-
-        vertexSsboSize0 = targetSize;
-        resizeVertexSsbo0(vertexSsboSize0);
-
-        return true;
-    }
-
-    /**
-     * Make sure that vertexSsbo1 isn't being used by gpu at the moment.
-     * Must only grow the current write target.
-     *
-     * @return Whether successfully grew the buffer
-     */
-    private boolean growVertexSsbo1(int meshletCount) {
-        int targetSize = calcWorstCaseVertexBytes(meshletCount);
-        if (vertexSsboSize1 >= targetSize) {
-            return true;
-        }
-        if (targetSize > MAX_SSBO_SIZE) {
-            return false;
-        }
-
-        vertexSsboSize1 = targetSize;
-        resizeVertexSsbo1(vertexSsboSize1);
-
-        return true;
-    }
-
     /**
      * Make sure that indexSsbo0 isn't being used by gpu at the moment.
      * Must only grow the current write target.
@@ -153,48 +87,6 @@ public class VertexOutputDoubleBuffer {
     //</editor-fold>
 
     //<editor-fold desc="resize utils">
-    /**
-     * Make sure that vertexSsbo0 isn't being used by gpu at the moment.
-     * Must only resize the current write target.
-     */
-    private void resizeVertexSsbo0(int size) {
-        int prevID = vertexSsbo0.fetchCurrentBoundBufferID();
-
-        vertexSsbo0.bind();
-        vertexSsbo0.unmapPersistent();
-        GLResourceManager.disposeEarly(vertexSsbo0.buffer);
-
-        vertexSsbo0 = new SSBOView(new GLBuffer());
-
-        // compute will overwrite contents. no need to clear
-        vertexSsbo0.bind();
-        vertexSsbo0.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        vertexSsbo0.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-
-        vertexSsbo0.bind(prevID);
-    }
-
-    /**
-     * Make sure that vertexSsbo1 isn't being used by gpu at the moment.
-     * Must only resize the current write target.
-     */
-    private void resizeVertexSsbo1(int size) {
-        int prevID = vertexSsbo1.fetchCurrentBoundBufferID();
-
-        vertexSsbo1.bind();
-        vertexSsbo1.unmapPersistent();
-        GLResourceManager.disposeEarly(vertexSsbo1.buffer);
-
-        vertexSsbo1 = new SSBOView(new GLBuffer());
-
-        // compute will overwrite contents. no need to clear
-        vertexSsbo1.bind();
-        vertexSsbo1.allocPersistent(size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        vertexSsbo1.mapPersistent(0, size, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-
-        vertexSsbo1.bind(prevID);
-    }
-
     /**
      * Make sure that indexSsbo0 isn't being used by gpu at the moment.
      * Must only resize the current write target.
@@ -248,37 +140,13 @@ public class VertexOutputDoubleBuffer {
     }
 
     // not being consumed by draw commands atm; going to be written by compute
-    public SSBOView getVertexWriteTarget() {
-        return index == 0 ? vertexSsbo0 : vertexSsbo1;
-    }
-
-    // not being consumed by draw commands atm; going to be written by compute
     public SSBOView getIndexWriteTarget() {
         return index == 0 ? indexSsbo0 : indexSsbo1;
     }
 
     // just finished computing; going to be passed to draw commands
-    public SSBOView getVertexConsumeTarget() {
-        return index == 0 ? vertexSsbo1 : vertexSsbo0;
-    }
-
-    // just finished computing; going to be passed to draw commands
     public SSBOView getIndexConsumeTarget() {
         return index == 0 ? indexSsbo1 : indexSsbo0;
-    }
-
-    /**
-     * @return The vertex size of the current write target
-     */
-    public int getVertexSize() {
-        if (index == 0) {
-            return vertexSsboSize0;
-        }
-        if (index == 1) {
-            return vertexSsboSize1;
-        }
-
-        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
     }
 
     /**
@@ -290,22 +158,6 @@ public class VertexOutputDoubleBuffer {
         }
         if (index == 1) {
             return indexSsboSize1;
-        }
-
-        throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
-    }
-
-    /**
-     * Grow the current vertex write target.
-     *
-     * @return Whether successfully grew the buffer
-     */
-    public boolean growVertex(int meshletCount) {
-        if (index == 0) {
-            return growVertexSsbo0(meshletCount);
-        }
-        if (index == 1) {
-            return growVertexSsbo1(meshletCount);
         }
 
         throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);

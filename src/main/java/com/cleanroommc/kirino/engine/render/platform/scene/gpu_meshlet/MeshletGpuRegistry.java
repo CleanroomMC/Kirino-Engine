@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
 import com.cleanroommc.kirino.KirinoClientDebug;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletComponent;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.DrawIndexOutputDoubleBuffer;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletBufferSlotAllocator;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.VertexOutputDoubleBuffer;
@@ -15,6 +16,7 @@ import java.util.List;
 public class MeshletGpuRegistry {
     protected final MeshletInputDoubleBuffer meshletInputBuffer;
     protected final VertexOutputDoubleBuffer vertexOutputBuffer;
+    protected final DrawIndexOutputDoubleBuffer drawIndexOutputBuffer;
     protected final MeshletBufferSlotAllocator meshletBufferSlotAllocator;
 
     private int meshletIdCounter = 0;
@@ -33,12 +35,14 @@ public class MeshletGpuRegistry {
     public MeshletGpuRegistry() {
         meshletInputBuffer = new MeshletInputDoubleBuffer();
         vertexOutputBuffer = new VertexOutputDoubleBuffer();
+        drawIndexOutputBuffer = new DrawIndexOutputDoubleBuffer();
         meshletBufferSlotAllocator = new MeshletBufferSlotAllocator(meshletInputBuffer);
     }
 
     public void lateInit() {
         meshletInputBuffer.lateInit();
         vertexOutputBuffer.lateInit();
+        drawIndexOutputBuffer.lateInit();
     }
 
     //<editor-fold desc="id allocation & disposal">
@@ -170,6 +174,7 @@ public class MeshletGpuRegistry {
         // which is valid at this phase. finishWriting --> beginComputing --> beginWriting
         vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount());
         vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
+        drawIndexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
 
         computing = true;
     }
@@ -184,6 +189,7 @@ public class MeshletGpuRegistry {
         Preconditions.checkState(computing, "Must be computing already.");
 
         vertexOutputBuffer.swap();
+        drawIndexOutputBuffer.swap();
 
         computing = false;
     }
@@ -237,6 +243,24 @@ public class MeshletGpuRegistry {
      */
     public synchronized SSBOView getIndexConsumeTarget() {
         return vertexOutputBuffer.getIndexConsumeTarget();
+    }
+
+    /**
+     * Must be retrieved right before the compute task.
+     *
+     * @return The draw index ssbo to be written by the compute shader
+     */
+    public synchronized SSBOView getDrawIndexWriteTarget() {
+        return drawIndexOutputBuffer.getIndexWriteTarget();
+    }
+
+    /**
+     * Must be retrieved after the compute task.
+     *
+     * @return The draw index ssbo to be used in draw commands
+     */
+    public synchronized SSBOView getDrawIndexConsumeTarget() {
+        return drawIndexOutputBuffer.getIndexConsumeTarget();
     }
 
     /**
