@@ -39,7 +39,7 @@
 
 **3.31 Snapshot:**
 - Currently working on the "On demand compute; in place rewrite"
-  - In order reduce the amount of compute shader's work, 
+  - In order to reduce the amount of compute shader's work, 
     meshlet vertex/index output will follow a slot memory layout 
     (`|Slot 0: data ... padding|Slot 1: ...` where every slot has the same length, so in place rewrite will be possible)
 - Issue: `Meshlet.blockCount == 0` for some compute invocations while there's no empty meshlet on CPU side
@@ -168,3 +168,69 @@
 **Follow-up Tasks:**
 - Must provide multiple ECS runtimes since ECS flush timing is per `CleanWorld`
 
+Whether `GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT` is needed for coherent mapped buffers?
+- No
+  https://community.khronos.org/t/usage-of-gl-client-mapped-buffer-barrier-bit/75355
+  > If GL_MAP_COHERENT_BIT is set and the server does a write, the app must call FenceSync with GL_SYNC_GPU_COMMANDS_COMPLETE (or glFinish). Then the CPU will see the writes after the sync is complete.
+
+Slot-allocation layout / in-place-rewrite safe layout verified:
+- <details>
+  <summary>Click to Expand</summary>
+  
+  ```log
+  [22:29:20] [Client thread/INFO] [Kirino Core]: dispatch 3
+  [22:29:21] [Client thread/INFO] [Kirino Core]: ---------------------------------
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f10 (first index): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 384
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 576
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 1
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f10 (first index): 1152
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 128
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 192
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): -1
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 2
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f10 (first index): 2304
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 256
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 384
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): -1
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): -1
+  [22:29:21] [Client thread/INFO] [Kirino Core]: ---------------------------------
+  [22:29:21] [Client thread/INFO] [Kirino Core]: dispatch 67
+  [22:29:21] [Client thread/INFO] [Kirino Core]: ---------------------------------
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f00 (dirty index): 3
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f01 (old index count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f02 (old vertex count): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f10 (first index): 3456
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f11 (index count): 192
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f12 (vertex count): 128
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f20 (couters 0: vertex): 1516
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f21 (couters 1: index): 2274
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f22 (meshlet block count): 32
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f30 (chunk pos x): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f31 (chunk pos y): 0
+  [22:29:21] [Client thread/INFO] [Kirino Core]: f32 (chun pos z): -1
+  ```
+  
+  </details>
