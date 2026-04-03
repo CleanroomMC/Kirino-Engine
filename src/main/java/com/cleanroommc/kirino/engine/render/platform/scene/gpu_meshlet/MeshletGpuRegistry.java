@@ -172,9 +172,15 @@ public class MeshletGpuRegistry {
 
         // the meshlet count is up to date since last beginWriting
         // which is valid at this phase. finishWriting --> beginComputing --> beginWriting
-        vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount());
-        vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
-        drawIndexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount());
+        if (!vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount())) {
+            throw new RuntimeException("Failed to grow the write target vertex buffer.");
+        }
+        if (!vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount())) {
+            throw new RuntimeException("Failed to grow the write target index buffer.");
+        }
+        if (!drawIndexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount())) {
+            throw new RuntimeException("Failed to grow the write target draw index buffer.");
+        }
 
         computing = true;
     }

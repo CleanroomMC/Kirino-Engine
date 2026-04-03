@@ -155,7 +155,7 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
                 // since the next bind base is strictly after the draw commands
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getVertexConsumeTarget().target(), 1, storage.get(meshletGpuRegistry).getVertexConsumeTarget().bufferID);
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getIndexConsumeTarget().target(), 2, storage.get(meshletGpuRegistry).getIndexConsumeTarget().bufferID);
-                GL30.glBindBufferBase(storage.get(meshletComputeSystem).getRangeSsbo().target(), 4, storage.get(meshletComputeSystem).getRangeSsbo().bufferID);
+//                GL30.glBindBufferBase(storage.get(meshletComputeSystem).getRangeSsbo().target(), 4, storage.get(meshletComputeSystem).getRangeSsbo().bufferID);
                 meshletFsm.next(); // IDLE
 
                 KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_FINISH);

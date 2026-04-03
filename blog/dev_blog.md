@@ -167,7 +167,9 @@
 
 **Follow-up Tasks:**
 - Must provide multiple ECS runtimes since ECS flush timing is per `CleanWorld`
-
+- Meshlets that belong to chunks outside radius=8 must be disposed immediately since
+  all max buffer sizes are defined using `WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS = 16384`
+ 
 Whether `GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT` is needed for coherent mapped buffers?
 - No
   https://community.khronos.org/t/usage-of-gl-client-mapped-buffer-barrier-bit/75355

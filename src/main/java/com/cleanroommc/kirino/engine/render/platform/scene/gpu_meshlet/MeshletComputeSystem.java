@@ -23,28 +23,92 @@ import java.util.List;
 
 public class MeshletComputeSystem {
 
+    // these buffers won't face RAW/WAR hazards. no need to do double buffering
+    private static final class InternalBuffer {
+
+        private final static int MAX_DIRTY_LIST_BYTES = 4 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+        private final static int MAX_RANGE_BYTES = 12 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+
+        // record global vertex/index count
+        private SSBOView counterSsbo; // vertexCounter & indexCounter
+
+        // record dirty meshlet slot indices
+        private TextureBufferAccessor dirtyListTbo;
+        private VBOView tboWorkspace;
+        private ByteBuffer tboTempByteBuffer;
+        private int currentTboWorkspaceSize = 1024 * 4; // 1024 ints
+
+        // record meshlet ranges of output vertex/index
+        private SSBOView rangeSsbo;
+
+        void lateInit() {
+            counterSsbo = new SSBOView(new GLBuffer());
+            counterSsbo.bind();
+            counterSsbo.allocPersistent(8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+            counterSsbo.clearUint0();
+            counterSsbo.mapPersistent(0, 8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+            counterSsbo.bind(0);
+
+            dirtyListTbo = new TextureBufferAccessor(true, GLTexture.newDsaTexBuffer());
+            tboTempByteBuffer = BufferUtils.createByteBuffer(MAX_DIRTY_LIST_BYTES);
+            tboWorkspace = new VBOView(new GLBuffer());
+            tboWorkspace.bind();
+            tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+            tboWorkspace.bind(0);
+
+            rangeSsbo = new SSBOView(new GLBuffer());
+            rangeSsbo.bind();
+            rangeSsbo.allocPersistent(MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+            rangeSsbo.clearUint0();
+            rangeSsbo.mapPersistent(0, MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+            rangeSsbo.bind(0);
+        }
+
+        /**
+         * @return The compute dispatch count
+         */
+        int prepareTbo(List<Integer> dirtyList) {
+            int padding = 1;
+            int size = dirtyList.size() + 1 + padding; // (header=1 int) + extra padding
+            if (size * 4 > currentTboWorkspaceSize) {
+                currentTboWorkspaceSize = size * 4;
+                Preconditions.checkState(currentTboWorkspaceSize <= MAX_DIRTY_LIST_BYTES,
+                        "Dirty list TBO workspace overflow. %s bytes exceeds MAX_DIRTY_LIST_BYTES=%s.", currentTboWorkspaceSize, MAX_DIRTY_LIST_BYTES);
+
+                int prevID = tboWorkspace.fetchCurrentBoundBufferID();
+                tboWorkspace.bind();
+                tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+                tboWorkspace.bind(prevID);
+            }
+
+            tboTempByteBuffer.clear();
+            tboTempByteBuffer.putInt(dirtyList.size());
+            for (int dirtyIndex : dirtyList) {
+                tboTempByteBuffer.putInt(dirtyIndex);
+            }
+            tboTempByteBuffer.flip();
+
+            int prevID = tboWorkspace.fetchCurrentBoundBufferID();
+            tboWorkspace.bind();
+            tboWorkspace.uploadBySubData(0, tboTempByteBuffer);
+            tboWorkspace.bind(prevID);
+
+            // note: 0 = 0 (mod n) for all alignment
+            dirtyListTbo.texBufferRange(
+                    TextureFormat.R32UI.internalFormat,
+                    tboWorkspace.bufferID,
+                    0,
+                    size * 4L);
+
+            return dirtyList.size();
+        }
+    }
+
     private final ResourceSlot<ShaderProgram> computeShader;
     private boolean shaderRunning = false;
     private long fence;
 
-    // record global vertex/index count
-    private SSBOView counterSsbo; // vertexCounter & indexCounter
-
-    // record dirty meshlet slot indices
-    private TextureBufferAccessor dirtyListTbo;
-    private VBOView tboWorkspace;
-    private ByteBuffer tboTempByteBuffer;
-    private int currentTboWorkspaceSize = 1024 * 4; // 1024 ints
-
-    // record meshlet ranges of output vertex/index
-    private SSBOView rangeSsbo;
-
-    public SSBOView getRangeSsbo() {
-        return rangeSsbo;
-    }
-
-    private final static int MAX_DIRTY_LIST_BYTES = 4 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
-    private final static int MAX_RANGE_BYTES = 12 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+    private final InternalBuffer internalBuffer;
 
     private int rawVertexCount = 0;
     private int rawIndexCount = 0;
@@ -69,68 +133,11 @@ public class MeshletComputeSystem {
 
     public MeshletComputeSystem(ResourceSlot<ShaderProgram> computeShader) {
         this.computeShader = computeShader;
+        internalBuffer = new InternalBuffer();
     }
 
     public void lateInit() {
-        counterSsbo = new SSBOView(new GLBuffer());
-        counterSsbo.bind();
-        counterSsbo.allocPersistent(8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        counterSsbo.clearUint0();
-        counterSsbo.mapPersistent(0, 8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        counterSsbo.bind(0);
-
-        dirtyListTbo = new TextureBufferAccessor(true, GLTexture.newDsaTexBuffer());
-        tboTempByteBuffer = BufferUtils.createByteBuffer(MAX_DIRTY_LIST_BYTES);
-        tboWorkspace = new VBOView(new GLBuffer());
-        tboWorkspace.bind();
-        tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
-        tboWorkspace.bind(0);
-
-        rangeSsbo = new SSBOView(new GLBuffer());
-        rangeSsbo.bind();
-        rangeSsbo.allocPersistent(MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        rangeSsbo.clearUint0();
-        rangeSsbo.mapPersistent(0, MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        rangeSsbo.bind(0);
-    }
-
-    /**
-     * @return The compute dispatch count
-     */
-    private int prepareTbo(List<Integer> dirtyList) {
-        int padding = 1;
-        int size = dirtyList.size() + 1 + padding; // header=1 int + extra padding
-        if (size * 4 > currentTboWorkspaceSize) {
-            currentTboWorkspaceSize = size * 4;
-            Preconditions.checkState(currentTboWorkspaceSize <= MAX_DIRTY_LIST_BYTES,
-                    "Dirty list TBO workspace overflow. %s bytes exceeds 512KB.", currentTboWorkspaceSize);
-
-            int prevID = tboWorkspace.fetchCurrentBoundBufferID();
-            tboWorkspace.bind();
-            tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
-            tboWorkspace.bind(prevID);
-        }
-
-        tboTempByteBuffer.clear();
-        tboTempByteBuffer.putInt(dirtyList.size());
-        for (int dirtyIndex : dirtyList) {
-            tboTempByteBuffer.putInt(dirtyIndex);
-        }
-        tboTempByteBuffer.flip();
-
-        int prevID = tboWorkspace.fetchCurrentBoundBufferID();
-        tboWorkspace.bind();
-        tboWorkspace.uploadBySubData(0, tboTempByteBuffer);
-        tboWorkspace.bind(prevID);
-
-        // note: 0 = 0 (mod n) for all n=alignment
-        dirtyListTbo.texBufferRange(
-                TextureFormat.R32UI.internalFormat,
-                tboWorkspace.bufferID,
-                0,
-                size * 4L);
-
-        return dirtyList.size();
+        internalBuffer.lateInit();
     }
 
     public void startDispatch(ResourceStorage storage, MeshletGpuRegistry meshletGpuRegistry) {
@@ -139,14 +146,14 @@ public class MeshletComputeSystem {
         shaderRunning = true;
         ShaderProgram program = storage.get(computeShader);
 
-        int dispatchCount = prepareTbo(meshletGpuRegistry.getDirtySlots());
+        int dispatchCount = internalBuffer.prepareTbo(meshletGpuRegistry.getDirtySlots());
 
         // todo: abstract shader setup
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getVertexWriteTarget().target(), 1, meshletGpuRegistry.getVertexWriteTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getIndexWriteTarget().target(), 2, meshletGpuRegistry.getIndexWriteTarget().bufferID);
-        GL30.glBindBufferBase(counterSsbo.target(), 3, counterSsbo.bufferID);
-        GL30.glBindBufferBase(rangeSsbo.target(), 4, rangeSsbo.bufferID);
+        GL30.glBindBufferBase(internalBuffer.counterSsbo.target(), 3, internalBuffer.counterSsbo.bufferID);
+        GL30.glBindBufferBase(internalBuffer.rangeSsbo.target(), 4, internalBuffer.rangeSsbo.bufferID);
 
         GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);
         GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboVec3().target(), 14, ShaderDebugResource.RESOURCE.getSsboVec3().bufferID);
@@ -155,7 +162,7 @@ public class MeshletComputeSystem {
         program.use();
 
         GL20.glUniform1i(GL20.glGetUniformLocation(program.getProgramID(), "dirtyList"), 4);
-        dirtyListTbo.unit(4); // no one is using 4 atm; temp
+        internalBuffer.dirtyListTbo.unit(4); // no one is using 4 atm; temp
 
         ShaderDebugResource.RESOURCE.setDispatchCount(dispatchCount);
         KirinoCommonCore.LOGGER.info("dispatch " + dispatchCount);
@@ -173,7 +180,7 @@ public class MeshletComputeSystem {
         if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
             GL32C.glDeleteSync(fence);
 
-            ByteBuffer byteBuffer = counterSsbo.getPersistentMappedBuffer().orElseThrow();
+            ByteBuffer byteBuffer = internalBuffer.counterSsbo.getPersistentMappedBuffer().orElseThrow();
 
             rawVertexCount = byteBuffer.getInt(0);
             rawIndexCount = byteBuffer.getInt(4);
