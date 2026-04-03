@@ -12,7 +12,6 @@ import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
-import com.cleanroommc.kirino.gl.texture.accessor.Texture1DAccessor;
 import com.cleanroommc.kirino.gl.texture.accessor.TextureBufferAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
@@ -29,8 +28,7 @@ public class MeshletComputeSystem {
     private long fence;
 
     // record global vertex/index count
-    private Texture1DAccessor counterTex; // vertexCounter & indexCounter
-    private ByteBuffer texTempByteBuffer;
+    private SSBOView counterSsbo; // vertexCounter & indexCounter
 
     // record dirty meshlet slot indices
     private TextureBufferAccessor dirtyListTbo;
@@ -74,13 +72,12 @@ public class MeshletComputeSystem {
     }
 
     public void lateInit() {
-        counterTex = new Texture1DAccessor(true, GLTexture.newDsaTex1D(2));
-        counterTex.highlevel().alloc(
-                false,
-                BufferUtils.createByteBuffer(8).putInt(0).putInt(0).flip(),
-                TextureFormat.R32UI);
-
-        texTempByteBuffer = BufferUtils.createByteBuffer(8);
+        counterSsbo = new SSBOView(new GLBuffer());
+        counterSsbo.bind();
+        counterSsbo.allocPersistent(8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        counterSsbo.clearUint0();
+        counterSsbo.mapPersistent(0, 8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
+        counterSsbo.bind(0);
 
         dirtyListTbo = new TextureBufferAccessor(true, GLTexture.newDsaTexBuffer());
         tboTempByteBuffer = BufferUtils.createByteBuffer(MAX_DIRTY_LIST_BYTES);
@@ -148,7 +145,7 @@ public class MeshletComputeSystem {
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getVertexWriteTarget().target(), 1, meshletGpuRegistry.getVertexWriteTarget().bufferID);
         GL30.glBindBufferBase(meshletGpuRegistry.getIndexWriteTarget().target(), 2, meshletGpuRegistry.getIndexWriteTarget().bufferID);
-        GL42.glBindImageTexture(3, counterTex.textureID(), 0, false, 0, GL15.GL_READ_WRITE, TextureFormat.R32UI.internalFormat);
+        GL30.glBindBufferBase(counterSsbo.target(), 3, counterSsbo.bufferID);
         GL30.glBindBufferBase(rangeSsbo.target(), 4, rangeSsbo.bufferID);
 
         GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);
@@ -176,15 +173,10 @@ public class MeshletComputeSystem {
         if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
             GL32C.glDeleteSync(fence);
 
-            texTempByteBuffer.clear();
-            counterTex.getTexImage(
-                    0,
-                    TextureFormat.R32UI.format,
-                    TextureFormat.R32UI.type,
-                    texTempByteBuffer);
+            ByteBuffer byteBuffer = counterSsbo.getPersistentMappedBuffer().orElseThrow();
 
-            rawVertexCount = texTempByteBuffer.getInt(0);
-            rawIndexCount = texTempByteBuffer.getInt(4);
+            rawVertexCount = byteBuffer.getInt(0);
+            rawIndexCount = byteBuffer.getInt(4);
 
             ShaderDebugResource.RESOURCE.readAndPrint();
 

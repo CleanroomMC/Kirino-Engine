@@ -47,7 +47,11 @@ layout(std430, binding = 2) buffer OutputIndices
     int outIndices[];
 };
 
-layout(r32ui, binding = 3) uniform uimage1D counters;
+layout(std430, binding = 3) buffer Counters
+{
+    int vertexCount;
+    int indexCount;
+};
 
 layout(std430, binding = 4) buffer MeshletRanges
 {
@@ -227,11 +231,8 @@ void main()
     ranges[dirtyIndex].indexCount = iCursor;
     ranges[dirtyIndex].vertexCount = vCursor;
 
-    int vertexDelta = int(vCursor) - int(oldVertexCount);
-    int indexDelta = int(iCursor) - int(oldIndexCount);
-
-    imageAtomicAdd(counters, 0, uint(vertexDelta));
-    imageAtomicAdd(counters, 1, uint(indexDelta));
+    atomicAdd(vertexCount, int(vCursor) - int(oldVertexCount));
+    atomicAdd(indexCount, int(iCursor) - int(oldIndexCount));
 
 #ifdef KIRINO_DEBUG
     temp[dispatchIndex * 4].x = dirtyIndex;
@@ -244,8 +245,8 @@ void main()
     temp[dispatchIndex * 4 + 1].z = ranges[dirtyIndex].vertexCount;
     temp[dispatchIndex * 4 + 1].w = 0;
 
-    temp[dispatchIndex * 4 + 2].x = imageLoad(counters, 0).r;
-    temp[dispatchIndex * 4 + 2].y = imageLoad(counters, 1).r;
+    temp[dispatchIndex * 4 + 2].x = vertexCount;
+    temp[dispatchIndex * 4 + 2].y = indexCount;
     temp[dispatchIndex * 4 + 2].z = m.chunkPosAndBlockCount.w;
     temp[dispatchIndex * 4 + 2].w = 0;
 
