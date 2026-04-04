@@ -237,3 +237,40 @@ Slot-allocation layout / in-place-rewrite safe layout verified:
   ```
   
   </details>
+
+Index compaction pipeline is done, but only some meshlets are drawn??
+
+```glsl
+    uint actualIndex = uint(gl_VertexID);
+//    uint actualIndex = drawIndices[uint(gl_VertexID)];
+```
+Drawing without indirection should at least draw the first meshlet but nothing was drawn.
+
+```glsl
+    uint actualIndex = drawIndices[uint(gl_VertexID % 192)];
+//    uint actualIndex = drawIndices[uint(gl_VertexID)];
+```
+Try drawing the first meshlet. Failed.
+
+```log
+[01:14:30] [Client thread/INFO] [Kirino Core]: dispatch 1
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (1): 9
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (2): 11
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (5): 13
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (1): 9
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (2): 11
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (5): 13
+[01:14:30] [Client thread/INFO] [Kirino Core]: dispatch 67
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (1): 10
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (2): 12
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (5): 14
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (1): 10
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (2): 12
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id after compute (5): 14
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (1): 10
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (2): 12
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (5): 14
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (1): 10
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (2): 12
+[01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (5): 14
+```

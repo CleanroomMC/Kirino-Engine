@@ -1,5 +1,6 @@
 #version 430 core
 
+// 32
 struct Vertex
 {
     vec3 pos;

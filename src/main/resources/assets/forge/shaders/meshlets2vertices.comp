@@ -87,25 +87,25 @@ void emitQuad(
     uint vBase = vertexBase + vCursor;
     uint iBase = indexBase + iCursor;
 
-    outVertices[vBase + 0].pos = p0;
-    outVertices[vBase + 0].texCoord = decodeTexCoordFromInt(tc.x);
+    outVertices[vBase + 0u].pos = p0;
+    outVertices[vBase + 0u].texCoord = decodeTexCoordFromInt(tc.x);
 
-    outVertices[vBase + 1].pos = p1;
-    outVertices[vBase + 1].texCoord = decodeTexCoordFromInt(tc.y);
+    outVertices[vBase + 1u].pos = p1;
+    outVertices[vBase + 1u].texCoord = decodeTexCoordFromInt(tc.y);
 
-    outVertices[vBase + 2].pos = p2;
-    outVertices[vBase + 2].texCoord = decodeTexCoordFromInt(tc.z);
+    outVertices[vBase + 2u].pos = p2;
+    outVertices[vBase + 2u].texCoord = decodeTexCoordFromInt(tc.z);
 
-    outVertices[vBase + 3].pos = p3;
-    outVertices[vBase + 3].texCoord = decodeTexCoordFromInt(tc.w);
+    outVertices[vBase + 3u].pos = p3;
+    outVertices[vBase + 3u].texCoord = decodeTexCoordFromInt(tc.w);
 
-    outIndices[iBase + 0] = int(vBase + 0);
-    outIndices[iBase + 1] = int(vBase + 1);
-    outIndices[iBase + 2] = int(vBase + 2);
+    outIndices[iBase + 0u] = vBase + 0u;
+    outIndices[iBase + 1u] = vBase + 1u;
+    outIndices[iBase + 2u] = vBase + 2u;
 
-    outIndices[iBase + 3] = int(vBase + 2);
-    outIndices[iBase + 4] = int(vBase + 3);
-    outIndices[iBase + 5] = int(vBase + 0);
+    outIndices[iBase + 3u] = vBase + 2u;
+    outIndices[iBase + 4u] = vBase + 3u;
+    outIndices[iBase + 5u] = vBase + 0u;
 
     vCursor += 4u;
     iCursor += 6u;

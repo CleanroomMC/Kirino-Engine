@@ -45,7 +45,7 @@ public class MeshletComputeSystem {
             counterSsbo = new SSBOView(new GLBuffer());
             counterSsbo.bind();
             counterSsbo.allocPersistent(8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-            counterSsbo.clearUint0();
+            counterSsbo.clearUint0(); // must clear since compute reads and writes
             counterSsbo.mapPersistent(0, 8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
             counterSsbo.bind(0);
 
