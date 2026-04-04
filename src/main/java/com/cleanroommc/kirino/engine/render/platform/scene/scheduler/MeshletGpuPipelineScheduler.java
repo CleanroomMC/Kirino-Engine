@@ -19,8 +19,8 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
 
     public static class ComputeResult {
         public boolean update;
-        public long uintVertexCount;
-        public long uintIndexCount;
+        public int vertexCount;
+        public int indexCount;
     }
 
     public final ComputeResult computeResult = new ComputeResult();
@@ -125,7 +125,10 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
                 KirinoClientDebug.MeshletGpuTimeline$beginComputing();
 
                 storage.get(meshletGpuRegistry).beginComputing();
-                storage.get(meshletComputeSystem).startDispatch(storage, storage.get(meshletGpuRegistry));
+                storage.get(meshletComputeSystem).startDispatch(
+                        storage,
+                        storage.get(meshletGpuRegistry),
+                        storage.get(meshletGpuRegistry).getMeshletCount());
 
                 KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_BEGIN_COMPUTING);
 
@@ -147,15 +150,15 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
 
                 storage.get(meshletGpuRegistry).finishComputing();
                 result.update = true;
-                result.uintVertexCount = storage.get(meshletComputeSystem).getUintVertexCount();
-                result.uintIndexCount = storage.get(meshletComputeSystem).getUintIndexCount();
+                result.vertexCount = storage.get(meshletComputeSystem).getVertexCount();
+                result.indexCount = storage.get(meshletComputeSystem).getIndexCount();
 
                 // todo: move gl calls somewhere else
                 // draw commands will be submitted subsequently. next update is definitely valid for the next compute (bind bases to different buffers)
                 // since the next bind base is strictly after the draw commands
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getVertexConsumeTarget().target(), 1, storage.get(meshletGpuRegistry).getVertexConsumeTarget().bufferID);
                 GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getIndexConsumeTarget().target(), 2, storage.get(meshletGpuRegistry).getIndexConsumeTarget().bufferID);
-//                GL30.glBindBufferBase(storage.get(meshletComputeSystem).getRangeSsbo().target(), 4, storage.get(meshletComputeSystem).getRangeSsbo().bufferID);
+                GL30.glBindBufferBase(storage.get(meshletGpuRegistry).getDrawIndexConsumeTarget().target(), 5, storage.get(meshletGpuRegistry).getDrawIndexConsumeTarget().bufferID);
                 meshletFsm.next(); // IDLE
 
                 KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_FINISH);

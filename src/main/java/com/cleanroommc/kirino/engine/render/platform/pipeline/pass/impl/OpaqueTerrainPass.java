@@ -75,8 +75,8 @@ public class OpaqueTerrainPass extends Subpass {
     @Override
     protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
         MeshletRenderPayload meshletRenderPayload = (MeshletRenderPayload) payload;
-        if (meshletRenderPayload.uintIndexCount() != 0) {
-            storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, (int) (meshletRenderPayload.uintIndexCount() & 0xFFFF_FFFFL));
+        if (meshletRenderPayload.indexCount() != 0) {
+            storage.get(renderer).dummyDraw(GL11.GL_TRIANGLES, 0, meshletRenderPayload.indexCount());
         }
     }
 

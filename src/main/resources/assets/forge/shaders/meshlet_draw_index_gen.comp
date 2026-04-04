@@ -1,0 +1,48 @@
+#version 430
+
+// 12
+struct MeshletRange
+{
+    uint firstIndex;
+    uint indexCount;
+    uint vertexCount;
+};
+
+layout(local_size_x = 1) in;
+
+layout(std430, binding = 3) buffer Counters
+{
+    int vertexCount;
+    int indexCount;
+};
+
+layout(std430, binding = 4) buffer MeshletRanges
+{
+    MeshletRange ranges[];
+};
+
+layout(std430, binding = 5) buffer DrawIndices
+{
+    uint drawIndices[];
+};
+
+uniform uint meshletCap;
+
+void main()
+{
+    uint totalIndexCount = uint(max(indexCount, 0));
+    uint written = 0u;
+
+    for (uint i = 0u; i < meshletCap && written < totalIndexCount; i++)
+    {
+        MeshletRange range = ranges[i];
+        uint count = range.indexCount;
+        uint first = range.firstIndex;
+
+        for (uint j = 0u; j < count && written < totalIndexCount; j++)
+        {
+            drawIndices[written] = first + j;
+            written++;
+        }
+    }
+}

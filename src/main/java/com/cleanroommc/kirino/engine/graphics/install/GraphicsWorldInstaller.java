@@ -223,7 +223,9 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         MeshletGpuRegistry meshletGpuRegistry = new MeshletGpuRegistry();
         meshletGpuRegistry.lateInit();
 
-        MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(context.ext().meshletComputeProgram);
+        MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(
+                context.ext().meshletVertexGenComputeProgram,
+                context.ext().meshletDrawIndexGenComputeProgram);
         meshletComputeSystem.lateInit();
 
         storage.put(context.sceneViewState().meshletGpuRegistry, meshletGpuRegistry);
@@ -279,9 +281,13 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
                 storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
-        storage.put(context.ext().meshletComputeProgram,
+        storage.put(context.ext().meshletVertexGenComputeProgram,
                 storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/meshlets2vertices.comp"));
+
+        storage.put(context.ext().meshletDrawIndexGenComputeProgram,
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
+                        "forge:shaders/meshlet_draw_index_gen.comp"));
 
         storage.sealResource(context.ext().postProcessingDefaultProgram);
         storage.sealResource(context.ext().terrainGpuPassProgram);
@@ -290,7 +296,8 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         storage.sealResource(context.ext().toneMappingPassProgram);
         storage.sealResource(context.ext().upscalingPassProgram);
         storage.sealResource(context.ext().downscalingPassProgram);
-        storage.sealResource(context.ext().meshletComputeProgram);
+        storage.sealResource(context.ext().meshletVertexGenComputeProgram);
+        storage.sealResource(context.ext().meshletDrawIndexGenComputeProgram);
     }
 
     private void prepare(WorldContext<Graphics> context) {

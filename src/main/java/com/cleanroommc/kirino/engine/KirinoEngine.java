@@ -135,7 +135,8 @@ public class KirinoEngine {
         ResourceSlot<ShaderProgram> toneMappingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> upscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> downscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> meshletComputeProgram = resourceLayout.slot(ShaderProgram.class);
+        ResourceSlot<ShaderProgram> meshletVertexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
+        ResourceSlot<ShaderProgram> meshletDrawIndexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
 
         bootstrapResources = new BootstrapResources(
                 frameFinalizer,
@@ -232,7 +233,8 @@ public class KirinoEngine {
                 toneMappingPassProgram,
                 upscalingPassProgram,
                 downscalingPassProgram,
-                meshletComputeProgram);
+                meshletVertexGenComputeProgram,
+                meshletDrawIndexGenComputeProgram);
 
         ModuleInstallerRegistrationEvent event = new ModuleInstallerRegistrationEvent();
         eventBus.post(event);

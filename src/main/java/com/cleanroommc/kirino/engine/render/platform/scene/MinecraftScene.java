@@ -244,8 +244,8 @@ public class MinecraftScene extends CleanWorld {
 
         if (meshletScheduler.computeResult.update) {
             meshletRenderPayload = new MeshletRenderPayload(
-                    meshletScheduler.computeResult.uintVertexCount,
-                    meshletScheduler.computeResult.uintIndexCount);
+                    meshletScheduler.computeResult.vertexCount,
+                    meshletScheduler.computeResult.indexCount);
         }
 
         super.update();
