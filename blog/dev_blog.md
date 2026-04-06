@@ -274,3 +274,34 @@ Try drawing the first meshlet. Failed.
 [01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (2): 12
 [01:14:30] [Client thread/INFO] [Kirino Core]: buffer base id before draw (5): 14
 ```
+
+```log
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=0 x, y, z: 0.0, 0.0, 0.0; index redirects to 0
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=1 x, y, z: 0.0, 0.0, 0.0; index redirects to 1
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=2 x, y, z: 0.0, 0.0, 0.0; index redirects to 2
+...
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=189 x, y, z: 0.0, 0.0, 0.0; index redirects to 189
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=190 x, y, z: 0.0, 0.0, 0.0; index redirects to 190
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=191 x, y, z: 0.0, 0.0, 0.0; index redirects to 191
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=192 x, y, z: 0.0, 0.0, 0.0; index redirects to 1152
+[02:52:30] [Client thread/INFO] [Kirino Core]: index=193 x, y, z: 0.0, 0.0, 0.0; index redirects to 1153
+```
+Indirection seems fine but vertex data is just empty. (index stride=1152 elements; verified)
+
+```java
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=0 x, y, z: 0.0, 0.0, 0.0; index redirects to 0; vertex index: 0
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=1 x, y, z: 0.0, 0.0, 0.0; index redirects to 1; vertex index: 0
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=2 x, y, z: 0.0, 0.0, 0.0; index redirects to 2; vertex index: 0
+...
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=766 x, y, z: 0.0, 0.0, 0.0; index redirects to 3646; vertex index: 0
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=767 x, y, z: 0.0, 0.0, 0.0; index redirects to 3647; vertex index: 0
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=768 x, y, z: 0.0, 0.0, 0.0; index redirects to 4608; vertex index: 3072
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=769 x, y, z: 0.0, 0.0, 0.0; index redirects to 4609; vertex index: 3073
+...
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=959 x, y, z: 0.0, 0.0, 0.0; index redirects to 4799; vertex index: 3196
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=960 x, y, z: 0.0, 0.0, 0.0; index redirects to 5760; vertex index: 3840
+[02:59:01] [Client thread/INFO] [Kirino Core]: index=961 x, y, z: 0.0, 0.0, 0.0; index redirects to 5761; vertex index: 3841
+```
+Wrong vertex index is the cause of empty vertex data? (vertex stride=3840-3072=768 elements; verified)
+
+Guess: regarding double buffering, I didn't copy the result of A to B after compute which breaks the dirty-based in place rewrite model.

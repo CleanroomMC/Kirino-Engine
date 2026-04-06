@@ -109,4 +109,29 @@ public final class ShaderDebugResource {
 
         KirinoCommonCore.LOGGER.info("---------------------------------");
     }
+
+    public void readAndPrint2() {
+        ByteBuffer byteBuffer = ssboTemp.getPersistentMappedBuffer().orElseThrow()
+                .duplicate()
+                .order(ByteOrder.nativeOrder());
+        byteBuffer.position(0);
+
+        KirinoCommonCore.LOGGER.info("---------------------------------");
+
+        for (int i = 0; i < dispatchCount; i++) {
+            float f00 = byteBuffer.getFloat();
+            float f01 = byteBuffer.getFloat();
+            float f02 = byteBuffer.getFloat();
+            float f03 = byteBuffer.getFloat();
+
+            float f10 = byteBuffer.getFloat();
+            float f11 = byteBuffer.getFloat();
+            float f12 = byteBuffer.getFloat();
+            float f13 = byteBuffer.getFloat();
+
+            KirinoCommonCore.LOGGER.info("index={} x, y, z: {}, {}, {}; index redirects to {}; vertex index: {}", i, f00, f01, f02, (int) f03, (int) f10);
+        }
+
+        KirinoCommonCore.LOGGER.info("---------------------------------");
+    }
 }

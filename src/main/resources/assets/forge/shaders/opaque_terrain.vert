@@ -28,6 +28,13 @@ uniform mat4 projection;
 
 out vec2 TexCoord;
 
+#ifdef KIRINO_DEBUG
+layout(std430, binding = 13) buffer TempBuffer
+{
+    vec4 temp[];
+};
+#endif
+
 void main()
 {
     uint actualIndex = drawIndices[uint(gl_VertexID)];
@@ -36,4 +43,12 @@ void main()
 
     gl_Position = projection * viewRot * vec4(v.pos - worldOffset, 1.0);
     TexCoord = v.texCoord;
+
+#ifdef KIRINO_DEBUG
+    uint index = uint(gl_VertexID);
+    if (index >= 1024) return;
+    temp[index * 2].xyz = v.pos;
+    temp[index * 2].w = actualIndex;
+    temp[index * 2 + 1].x = vertexIndex;
+#endif
 }
