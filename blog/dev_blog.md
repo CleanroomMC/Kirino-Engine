@@ -63,7 +63,7 @@
   }
   ```
   But it looks less elegant since systems/jobs inside a `CleanWorld` will require manual managements.
-  It still makes sense if we aim to provide a low level ECS.
+  It still makes sense if we aim to provide a low level ECS. (fixed)
 - **Guess**<br>
   The potential ECS race condition might be the cause of `Meshlet.blockCount == 0` but
   the empty meshlet issue only happens for the first compute dispatch. The consistency makes this thing more suspicious.

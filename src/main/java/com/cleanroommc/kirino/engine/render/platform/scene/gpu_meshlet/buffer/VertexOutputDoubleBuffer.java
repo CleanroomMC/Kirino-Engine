@@ -332,7 +332,7 @@ public class VertexOutputDoubleBuffer {
     /**
      * Copy the both last vertex/index consume target to vertex/index write target.
      *
-     * <p>Notice: this is a GPU copy method powered by GL. Be carefully with GL side effects.</p>
+     * <p>Notice: this is a GPU copy method powered by GL. Be carefully with GL side effects (no bind state restoration is performed).</p>
      * <p>Notice: GPU memory visibility is guaranteed by barriers already.</p>
      */
     public void copyLastConsumeToWirteTarget() {
@@ -352,14 +352,8 @@ public class VertexOutputDoubleBuffer {
     }
 
     private void copyBuffer(SSBOView source, SSBOView dest, int size) {
-        int prevRead = GL11.glGetInteger(GL31.GL_COPY_READ_BUFFER_BINDING);
-        int prevWrite = GL11.glGetInteger(GL31.GL_COPY_WRITE_BUFFER_BINDING);
-
         GL15.glBindBuffer(GL31.GL_COPY_READ_BUFFER, source.bufferID);
         GL15.glBindBuffer(GL31.GL_COPY_WRITE_BUFFER, dest.bufferID);
         GL31.glCopyBufferSubData(GL31.GL_COPY_READ_BUFFER, GL31.GL_COPY_WRITE_BUFFER, 0, 0, size);
-
-        GL15.glBindBuffer(GL31.GL_COPY_READ_BUFFER, prevRead);
-        GL15.glBindBuffer(GL31.GL_COPY_WRITE_BUFFER, prevWrite);
     }
 }

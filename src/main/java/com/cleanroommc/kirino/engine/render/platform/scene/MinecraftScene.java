@@ -67,6 +67,20 @@ public class MinecraftScene extends CleanWorld {
     private final ChunkCreateCallback chunkCreateCallback;
     private final CallbackDrivenChunkDelta chunkDelta;
 
+    private boolean isAnySystemFlowExecuting() {
+        return chunkPrioritizationSystem.isExecuting()
+                || chunkMeshletGenSystem.isExecuting()
+                || meshletDestroySystem.isExecuting()
+                || meshletDebugSystem.isExecuting()
+                || meshletBufferWriteSystem.isExecuting();
+    }
+
+    private void condFlushECS() {
+        if (!isAnySystemFlowExecuting()) {
+            flushECS();
+        }
+    }
+
     public MinecraftScene(
             ResourceStorage storage,
             EntityManager entityManager,
@@ -202,7 +216,7 @@ public class MinecraftScene extends CleanWorld {
         KirinoClientDebug.MeshletGpuTimeline$worldTick();
 
         if (worldScheduler.update(worldScheduler.newWorldHint)) {
-            super.update();
+            condFlushECS();
             return;
         }
 
@@ -221,7 +235,7 @@ public class MinecraftScene extends CleanWorld {
         }
 
         if (terrainScheduler.update(terrainScheduler.updateHint)) {
-            super.update();
+            condFlushECS();
             return;
         }
 
@@ -238,7 +252,7 @@ public class MinecraftScene extends CleanWorld {
 //        }
 
         if (meshletScheduler.update(meshletScheduler.computeResult)) {
-            super.update();
+            condFlushECS();
             return;
         }
 
@@ -248,7 +262,7 @@ public class MinecraftScene extends CleanWorld {
                     meshletScheduler.computeResult.indexCount);
         }
 
-        super.update();
+        condFlushECS();
     }
 
     static int counter = 0;
