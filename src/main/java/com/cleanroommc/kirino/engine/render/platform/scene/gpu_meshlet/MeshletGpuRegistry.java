@@ -161,7 +161,7 @@ public class MeshletGpuRegistry {
 
     /**
      * Thread-safety is guaranteed.
-     * <p>Semantic Note: you only call begin computing right before {@link MeshletComputeSystem#startDispatch(ResourceStorage, MeshletGpuRegistry)}
+     * <p>Semantic Note: you only call begin computing right before {@link MeshletComputeSystem#startDispatch(ResourceStorage, MeshletGpuRegistry, int)}
      * to prepare buffers (like grow buffers if needed).</p>
      * <br>
      * Should be called before an independent computing task.
@@ -181,6 +181,8 @@ public class MeshletGpuRegistry {
         if (!drawIndexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount())) {
             throw new RuntimeException("Failed to grow the write target draw index buffer.");
         }
+
+        vertexOutputBuffer.copyLastConsumeToWirteTarget();
 
         computing = true;
     }

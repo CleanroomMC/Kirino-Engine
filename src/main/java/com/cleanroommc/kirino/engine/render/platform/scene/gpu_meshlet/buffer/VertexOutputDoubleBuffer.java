@@ -4,6 +4,8 @@ import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
+import com.google.common.base.Preconditions;
+import org.lwjgl.opengl.*;
 
 public class VertexOutputDoubleBuffer {
 
@@ -312,7 +314,7 @@ public class VertexOutputDoubleBuffer {
     }
 
     /**
-     * Grow the current vertex write target.
+     * Grow the current index write target.
      *
      * @return Whether successfully grew the buffer
      */
@@ -325,5 +327,39 @@ public class VertexOutputDoubleBuffer {
         }
 
         throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
+    }
+
+    /**
+     * Copy the both last vertex/index consume target to vertex/index write target.
+     *
+     * <p>Notice: this is a GPU copy method powered by GL. Be carefully with GL side effects.</p>
+     * <p>Notice: GPU memory visibility is guaranteed by barriers already.</p>
+     */
+    public void copyLastConsumeToWirteTarget() {
+        int consumeVertexSize = index == 0 ? vertexSsboSize1 : vertexSsboSize0;
+        int consumeIndexSize = index == 0 ? indexSsboSize1 : indexSsboSize0;
+        int writeVertexSize = getVertexSize();
+        int writeIndexSize = getIndexSize();
+        Preconditions.checkState(writeVertexSize >= consumeVertexSize,
+                "Vertex write target size (%s bytes) must be greater than consume target size (%s bytes).", writeVertexSize, consumeVertexSize);
+        Preconditions.checkState(writeIndexSize >= consumeIndexSize,
+                "Index write target size (%s bytes) must be greater than consume target size (%s bytes).", writeIndexSize, consumeIndexSize);
+
+        copyBuffer(getVertexConsumeTarget(), getVertexWriteTarget(), consumeVertexSize);
+        copyBuffer(getIndexConsumeTarget(), getIndexWriteTarget(), consumeIndexSize);
+
+        GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+    }
+
+    private void copyBuffer(SSBOView source, SSBOView dest, int size) {
+        int prevRead = GL11.glGetInteger(GL31.GL_COPY_READ_BUFFER_BINDING);
+        int prevWrite = GL11.glGetInteger(GL31.GL_COPY_WRITE_BUFFER_BINDING);
+
+        GL15.glBindBuffer(GL31.GL_COPY_READ_BUFFER, source.bufferID);
+        GL15.glBindBuffer(GL31.GL_COPY_WRITE_BUFFER, dest.bufferID);
+        GL31.glCopyBufferSubData(GL31.GL_COPY_READ_BUFFER, GL31.GL_COPY_WRITE_BUFFER, 0, 0, size);
+
+        GL15.glBindBuffer(GL31.GL_COPY_READ_BUFFER, prevRead);
+        GL15.glBindBuffer(GL31.GL_COPY_WRITE_BUFFER, prevWrite);
     }
 }

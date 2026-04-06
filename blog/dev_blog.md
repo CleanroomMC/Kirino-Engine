@@ -288,7 +288,7 @@ Try drawing the first meshlet. Failed.
 ```
 Indirection seems fine but vertex data is just empty. (index stride=1152 elements; verified)
 
-```java
+```log
 [02:59:01] [Client thread/INFO] [Kirino Core]: index=0 x, y, z: 0.0, 0.0, 0.0; index redirects to 0; vertex index: 0
 [02:59:01] [Client thread/INFO] [Kirino Core]: index=1 x, y, z: 0.0, 0.0, 0.0; index redirects to 1; vertex index: 0
 [02:59:01] [Client thread/INFO] [Kirino Core]: index=2 x, y, z: 0.0, 0.0, 0.0; index redirects to 2; vertex index: 0
@@ -305,3 +305,5 @@ Indirection seems fine but vertex data is just empty. (index stride=1152 element
 Wrong vertex index is the cause of empty vertex data? (vertex stride=3840-3072=768 elements; verified)
 
 Guess: regarding double buffering, I didn't copy the result of A to B after compute which breaks the dirty-based in place rewrite model.
+
+Add double buffering ping pong copy for vertex/index output; issue resolved!
