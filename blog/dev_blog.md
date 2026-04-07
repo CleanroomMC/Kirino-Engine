@@ -29,7 +29,7 @@
 ## March 2026
 **Done:**
 - Refactor & implement texture abstraction: `GLTexture` + `Accessor`
-- Replace SSBO counter by uimage1D
+- Replace SSBO counter by uimage1D (reverted)
 - Basic shader debug infra
 
 **Want To Investigate:**
@@ -307,3 +307,43 @@ Wrong vertex index is the cause of empty vertex data? (vertex stride=3840-3072=7
 Guess: regarding double buffering, I didn't copy the result of A to B after compute which breaks the dirty-based in place rewrite model.
 
 Add double buffering ping pong copy for vertex/index output; issue resolved!
+
+### 4.7 Summary
+
+**Done:**
+- Fixed the first-dispatch empty meshlet issue where `MeshletBufferWriteJob.execute` didn't run before compute
+- Switched ECS system flow execution away from the common pool to a dedicated fork-join pool
+- Fixed the `executeAsync` submit-start gap where `executing=false` could briefly remain visible after execution
+- Delayed ECS flushing while async system flows are executing to avoid mutating archetype data while jobs are reading it
+- Verified that `GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT` is not needed for coherent mapped buffers
+- Verified the slot-allocation layout for terrain meshlet vertex/index output
+- Finished the index compaction / draw-index indirection pipeline
+- Fixed the terrain meshlet output double-buffering issue by copying the previous vertex/index result into the next write target before dirty in-place rewrite
+
+**Major Issues/Bugs**:
+- Removing meshlets doesn't update `ranges`/`counters` in `MeshletComputeSystem`, causing stale/ghost
+  meshlets to be drawn
+  ![](gallery/2026-04-07.png)
+- World rebuild doesn't remove meshlets, doesn't guarantee that current async tasks finished,
+  doesn't reset `MeshletGpuRegistry`, doesn't reset `MeshletComputeSystem`
+- Entities rendering responds to camera rotation slower (lagged). Unknown causes
+- Changing render dist dynamically causes lag. Unknown causes
+
+**Todos For Terrain Pipeline/Next Milestone**:
+- Expand the pipeline to opaque/transparent/cutout
+- Block update notify; reset old state; update properly
+- Handle non-fullblock rendering; meshlet pipeline only handles the fullblock rendering
+- Handle tile entity renderers; integrate render command pipeline
+
+**Future**:
+- SDF AO
+- GI
+- Low priority: chunks outside render dist=8; Another dedicated LOD solution needed
+
+**Follow-up Tasks:**
+- Verify `ChunkMeshletGenJob.fillBlockInfo` coordinate space. It currently passes 16^3 section-local
+  block coordinates?
+- ECS runtime ownership issue. Multiple ECS runtimes is needed because due to `flush`
+- Stabilize/Finish shader debug infra
+- Refactor `RenderExtension` and post-processing registration so render extension setup is less ad hoc
+- Implement full texture abstraction

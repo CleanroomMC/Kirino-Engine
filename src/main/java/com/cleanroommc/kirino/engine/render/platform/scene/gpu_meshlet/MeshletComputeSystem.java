@@ -26,7 +26,7 @@ public class MeshletComputeSystem {
     // these buffers won't face RAW/WAR hazards. no need to do double buffering
     private static final class InternalBuffers {
 
-        private final static int MAX_DIRTY_LIST_BYTES = 4 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+        private final static int MAX_DIRTY_LIST_BYTES = 4 * (MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS + 2);
         private final static int MAX_RANGE_BYTES = 12 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
 
         // record global vertex/index count

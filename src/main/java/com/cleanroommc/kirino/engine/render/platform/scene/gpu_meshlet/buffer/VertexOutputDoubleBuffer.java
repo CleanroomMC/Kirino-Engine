@@ -352,10 +352,10 @@ public class VertexOutputDoubleBuffer {
 
         if (writeIndexSize < consumeIndexSize) {
             if (index == 0) {
-                indexSsboSize0 = consumeVertexSize;
+                indexSsboSize0 = consumeIndexSize;
                 resizeIndexSsbo0(consumeIndexSize);
             } else if (index == 1) {
-                indexSsboSize1 = consumeVertexSize;
+                indexSsboSize1 = consumeIndexSize;
                 resizeIndexSsbo1(consumeIndexSize);
             } else {
                 throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
