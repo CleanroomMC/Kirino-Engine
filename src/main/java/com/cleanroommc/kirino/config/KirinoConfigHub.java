@@ -13,15 +13,21 @@ public final class KirinoConfigHub {
         public boolean enableHDR = true;
         public boolean enablePostProcessing = false;
 
+        public boolean enableShaderDebug = false;
+
         public int targetWorkloadPerThread = 5000;
 
+        public boolean compileToMdiCommands = true;
         public int maxMultiDrawIndirectUnitCount = 5000;
 
         public int highLevelDrawCommandPoolSize = 2000;
         public int lowLevelDrawCommandPoolSize = 2000;
 
         public int worldInitFrames = 5;
+        public int meshletInitFrames = 5;
         public float chunkUpdateDisplacement = 8f;
+
+        public int foregroundRenderDistance = 8;
     }
 
     public static class Runtime {
@@ -48,8 +54,16 @@ public final class KirinoConfigHub {
         return requiresRestart.enablePostProcessing;
     }
 
+    public boolean isEnableShaderDebug() {
+        return requiresRestart.enableShaderDebug;
+    }
+
     public int getTargetWorkloadPerThread() {
         return requiresRestart.targetWorkloadPerThread;
+    }
+
+    public boolean isCompileToMdiCommands() {
+        return requiresRestart.compileToMdiCommands;
     }
 
     public int getMaxMultiDrawIndirectUnitCount() {
@@ -68,7 +82,15 @@ public final class KirinoConfigHub {
         return requiresRestart.worldInitFrames;
     }
 
+    public int getMeshletInitFrames() {
+        return requiresRestart.meshletInitFrames;
+    }
+
     public float getChunkUpdateDisplacement() {
         return requiresRestart.chunkUpdateDisplacement;
+    }
+
+    public int getForegroundRenderDistance() {
+        return requiresRestart.foregroundRenderDistance;
     }
 }

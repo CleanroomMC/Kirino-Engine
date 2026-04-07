@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet;
 
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.buffer.MeshletConstants;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.google.common.base.Preconditions;
@@ -37,6 +38,6 @@ public class MeshletGpuWriterContext {
     }
 
     public int getByteBufferPosition(int meshletId) {
-        return storage.get(meshletGpuRegistry).meshletBufferSlotAllocator.getSlotForMeshletId(meshletId) * MeshletInputDoubleBuffer.MESHLET_STRIDE_BYTE;
+        return storage.get(meshletGpuRegistry).meshletBufferSlotAllocator.getSlotForMeshletId(meshletId) * MeshletConstants.MESHLET_STRIDE_BYTES;
     }
 }

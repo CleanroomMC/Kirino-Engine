@@ -21,7 +21,6 @@
 > <br>· `com.cleanroommc.kirino.gl.GLDisposable`
 > <br>· `com.cleanroommc.kirino.gl.debug.KHRDebug`
 > <br>· `com.cleanroommc.kirino.gl.buffer.view.BufferView`
-> <br>· `com.cleanroommc.kirino.gl.texture.TextureView`
 > <br>· `com.cleanroommc.kirino.gl.framebuffer.Framebuffer`
 > <br>· `com.cleanroommc.kirino.engine.render.shader.ShaderRegistry`
 

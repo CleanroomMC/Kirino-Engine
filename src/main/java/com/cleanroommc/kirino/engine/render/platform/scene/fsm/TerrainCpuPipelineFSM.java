@@ -67,4 +67,8 @@ public class TerrainCpuPipelineFSM {
             fsm.reset(); // clear backlog
         }
     }
+
+    public void reset() {
+        fsm.reset();
+    }
 }

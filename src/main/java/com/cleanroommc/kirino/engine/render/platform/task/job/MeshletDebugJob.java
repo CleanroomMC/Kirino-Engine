@@ -269,7 +269,7 @@ public class MeshletDebugJob implements ParallelJob {
         int chunkPosY = chunkPosYArray.getInt(index);
         int chunkPosZ = chunkPosZArray.getInt(index);
 
-        storage.get(gizmosManager).addMeshlet(chunkPosX * 16, chunkPosY * 16, chunkPosZ * 16, blocks);
+        storage.get(gizmosManager).addMeshlet(chunkPosX, chunkPosY, chunkPosZ, blocks);
     }
 
     @Override

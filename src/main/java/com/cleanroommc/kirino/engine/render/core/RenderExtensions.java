@@ -5,9 +5,10 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.subpasses.AbstractPostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -15,13 +16,12 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.function.TriFunction;
 import org.apache.commons.lang3.tuple.Triple;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class RenderExtensions {
     public final PostProcessingPass postProcessingPass;
 
-    public final List<ResourceLocation> shaderRLs;
+    public final Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders;
     public final List<Triple<
             String,
             String[],
@@ -29,7 +29,7 @@ public class RenderExtensions {
                     ResourceSlot<Renderer>,
                     PipelineStateObject,
                     ResourceSlot<VAO>,
-                    AbstractPostProcessingPass>>> postProcessingEntries;
+                    AbstractPostProcessingPass>>> postProcessingEntries; // todo: definitely want to refactor
     public final List<ImmediateHUD> debugHuds;
 
     public final ResourceSlot<ShaderProgram> postProcessingDefaultProgram;
@@ -39,6 +39,8 @@ public class RenderExtensions {
     public final ResourceSlot<ShaderProgram> toneMappingPassProgram;
     public final ResourceSlot<ShaderProgram> upscalingPassProgram;
     public final ResourceSlot<ShaderProgram> downscalingPassProgram;
+    public final ResourceSlot<ShaderProgram> meshletVertexGenComputeProgram;
+    public final ResourceSlot<ShaderProgram> meshletDrawIndexGenComputeProgram;
 
     public RenderExtensions(
             ResourceSlot<Renderer> renderer,
@@ -51,7 +53,9 @@ public class RenderExtensions {
             ResourceSlot<ShaderProgram> gizmosPassProgram,
             ResourceSlot<ShaderProgram> toneMappingPassProgram,
             ResourceSlot<ShaderProgram> upscalingPassProgram,
-            ResourceSlot<ShaderProgram> downscalingPassProgram) {
+            ResourceSlot<ShaderProgram> downscalingPassProgram,
+            ResourceSlot<ShaderProgram> meshletVertexGenComputeProgram,
+            ResourceSlot<ShaderProgram> meshletDrawIndexGenComputeProgram) {
 
         this.postProcessingDefaultProgram = postProcessingDefaultProgram;
         this.terrainGpuPassProgram = terrainGpuPassProgram;
@@ -60,13 +64,15 @@ public class RenderExtensions {
         this.toneMappingPassProgram = toneMappingPassProgram;
         this.upscalingPassProgram = upscalingPassProgram;
         this.downscalingPassProgram = downscalingPassProgram;
+        this.meshletVertexGenComputeProgram = meshletVertexGenComputeProgram;
+        this.meshletDrawIndexGenComputeProgram = meshletDrawIndexGenComputeProgram;
 
         postProcessingPass = new PostProcessingPass(
                 new RenderPass("Post-Processing", graphicResourceManager, idbGenerator),
                 renderer,
                 fullscreenTriangleVao);
 
-        shaderRLs = new ArrayList<>();
+        rawShaders = new HashMap<>();
         postProcessingEntries = new ArrayList<>();
         debugHuds = new ArrayList<>();
     }

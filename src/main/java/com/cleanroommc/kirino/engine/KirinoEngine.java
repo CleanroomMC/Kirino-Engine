@@ -21,6 +21,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBuffe
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
@@ -49,17 +50,40 @@ import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 public class KirinoEngine {
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final BootstrapResources bootstrapResources;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final GraphicsRuntimeServices graphicsRuntimeServices;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final SceneViewState sceneViewState;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final MinecraftIntegration minecraftIntegration;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final MinecraftAssetProviders minecraftAssetProviders;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final ShaderIntrospection shaderIntrospection;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final RenderStructure renderStructure;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final RenderExtensions renderExtensions;
 
     private final ResourceStorage storage;
 
+    /**
+     * Storage will be null before it's sealed.
+     * You can only expect non-null storage at runtime.
+     *
+     * <p>You're not supposed to get the storage in general! This method
+     * is meant to be accessed by engine kernel classes.</p>
+     */
     @Nullable
     public ResourceStorage getStorage() {
         if (storage.isStorageSealed()) {
@@ -96,6 +120,7 @@ public class KirinoEngine {
         ResourceSlot<FrameFinalizer> frameFinalizer = resourceLayout.slot(FrameFinalizer.class);
         ResourceSlot<VAO> dummyVao = resourceLayout.slot(VAO.class);
         ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry = resourceLayout.slot(MeshletGpuRegistry.class);
+        ResourceSlot<MeshletComputeSystem> meshletComputeSystem = resourceLayout.slot(MeshletComputeSystem.class);
         ResourceSlot<BlockMeshGenerator> blockMeshGenerator = resourceLayout.slot(BlockMeshGenerator.class);
         ResourceSlot<StagingBufferManager> stagingBufferManager = resourceLayout.slot(StagingBufferManager.class);
         ResourceSlot<InGameDebugHUDManager> debugHudManager = resourceLayout.slot(InGameDebugHUDManager.class);
@@ -110,6 +135,8 @@ public class KirinoEngine {
         ResourceSlot<ShaderProgram> toneMappingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> upscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
         ResourceSlot<ShaderProgram> downscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
+        ResourceSlot<ShaderProgram> meshletVertexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
+        ResourceSlot<ShaderProgram> meshletDrawIndexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
 
         bootstrapResources = new BootstrapResources(
                 frameFinalizer,
@@ -127,6 +154,29 @@ public class KirinoEngine {
                 shaderRegistry);
 
         MinecraftCamera camera = new MinecraftCamera();
+
+        int parallelism = Runtime.getRuntime().availableProcessors();
+
+        // system flow executor
+        ForkJoinPool systemFlowPool = new ForkJoinPool(
+                parallelism,
+                ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                null,
+                true);
+
+        // system executor
+        ForkJoinPool systemPool = new ForkJoinPool(
+                parallelism,
+                ForkJoinPool.defaultForkJoinWorkerThreadFactory,
+                null,
+                true);
+
+        // todo: refactor
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            systemFlowPool.shutdown();
+            systemPool.shutdown();
+        }));
+
         MinecraftScene scene = new MinecraftScene(
                 storage,
                 ecsRuntime.entityManager,
@@ -135,13 +185,15 @@ public class KirinoEngine {
                 gizmosManager,
                 camera,
                 meshletGpuRegistry,
-                ForkJoinPool.commonPool(),
-                ForkJoinPool.commonPool());
+                meshletComputeSystem,
+                systemFlowPool,
+                systemPool);
 
         sceneViewState = new SceneViewState(
                 camera,
                 scene,
-                meshletGpuRegistry);
+                meshletGpuRegistry,
+                meshletComputeSystem);
 
         minecraftIntegration = new MinecraftIntegration(
                 minecraftCulling,
@@ -180,7 +232,9 @@ public class KirinoEngine {
                 gizmosPassProgram,
                 toneMappingPassProgram,
                 upscalingPassProgram,
-                downscalingPassProgram);
+                downscalingPassProgram,
+                meshletVertexGenComputeProgram,
+                meshletDrawIndexGenComputeProgram);
 
         ModuleInstallerRegistrationEvent event = new ModuleInstallerRegistrationEvent();
         eventBus.post(event);

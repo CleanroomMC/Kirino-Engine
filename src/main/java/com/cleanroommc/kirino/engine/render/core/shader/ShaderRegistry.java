@@ -1,5 +1,9 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderRemapHelper;
 import com.cleanroommc.kirino.gl.shader.ShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
@@ -9,17 +13,26 @@ import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ShaderRegistry {
-    // key: rl
+
+    // key: rl.toString
     private final Map<String, Shader> shaders = new HashMap<>();
 
-    public Shader register(ResourceLocation rl) {
+    /**
+     * This step is purely string manipulation and parsing. No GL submissions involved.
+     */
+    @NonNull
+    public Shader register(@NonNull Logger logger, @NonNull ResourceLocation rl, @Nullable ShaderCompileOptions options) {
+        Preconditions.checkNotNull(logger);
+        Preconditions.checkNotNull(rl);
+
         String rawRl = rl.toString();
         int lastDot = rawRl.lastIndexOf('.');
         if (lastDot == -1) {
@@ -30,19 +43,54 @@ public class ShaderRegistry {
         if (shaderType == null) {
             throw new IllegalStateException("Invalid Shader ResourceLocation " + rawRl + ". Can't parse the shader type.");
         }
-        String shaderSource = MinecraftResourceUtils.readText(rl, true);
+
+        String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
+
+        List<ShaderDebugInjection.Type> debugTypes = null;
+        if (KirinoCommonCore.KIRINO_CONFIG_HUB.isEnableShaderDebug() && options != null) {
+            debugTypes = ShaderDebugInjection.parse(options.debugFlags);
+        }
+
+        // todo: integrate ksmlc here
+
+        // todo: temp; to be refactored
+        if (debugTypes != null && debugTypes.contains(ShaderDebugInjection.Type.VEC3F_DEBUG)) {
+            shaderSource = ShaderDebugInjection.inject(shaderSource, MinecraftResourceUtils.readText(
+                    new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
+                    MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+        }
+
+        Map<String, String> remap = new HashMap<>();
+
+        // debug infra injection
+        if (debugTypes != null && !debugTypes.isEmpty()) {
+            Set<String> remapFields = new HashSet<>();
+            shaderSource = ShaderDebugInjection.injectDebugInfra(shaderSource, debugTypes, remapFields);
+            remap.putAll(ShaderDebugInjection.resolveDebugRemap(remapFields));
+        }
+
+        if (!remap.isEmpty()) {
+            shaderSource = ShaderRemapHelper.remap(shaderSource, remap);
+        }
+
+        logger.debug("{} Shader \"{}\" assembled:\n{}",
+                shaderType.toString(),
+                rawRl,
+                shaderSource);
+
         Shader shader = MethodHolder.initShader(shaderSource, rawRl, shaderType);
+
         shaders.put(rawRl, shader);
         return shader;
     }
 
-    public void compile() {
+    public void submitToGL() {
         for (Shader shader : shaders.values()) {
             shader.compile();
         }
         boolean invalid = false;
         StringBuilder builder = new StringBuilder();
-        builder.append("Shader Compilation Error:\n");
+        builder.append("GLSL Shader Compilation Error:\n");
         for (Shader shader : shaders.values()) {
             if (!shader.isValid()) {
                 invalid = true;
@@ -61,12 +109,18 @@ public class ShaderRegistry {
         }
     }
 
-    public ShaderProgram newShaderProgram(String... shaderRLs) {
+    @NonNull
+    public ShaderProgram newShaderProgram(@NonNull String @NonNull ... shaderRLs) {
+        Preconditions.checkNotNull(shaderRLs);
+
         for (String rl : shaderRLs) {
+            Preconditions.checkNotNull(rl);
+
             if (!shaders.containsKey(rl)) {
                 throw new IllegalStateException("Shader " +  rl + " isn't registered.");
             }
         }
+
         Shader[] shaders1 = new Shader[shaderRLs.length];
         for (int i = 0; i < shaders1.length; i++) {
             shaders1[i] = shaders.get(shaderRLs[i]);
@@ -89,6 +143,7 @@ public class ShaderRegistry {
             Preconditions.checkNotNull(DELEGATE.shaderCtor());
             Preconditions.checkNotNull(DELEGATE.shaderProgramCtor());
         }
+
         /**
          * @see Shader#Shader(String, String, ShaderType)
          */
@@ -114,6 +169,7 @@ public class ShaderRegistry {
 
         record ShaderDelegate(
                 MethodHandle shaderCtor,
-                MethodHandle shaderProgramCtor) {}
+                MethodHandle shaderProgramCtor) {
+        }
     }
 }

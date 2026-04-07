@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
+import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftCulling;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftEntityRendering;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.patch.MinecraftTESRRendering;
@@ -16,6 +17,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBuffe
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
+import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletComputeSystem;
 import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
 import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
@@ -46,6 +48,8 @@ import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
@@ -161,14 +165,14 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
         ShaderRegistry shaderRegistry = new ShaderRegistry();
 
-        for (ResourceLocation rl : context.ext().shaderRLs) {
-            Shader shader = shaderRegistry.register(rl);
-            context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + rl + "\".");
+        for (Map.Entry<ResourceLocation, Optional<ShaderCompileOptions>> entry : context.ext().rawShaders.entrySet()) {
+            Shader shader = shaderRegistry.register(context.logger(), entry.getKey(), entry.getValue().isPresent() ? entry.getValue().get() : null);
+            context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + entry.getKey() + "\".");
             if (shader.getShaderSource().isEmpty()) {
-                context.logger().info("Warning! \"" + rl + "\" is empty.");
+                context.logger().info("Warning! \"" + entry.getKey() + "\" is empty.");
             }
         }
-        shaderRegistry.compile();
+        shaderRegistry.submitToGL();
         context.logger().info("Shader compilation passed.");
 
         shaderRegistry.analyze(
@@ -219,9 +223,16 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         MeshletGpuRegistry meshletGpuRegistry = new MeshletGpuRegistry();
         meshletGpuRegistry.lateInit();
 
+        MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(
+                context.ext().meshletVertexGenComputeProgram,
+                context.ext().meshletDrawIndexGenComputeProgram);
+        meshletComputeSystem.lateInit();
+
         storage.put(context.sceneViewState().meshletGpuRegistry, meshletGpuRegistry);
+        storage.put(context.sceneViewState().meshletComputeSystem, meshletComputeSystem);
 
         storage.sealResource(context.sceneViewState().meshletGpuRegistry);
+        storage.sealResource(context.sceneViewState().meshletComputeSystem);
     }
 
     private void initRenderExtensions(GraphicsWorldView context) {
@@ -270,6 +281,14 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
                 storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
+        storage.put(context.ext().meshletVertexGenComputeProgram,
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
+                        "forge:shaders/meshlets2vertices.comp"));
+
+        storage.put(context.ext().meshletDrawIndexGenComputeProgram,
+                storage.get(context.graphicsRuntimeServices().shaderRegistry).newShaderProgram(
+                        "forge:shaders/meshlet_draw_index_gen.comp"));
+
         storage.sealResource(context.ext().postProcessingDefaultProgram);
         storage.sealResource(context.ext().terrainGpuPassProgram);
         storage.sealResource(context.ext().chunkCpuPassProgram);
@@ -277,6 +296,8 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         storage.sealResource(context.ext().toneMappingPassProgram);
         storage.sealResource(context.ext().upscalingPassProgram);
         storage.sealResource(context.ext().downscalingPassProgram);
+        storage.sealResource(context.ext().meshletVertexGenComputeProgram);
+        storage.sealResource(context.ext().meshletDrawIndexGenComputeProgram);
     }
 
     private void prepare(WorldContext<Graphics> context) {
@@ -295,10 +316,6 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         initMinecraftAssetProviders(view);
         initSceneViewState(view);
         initRenderExtensions(view);
-
-        view.sceneViewState().scene.computeShaderProgram = view.storage()
-                .get(view.graphicsRuntimeServices().shaderRegistry)
-                .newShaderProgram("forge:shaders/meshlets2vertices.comp");
 
         init = true;
     }

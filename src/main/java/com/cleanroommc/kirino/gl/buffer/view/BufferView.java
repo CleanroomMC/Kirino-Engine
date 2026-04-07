@@ -13,8 +13,15 @@ import java.util.Arrays;
 import java.util.Optional;
 
 /**
- * Note: this API performs <i><b>no validation or protection against illegal
- * OpenGL and driver-level behavior</b></i>. Clients are fully responsible for ensuring correctness.
+ * <p>Note: this API performs <i><b>no validation or protection against illegal
+ * OpenGL and driver-level behavior</b></i>. Clients are fully responsible for ensuring correctness.</p>
+ *
+ * <p>This class aims high usability and strong interoperability with raw GL calls,
+ * and it allows direct interaction with underlying GL states. You can expect nearly no defensive guards around
+ * GL specifications.</p>
+ *
+ * <p>Highlevel abstractions are also provided, allowing users to finish common tasks in shorter
+ * and simpler calls.</p>
  */
 public abstract class BufferView {
     private boolean validation = false;
@@ -237,6 +244,10 @@ public abstract class BufferView {
         } else {
             throw new RuntimeException("Failed to map buffer.");
         }
+    }
+
+    public void clearUint0() {
+        GL43.glClearBufferData(target(), GL30.GL_R32UI, GL30.GL_RED_INTEGER, GL11.GL_UNSIGNED_INT, null);
     }
 
     protected ByteBuffer persistentMappedBuffer = null;

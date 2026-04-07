@@ -1,14 +1,14 @@
 package com.cleanroommc.kirino.gl.framebuffer;
 
 import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
-import com.cleanroommc.kirino.gl.texture.Texture2DView;
+import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import org.lwjgl.opengl.GL30;
 
 public class ColorAttachment implements FramebufferAttachment{
     public final int index;
-    public final Texture2DView texture2D;
+    public final Texture2DAccessor texture2D;
 
-    public ColorAttachment(int index, Texture2DView texture2D) {
+    public ColorAttachment(int index, Texture2DAccessor texture2D) {
         this.index = index;
         this.texture2D = texture2D;
     }
@@ -26,7 +26,7 @@ public class ColorAttachment implements FramebufferAttachment{
     @Override
     public void resize(int width, int height) {
         texture2D.bind();
-        texture2D.resizeAndAllocNull(width, height);
+        texture2D.highlevel().resizeAndAllocEmpty(width, height);
         texture2D.bind(0);
     }
 }

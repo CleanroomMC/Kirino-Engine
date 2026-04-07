@@ -7,6 +7,8 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph.*;
@@ -85,6 +87,52 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
                 executing = false;
                 lock.unlock();
             }
+        }
+    }
+
+    @NonNull
+    @Override
+    public CompletableFuture<Void> executeAsync(Executor executor) {
+        if (!lock.tryLock()) {
+            throw new IllegalStateException("Must not execute while executing!");
+        }
+
+        executing = true;
+        try {
+            return CompletableFuture.runAsync(() -> {
+                try {
+                    for (BarrierNode node : topo) {
+                        for (Transition edge : node.incoming) {
+                            if (edge.system != null) {
+                                joinSystem(edge.system);
+                            }
+                        }
+
+                        if (node.callback != null) {
+                            node.callback.run();
+                        }
+
+                        for (Transition edge : node.outgoing) {
+                            if (edge.system != null) {
+                                executeSystem(world, edge.system);
+                            }
+                        }
+                    }
+                } finally {
+                    try {
+                        if (finishCallback != null) {
+                            finishCallback.run();
+                        }
+                    } finally {
+                        executing = false;
+                        lock.unlock();
+                    }
+                }
+            }, executor);
+        } catch (Throwable t) {
+            executing = false;
+            lock.unlock();
+            throw t;
         }
     }
 

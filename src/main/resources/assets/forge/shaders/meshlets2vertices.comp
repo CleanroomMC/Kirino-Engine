@@ -22,6 +22,16 @@ struct Vertex
     vec2 texCoord; // 8
 };
 
+// 12
+struct MeshletRange
+{
+    uint firstIndex;
+    uint indexCount;
+    uint vertexCount;
+};
+
+layout(local_size_x = 1) in;
+
 layout(std430, binding = 0) buffer InputMeshlets
 {
     Meshlet inMeshlets[];
@@ -34,26 +44,215 @@ layout(std430, binding = 1) buffer OutputVertices
 
 layout(std430, binding = 2) buffer OutputIndices
 {
-    int outIndices[];
+    uint outIndices[];
 };
 
-layout(local_size_x = 1) in;
+layout(std430, binding = 3) buffer Counters
+{
+    int vertexCount;
+    int indexCount;
+};
+
+layout(std430, binding = 4) buffer MeshletRanges
+{
+    MeshletRange ranges[];
+};
+
+uniform usamplerBuffer dirtyList;
+
+const uint MESHLET_VERTEX_CAPACITY = 768u; // 24576 / 32 = 768 elements
+const uint MESHLET_INDEX_CAPACITY = 1152u; // 4608 / 4 = 1152 elements
+
+const int FACE_X_POS = 5;
+const int FACE_X_NEG = 4;
+const int FACE_Y_POS = 3;
+const int FACE_Y_NEG = 2;
+const int FACE_Z_POS = 1;
+const int FACE_Z_NEG = 0;
+
+vec2 decodeTexCoordFromInt(int packedBits)
+{
+    int a = packedBits & 0xFFFF;
+    int b = (packedBits >> 16) & 0xFFFF;
+    return vec2(float(a) / 65535.0, float(b) / 65535.0);
+}
+
+void emitQuad(
+    vec3 p0, vec3 p1, vec3 p2, vec3 p3, ivec4 tc,
+    inout uint vCursor,
+    inout uint iCursor,
+    uint vertexBase,
+    uint indexBase)
+{
+    uint vBase = vertexBase + vCursor;
+    uint iBase = indexBase + iCursor;
+
+    outVertices[vBase + 0u].pos = p0;
+    outVertices[vBase + 0u].texCoord = decodeTexCoordFromInt(tc.x);
+
+    outVertices[vBase + 1u].pos = p1;
+    outVertices[vBase + 1u].texCoord = decodeTexCoordFromInt(tc.y);
+
+    outVertices[vBase + 2u].pos = p2;
+    outVertices[vBase + 2u].texCoord = decodeTexCoordFromInt(tc.z);
+
+    outVertices[vBase + 3u].pos = p3;
+    outVertices[vBase + 3u].texCoord = decodeTexCoordFromInt(tc.w);
+
+    outIndices[iBase + 0u] = vBase + 0u;
+    outIndices[iBase + 1u] = vBase + 1u;
+    outIndices[iBase + 2u] = vBase + 2u;
+
+    outIndices[iBase + 3u] = vBase + 2u;
+    outIndices[iBase + 4u] = vBase + 3u;
+    outIndices[iBase + 5u] = vBase + 0u;
+
+    vCursor += 4u;
+    iCursor += 6u;
+}
+
+#ifdef KIRINO_DEBUG
+layout(std430, binding = 13) buffer TempBuffer
+{
+    vec4 temp[];
+};
+#endif
 
 void main()
 {
-    uint index = gl_GlobalInvocationID.x;
+    uint dirtyCount = texelFetch(dirtyList, 0).r;
+    uint dispatchIndex = gl_GlobalInvocationID.x;
 
-    // test
-    outVertices[0].pos = vec3(-5, -5, 0);
-    outVertices[0].texCoord = vec2(0, 0);
+    if (dispatchIndex >= dirtyCount) return;
 
-    outVertices[1].pos = vec3(5, -5, 0);
-    outVertices[1].texCoord = vec2(1, 0);
+    uint dirtyListIndex = dispatchIndex + 1u;
+    uint dirtyIndex = texelFetch(dirtyList, int(dirtyListIndex)).r;
 
-    outVertices[2].pos = vec3(0, 5, 0);
-    outVertices[2].texCoord = vec2(0.5, 1);
+    Meshlet m = inMeshlets[dirtyIndex];
 
-    outIndices[0] = 0;
-    outIndices[1] = 1;
-    outIndices[2] = 2;
+    uint vertexBase = dirtyIndex * MESHLET_VERTEX_CAPACITY;
+    uint indexBase = dirtyIndex * MESHLET_INDEX_CAPACITY;
+
+    uint vCursor = 0u;
+    uint iCursor = 0u;
+
+    vec3 meshletPos = vec3(m.chunkPosAndBlockCount.x * 16, m.chunkPosAndBlockCount.y * 16, m.chunkPosAndBlockCount.z * 16);
+    int blockCount = clamp(m.chunkPosAndBlockCount.w, 0, 32);
+
+    for (int b = 0; b < blockCount; ++b)
+    {
+        Block block = m.blocks[b];
+        int posFace = block.positionAndFaceMask;
+
+        int faceMask = posFace & 0x3F;
+        int x = (posFace >> 6) & 0xF;
+        int y = (posFace >> 10) & 0xF;
+        int z = (posFace >> 14) & 0xF;
+
+        vec3 base = vec3(meshletPos.x + x, meshletPos.y + y, meshletPos.z + z);
+
+        if ((faceMask & (1 << FACE_X_POS)) != 0)
+        {
+            emitQuad(
+                base + vec3(1, 1, 1), // yz<1,1>
+                base + vec3(1, 0, 1), // yz<0,1>
+                base + vec3(1, 0, 0), // yz<0,0>
+                base + vec3(1, 1, 0), // yz<1,0>
+                block.texCoords[FACE_X_POS],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+
+        if ((faceMask & (1 << FACE_X_NEG)) != 0)
+        {
+            emitQuad(
+                base + vec3(0, 1, 0), // yz<1,0>
+                base + vec3(0, 0, 0), // yz<0,0>
+                base + vec3(0, 0, 1), // yz<0,1>
+                base + vec3(0, 1, 1), // yz<1,1>
+                block.texCoords[FACE_X_NEG],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+
+        if ((faceMask & (1 << FACE_Y_POS)) != 0)
+        {
+            emitQuad(
+                base + vec3(0, 1, 0), // xz<0,0>
+                base + vec3(0, 1, 1), // xz<0,1>
+                base + vec3(1, 1, 1), // xz<1,1>
+                base + vec3(1, 1, 0), // xz<1,0>
+                block.texCoords[FACE_Y_POS],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+
+        if ((faceMask & (1 << FACE_Y_NEG)) != 0)
+        {
+            emitQuad(
+                base + vec3(0, 0, 1), // xz<0,1>
+                base + vec3(0, 0, 0), // xz<0,0>
+                base + vec3(1, 0, 0), // xz<1,0>
+                base + vec3(1, 0, 1), // xz<1,1>
+                block.texCoords[FACE_Y_NEG],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+
+        if ((faceMask & (1 << FACE_Z_POS)) != 0)
+        {
+            emitQuad(
+                base + vec3(0, 1, 1), // xy<0,1>
+                base + vec3(0, 0, 1), // xy<0,0>
+                base + vec3(1, 0, 1), // xy<1,0>
+                base + vec3(1, 1, 1), // xy<1,1>
+                block.texCoords[FACE_Z_POS],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+
+        if ((faceMask & (1 << FACE_Z_NEG)) != 0)
+        {
+            emitQuad(
+                base + vec3(1, 1, 0), // xy<1,1>
+                base + vec3(1, 0, 0), // xy<1,0>
+                base + vec3(0, 0, 0), // xy<0,0>
+                base + vec3(0, 1, 0), // xy<0,1>
+                block.texCoords[FACE_Z_NEG],
+                vCursor, iCursor, vertexBase, indexBase
+            );
+        }
+    }
+
+    uint oldIndexCount = ranges[dirtyIndex].indexCount;
+    uint oldVertexCount = ranges[dirtyIndex].vertexCount;
+
+    ranges[dirtyIndex].firstIndex = indexBase;
+    ranges[dirtyIndex].indexCount = iCursor;
+    ranges[dirtyIndex].vertexCount = vCursor;
+
+    atomicAdd(vertexCount, int(vCursor) - int(oldVertexCount));
+    atomicAdd(indexCount, int(iCursor) - int(oldIndexCount));
+
+#ifdef KIRINO_DEBUG
+    temp[dispatchIndex * 4].x = dirtyIndex;
+    temp[dispatchIndex * 4].y = oldIndexCount;
+    temp[dispatchIndex * 4].z = oldVertexCount;
+    temp[dispatchIndex * 4].w = 0;
+
+    temp[dispatchIndex * 4 + 1].x = ranges[dirtyIndex].firstIndex;
+    temp[dispatchIndex * 4 + 1].y = ranges[dirtyIndex].indexCount;
+    temp[dispatchIndex * 4 + 1].z = ranges[dirtyIndex].vertexCount;
+    temp[dispatchIndex * 4 + 1].w = 0;
+
+    temp[dispatchIndex * 4 + 2].x = vertexCount;
+    temp[dispatchIndex * 4 + 2].y = indexCount;
+    temp[dispatchIndex * 4 + 2].z = m.chunkPosAndBlockCount.w;
+    temp[dispatchIndex * 4 + 2].w = 0;
+
+    temp[dispatchIndex * 4 + 3].x = m.chunkPosAndBlockCount.x;
+    temp[dispatchIndex * 4 + 3].y = m.chunkPosAndBlockCount.y;
+    temp[dispatchIndex * 4 + 3].z = m.chunkPosAndBlockCount.z;
+    temp[dispatchIndex * 4 + 3].w = 0;
+#endif
 }

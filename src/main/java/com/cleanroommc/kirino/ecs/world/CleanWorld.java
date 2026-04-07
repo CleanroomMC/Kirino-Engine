@@ -9,7 +9,7 @@ import com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph;
  * It's recommended to utilize the implementations of {@link SystemExeFlowGraph} to guide the execution of systems.
  * In order to do so, simply set up an instance of {@link SystemExeFlowGraph} like {@link SingleFlow} etc.
  */
-public class CleanWorld {
+public abstract class CleanWorld {
     protected final EntityManager entityManager;
     protected final JobScheduler jobScheduler;
 
@@ -18,7 +18,9 @@ public class CleanWorld {
         this.jobScheduler = jobScheduler;
     }
 
-    public void update() {
+    protected final void flushECS() {
         entityManager.flush();
     }
+
+    public abstract void update();
 }

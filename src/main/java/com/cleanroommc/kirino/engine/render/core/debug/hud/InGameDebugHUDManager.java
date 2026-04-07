@@ -140,10 +140,22 @@ public class InGameDebugHUDManager {
         context = new HUDContext(Minecraft.getMinecraft().fontRenderer, Tessellator.getInstance());
     }
 
+    /**
+     * Must only be called by the registration event publisher.
+     */
     public void register(@NonNull ImmediateHUD hud) {
         Preconditions.checkNotNull(hud);
 
         huds.add(hud);
+    }
+
+    /**
+     * Make sure <code>{@link #isEnabled()} == true</code> before calling this method.
+     */
+    public Class<? extends ImmediateHUD> getCurrentHud() {
+        Preconditions.checkState(isEnabled(), "The manager must be enabled. Check \"InGameDebugHUDManager#isEnabled()\".");
+
+        return huds.get(currentIndex).getClass();
     }
 
     /**

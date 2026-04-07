@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.debug.gizmos;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.platform.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
@@ -9,7 +10,6 @@ import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Slot;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
 import com.cleanroommc.kirino.gl.vao.attribute.Type;
-import com.google.common.base.Preconditions;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
 
@@ -18,32 +18,69 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class GizmosManager {
-    private final GraphicResourceManager graphicResourceManager;
 
     private record BlockSurface(float x, float y, float z, int faceMask, int color) {
     }
 
-    private record BlockRecord(float x, float y, float z, int faceMask) {
+    private record MeshletKey(int chunkPosX, int chunkPosY, int chunkPosZ) {
     }
 
-    private final Queue<BlockSurface> blockSurfaces = new ConcurrentLinkedQueue<>();
-    private final Set<BlockRecord> blockIdentities = ConcurrentHashMap.newKeySet();
-
-    public void clearBlocks() {
-        blockSurfaces.clear();
-        blockIdentities.clear();
+    private record Meshlet(List<BlockSurface> blockSurfaces) {
     }
 
-    public void addMeshlet(int xWorldOffset, int yWorldOffset, int zWorldOffset, List<Integer> blocks) {
+    private final GraphicResourceManager graphicResourceManager;
+
+    private final Map<MeshletKey, List<Meshlet>> meshlets = new ConcurrentHashMap<>();
+
+    /**
+     * It doesn't care if one face of the block overlaps.
+     * It only returns <code>true</code> when all faces (the whole <code>faceMask</code>)
+     * of a block overlap.
+     *
+     * <p>Note: thread safety is guaranteed.</p>
+     */
+    private boolean meshletOverlaps(MeshletKey key, float x, float y, float z, int faceMask) {
+        List<Meshlet> list = meshlets.get(key);
+        if (list == null) {
+            return false;
+        }
+
+        synchronized (list) {
+            for (Meshlet meshlet : list) {
+                for (BlockSurface blockSurface : meshlet.blockSurfaces) {
+                    if (blockSurface.x == x
+                            && blockSurface.y == y
+                            && blockSurface.z == z
+                            && blockSurface.faceMask == faceMask) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * <p>Note: thread safety is guaranteed.</p>
+     */
+    public void addMeshlet(int chunkPosX, int chunkPosY, int chunkPosZ, List<Integer> blocks) {
+        MeshletKey key = new MeshletKey(chunkPosX, chunkPosY, chunkPosZ);
+        List<Meshlet> list = meshlets.computeIfAbsent(key, k -> Collections.synchronizedList(new ArrayList<>()));
+
+        int xWorldOffset = chunkPosX * 16;
+        int yWorldOffset = chunkPosY * 16;
+        int zWorldOffset = chunkPosZ * 16;
+
         int hash = Arrays.hashCode(blocks.toArray(new Integer[0]));
         hash = hash * 31 + Objects.hash(xWorldOffset, yWorldOffset, zWorldOffset);
 
         Random random = new Random(hash);
         Color color = new Color(random.nextFloat(), random.nextFloat(), random.nextFloat(), 0.5f);
 
+        List<BlockSurface> blockSurfaceList = new ArrayList<>();
         for (Integer block : blocks) {
             int[] positionAndFaceMask = Block.decompress(block);
             float x = xWorldOffset + positionAndFaceMask[0];
@@ -51,17 +88,21 @@ public class GizmosManager {
             float z = zWorldOffset + positionAndFaceMask[2];
             int faceMask = positionAndFaceMask[3];
 
-            if (!blockIdentities.add(new BlockRecord(x, y, z, faceMask))) {
+            if (meshletOverlaps(key, x, y, z, faceMask)) {
                 // duplicate; warn
-                addBlock(x, y, z, faceMask, Color.RED.getRGB());
+                blockSurfaceList.add(new BlockSurface(x, y, z, faceMask, Color.RED.getRGB()));
             } else {
-                addBlock(x, y, z, faceMask, color.getRGB());
+                blockSurfaceList.add(new BlockSurface(x, y, z, faceMask, color.getRGB()));
             }
+        }
+
+        synchronized (list) {
+            list.add(new Meshlet(blockSurfaceList));
         }
     }
 
-    public void addBlock(float x, float y, float z, int faceMask, int color) {
-        blockSurfaces.add(new BlockSurface(x, y, z, faceMask, color));
+    public void clearMeshlets() {
+        meshlets.clear();
     }
 
     public GizmosManager(GraphicResourceManager graphicResourceManager) {
@@ -84,20 +125,46 @@ public class GizmosManager {
     private static final int FACE_Z_POS = 0b000010;
     private static final int FACE_Z_NEG = 0b000001;
 
-    private void buildBlockFaces(MeshTicketBuilder builder, float x, float y, float z, int faceMask, int color) {
-        int faceCount = Integer.bitCount(faceMask);
-        Preconditions.checkArgument(faceCount > 0, "Must have at least one face to draw.");
+    private void buildMeshlet(MeshTicketBuilder builder, Meshlet meshlet) {
+        int faceCount = 0;
+        for (BlockSurface blockSurface : meshlet.blockSurfaces) {
+            faceCount += Integer.bitCount(blockSurface.faceMask);
+        }
+
+        ByteBuffer vboData = MemoryUtil.memAlloc(faceCount * 4 * ATTRIBUTE_LAYOUT.getFirstStride().getSize());
+        ByteBuffer eboData = MemoryUtil.memAlloc(faceCount * 6 * Short.BYTES);
+
+        int vertexBase = 0;
+        for (BlockSurface blockSurface : meshlet.blockSurfaces) {
+            vertexBase = buildBlockFaces(
+                    vboData,
+                    eboData,
+                    blockSurface.x,
+                    blockSurface.y,
+                    blockSurface.z,
+                    blockSurface.faceMask,
+                    blockSurface.color,
+                    vertexBase);
+        }
+
+        vboData.flip();
+        eboData.flip();
+
+        builder.build(vboData, eboData, ATTRIBUTE_LAYOUT, true, true);
+    }
+
+    private int buildBlockFaces(
+            ByteBuffer vboData,
+            ByteBuffer eboData,
+            float x, float y, float z,
+            int faceMask, int color,
+            int vertexBase) {
 
         byte a = (byte) ((color >> 24) & 0xFF);
         byte r;
         byte g;
         byte b;
         Color color1 = new Color(color, true);
-
-        ByteBuffer vboData = MemoryUtil.memAlloc(faceCount * 4 * ATTRIBUTE_LAYOUT.getFirstStride().getSize());
-        ByteBuffer eboData = MemoryUtil.memAlloc(faceCount * 6);
-
-        int vertexBase = 0;
 
         if ((faceMask & FACE_X_POS) != 0) {
             float factor = 1.1f;
@@ -114,8 +181,8 @@ public class GizmosManager {
             vboData.putFloat(x + 1f).putFloat(y + 1f).putFloat(z);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
             vertexBase += 4;
         }
 
@@ -134,8 +201,8 @@ public class GizmosManager {
             vboData.putFloat(x).putFloat(y + 1f).putFloat(z + 1f);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
             vertexBase += 4;
         }
 
@@ -154,8 +221,8 @@ public class GizmosManager {
             vboData.putFloat(x).putFloat(y + 1f).putFloat(z + 1f);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) (vertexBase)).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
             vertexBase += 4;
         }
 
@@ -174,8 +241,8 @@ public class GizmosManager {
             vboData.putFloat(x).putFloat(y).putFloat(z);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
             vertexBase += 4;
         }
 
@@ -194,8 +261,8 @@ public class GizmosManager {
             vboData.putFloat(x + 1f).putFloat(y).putFloat(z + 1f);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
             vertexBase += 4;
         }
 
@@ -214,28 +281,28 @@ public class GizmosManager {
             vboData.putFloat(x).putFloat(y).putFloat(z);
             vboData.put(r).put(g).put(b).put(a);
 
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 1)).put((byte) (vertexBase + 2));
-            eboData.put((byte) vertexBase).put((byte) (vertexBase + 2)).put((byte) (vertexBase + 3));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 1)).putShort((short) (vertexBase + 2));
+            eboData.putShort((short) vertexBase).putShort((short) (vertexBase + 2)).putShort((short) (vertexBase + 3));
+            vertexBase += 4;
         }
 
-        vboData.flip();
-        eboData.flip();
-
-        builder.build(vboData, eboData, ATTRIBUTE_LAYOUT, true, true);
+        return vertexBase;
     }
 
     public List<HighLevelDC> getDrawCommands() {
         List<HighLevelDC> list = new ArrayList<>();
 
-        for (BlockSurface blockSurface : blockSurfaces) {
-            String id = "block_surface_mesh_" + Objects.hash(blockSurface);
+        for (Map.Entry<MeshletKey, List<Meshlet>> entry : meshlets.entrySet()) {
+            for (Meshlet meshlet : entry.getValue()) {
+                String id = "meshlet_" + System.identityHashCode(meshlet); // hashcode based on reference
 
-            graphicResourceManager.requestMeshTicket(id, UploadStrategy.PERSISTENT, 20).ifPresent(builder -> {
-                buildBlockFaces(builder, blockSurface.x, blockSurface.y, blockSurface.z, blockSurface.faceMask, blockSurface.color);
-                graphicResourceManager.submitMeshTicket(builder);
-            });
+                graphicResourceManager.requestMeshTicket(id, UploadStrategy.PERSISTENT, 20).ifPresent(builder -> {
+                    buildMeshlet(builder, meshlet);
+                    graphicResourceManager.submitMeshTicket(builder);
+                });
 
-            list.add(HighLevelDC.acquire().fillPassInternal(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_BYTE));
+                list.add(HighLevelDC.acquire().fillPassInternal(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_SHORT));
+            }
         }
 
         return list;

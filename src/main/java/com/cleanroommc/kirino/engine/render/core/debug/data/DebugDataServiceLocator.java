@@ -16,7 +16,8 @@ public class DebugDataServiceLocator {
      * Register your service at any time. No event-driven entry point or strict phase restrictions.
      * However, it's preferably to register services during Forge's <code>preInit</code>/<code>init</code>/<code>postInit</code> stage.
      *
-     * <p>Note: You are not allowed to register a type of service twice.</p>
+     * <p>Note: You are not allowed to register a type of service twice.
+     * And yes, the lifecycle is left unclear because we don't recommend using it outside the engine kernel.</p>
      */
     public <T extends DebugDataService> void register(@NonNull Class<T> type, @NonNull T service) {
         Preconditions.checkNotNull(type);

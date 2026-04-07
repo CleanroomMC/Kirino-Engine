@@ -1,15 +1,15 @@
 package com.cleanroommc.kirino.gl.framebuffer;
 
 import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
-import com.cleanroommc.kirino.gl.texture.Texture2DView;
+import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import org.lwjgl.opengl.GL30;
 
 public class DepthStencilAttachment implements FramebufferAttachment{
-    public final Texture2DView texture2D;
+    public final Texture2DAccessor texture2D;
     public final GLRenderBuffer renderBuffer;
     public final boolean isTexture;
 
-    public DepthStencilAttachment(Texture2DView texture2D) {
+    public DepthStencilAttachment(Texture2DAccessor texture2D) {
         this.texture2D = texture2D;
         renderBuffer = null;
         isTexture = true;
@@ -41,7 +41,7 @@ public class DepthStencilAttachment implements FramebufferAttachment{
     public void resize(int width, int height) {
         if (isTexture) {
             texture2D.bind();
-            texture2D.resizeAndAllocNull(width, height);
+            texture2D.highlevel().resizeAndAllocEmpty(width, height);
             texture2D.bind(0);
         } else {
             renderBuffer.bind();

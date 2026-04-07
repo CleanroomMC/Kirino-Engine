@@ -11,6 +11,8 @@ public class DebugDataHandle<T extends DebugDataService> {
 
     /**
      * It only returns <code>null</code> when the service is inactive.
+     * <p><b>Never cache the result permanently!
+     * {@link DebugDataService#isActive()} must be respected.</b></p>
      */
     @Nullable
     public T fetch() {

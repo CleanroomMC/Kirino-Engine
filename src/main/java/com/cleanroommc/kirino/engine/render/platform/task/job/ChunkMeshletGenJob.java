@@ -10,13 +10,12 @@ import com.cleanroommc.kirino.engine.render.platform.ecs.component.MeshletCompon
 import com.cleanroommc.kirino.engine.render.platform.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.platform.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.platform.ecs.component.ChunkComponent;
-import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockModelType;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockRenderingType;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.semantic.BlockUnifier;
 import com.cleanroommc.kirino.engine.render.platform.minecraft.utils.BlockMeshGenerator;
-import com.cleanroommc.kirino.engine.render.platform.scene.MinecraftScene;
-import com.cleanroommc.kirino.engine.render.platform.scene.gpu_meshlet.MeshletGpuRegistry;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletCreateCallback;
+import com.cleanroommc.kirino.engine.render.platform.scene.callback.MeshletDestroyCallback;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.google.common.base.Preconditions;
@@ -53,10 +52,10 @@ public class ChunkMeshletGenJob implements ParallelJob {
     int lod;
 
     @JobExternalDataQuery
-    ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
+    MeshletDestroyCallback meshletDestroyCallback;
 
     @JobExternalDataQuery
-    MinecraftScene.MeshletDestroyCallback meshletDestroyCallback;
+    MeshletCreateCallback meshletCreateCallback;
 
     @JobExternalDataQuery
     ChunkProviderClient chunkProvider;
@@ -66,9 +65,6 @@ public class ChunkMeshletGenJob implements ParallelJob {
 
     @JobExternalDataQuery
     ResourceSlot<BlockMeshGenerator> blockMeshGenerator;
-
-    @JobExternalDataQuery
-    ResourceSlot<GizmosManager> gizmosManager;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
     PrimitiveArray chunkPosXArray;
@@ -379,9 +375,8 @@ public class ChunkMeshletGenJob implements ParallelJob {
                     meshletComponent.chunkPosY = chunkCluster.chunkY;
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
                     fillBlockInfo(chunkCluster, cluster, bufferBuilder);
-                    storage.get(meshletGpuRegistry).allocateMeshletID(meshletComponent);
 
-                    entityManager.createEntity(meshletDestroyCallback, null, meshletComponent);
+                    entityManager.createEntity(meshletDestroyCallback, meshletCreateCallback, meshletComponent);
                 }
             }
         }
