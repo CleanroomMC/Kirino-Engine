@@ -184,8 +184,10 @@ public class MeshletInputDoubleBuffer {
         int consumeSize = index == 0 ? ssboSize1 : ssboSize0;
         if (getSize() < consumeSize) {
             if (index == 0) {
+                ssboSize0 = consumeSize;
                 resizeSsbo0(consumeSize);
             } else if (index == 1) {
+                ssboSize1 = consumeSize;
                 resizeSsbo1(consumeSize);
             } else {
                 throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);

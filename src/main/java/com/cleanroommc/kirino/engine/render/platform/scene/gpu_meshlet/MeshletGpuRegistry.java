@@ -182,6 +182,7 @@ public class MeshletGpuRegistry {
             throw new RuntimeException("Failed to grow the write target draw index buffer.");
         }
 
+        vertexOutputBuffer.growToMatchSize();
         vertexOutputBuffer.copyLastConsumeToWirteTarget();
 
         computing = true;

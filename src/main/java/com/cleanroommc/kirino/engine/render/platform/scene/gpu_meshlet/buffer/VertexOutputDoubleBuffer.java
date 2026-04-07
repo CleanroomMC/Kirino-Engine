@@ -330,6 +330,40 @@ public class VertexOutputDoubleBuffer {
     }
 
     /**
+     * Grow the current vertex/index write target if it's smaller than the vertex/index consume target.
+     */
+    public void growToMatchSize() {
+        int consumeVertexSize = index == 0 ? vertexSsboSize1 : vertexSsboSize0;
+        int consumeIndexSize = index == 0 ? indexSsboSize1 : indexSsboSize0;
+        int writeVertexSize = getVertexSize();
+        int writeIndexSize = getIndexSize();
+
+        if (writeVertexSize < consumeVertexSize) {
+            if (index == 0) {
+                vertexSsboSize0 = consumeVertexSize;
+                resizeVertexSsbo0(consumeVertexSize);
+            } else if (index == 1) {
+                vertexSsboSize1 = consumeVertexSize;
+                resizeVertexSsbo1(consumeVertexSize);
+            } else {
+                throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
+            }
+        }
+
+        if (writeIndexSize < consumeIndexSize) {
+            if (index == 0) {
+                indexSsboSize0 = consumeVertexSize;
+                resizeIndexSsbo0(consumeIndexSize);
+            } else if (index == 1) {
+                indexSsboSize1 = consumeVertexSize;
+                resizeIndexSsbo1(consumeIndexSize);
+            } else {
+                throw new RuntimeException("No such index (expected 0 or 1). Index=" + index);
+            }
+        }
+    }
+
+    /**
      * Copy the both last vertex/index consume target to vertex/index write target.
      *
      * <p>Notice: this is a GPU copy method powered by GL. Be carefully with GL side effects (no bind state restoration is performed).</p>
@@ -340,6 +374,7 @@ public class VertexOutputDoubleBuffer {
         int consumeIndexSize = index == 0 ? indexSsboSize1 : indexSsboSize0;
         int writeVertexSize = getVertexSize();
         int writeIndexSize = getIndexSize();
+
         Preconditions.checkState(writeVertexSize >= consumeVertexSize,
                 "Vertex write target size (%s bytes) must be greater than consume target size (%s bytes).", writeVertexSize, consumeVertexSize);
         Preconditions.checkState(writeIndexSize >= consumeIndexSize,
