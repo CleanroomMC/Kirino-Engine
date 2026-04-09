@@ -3,7 +3,7 @@ package com.cleanroommc.kirino;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataHandle;
 import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.RenderStatsFrame;
-import com.cleanroommc.kirino.engine.render.platform.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 

@@ -13,12 +13,12 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistr
 import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.CommonStatsHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.builtin.FpsHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.shader.ShaderDebugResource;
-import com.cleanroommc.kirino.engine.render.platform.MinecraftAssetProviders;
-import com.cleanroommc.kirino.engine.render.platform.MinecraftIntegration;
-import com.cleanroommc.kirino.engine.render.platform.SceneViewState;
-import com.cleanroommc.kirino.engine.render.platform.debug.data.impl.MeshletGpuTimeline;
-import com.cleanroommc.kirino.engine.render.platform.debug.hud.impl.MeshletGpuTimelineHUD;
-import com.cleanroommc.kirino.engine.render.platform.task.job.*;
+import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
+import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
+import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
+import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.MeshletGpuTimelineHUD;
+import com.cleanroommc.kirino.engine.render.usage.task.job.*;
 import com.cleanroommc.kirino.gl.GLDeviceInfo;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
@@ -550,12 +550,12 @@ public final class KirinoClientCore {
 
     @SubscribeEvent
     public static void onStructScan(StructScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.struct");
+        event.register("com.cleanroommc.kirino.engine.render.usage.ecs.struct");
     }
 
     @SubscribeEvent
     public static void onComponentScan(ComponentScanningEvent event) {
-        event.register("com.cleanroommc.kirino.engine.render.platform.ecs.component");
+        event.register("com.cleanroommc.kirino.engine.render.usage.ecs.component");
     }
 
     @SubscribeEvent

@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.debug.gizmos;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
-import com.cleanroommc.kirino.engine.render.platform.ecs.struct.Block;
+import com.cleanroommc.kirino.engine.render.usage.ecs.struct.Block;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.render.core.resource.UploadStrategy;
