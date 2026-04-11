@@ -10,6 +10,7 @@ public interface TextureAccessorHighlevel {
 
     interface HighlevelOperator {
 
+        // implement two of them based on the texture type
         default void resizeAndAllocEmpty(int width) {
             throw new UnsupportedOperationException("\"resizeAndAllocEmpty\" is not implemented.");
         }
@@ -29,6 +30,7 @@ public interface TextureAccessorHighlevel {
             throw new UnsupportedOperationException("\"resizeAndAllocEmpty\" is not implemented.");
         }
 
+        // implement two of them based on the texture type
         default void resizeAndAlloc(int width, @Nullable ByteBuffer byteBuffer) {
             throw new UnsupportedOperationException("\"resizeAndAlloc\" is not implemented.");
         }
@@ -48,6 +50,7 @@ public interface TextureAccessorHighlevel {
             throw new UnsupportedOperationException("\"resizeAndAlloc\" is not implemented.");
         }
 
+        // implement both; texture type agnostic
         default void alloc(boolean mutable, @Nullable ByteBuffer byteBuffer) {
             throw new UnsupportedOperationException("\"alloc\" is not implemented.");
         }
@@ -55,6 +58,7 @@ public interface TextureAccessorHighlevel {
             throw new UnsupportedOperationException("\"alloc\" is not implemented.");
         }
 
+        // implement both; texture type agnostic
         default void allocEmpty(boolean mutable) {
             throw new UnsupportedOperationException("\"alloc\" is not implemented.");
         }
