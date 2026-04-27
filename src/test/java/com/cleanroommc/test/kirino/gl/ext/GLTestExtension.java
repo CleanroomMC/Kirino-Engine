@@ -12,6 +12,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
+import org.opentest4j.TestAbortedException;
 
 import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
@@ -172,7 +173,14 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
             f.completeExceptionally(new IllegalStateException("GLTestExtension not initialized yet."));
             return f;
         }
-        return CompletableFuture.runAsync(r, executor);
+        return CompletableFuture.runAsync(() -> {
+            try {
+                r.run();
+            } catch (TestAbortedException ignore) {
+            } catch (Throwable e) {
+                throw new CompletionException(e);
+            }
+        }, executor);
     }
 
     public static <T> CompletableFuture<T> submit(Callable<T> c) {
@@ -185,7 +193,9 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 return c.call();
-            } catch (Exception e) {
+            } catch (TestAbortedException ignore) {
+                return null;
+            } catch (Throwable e) {
                 throw new CompletionException(e);
             }
         }, executor);

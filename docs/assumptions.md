@@ -2,7 +2,7 @@
 
 Kirino-Engine is built on a set of explicit assumptions.
 
-## Assumption 1: Minecraft as a Data Source, Not a Compatibility Target
+## Minecraft as a Data Source, Not a Compatibility Target
 
 This can be stated explicitly and even evexaggerated:
 - We **_do not_** aim to provide the **_best_** performance and compatibility
@@ -12,7 +12,7 @@ This can be stated explicitly and even evexaggerated:
 - As a consequence, users can still expect the engine to experiment with
   cutting-edge rendering techniques where feasible, rather than focusing on incremental _marginal optimizations_
 
-## Assumption 2: Rendering Architecture Should Be Explicit
+## Rendering Architecture Should Be Explicit
 
 What do we avoid: implicit feature growth that gradually hides responsibilities.
 
@@ -55,15 +55,13 @@ else
 }
 ```
 
-In contrast, an explicit architecture represents features as data and structure,
-allowing behavior to be composed.
+In contrast, an explicit architecture that represents features as data and structure is wanted.
 
-## Assumption 3: CPU Orchestration & GPU Execution
+## CPU Orchestration & GPU Execution
 
 What do we avoid:
 - CPU control increasingly mirrors GPU logic
 - GPU computation is treated as an optimization patch
-- Responsibilities between CPU and GPU become blurred
 
 **Bad example**:
 ```java
@@ -89,10 +87,7 @@ for (Object obj : objects)
 }
 ```
 
-In contrast, when GPU execution is treated as the primary execution model,
-CPU control naturally becomes more declarative and readable.
-
-## Assumption 4: Architecture Matters More Than Micro-optimizations
+## Architecture Matters More Than Micro-optimizations
 
 What do we avoid:
 - Control becomes tightly coupled to low-level details
@@ -117,6 +112,3 @@ for (int i = 0; i < meshes.size(); i += 4)
     drawFast(meshes[i + 3]);
 }
 ```
-
-Micro-optimizations harden assumptions.
-In constrast, architecture keeps them flexible.

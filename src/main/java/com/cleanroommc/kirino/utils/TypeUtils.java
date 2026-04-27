@@ -4,6 +4,9 @@ import org.jspecify.annotations.Nullable;
 
 public final class TypeUtils {
 
+    private TypeUtils() {
+    }
+
     public static boolean looseTypeCheck(Class<?> clazz1, Class<?> clazz2) {
         if (clazz1.equals(clazz2)) {
             return true;

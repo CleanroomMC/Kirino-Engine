@@ -11,6 +11,9 @@ import java.io.*;
 
 public final class MinecraftResourceUtils {
 
+    private MinecraftResourceUtils() {
+    }
+
     @NonNull
     private static InputStream getInputStream(@NonNull String absolutePath) {
         Preconditions.checkNotNull(absolutePath);

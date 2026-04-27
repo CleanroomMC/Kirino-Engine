@@ -8,6 +8,9 @@ import java.util.Comparator;
 
 public final class QuantileUtils {
 
+    private QuantileUtils() {
+    }
+
     public static float median(@NonNull Integer @NonNull [] array) {
         Preconditions.checkNotNull(array);
         Preconditions.checkState(array.length > 0);

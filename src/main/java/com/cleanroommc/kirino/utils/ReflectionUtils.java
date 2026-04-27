@@ -29,6 +29,9 @@ import java.util.Optional;
  */
 public final class ReflectionUtils {
 
+    private ReflectionUtils() {
+    }
+
     private static final boolean isDeobf = FMLLaunchHandler.isDeobfuscatedEnvironment();
     // Consider using ImagineBreaker if this lookup isn't privileged enough
     private static final MethodHandles.Lookup LOOKUP = MethodHandles.lookup();
