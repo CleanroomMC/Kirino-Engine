@@ -14,6 +14,9 @@ public final class MinecraftResourceUtils {
     private MinecraftResourceUtils() {
     }
 
+    /**
+     * It returns the input stream for a file with the absolute path.
+     */
     @NonNull
     private static InputStream getInputStream(@NonNull String absolutePath) {
         Preconditions.checkNotNull(absolutePath);
@@ -30,6 +33,9 @@ public final class MinecraftResourceUtils {
         }
     }
 
+    /**
+     * It finds the absolute path for resources inside the dev env.
+     */
     @Nullable
     private static String findResource(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
@@ -77,6 +83,9 @@ public final class MinecraftResourceUtils {
 
     private static Boolean devEnv = null;
 
+    /**
+     * @return Wether it is the Cleanroom dev env (not Cleanroom mod template but Cleanroom itself)
+     */
     private static boolean isDevEnv() {
         if (devEnv != null) {
             return devEnv;
@@ -110,18 +119,20 @@ public final class MinecraftResourceUtils {
     }
 
     @NonNull
-    public static String readText(@NonNull ResourceLocation rl, @NonNull NewLineType newLine) {
+    public static InputStream getInputStream(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
-        Preconditions.checkNotNull(newLine);
 
         InputStream stream;
-        // dev env path for unit tests
+
+        // dev env runtime path
         if (isDevEnv() && rl.getNamespace().equals("forge")) {
             String path = findResource(rl);
             Preconditions.checkNotNull(path,
                     "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.", rl.toString());
 
             stream = getInputStream(path);
+
+        // normal runtime path
         } else {
             FMLFolderResourcePack resourcePack = new FMLFolderResourcePack(Loader.instance().getIndexedModList().get(rl.getNamespace()));
             try {
@@ -130,6 +141,16 @@ public final class MinecraftResourceUtils {
                 throw new RuntimeException(e);
             }
         }
+
+        return stream;
+    }
+
+    @NonNull
+    public static String readText(@NonNull ResourceLocation rl, @NonNull NewLineType newLine) {
+        Preconditions.checkNotNull(rl);
+        Preconditions.checkNotNull(newLine);
+
+        InputStream stream = getInputStream(rl);
 
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream));

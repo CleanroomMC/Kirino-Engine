@@ -457,7 +457,7 @@ public final class KirinoClientCore {
         KIRINO_ENGINE.run(FramePhase.POST_UPDATE);
         KIRINO_ENGINE.run(FramePhase.RENDER_OVERLAY);
 
-//        ImmediateServices.instance().font().draw();
+        ImmediateClientServices.instance().text();
     }
     //</editor-fold>
 
