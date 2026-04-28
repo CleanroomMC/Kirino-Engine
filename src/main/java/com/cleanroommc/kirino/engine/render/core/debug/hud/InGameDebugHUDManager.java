@@ -5,22 +5,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.input.Keyboard;
+import org.lwjglx.input.Keyboard;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InGameDebugHUDManager {
 
     private static class GLStateBackup {
-        private final IntBuffer INT_BUFFER_16 = ByteBuffer.allocateDirect(16 << 2).order(ByteOrder.nativeOrder()).asIntBuffer();
-        private final FloatBuffer FLOAT_BUFFER_16 = ByteBuffer.allocateDirect(16 << 2).order(ByteOrder.nativeOrder()).asFloatBuffer();
 
         private int textureID = 0;
         private float r = 0, g = 0, b = 0, a = 0;
@@ -39,42 +33,26 @@ public class InGameDebugHUDManager {
         private float alphaRef;
 
         private void storeGlStates() {
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D, INT_BUFFER_16);
-            textureID = INT_BUFFER_16.get(0);
-            FLOAT_BUFFER_16.clear();
-            GL11.glGetFloat(GL11.GL_CURRENT_COLOR, FLOAT_BUFFER_16);
-            r = FLOAT_BUFFER_16.get(0);
-            g = FLOAT_BUFFER_16.get(1);
-            b = FLOAT_BUFFER_16.get(2);
-            a = FLOAT_BUFFER_16.get(3);
+            textureID = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+            float[] color = new float[4];
+            GL11.glGetFloatv(GL11.GL_CURRENT_COLOR, color);
+            r = color[0];
+            g = color[1];
+            b = color[2];
+            a = color[3];
             blend = GL11.glIsEnabled(GL11.GL_BLEND);
             lighting = GL11.glIsEnabled(GL11.GL_LIGHTING);
             texture2D = GL11.glIsEnabled(GL11.GL_TEXTURE_2D);
             alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL11.GL_SHADE_MODEL, INT_BUFFER_16);
-            shadeModel = INT_BUFFER_16.get(0);
+            shadeModel = GL11.glGetInteger(GL11.GL_SHADE_MODEL);
             depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
             cullFace = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB, INT_BUFFER_16);
-            blendSrcRgb = INT_BUFFER_16.get(0);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL14.GL_BLEND_DST_RGB, INT_BUFFER_16);
-            blendDstRgb = INT_BUFFER_16.get(0);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA, INT_BUFFER_16);
-            blendSrcAlpha = INT_BUFFER_16.get(0);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA, INT_BUFFER_16);
-            blendDstAlpha = INT_BUFFER_16.get(0);
-            INT_BUFFER_16.clear();
-            GL11.glGetInteger(GL11.GL_ALPHA_TEST_FUNC, INT_BUFFER_16);
-            alphaFunc = INT_BUFFER_16.get(0);
-            FLOAT_BUFFER_16.clear();
-            GL11.glGetFloat(GL11.GL_ALPHA_TEST_REF, FLOAT_BUFFER_16);
-            alphaRef = FLOAT_BUFFER_16.get(0);
+            blendSrcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+            blendDstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
+            blendSrcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+            blendDstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+            alphaFunc = GL11.glGetInteger(GL11.GL_ALPHA_TEST_FUNC);
+            alphaRef = GL11.glGetFloat(GL11.GL_ALPHA_TEST_REF);
         }
 
         private void restoreGlStates() {

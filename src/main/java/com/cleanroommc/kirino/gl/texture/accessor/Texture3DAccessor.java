@@ -120,11 +120,12 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             int height,
             int depthOrLayers,
             int format,
-            int imageSize,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
+
+        Preconditions.checkNotNull(data);
 
         if (dsa) {
-            GL45.glCompressedTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, imageSize, data);
+            GL45.glCompressedTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, data);
         } else {
             GL13.glCompressedTexSubImage3D(target(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, data);
         }

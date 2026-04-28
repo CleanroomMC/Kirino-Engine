@@ -7,6 +7,7 @@ import org.lwjgl.opengl.GL43;
 import org.lwjgl.opengl.GL43C;
 import org.lwjgl.opengl.GLDebugMessageCallback;
 
+import java.nio.IntBuffer;
 import java.util.List;
 
 public final class KHRDebug {
@@ -36,10 +37,10 @@ public final class KHRDebug {
         GL43C.glDebugMessageCallback(callback, 0);
 
         // disable all
-        GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, null, false);
+        GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, (IntBuffer) null, false);
 
         for (DebugMessageFilter filter : messageFilters) {
-            GL43.glDebugMessageControl(filter.getSource().glValue, filter.getType().glValue, filter.getSeverity().glValue, null, true);
+            GL43.glDebugMessageControl(filter.getSource().glValue, filter.getType().glValue, filter.getSeverity().glValue, (IntBuffer) null, true);
         }
 
         enable = true;
@@ -55,7 +56,7 @@ public final class KHRDebug {
 
         GL43C.glDebugMessageCallback(null, 0);
 
-        GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, null, false);
+        GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, (IntBuffer) null, false);
 
         enable = false;
     }

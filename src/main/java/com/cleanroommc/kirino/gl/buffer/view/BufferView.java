@@ -247,7 +247,7 @@ public abstract class BufferView {
     }
 
     public void clearUint0() {
-        GL43.glClearBufferData(target(), GL30.GL_R32UI, GL30.GL_RED_INTEGER, GL11.GL_UNSIGNED_INT, null);
+        GL43.glClearBufferData(target(), GL30.GL_R32UI, GL30.GL_RED_INTEGER, GL11.GL_UNSIGNED_INT, (ByteBuffer) null);
     }
 
     protected ByteBuffer persistentMappedBuffer = null;

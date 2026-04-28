@@ -274,8 +274,7 @@ public interface TextureAccessor {
             int height,
             int depthOrLayers,
             int format,
-            int imageSize,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"compressedTexSubImage3D\" not supported by this texture type " + type().name() + ".");
     }

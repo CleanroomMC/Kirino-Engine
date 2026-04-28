@@ -44,7 +44,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL32C;
 import org.lwjgl.opengl.GL42;
-import org.lwjgl.util.glu.Project;
+import org.lwjglx.util.glu.Project;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;

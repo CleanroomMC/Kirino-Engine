@@ -6,7 +6,7 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
 import org.joml.Vector2f;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.input.Keyboard;
+import org.lwjglx.input.Keyboard;
 
 import java.awt.*;
 import java.util.ArrayList;
