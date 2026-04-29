@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.gl.shader;
 
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
@@ -21,6 +22,11 @@ public class ShaderProgram extends GLDisposable {
     }
 
     private ShaderProgram(Shader... shaders) {
+        for (Shader shader : shaders) {
+            Preconditions.checkState(shader.isValid(), "Shader must be valid.");
+            Preconditions.checkState(shader.isSetup(), "Shader must be set up.");
+        }
+
         ImmutableList.Builder<Shader> builder = ImmutableList.builder();
         this.shaders = builder.addAll(Arrays.asList(shaders)).build();
         programID = GL20.glCreateProgram();

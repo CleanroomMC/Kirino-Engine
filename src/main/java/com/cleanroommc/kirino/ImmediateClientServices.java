@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
-import com.cleanroommc.kirino.simpletext.FreeTypeManager;
+import com.cleanroommc.kirino.simpletext.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.simpletext.SimpleTextRenderer;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -21,7 +21,9 @@ public final class ImmediateClientServices {
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
-        textRenderer = new SimpleTextRenderer(freeTypeManager,
+        textRenderer = new SimpleTextRenderer(
+                shaderAccess,
+                freeTypeManager,
                 new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 //        freeTypeManager.destroy();
     }

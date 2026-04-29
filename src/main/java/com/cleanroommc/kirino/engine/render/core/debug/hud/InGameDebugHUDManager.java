@@ -130,6 +130,7 @@ public class InGameDebugHUDManager {
     /**
      * Make sure <code>{@link #isEnabled()} == true</code> before calling this method.
      */
+    @NonNull
     public Class<? extends ImmediateHUD> getCurrentHud() {
         Preconditions.checkState(isEnabled(), "The manager must be enabled. Check \"InGameDebugHUDManager#isEnabled()\".");
 

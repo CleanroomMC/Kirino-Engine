@@ -187,6 +187,13 @@ public class HUDContext {
         tessellator.draw();
     }
 
+    public void drawRectOutline(float x, float y, float width, float height, float thickness, int color) {
+        drawRect(x + thickness, y, width, thickness, color);
+        drawRect(x, y + height, width, thickness, color);
+        drawRect(x, y, thickness, height, color);
+        drawRect(x + width, y + thickness, thickness, height, color);
+    }
+
     public void drawText(String text, float x, float y, int color) {
         GlStateManager.disableCull();
         GlStateManager.enableTexture2D();

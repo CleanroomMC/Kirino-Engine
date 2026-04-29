@@ -162,14 +162,14 @@ public class FrameFinalizer {
             Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
             color0Tex.bind();
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             mainFramebuffer.framebuffer.attach(new ColorAttachment(0, color0Tex));
 
             Texture2DAccessor depthTex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
             depthTex.bind();
             depthTex.highlevel().allocEmpty(true, TextureFormat.D24S8);
-            depthTex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            depthTex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             depthTex.bind(0);
             mainFramebuffer.framebuffer.attach(new DepthStencilAttachment(depthTex));
 
@@ -192,7 +192,7 @@ public class FrameFinalizer {
             Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, intermediateFramebuffer.width(), intermediateFramebuffer.height()));
             color0Tex.bind();
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             intermediateFramebuffer.attach(new ColorAttachment(0, color0Tex));
 
@@ -213,7 +213,7 @@ public class FrameFinalizer {
             Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
             color0Tex.bind();
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             pingPongFramebuffer.framebufferA().attach(new ColorAttachment(0, color0Tex));
 
@@ -234,7 +234,7 @@ public class FrameFinalizer {
             Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
             color0Tex.bind();
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setParam(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
+            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
             pingPongFramebuffer.framebufferB().attach(new ColorAttachment(0, color0Tex));
 

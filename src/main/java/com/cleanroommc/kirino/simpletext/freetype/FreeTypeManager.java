@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.simpletext;
+package com.cleanroommc.kirino.simpletext.freetype;
 
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.google.common.base.Preconditions;
@@ -22,7 +22,7 @@ public final class FreeTypeManager {
     private FreeTypeManager() {
     }
 
-    public static final Logger LOGGER = LogManager.getLogger("Kirino FreeTypeManager");
+    private static final Logger LOGGER = LogManager.getLogger("Kirino FreeTypeManager");
 
     public static final int DEFAULT_PIXEL_SIZE = 32;
 

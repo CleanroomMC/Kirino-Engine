@@ -17,6 +17,7 @@ import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
 import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.FreeTypeDebugHUD;
 import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.MeshletGpuTimelineHUD;
 import com.cleanroommc.kirino.engine.render.usage.task.job.*;
 import com.cleanroommc.kirino.gl.GLDeviceInfo;
@@ -455,8 +456,6 @@ public final class KirinoClientCore {
 
         KIRINO_ENGINE.run(FramePhase.POST_UPDATE);
         KIRINO_ENGINE.run(FramePhase.RENDER_OVERLAY);
-
-        ImmediateClientServices.instance().text();
     }
     //</editor-fold>
 
@@ -570,6 +569,7 @@ public final class KirinoClientCore {
         event.register(new FpsHUD());
         event.register(new CommonStatsHUD());
         event.register(new MeshletGpuTimelineHUD());
+        event.register(new FreeTypeDebugHUD());
     }
 
     //<editor-fold desc="reflection">

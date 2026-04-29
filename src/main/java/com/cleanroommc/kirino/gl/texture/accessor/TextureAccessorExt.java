@@ -160,7 +160,7 @@ public abstract class TextureAccessorExt implements TextureAccessor {
         }
     }
 
-    public final void setParam(FilterMode filterModeMin, FilterMode filterModeMag, WrapMode wrapModeS, WrapMode wrapModeT) {
+    public final void setCommonParams(FilterMode filterModeMin, FilterMode filterModeMag, WrapMode wrapModeS, WrapMode wrapModeT) {
         texParamI(GL11.GL_TEXTURE_MIN_FILTER, filterModeMin.glValue);
         texParamI(GL11.GL_TEXTURE_MAG_FILTER, filterModeMag.glValue);
         texParamI(GL11.GL_TEXTURE_WRAP_S, wrapModeS.glValue);

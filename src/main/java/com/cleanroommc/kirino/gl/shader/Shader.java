@@ -36,6 +36,10 @@ public class Shader extends GLDisposable {
         return valid;
     }
 
+    public boolean isSetup() {
+        return setup;
+    }
+
     public String getErrorLog() {
          return errorLog;
     }

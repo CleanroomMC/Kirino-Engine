@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.ShaderType;
@@ -8,12 +7,16 @@ import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.*;
 
 public class ImmediateShaderAccess {
+
+    private static final Logger LOGGER = LogManager.getLogger("Kirino ImmediateShaderAccess");
 
     @NonNull
     public Shader makeShader(@NonNull ResourceLocation rl) {
@@ -32,9 +35,7 @@ public class ImmediateShaderAccess {
 
         String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
 
-        // todo: integrate ksmlc here
-
-        KirinoCommonCore.LOGGER.debug("[ImmediateShaderAccess] {} Shader \"{}\" assembled:\n{}",
+        LOGGER.debug("{} Shader \"{}\" assembled:\n{}",
                 shaderType.toString(),
                 rawRl,
                 shaderSource);
@@ -50,6 +51,30 @@ public class ImmediateShaderAccess {
         }
 
         return MethodHolder.initShaderProgram(shaders);
+    }
+
+    public void submitToGL(Shader... shaders) {
+        Preconditions.checkNotNull(shaders);
+
+        for (Shader shader : shaders) {
+            Preconditions.checkNotNull(shader);
+
+            shader.compile();
+        }
+
+        boolean invalid = false;
+        StringBuilder builder = new StringBuilder();
+        builder.append("GLSL Shader Compilation Error:\n");
+        for (Shader shader : shaders) {
+            if (!shader.isValid()) {
+                invalid = true;
+                builder.append("[Error from ").append(shader.getShaderName()).append("]: ");
+                builder.append(shader.getErrorLog()).append("\n");
+            }
+        }
+        if (invalid) {
+            throw new RuntimeException(builder.toString());
+        }
     }
 
     private static class MethodHolder {
