@@ -18,9 +18,11 @@ public final class FreeTypeBitmapDecoder {
      *
      * <p>Note: This method removes freetype bitmap memory padding,
      * normalizes grayscale, handles <code>FT_PIXEL_MODE_GRAY</code> and <code>FT_PIXEL_MODE_MONO</code>.</p>
+     *
+     * <p>Note: {@link AlphaBitmap} must be freed later.</p>
      */
     @NonNull
-    public static AlphaBitmap decode(@NonNull FT_Bitmap bitmap) {
+    public static AlphaBitmap decode(@NonNull FT_Bitmap bitmap) throws UnsupportedOperationException {
         Preconditions.checkNotNull(bitmap);
 
         int width = bitmap.width();
@@ -39,7 +41,7 @@ public final class FreeTypeBitmapDecoder {
             for (int y = 0; y < height; y++) {
                 int sourceRow = (pitch > 0) ? y : (height - 1 - y);
 
-                if (numGrays == 256) {
+                if (numGrays == 256 && absPitch >= width) {
                     MemoryUtil.memCopy(
                             MemoryUtil.memAddress(source) + (long) sourceRow * absPitch,
                             MemoryUtil.memAddress(dest) + (long) y * width,

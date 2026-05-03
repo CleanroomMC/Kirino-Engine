@@ -1,11 +1,14 @@
 package com.cleanroommc.kirino.simpletext.freetype;
 
 import org.lwjgl.system.MemoryUtil;
+import org.lwjgl.util.freetype.FT_Bitmap;
 
 import java.nio.ByteBuffer;
 
 /**
  * Format: row-major, width * height, 1-byte-per-pixel
+ *
+ * <p>Note: Do not initialize it by yourself. Call {@link FreeTypeBitmapDecoder#decode(FT_Bitmap)}!</p>
  */
 public record AlphaBitmap(int width, int height, ByteBuffer byteBuffer) implements AutoCloseable {
 

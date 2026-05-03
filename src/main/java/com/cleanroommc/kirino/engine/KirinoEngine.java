@@ -156,8 +156,8 @@ public class KirinoEngine {
 
         MinecraftCamera camera = new MinecraftCamera();
 
-        ForkJoinPool systemFlowPool = ForkJoinPoolUtils.newWorkStealingPool();
-        ForkJoinPool systemPool = ForkJoinPoolUtils.newWorkStealingPool();
+        ForkJoinPool systemFlowPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystemFlow");
+        ForkJoinPool systemPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystem");
 
         ShutdownManager.registerAsync(() -> {
             ForkJoinPoolUtils.shutdownPool(systemFlowPool);

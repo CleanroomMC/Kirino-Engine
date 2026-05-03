@@ -13,6 +13,9 @@ public final class FreeTypeBitmapLoader {
     private FreeTypeBitmapLoader() {
     }
 
+    /**
+     * <p>Note: Do not free the result.</p>
+     */
     @Nullable
     public static FT_Bitmap load(@NonNull FT_Face face, char c, int loadFlags) {
         Preconditions.checkNotNull(face);

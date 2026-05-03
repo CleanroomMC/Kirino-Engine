@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.utils;
 
-import com.cleanroommc.kirino.KirinoClientCore;
 import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.jspecify.annotations.NonNull;
@@ -24,7 +23,33 @@ import java.util.Optional;
  * Whenever possible, cache the results in a {@code static final} field. Another way to cache it is to store them in a {@code record}
  * and store that reference in a {@code static final} field.
  *
- * @see KirinoClientCore.MethodHolder1 An example of inlinable cached handles
+ * <hr>
+ * <p>Example:<p/>
+ * <code>
+ * private static class MethodHolder {<br>
+ * &emsp;static final Delegate DELEGATE;<br>
+ *<br>
+ * &emsp;static {<br>
+ * &emsp;&emsp;DELEGATE = new Delegate(ReflectionUtils.getConstructor(FreeTypeManager.class));<br>
+ *<br>
+ * &emsp;&emsp;Preconditions.checkNotNull(DELEGATE.freeTypeManagerCtor);<br>
+ * &emsp;}<br>
+ *<br>
+ * &emsp;static FreeTypeManager newFreeTypeManager() {<br>
+ * &emsp;&emsp;try {<br>
+ * &emsp;&emsp;&emsp;return (FreeTypeManager) DELEGATE.freeTypeManagerCtor.invokeExact();<br>
+ * &emsp;&emsp;} catch (Throwable e) {<br>
+ * &emsp;&emsp;&emsp;throw new RuntimeException(e);<br>
+ * &emsp;&emsp;}<br>
+ * &emsp;}<br>
+ *<br>
+ * &emsp;record Delegate(MethodHandle freeTypeManagerCtor) {<br>
+ * &emsp;}<br>
+ * }<br>
+ * </code>
+ * <br>
+ * <hr>
+ *
  * @see <a href="https://jornvernee.github.io/methodhandles/2024/01/19/methodhandle-primer.html#method-handle-inlining">For more details about caching/inlining</a>
  */
 public final class ReflectionUtils {

@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino.utils;
 
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 public final class TypeUtils {
@@ -7,33 +9,43 @@ public final class TypeUtils {
     private TypeUtils() {
     }
 
-    public static boolean looseTypeCheck(Class<?> clazz1, Class<?> clazz2) {
-        if (clazz1.equals(clazz2)) {
+    /**
+     * It ignores the difference between primitives and wrapped primitives, like <code>int</code> and <code>Integer</code>.
+     */
+    public static boolean looseTypeCheck(@NonNull Class<?> class1, @NonNull Class<?> class2) {
+        Preconditions.checkNotNull(class1);
+        Preconditions.checkNotNull(class2);
+
+        if (class1.equals(class2)) {
             return true;
-        } else if (isIntOrWrappedInt(clazz1) && isIntOrWrappedInt(clazz2)) {
+        } else if (isIntOrWrappedInt(class1) && isIntOrWrappedInt(class2)) {
             return true;
-        } else if (isLongOrWrappedLong(clazz1) && isLongOrWrappedLong(clazz2)) {
+        } else if (isLongOrWrappedLong(class1) && isLongOrWrappedLong(class2)) {
             return true;
-        } else if (isShortOrWrappedShort(clazz1) && isShortOrWrappedShort(clazz2)) {
+        } else if (isShortOrWrappedShort(class1) && isShortOrWrappedShort(class2)) {
             return true;
-        } else if (isByteOrWrappedByte(clazz1) && isByteOrWrappedByte(clazz2)) {
+        } else if (isByteOrWrappedByte(class1) && isByteOrWrappedByte(class2)) {
             return true;
-        } else if (isDoubleOrWrappedDouble(clazz1) && isDoubleOrWrappedDouble(clazz2)) {
+        } else if (isDoubleOrWrappedDouble(class1) && isDoubleOrWrappedDouble(class2)) {
             return true;
-        } else if (isFloatOrWrappedFloat(clazz1) && isFloatOrWrappedFloat(clazz2)) {
+        } else if (isFloatOrWrappedFloat(class1) && isFloatOrWrappedFloat(class2)) {
             return true;
-        } else if (isCharacterOrWrappedCharacter(clazz1) && isCharacterOrWrappedCharacter(clazz2)) {
+        } else if (isCharacterOrWrappedCharacter(class1) && isCharacterOrWrappedCharacter(class2)) {
             return true;
         } else {
-            return isBooleanOrWrappedBoolean(clazz1) && isBooleanOrWrappedBoolean(clazz2);
+            return isBooleanOrWrappedBoolean(class1) && isBooleanOrWrappedBoolean(class2);
         }
     }
 
-    public static boolean isPrimitiveOrWrappedPrimitive(Class<?> clazz) {
+    public static boolean isPrimitiveOrWrappedPrimitive(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.isPrimitive() || isWrappedPrimitive(clazz);
     }
 
-    public static boolean isWrappedPrimitive(Class<?> clazz) {
+    public static boolean isWrappedPrimitive(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz == Integer.class ||
                 clazz == Long.class ||
                 clazz == Short.class ||
@@ -44,9 +56,14 @@ public final class TypeUtils {
                 clazz == Boolean.class;
     }
 
+    /**
+     * @return It returns <code>null</code> if the input is not a primitive type.
+     */
     @Nullable
-    public static Class<?> toWrappedPrimitive(Class<?> primitiveClass) {
-        return switch (primitiveClass.getName()) {
+    public static Class<?> toWrappedPrimitive(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        return switch (clazz.getName()) {
             case "int" -> Integer.class;
             case "long" -> Long.class;
             case "short" -> Short.class;
@@ -59,64 +76,85 @@ public final class TypeUtils {
         };
     }
 
+    /**
+     * @return It returns <code>null</code> if the input is not a wrapped primitive type.
+     */
     @Nullable
-    public static Class<?> toPrimitive(Class<?> wrappedPrimitiveClass) {
-        if (wrappedPrimitiveClass == Integer.class) {
+    public static Class<?> toPrimitive(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        if (clazz == Integer.class) {
             return int.class;
         }
-        if (wrappedPrimitiveClass == Long.class) {
+        if (clazz == Long.class) {
             return long.class;
         }
-        if (wrappedPrimitiveClass == Short.class) {
+        if (clazz == Short.class) {
             return short.class;
         }
-        if (wrappedPrimitiveClass == Byte.class) {
+        if (clazz == Byte.class) {
             return byte.class;
         }
-        if (wrappedPrimitiveClass == Double.class) {
+        if (clazz == Double.class) {
             return double.class;
         }
-        if (wrappedPrimitiveClass == Float.class) {
+        if (clazz == Float.class) {
             return float.class;
         }
-        if (wrappedPrimitiveClass == Character.class) {
+        if (clazz == Character.class) {
             return char.class;
         }
-        if (wrappedPrimitiveClass == Boolean.class) {
+        if (clazz == Boolean.class) {
             return boolean.class;
         }
         return null;
     }
 
-    public static boolean isIntOrWrappedInt(Class<?> clazz) {
+    public static boolean isIntOrWrappedInt(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("int") || clazz.equals(Integer.class);
     }
 
-    public static boolean isLongOrWrappedLong(Class<?> clazz) {
+    public static boolean isLongOrWrappedLong(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("long") || clazz.equals(Long.class);
     }
 
-    public static boolean isShortOrWrappedShort(Class<?> clazz) {
+    public static boolean isShortOrWrappedShort(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("short") || clazz.equals(Short.class);
     }
 
-    public static boolean isByteOrWrappedByte(Class<?> clazz) {
+    public static boolean isByteOrWrappedByte(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("byte") || clazz.equals(Byte.class);
     }
 
-    public static boolean isDoubleOrWrappedDouble(Class<?> clazz) {
+    public static boolean isDoubleOrWrappedDouble(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("double") || clazz.equals(Double.class);
     }
 
-    public static boolean isFloatOrWrappedFloat(Class<?> clazz) {
+    public static boolean isFloatOrWrappedFloat(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("float") || clazz.equals(Float.class);
     }
 
-    public static boolean isCharacterOrWrappedCharacter(Class<?> clazz) {
+    public static boolean isCharacterOrWrappedCharacter(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("char") || clazz.equals(Character.class);
     }
 
-    public static boolean isBooleanOrWrappedBoolean(Class<?> clazz) {
+    public static boolean isBooleanOrWrappedBoolean(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return clazz.getName().equals("boolean") || clazz.equals(Boolean.class);
     }
 }
