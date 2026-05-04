@@ -117,7 +117,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
                     drawScale);
 
             if (sdfBitmap == null) {
-                SDFGenerator generator = new SDFGenerator(ImmediateClientServices.instance().text().getFreeTypeFace(), 8, 8);
+                SDFGenerator generator = new SDFGenerator(ImmediateClientServices.instance().text().getFreeTypeFace(), 9, 9);
                 if (generator.tryLoadBitmap(inputChar)) {
                     sdfBitmap = generator.compute();
                 }
