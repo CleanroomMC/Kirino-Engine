@@ -6,7 +6,7 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
-import com.cleanroommc.kirino.simpletext.TextContext;
+import com.cleanroommc.kirino.simpletext.SimpleTextContext;
 import com.cleanroommc.kirino.simpletext.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -27,7 +27,7 @@ public final class ImmediateClientServices {
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
 
-        textContext = new TextContext(
+        textContext = new SimpleTextContext(
                 freeTypeManager,
                 new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 
@@ -40,7 +40,7 @@ public final class ImmediateClientServices {
 
     private final ImmediateShaderAccess shaderAccess;
     private final FreeTypeManager freeTypeManager;
-    private final TextContext textContext;
+    private final SimpleTextContext textContext;
     private final VAO dummyVao;
 
     public ImmediateShaderAccess shader() {
@@ -51,7 +51,7 @@ public final class ImmediateClientServices {
         return freeTypeManager;
     }
 
-    public TextContext text() {
+    public SimpleTextContext text() {
         return textContext;
     }
 

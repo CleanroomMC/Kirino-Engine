@@ -81,7 +81,7 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
             int width,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         if (dsa) {
             GL45.glTextureSubImage1D(textureID(), level, xOffset, width, format, type, data);

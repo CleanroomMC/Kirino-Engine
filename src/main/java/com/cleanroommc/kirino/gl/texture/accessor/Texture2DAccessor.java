@@ -82,7 +82,7 @@ public class Texture2DAccessor extends TextureAccessorExt implements TextureAcce
             int height,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         if (dsa) {
             GL45.glTextureSubImage2D(textureID(), level, xOffset, yOffset, width, height, format, type, data);

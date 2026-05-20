@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.simpletext.sdf;
 
+import com.cleanroommc.kirino.simpletext.SimpleTextBitmap;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -9,7 +10,7 @@ import java.nio.ByteBuffer;
  *
  * <p>Note: Do not initialize it by yourself. Call {@link SDFGenerator#compute()}!</p>
  */
-public record SDFBitmap(int width, int height, ByteBuffer byteBuffer) implements AutoCloseable {
+public record SDFBitmap(int width, int height, ByteBuffer byteBuffer) implements SimpleTextBitmap {
 
     @Override
     public void close() {

@@ -5,10 +5,12 @@ import com.cleanroommc.kirino.simpletext.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.simpletext.glyph.GlyphMetricsStore;
 import net.minecraft.util.ResourceLocation;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
-public class TextContext {
+public class SimpleTextContext {
 
     private final ResourceLocation fontRl;
     private final FT_Face face;
@@ -27,19 +29,35 @@ public class TextContext {
     }
 
     private final GlyphMetricsStore metricsStore = new GlyphMetricsStore();
-    private final TextConsumer textConsumer;
-    private final TextProducer textProducer;
+    private final SimpleTextConsumer textConsumer;
+    private final SimpleTextProducer textProducer;
 
-    public TextContext(FreeTypeManager freeTypeManager, ResourceLocation fontRl) {
+    public SimpleTextContext(FreeTypeManager freeTypeManager, ResourceLocation fontRl) {
         this.fontRl = fontRl;
         face = freeTypeManager.load(fontRl, 0, 64);
         hasKerning = FreeType.FT_HAS_KERNING(face);
 
         textConsumer = new DebugTextRenderer(this);
-        textProducer = new TextProducer(this);
+        textProducer = new SimpleTextProducer(this);
     }
 
+    /**
+     * It automatically loads a new metrics if the requested one wasn't loaded.
+     *
+     * <p>Note: <b>Not</b> guaranteed to be thread safe.</p>
+     */
+    @NonNull
     public GlyphMetrics getMetrics(int glyphIndex) {
         return metricsStore.loadMetricsIfAbsent(face, fontRl, glyphIndex);
+    }
+
+    /**
+     * It straight up fetches the metrics. Will return <code>null</code> if the requested one wasn't loaded.
+     *
+     * <p>Note: Guaranteed to be thread safe.</p>
+     */
+    @Nullable
+    public GlyphMetrics getMetricsDirectly(int glyphIndex) {
+        return metricsStore.get(glyphIndex);
     }
 }

@@ -177,7 +177,7 @@ public interface TextureAccessor {
             int width,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"texSubImage1D\" not supported by this texture type " + type().name() + ".");
     }
@@ -190,7 +190,7 @@ public interface TextureAccessor {
             int height,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"texSubImage2D\" not supported by this texture type " + type().name() + ".");
     }
@@ -205,7 +205,7 @@ public interface TextureAccessor {
             int depthOrLayer,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"texSubImage3D\" not supported by this texture type " + type().name() + ".");
     }

@@ -1,14 +1,14 @@
 package com.cleanroommc.kirino.simpletext.backend;
 
-import com.cleanroommc.kirino.simpletext.TextConsumer;
-import com.cleanroommc.kirino.simpletext.TextContext;
+import com.cleanroommc.kirino.simpletext.SimpleTextConsumer;
+import com.cleanroommc.kirino.simpletext.SimpleTextContext;
 import com.cleanroommc.kirino.simpletext.command.TextCommandList;
 
-public class DebugTextRenderer implements TextConsumer {
+public class DebugTextRenderer implements SimpleTextConsumer {
 
-    private final TextContext context;
+    private final SimpleTextContext context;
 
-    public DebugTextRenderer(TextContext context) {
+    public DebugTextRenderer(SimpleTextContext context) {
         this.context = context;
     }
 

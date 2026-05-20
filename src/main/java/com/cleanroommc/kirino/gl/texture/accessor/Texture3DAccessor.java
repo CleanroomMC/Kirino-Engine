@@ -86,7 +86,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             int depthOrLayer,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         if (dsa) {
             GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayer, format, type, data);

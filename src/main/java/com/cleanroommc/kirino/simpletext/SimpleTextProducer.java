@@ -10,14 +10,14 @@ import org.lwjgl.system.MemoryStack;
 import org.lwjgl.util.freetype.FT_Vector;
 import org.lwjgl.util.freetype.FreeType;
 
-public class TextProducer {
+public class SimpleTextProducer {
 
     /**
      * <p>Unit: ?</p>
      */
     private final static int MISSING_GLYPH_ADV_X = 12;
 
-    private final TextContext context;
+    private final SimpleTextContext context;
 
     private final TextCommandList cmdList = new TextCommandList(1024);
 
@@ -26,7 +26,7 @@ public class TextProducer {
     private float penX;
     private float penY;
 
-    public TextProducer(TextContext context) {
+    public SimpleTextProducer(SimpleTextContext context) {
         this.context = context;
     }
 

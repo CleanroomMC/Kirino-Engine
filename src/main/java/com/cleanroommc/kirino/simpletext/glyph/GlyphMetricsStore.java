@@ -8,8 +8,8 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * It helps to load metrics and stores metrics.
@@ -19,7 +19,7 @@ import java.util.Map;
 public class GlyphMetricsStore {
 
     // key: glyph index
-    private final Map<Integer, GlyphMetrics> metricsMap = new HashMap<>();
+    private final ConcurrentMap<Integer, GlyphMetrics> metricsMap = new ConcurrentHashMap<>();
 
     public int size() {
         return metricsMap.size();
@@ -29,6 +29,9 @@ public class GlyphMetricsStore {
         return metricsMap.containsKey(glyphIndex);
     }
 
+    /**
+     * <p>Note: Guaranteed to be thread safe.</p>
+     */
     @Nullable
     public GlyphMetrics get(int glyphIndex) {
         return metricsMap.get(glyphIndex);
@@ -54,6 +57,8 @@ public class GlyphMetricsStore {
     }
 
     /**
+     * <p>Note: <b>Not</b> guaranteed to be thread safe.</p>
+     *
      * @param glyphIndex Glyph index must be positive and valid
      */
     @NonNull
