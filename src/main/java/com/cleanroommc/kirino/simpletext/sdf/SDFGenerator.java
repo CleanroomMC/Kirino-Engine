@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.simpletext.sdf;
 
-import com.cleanroommc.kirino.simpletext.freetype.AlphaBitmap;
+import com.cleanroommc.kirino.simpletext.ST_Bitmap;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.system.MemoryUtil;
@@ -29,7 +29,7 @@ public class SDFGenerator {
      * <p>Note: This method will not free the input <code>bitmap</code>.</p>
      */
     @NonNull
-    public SDFBitmap compute(@NonNull AlphaBitmap bitmap) {
+    public SDFBitmap compute(@NonNull ST_Bitmap bitmap) {
         Preconditions.checkNotNull(bitmap, "Bitmap must be non-null.");
 
         int width = bitmap.width();
@@ -79,16 +79,18 @@ public class SDFGenerator {
         return new SDFBitmap(outWidth, outHeight, out);
     }
 
-    private static final float BIG_FLOAT = 1e20f;
+    private static final float BIG_FLOAT = 1e6f;
 
     private static float[] edt(boolean[] inside, int width, int height, boolean invert) {
         float[] f = new float[width * height];
 
         for (int i = 0; i < f.length; i++) {
             boolean v = inside[i];
-            if (invert) v = !v;
+            if (invert) {
+                v = !v;
+            }
 
-            f[i] = v ? 0f : BIG_FLOAT;
+            f[i] = v ? BIG_FLOAT : 0f;
         }
 
         float[] tmp = new float[width * height];

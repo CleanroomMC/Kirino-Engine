@@ -16,7 +16,7 @@ void main()
     float edge = 0.5;
     float softness = 1.1;
 
-    float alpha = 1.0 - smoothstep(edge - w * softness, edge + w * softness, dist);
+    float alpha = smoothstep(edge - w * softness, edge + w * softness, dist);
 
     // outline
 //    float outline = 1.0 - smoothstep(edge - w * softness, edge + w * softness, dist);

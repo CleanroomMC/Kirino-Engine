@@ -19,10 +19,10 @@ public final class FreeTypeBitmapDecoder {
      * <p>Note: This method removes freetype bitmap memory padding,
      * normalizes grayscale, handles <code>FT_PIXEL_MODE_GRAY</code> and <code>FT_PIXEL_MODE_MONO</code>.</p>
      *
-     * <p>Note: {@link AlphaBitmap} must be freed later.</p>
+     * <p>Note: {@link FreeTypeAlphaBitmap} must be freed later.</p>
      */
     @NonNull
-    public static AlphaBitmap decode(@NonNull FT_Bitmap bitmap) throws UnsupportedOperationException {
+    public static FreeTypeAlphaBitmap decode(@NonNull FT_Bitmap bitmap) throws UnsupportedOperationException {
         Preconditions.checkNotNull(bitmap);
 
         int width = bitmap.width();
@@ -57,7 +57,7 @@ public final class FreeTypeBitmapDecoder {
                 }
             }
 
-            return new AlphaBitmap(width, height, dest);
+            return new FreeTypeAlphaBitmap(width, height, dest);
         }
 
         if (pixelMode == FreeType.FT_PIXEL_MODE_MONO) {
@@ -77,7 +77,7 @@ public final class FreeTypeBitmapDecoder {
                 }
             }
 
-            return new AlphaBitmap(width, height, dest);
+            return new FreeTypeAlphaBitmap(width, height, dest);
         }
 
         throw new UnsupportedOperationException("Unsupported pixel mode: " + pixelMode);

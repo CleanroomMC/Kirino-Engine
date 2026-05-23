@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.simpletext.atlas;
 
-import com.cleanroommc.kirino.simpletext.SimpleTextBitmap;
+import com.cleanroommc.kirino.simpletext.ST_Bitmap;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public abstract class AbstractPagedAtlas<TPage, TBitmap extends SimpleTextBitmap> {
+public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
 
     private record SlotRegion(int x, int y, int width, int height) {
     }

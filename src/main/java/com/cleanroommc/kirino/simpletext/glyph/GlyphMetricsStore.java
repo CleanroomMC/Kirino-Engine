@@ -1,26 +1,29 @@
 package com.cleanroommc.kirino.simpletext.glyph;
 
-import com.cleanroommc.kirino.simpletext.SimpleTextConstants;
-import com.cleanroommc.kirino.simpletext.freetype.FreeTypeBitmapLoader;
+import com.cleanroommc.kirino.simpletext.ST_Config;
+import com.cleanroommc.kirino.simpletext.ST_FontObject;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.util.freetype.FT_Face;
-import org.lwjgl.util.freetype.FreeType;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
  * It helps to load metrics and stores metrics.
- * <p>Note: {@link GlyphMetricsStore} must be owned by a {@link org.lwjgl.util.freetype.FT_Face} owner,
+ * <p>Note: {@link GlyphMetricsStore} must be owned by a {@link ST_FontObject} owner,
  * so <code>glyphIndex</code> therefore makes sense with a given font face.</p>
  */
 public class GlyphMetricsStore {
 
     // key: glyph index
     private final ConcurrentMap<Integer, GlyphMetrics> metricsMap = new ConcurrentHashMap<>();
+    private final ST_Config config;
+
+    public GlyphMetricsStore(ST_Config config) {
+        this.config = config;
+    }
 
     public int size() {
         return metricsMap.size();
@@ -40,23 +43,19 @@ public class GlyphMetricsStore {
 
     @SuppressWarnings("resource")
     @NonNull
-    private GlyphMetrics loadMetrics(FT_Face face, ResourceLocation fontRl, int glyphIndex) {
-        GlyphMetrics metrics = new GlyphMetrics();
-        FreeTypeBitmapLoader.loadGlyph(
-                face,
-                glyphIndex,
-                SimpleTextConstants.LOAD_FLAGS,
-                metrics);
+    private GlyphMetrics loadMetrics(ST_FontObject font, ResourceLocation fontRl, int glyphIndex) {
+        GlyphMetrics outMetrics = new GlyphMetrics();
+        font.loadGlyph(glyphIndex, config.payload(), outMetrics);
 
-        if (metrics.isEmpty()) {
+        if (outMetrics.isEmpty()) {
             throw new RuntimeException(String.format(
-                    "Load glyph metrics failed (fontRl=%s, glyphIndex=%d).",
-                    fontRl.toString(), glyphIndex));
+                    "Load glyph metrics failed (fontRl=%s, glyphIndex=%d, backend=%s, impl=%s).",
+                    fontRl.toString(), glyphIndex, font.type(), font.getClass().getName()));
         }
 
-        metrics.setSdf(SimpleTextConstants.SDF_PADDING);
+        outMetrics.setSdf(config.sdfPadding());
 
-        return metrics;
+        return outMetrics;
     }
 
     /**
@@ -65,10 +64,10 @@ public class GlyphMetricsStore {
      * @param glyphIndex Glyph index must be positive and valid
      */
     @NonNull
-    public GlyphMetrics loadMetricsIfAbsent(FT_Face face, ResourceLocation fontRl, int glyphIndex) {
+    public GlyphMetrics loadMetricsIfAbsent(ST_FontObject font, ResourceLocation fontRl, int glyphIndex) {
         Preconditions.checkArgument(glyphIndex > 0,
                 "Argument \"glyphIndex\"=%s must be positive.", glyphIndex);
 
-        return metricsMap.computeIfAbsent(glyphIndex, k -> loadMetrics(face, fontRl, k));
+        return metricsMap.computeIfAbsent(glyphIndex, k -> loadMetrics(font, fontRl, k));
     }
 }

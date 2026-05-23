@@ -34,10 +34,6 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
         ICS.instance().text()
                 .begin()
                 .append("ABCabcijk", 0, 0)
-                .endDraw();
-
-        ICS.instance().text()
-                .begin()
                 .append("Hello World JetBrains Mono NL Regular", 0, 12)
                 .endDraw();
     }

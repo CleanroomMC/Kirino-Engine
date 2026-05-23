@@ -11,7 +11,7 @@ import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
-import com.cleanroommc.kirino.simpletext.freetype.AlphaBitmap;
+import com.cleanroommc.kirino.simpletext.freetype.FreeTypeAlphaBitmap;
 import com.cleanroommc.kirino.simpletext.freetype.FreeTypeBitmapDecoder;
 import com.cleanroommc.kirino.simpletext.freetype.FreeTypeBitmapLoader;
 import com.cleanroommc.kirino.simpletext.sdf.SDFBitmap;
@@ -40,7 +40,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
     private boolean inputProtect = false;
 
     private char inputChar = 'A';
-    private AlphaBitmap bitmap = null;
+    private FreeTypeAlphaBitmap bitmap = null;
     private SDFBitmap sdfBitmap = null;
 
     private float charSize = 20f;
@@ -231,7 +231,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
         hud.drawRectOutline(x, y, width, height, 0.5f, Color.RED.getRGB());
     }
 
-    private static void drawChar(HUDContext hud, AlphaBitmap bitmap, float x, float y, float charSize) {
+    private static void drawChar(HUDContext hud, FreeTypeAlphaBitmap bitmap, float x, float y, float charSize) {
         float ratio = charSize / bitmap.height();
 
         drawBitmap(
@@ -289,10 +289,10 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
                 float x1 = x0 + scale;
                 float y1 = y0 + scale;
 
-                buffer.pos(x0, y1, 0).color(r, g, b, 1 - a).endVertex();
-                buffer.pos(x1, y1, 0).color(r, g, b, 1 - a).endVertex();
-                buffer.pos(x1, y0, 0).color(r, g, b, 1 - a).endVertex();
-                buffer.pos(x0, y0, 0).color(r, g, b, 1 - a).endVertex();
+                buffer.pos(x0, y1, 0).color(r, g, b, a).endVertex();
+                buffer.pos(x1, y1, 0).color(r, g, b, a).endVertex();
+                buffer.pos(x1, y0, 0).color(r, g, b, a).endVertex();
+                buffer.pos(x0, y0, 0).color(r, g, b, a).endVertex();
             }
         }
 
@@ -301,7 +301,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
         hud.drawRectOutline(x, y, width * scale, height * scale, 0.5f, Color.RED.getRGB());
     }
 
-    private static void drawBitmap(HUDContext hud, Tessellator tessellator, AlphaBitmap bitmap, float x, float y, float scale) {
+    private static void drawBitmap(HUDContext hud, Tessellator tessellator, FreeTypeAlphaBitmap bitmap, float x, float y, float scale) {
         int width = bitmap.width();
         int height = bitmap.height();
         ByteBuffer buf = bitmap.byteBuffer();
@@ -352,7 +352,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
     }
 
     @Nullable
-    private static AlphaBitmap genBitmap(char c) {
+    private static FreeTypeAlphaBitmap genBitmap(char c) {
         FT_Bitmap b = FreeTypeBitmapLoader.load(
                 face(), c,
                 FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING, null);

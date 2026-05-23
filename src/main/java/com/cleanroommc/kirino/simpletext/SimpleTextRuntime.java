@@ -3,43 +3,55 @@ package com.cleanroommc.kirino.simpletext;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.simpletext.atlas.Tex2DGlyphAtlas;
 import com.cleanroommc.kirino.simpletext.backend.DebugTextRenderer;
+import com.cleanroommc.kirino.simpletext.backend.FreeTypeTextProducer;
 import com.cleanroommc.kirino.simpletext.command.TextCommandList;
-import com.cleanroommc.kirino.simpletext.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.simpletext.sdf.SDFGenerator;
+import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.util.freetype.FT_Face;
-import org.lwjgl.util.freetype.FreeType;
+
+import java.util.function.BiFunction;
 
 public class SimpleTextRuntime {
 
     private final ResourceLocation fontRl;
-    private final FT_Face face;
-    private final boolean hasKerning;
+    private final ST_FontObject font;
+    private final ST_Config config;
 
     public ResourceLocation getFontRl() {
         return fontRl;
     }
 
-    public FT_Face getFontFace() {
-        return face;
+    public ST_FontObject getFont() {
+        return font;
     }
 
-    public boolean hasFontKerning() {
-        return hasKerning;
+    public ST_Config getConfig() {
+        return config;
     }
 
-    private final GlyphMetricsStore metricsStore = new GlyphMetricsStore();
+    private final GlyphMetricsStore metricsStore;
     private final SimpleTextConsumer textConsumer;
     private final SimpleTextProducer textProducer;
 
-    public SimpleTextRuntime(FreeTypeManager freeTypeManager, ImmediateShaderAccess shaderAccess, ResourceLocation fontRl) {
+    public SimpleTextRuntime(
+            BiFunction<ResourceLocation, ST_Config, ST_FontObject> fontFactory,
+            ImmediateShaderAccess shaderAccess,
+            ST_Config config,
+            ResourceLocation fontRl) {
+
         this.fontRl = fontRl;
-        face = freeTypeManager.load(fontRl, 0, SimpleTextConstants.PIXEL_SIZE);
-        hasKerning = FreeType.FT_HAS_KERNING(face);
+        this.config = config;
+        font = fontFactory.apply(fontRl, config);
+
+        Preconditions.checkState(font.type() == config.target(),
+                "Backend must match. Font backend type=%s but config backend target=%s.",
+                font.type().toString(), config.target().toString());
+
+        metricsStore = new GlyphMetricsStore(config);
 
 //        int[] outParallelism = new int[1];
 //        ForkJoinPool workerPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoSimpleTextSDF", outParallelism);
@@ -49,10 +61,10 @@ public class SimpleTextRuntime {
 
         textConsumer = new DebugTextRenderer(
                 this,
-                new SDFGenerator(SimpleTextConstants.SDF_PADDING, SimpleTextConstants.SDF_SPREAD),
+                new SDFGenerator(config.sdfPadding(), config.sdfSpread()),
                 new Tex2DGlyphAtlas(1024, 1024),
                 shaderAccess);
-        textProducer = new SimpleTextProducer(this, SimpleTextConstants.PIXEL_SIZE);
+        textProducer = new FreeTypeTextProducer(this, config.pixelSize());
     }
 
     /**
@@ -62,7 +74,7 @@ public class SimpleTextRuntime {
      */
     @NonNull
     public GlyphMetrics getGlyphMetrics(int glyphIndex) {
-        return metricsStore.loadMetricsIfAbsent(face, fontRl, glyphIndex);
+        return metricsStore.loadMetricsIfAbsent(font, fontRl, glyphIndex);
     }
 
     /**

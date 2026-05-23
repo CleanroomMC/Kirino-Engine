@@ -9,15 +9,12 @@ import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.*;
-import com.cleanroommc.kirino.simpletext.SimpleTextConstants;
+import com.cleanroommc.kirino.simpletext.ST_Bitmap;
 import com.cleanroommc.kirino.simpletext.SimpleTextConsumer;
 import com.cleanroommc.kirino.simpletext.SimpleTextRuntime;
 import com.cleanroommc.kirino.simpletext.atlas.AbstractPagedAtlas;
 import com.cleanroommc.kirino.simpletext.atlas.Tex2DGlyphAtlas;
 import com.cleanroommc.kirino.simpletext.command.TextCommandList;
-import com.cleanroommc.kirino.simpletext.freetype.AlphaBitmap;
-import com.cleanroommc.kirino.simpletext.freetype.FreeTypeBitmapDecoder;
-import com.cleanroommc.kirino.simpletext.freetype.FreeTypeBitmapLoader;
 import com.cleanroommc.kirino.simpletext.sdf.SDFBitmap;
 import com.cleanroommc.kirino.simpletext.sdf.SDFGenerator;
 import com.google.common.base.Preconditions;
@@ -29,7 +26,6 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL31;
 import org.lwjgl.system.MemoryUtil;
-import org.lwjgl.util.freetype.FT_Bitmap;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -78,7 +74,6 @@ public class DebugTextRenderer implements SimpleTextConsumer {
 
         Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font.vert"));
         Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font.frag"));
-//        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/test.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
     }
@@ -96,21 +91,15 @@ public class DebugTextRenderer implements SimpleTextConsumer {
                 continue;
             }
 
-            FT_Bitmap bitmap = FreeTypeBitmapLoader.loadGlyph(
-                    context.getFontFace(),
-                    glyph,
-                    SimpleTextConstants.LOAD_FLAGS,
-                    null);
+            ST_Bitmap bitmap = context.getFont().loadGlyph(glyph, context.getConfig().payload(), null);
 
-            Preconditions.checkNotNull(bitmap);
-
-            try (AlphaBitmap alphaBitmap = FreeTypeBitmapDecoder.decode(bitmap)) {
-                try (SDFBitmap sdfBitmap = generator.compute(alphaBitmap)) {
+            if (bitmap == null || bitmap.byteBuffer() == null) {
+                failedGlyphHistory.add(glyph);
+            } else {
+                try (SDFBitmap sdfBitmap = generator.compute(bitmap)) {
                     var handle = glyphAtlas.allocate(sdfBitmap);
                     glyphSlotCache.put(glyph, handle);
                 }
-            } catch (Throwable t) {
-                failedGlyphHistory.add(glyph);
             }
         }
     }

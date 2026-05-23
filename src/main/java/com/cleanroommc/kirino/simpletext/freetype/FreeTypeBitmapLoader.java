@@ -22,6 +22,7 @@ public final class FreeTypeBitmapLoader {
      * <p>Note: A <code>null</code> return value marks the failure of this call. You can
      * expect unmodified <code>outMetrics</code> too if it was non-null.</p>
      * <p>Note: returned {@link FT_Bitmap} is valid until the next load call. No manual close!</p>
+     * <p>Note: It doesn't put SDF parameters to <code>outMetrics</code>.</p>
      *
      * @param outMetrics It will receive glyph metrics if and only if it's non-null
      */
@@ -47,6 +48,7 @@ public final class FreeTypeBitmapLoader {
      * <p>Note: A <code>null</code> return value marks the failure of this call. You can
      * expect unmodified <code>outMetrics</code> too if it was non-null.</p>
      * <p>Note: returned {@link FT_Bitmap} is valid until the next load call. No manual close!</p>
+     * <p>Note: It doesn't put SDF parameters to <code>outMetrics</code>.</p>
      *
      * @param outMetrics It will receive glyph metrics if and only if it's non-null
      */
@@ -77,6 +79,7 @@ public final class FreeTypeBitmapLoader {
      * <p>Note: A <code>null</code> return value marks the failure of this call. You can
      * expect unmodified <code>outMetrics</code> too if it was non-null.</p>
      * <p>Note: returned {@link FT_Bitmap} is valid until the next load call. No manual close!</p>
+     * <p>Note: It doesn't put SDF parameters to <code>outMetrics</code>.</p>
      *
      * @param outMetrics It will receive glyph metrics if and only if it's non-null
      */

@@ -6,11 +6,16 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
+import com.cleanroommc.kirino.simpletext.ST_Config;
+import com.cleanroommc.kirino.simpletext.ST_FontBackendType;
 import com.cleanroommc.kirino.simpletext.SimpleTextRuntime;
+import com.cleanroommc.kirino.simpletext.backend.FreeTypeFontObject;
 import com.cleanroommc.kirino.simpletext.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.util.freetype.FT_Face;
+import org.lwjgl.util.freetype.FreeType;
 
 import java.lang.invoke.MethodHandle;
 
@@ -27,9 +32,19 @@ public final class ImmediateClientServices {
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
 
+        ST_Config config = new ST_Config(
+                ST_FontBackendType.FREE_TYPE,
+                64,
+                9,
+                9,
+                FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
         textRuntime = new SimpleTextRuntime(
-                freeTypeManager,
+                (rl, cfg) -> {
+                    FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                    return new FreeTypeFontObject(face);
+                },
                 shaderAccess,
+                config,
                 new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 
         AttributeLayout dummyLayout = new AttributeLayout();

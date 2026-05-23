@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.simpletext.freetype;
 
-import com.cleanroommc.kirino.simpletext.SimpleTextBitmap;
+import com.cleanroommc.kirino.simpletext.ST_Bitmap;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.freetype.FT_Bitmap;
 
@@ -11,7 +11,7 @@ import java.nio.ByteBuffer;
  *
  * <p>Note: Do not initialize it by yourself. Call {@link FreeTypeBitmapDecoder#decode(FT_Bitmap)}!</p>
  */
-public record AlphaBitmap(int width, int height, ByteBuffer byteBuffer) implements SimpleTextBitmap {
+public record FreeTypeAlphaBitmap(int width, int height, ByteBuffer byteBuffer) implements ST_Bitmap {
 
     @Override
     public void close() {
