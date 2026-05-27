@@ -14,7 +14,7 @@ import com.cleanroommc.kirino.simpletext.backend.DebugTextRenderer;
 import com.cleanroommc.kirino.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.simpletext.backend.FreeTypeTextProducer;
 import com.cleanroommc.kirino.simpletext.backend.freetype.FreeTypeManager;
-import com.cleanroommc.kirino.simpletext.sdf.SDFGenerator;
+import com.cleanroommc.kirino.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
@@ -38,9 +38,9 @@ public final class ImmediateClientServices {
 
         ST_Config config = new ST_Config(
                 ST_FontBackendType.FREE_TYPE,
-                64,
-                9,
-                9,
+                48,
+                16,
+                12,
                 FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
         textRuntime = new SimpleTextRuntime(
                 (rl, cfg) -> {
@@ -50,7 +50,7 @@ public final class ImmediateClientServices {
                 (context) -> {
                     return new DebugTextRenderer(
                             context,
-                            new SDFGenerator(context.getConfig().sdfPadding(), context.getConfig().sdfSpread()),
+                            new SDFGeneratorBruteForceImpl(context.getConfig().sdfPadding(), context.getConfig().sdfSpread()),
                             new Tex2DGlyphAtlas(1024, 1024),
                             context.getShaderAccess());
                 },

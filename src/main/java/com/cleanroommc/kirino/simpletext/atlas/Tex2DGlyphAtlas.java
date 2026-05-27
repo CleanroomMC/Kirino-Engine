@@ -22,6 +22,7 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
         Preconditions.checkNotNull(page);
 
         page.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
+        page.clearTexImage(0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, null);
         page.setCommonParams(FilterMode.LINEAR, FilterMode.LINEAR, WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE);
     }
 

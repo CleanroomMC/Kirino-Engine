@@ -17,6 +17,7 @@ import com.cleanroommc.kirino.simpletext.atlas.Tex2DGlyphAtlas;
 import com.cleanroommc.kirino.simpletext.command.TextCommandList;
 import com.cleanroommc.kirino.simpletext.sdf.SDFBitmap;
 import com.cleanroommc.kirino.simpletext.sdf.SDFGenerator;
+import com.cleanroommc.kirino.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
@@ -137,10 +138,10 @@ public class DebugTextRenderer implements SimpleTextConsumer {
             Preconditions.checkNotNull(handle);
 
             buffer
-                    .putFloat(handle.u0(glyphAtlas.getPageWidth()))
-                    .putFloat(handle.v0(glyphAtlas.getPageHeight()))
-                    .putFloat(handle.u1(glyphAtlas.getPageWidth()))
-                    .putFloat(handle.v1(glyphAtlas.getPageHeight()))
+                    .putFloat(handle.u0(glyphAtlas.getPageWidth(), 0))
+                    .putFloat(handle.v0(glyphAtlas.getPageHeight(), 0))
+                    .putFloat(handle.u1(glyphAtlas.getPageWidth(), 0))
+                    .putFloat(handle.v1(glyphAtlas.getPageHeight(), 0))
                     .putFloat(commandList.x(i))
                     .putFloat(commandList.y(i))
                     .putFloat(commandList.width(i))

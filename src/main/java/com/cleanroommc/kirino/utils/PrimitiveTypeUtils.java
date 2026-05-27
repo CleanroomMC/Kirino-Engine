@@ -4,9 +4,9 @@ import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public final class TypeUtils {
+public final class PrimitiveTypeUtils {
 
-    private TypeUtils() {
+    private PrimitiveTypeUtils() {
     }
 
     /**

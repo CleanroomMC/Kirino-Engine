@@ -21,17 +21,22 @@ vec4 unpackARGB(uint c)
 
 void main()
 {
-    ivec2 texSize = textureSize(atlas, 0);
-    float dist = texture(atlas, UV).r;
+    vec2 texel = vec2(1.0, 1.0) / textureSize(atlas, 0);
+    float d0 = texture(atlas, UV).r;
+    float d1 = texture(atlas, UV + vec2(1, 0) * texel).r;
+    float d2 = texture(atlas, UV - vec2(1, 0) * texel).r;
+    float d3 = texture(atlas, UV + vec2(0, 1) * texel).r;
+    float d4 = texture(atlas, UV - vec2(0, 1) * texel).r;
+
+    float dist = (d0 * 4 + d1 + d2 + d3 + d4) / 8.0;
+
     float w = fwidth(dist);
     w = max(w, 0.001);
 
     float edge = 0.5;
-    float softness = 1.1;
+    float softness = 1.0;
 
     float alpha = smoothstep(edge - w * softness, edge + w * softness, dist);
-
-    if (alpha <= 0.01) discard;
 
     vec4 color = unpackARGB(Color);
     FragColor = vec4(color.rgb, color.a * alpha);

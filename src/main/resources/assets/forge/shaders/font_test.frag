@@ -18,12 +18,10 @@ void main()
 
     float alpha = smoothstep(edge - w * softness, edge + w * softness, dist);
 
-    // outline
+//    // outline
 //    float outline = 1.0 - smoothstep(edge - w * softness, edge + w * softness, dist);
 //    float border = 1.0 - smoothstep(edge + 0.05 - w * softness, edge + 0.05 + w * softness, dist);
 //    float alpha = border - outline;
-
-//    alpha = pow(alpha, 1.0 / 2.2);
 
     FragColor = vec4(1.0, 1.0, 1.0, alpha);
 }

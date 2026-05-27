@@ -15,7 +15,7 @@ import com.cleanroommc.kirino.simpletext.backend.freetype.FreeTypeAlphaBitmap;
 import com.cleanroommc.kirino.simpletext.backend.freetype.FreeTypeBitmapDecoder;
 import com.cleanroommc.kirino.simpletext.backend.freetype.FreeTypeBitmapLoader;
 import com.cleanroommc.kirino.simpletext.sdf.SDFBitmap;
-import com.cleanroommc.kirino.simpletext.sdf.SDFGenerator;
+import com.cleanroommc.kirino.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -118,7 +118,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
                     drawScale);
 
             if (sdfBitmap == null) {
-                SDFGenerator generator = new SDFGenerator(9, 9);
+                SDFGeneratorBruteForceImpl generator = new SDFGeneratorBruteForceImpl(16, 16);
                 sdfBitmap = generator.compute(bitmap);
             }
 
@@ -177,7 +177,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
             freeTypeFace = ImmediateClientServices.instance().freetype().load(
                     new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"),
                     0,
-                    64);
+                    48);
         }
         return freeTypeFace;
     }

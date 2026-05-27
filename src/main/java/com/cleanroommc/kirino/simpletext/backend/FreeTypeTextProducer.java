@@ -28,7 +28,7 @@ public class FreeTypeTextProducer implements SimpleTextProducer {
     /**
      * <p>Unit: Minecraft scaled resolution</p>
      */
-    private final static int GLYPH_SIZE = 10;
+    private final static int GLYPH_SIZE = 7;
 
     /**
      * <p>Unit: Minecraft scaled resolution</p>

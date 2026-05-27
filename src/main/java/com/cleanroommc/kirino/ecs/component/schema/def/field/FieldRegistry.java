@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
-import com.cleanroommc.kirino.utils.TypeUtils;
+import com.cleanroommc.kirino.utils.PrimitiveTypeUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -114,10 +114,10 @@ public class FieldRegistry {
         Preconditions.checkNotNull(fieldInstance);
 
         Class<?> fieldClass = fieldInstance.getClass();
-        if (TypeUtils.isWrappedPrimitive(fieldClass)) {
+        if (PrimitiveTypeUtils.isWrappedPrimitive(fieldClass)) {
             // force primitive types cuz we use primitive types by default
             // see CleanECSRuntime's constructor
-            fieldClass = TypeUtils.toPrimitive(fieldInstance.getClass());
+            fieldClass = PrimitiveTypeUtils.toPrimitive(fieldInstance.getClass());
         }
 
         Preconditions.checkArgument(fieldTypeExists(fieldClass),
