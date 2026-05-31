@@ -132,7 +132,7 @@ public class ShaderRegistry {
         return newShaderProgram(Arrays.stream(shaderRLs).map(ResourceLocation::toString).toList().toArray(new String[0]));
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final ShaderDelegate DELEGATE;
 
         static {

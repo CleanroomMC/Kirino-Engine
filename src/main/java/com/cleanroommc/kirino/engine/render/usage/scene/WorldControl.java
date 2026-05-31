@@ -150,7 +150,7 @@ public class WorldControl {
         meshletFsm.reset();
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

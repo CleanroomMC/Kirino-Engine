@@ -1,17 +1,6 @@
-For `epoch-1` alphas, read [Get Started](get_started_epoch-1.a1.md).
 
-For `epoch-1` alpha usages, see:
-- https://github.com/tttsaurus/ke-example-mod
-
-In order to build a mental model, read:
-- [Assumptions](assumptions.md)
-- [Code Navigation](code_navigation.md)
-- [Engine Entry Point](entry_point.md)
-- [Execution Model](execution_model.md)
-- [Terrain Rendering Data Flow](terrain_data_flow.md)
-
-Affiliated project:
-- https://github.com/CleanroomMC/KSML-Compiler ([Spec](ksml))
-- https://github.com/tttsaurus/ksml-intellij-plugin
-
-
+- Firstly, read [Entry Point](entry_point.md) to understand our domain-specific concepts 
+like engine initialization steps, `Headless`/`Graphics` mode, `ICS`, etc.
+- Read [Assumptions](assumptions.md) to further complete the mental model
+- Read [Privileged Enclave](privileged_enclave.md) to understand how we handle cross-package internal accesses
+- _[Optional]_ Goto [Utils](utils) if you want to get feedbacks immediately

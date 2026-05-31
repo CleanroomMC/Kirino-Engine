@@ -353,7 +353,7 @@ public class KirinoEngine {
         }
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

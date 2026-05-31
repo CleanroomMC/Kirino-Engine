@@ -77,7 +77,7 @@ public class ImmediateShaderAccess {
         }
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final ShaderDelegate DELEGATE;
 
         static {

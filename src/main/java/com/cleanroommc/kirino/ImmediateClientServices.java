@@ -6,15 +6,15 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
-import com.cleanroommc.kirino.simpletext.ST_Config;
-import com.cleanroommc.kirino.simpletext.ST_FontBackendType;
-import com.cleanroommc.kirino.simpletext.SimpleTextRuntime;
-import com.cleanroommc.kirino.simpletext.atlas.Tex2DGlyphAtlas;
-import com.cleanroommc.kirino.simpletext.backend.DebugTextRenderer;
-import com.cleanroommc.kirino.simpletext.backend.FreeTypeFontHandle;
-import com.cleanroommc.kirino.simpletext.backend.DefaultTextProducer;
-import com.cleanroommc.kirino.simpletext.backend.freetype.FreeTypeManager;
-import com.cleanroommc.kirino.simpletext.sdf.SDFGeneratorBruteForceImpl;
+import com.cleanroommc.kirino.ui.simpletext.ST_Config;
+import com.cleanroommc.kirino.ui.simpletext.ST_FontBackendType;
+import com.cleanroommc.kirino.ui.simpletext.SimpleTextRuntime;
+import com.cleanroommc.kirino.ui.simpletext.atlas.Tex2DGlyphAtlas;
+import com.cleanroommc.kirino.ui.simpletext.backend.DebugTextRenderer;
+import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
+import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
+import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
+import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
@@ -89,7 +89,7 @@ public final class ImmediateClientServices {
         return dummyVao;
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

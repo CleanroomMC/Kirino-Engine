@@ -68,7 +68,7 @@ public class AnalyticalWorldInstaller implements ModuleInstaller<Headless> {
         context.on(FramePhase.PREPARE, FramePhaseTiming.BEFORE, this::prepare);
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

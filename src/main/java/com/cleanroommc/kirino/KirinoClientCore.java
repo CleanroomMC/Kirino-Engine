@@ -582,7 +582,7 @@ public final class KirinoClientCore {
     /**
      * Holder class to initialize-on-demand necessary method handles.
      */
-    private static class MethodHolder1 {
+    private static final class MethodHolder1 {
         static final EntityRendererDelegate DELEGATE;
 
         static {
@@ -773,7 +773,7 @@ public final class KirinoClientCore {
     /**
      * Holder class to initialize-on-demand necessary method handles.
      */
-    private static class MethodHolder2 {
+    private static final class MethodHolder2 {
         static final KirinoEngineDelegate DELEGATE;
 
         static {

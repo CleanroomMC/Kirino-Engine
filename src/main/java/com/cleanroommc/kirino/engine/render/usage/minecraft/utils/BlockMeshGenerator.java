@@ -147,7 +147,7 @@ public class BlockMeshGenerator {
         return blockInfo;
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

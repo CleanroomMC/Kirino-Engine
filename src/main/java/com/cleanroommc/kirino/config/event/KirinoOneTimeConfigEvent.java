@@ -15,7 +15,7 @@ public class KirinoOneTimeConfigEvent extends Event {
         return MethodHolder.getConfig(KirinoCommonCore.KIRINO_CONFIG_HUB);
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final Delegate DELEGATE;
 
         static {

@@ -264,7 +264,7 @@ public class StagingBufferManager {
         return new TemporaryEBOHandle(this, handleGeneration, size, eboView);
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final MethodHandle VAO_GETTER;
 
         static {

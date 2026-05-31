@@ -51,7 +51,7 @@ public class MinecraftCamera implements Camera {
         return new Vector3f((float)camX, (float)camY, (float)camZ);
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final CameraInfoDelegate DELEGATE;
 
         static {

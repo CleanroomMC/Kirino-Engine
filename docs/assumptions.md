@@ -4,7 +4,7 @@ Kirino-Engine is built on a set of explicit assumptions.
 
 ## Minecraft as a Data Source, Not a Compatibility Target
 
-This can be stated explicitly and even evexaggerated:
+This can be stated explicitly and even exaggerated:
 - We **_do not_** aim to provide the **_best_** performance and compatibility
 - We **_do not_** aim to prove the superiority over Sodium/Iris,
   since they don't share the same assumption space

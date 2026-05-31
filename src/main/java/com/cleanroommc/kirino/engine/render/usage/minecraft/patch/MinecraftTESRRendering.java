@@ -127,7 +127,7 @@ public class MinecraftTESRRendering {
         entityRenderer.disableLightmap();
     }
 
-    private static class MethodHolder {
+    private static final class MethodHolder {
         static final MethodHandle DAMAGED_BLOCKS_GETTER;
 
         static {

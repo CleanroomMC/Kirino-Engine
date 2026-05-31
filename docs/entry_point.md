@@ -34,22 +34,32 @@ Here are some events you want to listen from the engine setup:
 
 For client side logic, the engine can run in two different modes depending on the config and environment.
 
-Two modes:
+Two modes are:
 - `Headless`
 - `Graphics`
 
 If it was `Headless` mode, no GL related resources will be initialized; vanilla render 
 update will not be taken over; however, the engine will not pause but run in headless mode instead
 
-If it was `Graphics` mode, all functionalities will be activated but they are still WIP.
+If it was `Graphics` mode, all functionalities will be activated, but they are still WIP.
 
 We introduced `Headless` mode to decouple the engine from rendering, so the ECS runtime and
 other GL agnostic modules can still run when the rendering part is disbaled or GL requirement isn't met.
 
-# Immediate Services
+# Client Side Immediate Services
 
 In order to interact with the engine, you must utilize event listeners to register your classes.
-However, `ImmediateServices.instance()` provides immediate access to multiple services without following the lifecycle.
+However, `ICS`/`ImmediateClientServices` provides immediate access to multiple services without following the lifecycle.
+
+For example:
+- `ICS.instance().shader()`
+- `ICS.instance().dummyVao()`
+- `ICS.instance().text()`
+
+The privileged immediate access was proposed for special demands like editor GUIs, 
+but it could also come in handy for mod devs.
+
+> Notice: spamming it everywhere is still considered as antipattern.
 
 # Rendering Entry Point
 
@@ -75,5 +85,4 @@ to Minecraft's `RenderGlobal` to listen rendering related updates.
 
 Similar to immediate services, feel free to utilize our util classes. Examples:
 - `MinecraftResourceUtils.readText(ResourceLocation, NewLineType)`
-- `ReflectionUtils` to unreflect fields and methods
-
+- `ReflectionUtils` to unreflect fields, methods and get `MethodHandle`s
