@@ -71,7 +71,7 @@ private static final class MethodHolder {
 Notice that:
 - We enforce the usage of `ReflectionUtils` and `MethodHandle`
 - We enforce the `Preconditions` checks
-- It's not necessarily to use a `record` when there is only one `MethodHandle` (but `record` is always fine)
+- It's not necessary to use a `record` when there is only one `MethodHandle` (but `record` is always fine)
 
 Benefits:
 - Less redundant and more tightened than a centralized public `InternalApi` class
