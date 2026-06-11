@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
+import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontBackendType;
 import com.cleanroommc.kirino.ui.simpletext.SimpleTextRuntime;
@@ -61,6 +62,8 @@ public final class ImmediateClientServices {
                 config,
                 new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 
+        guiRuntime = new SimpleGuiRuntime();
+
         AttributeLayout dummyLayout = new AttributeLayout();
         dummyLayout.push(new Stride(0));
         dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
@@ -71,6 +74,7 @@ public final class ImmediateClientServices {
     private final ImmediateShaderAccess shaderAccess;
     private final FreeTypeManager freeTypeManager;
     private final SimpleTextRuntime textRuntime;
+    private final SimpleGuiRuntime guiRuntime;
     private final VAO dummyVao;
 
     public ImmediateShaderAccess shader() {
@@ -83,6 +87,10 @@ public final class ImmediateClientServices {
 
     public SimpleTextRuntime text() {
         return textRuntime;
+    }
+
+    public SimpleGuiRuntime gui() {
+        return guiRuntime;
     }
 
     public VAO dummyVao() {

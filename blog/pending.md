@@ -33,3 +33,4 @@
 - SimpleGUI: a ByteBuffer command stream driven GUI rendering helper layer (no layout etc.)
 - Engine Editor: `Document` oriented, no actual record classes for runtime data (generic database instead), easy undo,
   command driven, session oriented (no widget tree for docking)
+- Migrate most of `ByteBuffer.allocateDirect` to LWJGL explicit `malloc` & `memFree`. Utilize `ShutdownManager` too.

@@ -30,7 +30,10 @@ public class GuiCompiler {
             int used = view.getInt(pos + SG_CmdHeader.USED);
 
             // |---header---|---used---|---tail---|---other---|---padding---|
-            view.putInt(pos + used, layer++);
+            // tail = layer + depth
+            if (op != SG_GuiOp.PUSH_CLIP && op != SG_GuiOp.POP_CLIP) {
+                view.putInt(pos + used, layer++);
+            }
 
             if (op == SG_GuiOp.DRAW_RECT && (flags & SG_GuiOp.FLAG_COMPILED) == 0) {
                 compileRect(view, pos, flags, used, size);
@@ -48,8 +51,25 @@ public class GuiCompiler {
 
             pos += size;
         }
+
+        pos = 0;
+
+        while (pos < end) {
+            int op = view.getInt(pos + SG_CmdHeader.OP);
+            int size = view.getInt(pos + SG_CmdHeader.SIZE);
+            int used = view.getInt(pos + SG_CmdHeader.USED);
+
+            if (op != SG_GuiOp.PUSH_CLIP && op != SG_GuiOp.POP_CLIP) {
+                int _layer = view.getInt(pos + used);
+                float depth = (float) (((double) _layer) / ((double) layer));
+                view.putFloat(pos + used + 4, depth);
+            }
+
+            pos += size;
+        }
     }
 
+    //<editor-fold desc="compile">
     private void compileRect(ByteBuffer buffer, int pos, int flags, int used, int size) {
         int posPointer = pos + SG_CmdHeader.HEADER_SIZE;
 
@@ -105,6 +125,10 @@ public class GuiCompiler {
     private void compilePopClip(ByteBuffer buffer, int pos, int flags, int used, int size) {
 
     }
+    //</editor-fold>
+
+    //<editor-fold desc="mesh building">
+    private static final int[] CURSOR = {0};
 
     private void buildRoundedRectMesh(
             float x,
@@ -116,13 +140,32 @@ public class GuiCompiler {
             int[] out) {
 
         Preconditions.checkArgument(out.length == 2, "Length of \"out\" must be 2.");
-        Preconditions.checkArgument(cornerType == 0 || cornerType == 1 || cornerType == 2 || cornerType == 3,
-                "Argument \"cornerType\"=%s must be either 0 or 1 or 2 or 3.", cornerType);
+        Preconditions.checkArgument(
+                cornerType == 0 ||
+                        cornerType == 1 ||
+                        cornerType == 2 ||
+                        cornerType == 3 ||
+                        cornerType == 4 ||
+                        cornerType == 5,
+                "Argument \"cornerType\"=%s must be either 0, 1, 2, 3, 4, 5.", cornerType);
 
-        boolean bezier = cornerType == 2 || cornerType == 3;
+        boolean circle = cornerType == 0 || cornerType == 1;
 
-        // todo
-        if (!bezier) {
+        CURSOR[0] = 0;
+
+        float tlx = x + radius;
+        float tly = y + radius;
+
+        float trx = x + width - radius;
+        float try_ = y + radius;
+
+        float brx = x + width - radius;
+        float bry = y + height - radius;
+
+        float blx = x + radius;
+        float bly = y + height - radius;
+
+        if (circle) {
             // 0: 5 vertices
             // 1: 10 vertices
             int cornerVertCount = cornerType == 0 ? 5 : 10;
@@ -133,10 +176,43 @@ public class GuiCompiler {
             out[0] = offset;
             out[1] = cornerVertCount * 4;
 
+            emitArc(
+                    view, offset, CURSOR,
+                    tlx, tly,
+                    radius,
+                    (float) Math.PI,
+                    (float) Math.PI * 0.5f,
+                    cornerVertCount);
+
+            emitArc(
+                    view, offset, CURSOR,
+                    trx, try_,
+                    radius,
+                    (float) Math.PI * 0.5f,
+                    0f,
+                    cornerVertCount);
+
+            emitArc(
+                    view, offset, CURSOR,
+                    brx, bry,
+                    radius,
+                    0f,
+                    -(float) Math.PI * 0.5f,
+                    cornerVertCount);
+
+            emitArc(
+                    view, offset, CURSOR,
+                    blx, bly,
+                    radius,
+                    -(float) Math.PI * 0.5f,
+                    -(float) Math.PI,
+                    cornerVertCount);
         } else {
-            // 2: 8 vertices
-            // 3: 16 vertices
-            int cornerVertCount = cornerType == 2 ? 8 : 16;
+            // 2: n=4, 8 vertices
+            // 3: n=4, 16 vertices
+            // 4: n=5, 8 vertices
+            // 5: n=5, 16 vertices
+            int cornerVertCount = (cornerType == 2 || cornerType == 4) ? 8 : 16;
             int size = cornerVertCount * 4 * 8; // 8 bytes per vert (vec2)
             int offset = arena.alloc(size, 16);
             ByteBuffer view = arena.view();
@@ -144,6 +220,127 @@ public class GuiCompiler {
             out[0] = offset;
             out[1] = cornerVertCount * 4;
 
+            float superellipseN = (cornerType == 2 || cornerType == 4) ? 4f : 5f;
+
+            emitSuperellipseCorner(
+                    view, offset, CURSOR,
+                    tlx, tly,
+                    radius,
+                    (float) Math.PI,
+                    (float) Math.PI * 0.5f,
+                    superellipseN,
+                    cornerVertCount);
+
+            emitSuperellipseCorner(
+                    view, offset, CURSOR,
+                    trx, try_,
+                    radius,
+                    (float) Math.PI * 0.5f,
+                    0f,
+                    superellipseN,
+                    cornerVertCount);
+
+            emitSuperellipseCorner(
+                    view, offset, CURSOR,
+                    brx, bry,
+                    radius,
+                    0f,
+                    -(float) Math.PI * 0.5f,
+                    superellipseN,
+                    cornerVertCount);
+
+            emitSuperellipseCorner(
+                    view, offset, CURSOR,
+                    blx, bly,
+                    radius,
+                    -(float) Math.PI * 0.5f,
+                    -(float) Math.PI,
+                    superellipseN,
+                    cornerVertCount);
         }
     }
+
+    private static void putVertex(
+            ByteBuffer buffer,
+            int baseOffset,
+            int index,
+            float x,
+            float y) {
+
+        int pos = baseOffset + index * 8;
+
+        buffer.putFloat(pos, x);
+        buffer.putFloat(pos + 4, y);
+    }
+
+    private static void emitArc(
+            ByteBuffer buffer,
+            int baseOffset,
+            int[] cursor,
+            float cx,
+            float cy,
+            float radius,
+            float startAngle,
+            float endAngle,
+            int count) {
+
+        for (int i = 0; i < count; i++) {
+            float t = (float) i / (count - 1);
+            float a = startAngle + (endAngle - startAngle) * t;
+            float px = cx + (float) Math.cos(a) * radius;
+            float py = cy - (float) Math.sin(a) * radius;
+
+            putVertex(
+                    buffer,
+                    baseOffset,
+                    cursor[0]++,
+                    px,
+                    py);
+        }
+    }
+
+    private static void emitSuperellipseCorner(
+            ByteBuffer buffer,
+            int baseOffset,
+            int[] cursor,
+            float cx,
+            float cy,
+            float radius,
+            float startAngle,
+            float endAngle,
+            float n,
+            int count) {
+
+        float power = 2f / n;
+
+        for (int i = 0; i < count; i++) {
+            float t = (float) i / (count - 1);
+            float a = startAngle + (endAngle - startAngle) * t;
+
+            float c = (float) Math.cos(a);
+            float s = (float) Math.sin(a);
+
+            float sx = signedPow(c, power);
+            float sy = signedPow(s, power);
+
+            float px = cx + sx * radius;
+            float py = cy - sy * radius;
+
+            putVertex(
+                    buffer,
+                    baseOffset,
+                    cursor[0]++,
+                    px,
+                    py);
+        }
+    }
+
+    private static float signedPow(float v, float power) {
+        if (v == 0f) {
+            return 0f;
+        }
+
+        return Math.copySign((float) Math.pow(Math.abs(v), power), v);
+    }
+    //</editor-fold>
 }

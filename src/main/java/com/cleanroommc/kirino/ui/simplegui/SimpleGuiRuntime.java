@@ -13,10 +13,11 @@ public class SimpleGuiRuntime {
     private final GuiRenderer renderer;
 
     public SimpleGuiRuntime() {
+        // todo: grow mechanism
         arena = new TransientArena(1024);
         stream = new GuiCommandStream(1024);
         compiler = new GuiCompiler(arena);
-        renderer = new GuiRenderer();
+        renderer = new GuiRenderer(1024, 1024);
     }
 
     private boolean batch = false;
@@ -39,8 +40,7 @@ public class SimpleGuiRuntime {
         batch = false;
 
         compiler.compile(stream);
-        renderer.bake(stream);
-        renderer.render();
+        renderer.render(stream);
         return this;
     }
 
