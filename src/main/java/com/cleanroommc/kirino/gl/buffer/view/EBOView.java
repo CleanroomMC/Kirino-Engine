@@ -17,4 +17,8 @@ public class EBOView extends BufferView {
     public int bindingTarget() {
         return GL15.GL_ELEMENT_ARRAY_BUFFER_BINDING;
     }
+
+    public static void bindRaw(int bufferID) {
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, bufferID);
+    }
 }

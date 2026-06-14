@@ -1,22 +1,34 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
 import com.cleanroommc.kirino.engine.ShutdownManager;
+import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
+import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.IDBView;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
+import com.cleanroommc.kirino.gl.shader.Shader;
+import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
+import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
 public class GuiRenderer {
 
+    private static final float MEM_ALLOC_FACTOR = 1.5f;
+
     private static final int DRAW_INFO_STRIDE = 16;
     private static final int IDB_STRIDE = 16;
     private static final int RECT_PAYLOAD_STRIDE = 64;
     private static final int LINES_PAYLOAD_STRIDE = 1;
     private static final int BEZIER_PAYLOAD_STRIDE = 1;
+
+    private final ShaderProgram program;
+    private final VAO dummyVao;
 
     // stride=8
     // vec2 pos
@@ -60,8 +72,10 @@ public class GuiRenderer {
     private ByteBuffer idbWorkspace = null;
     private final IDBView idb;
 
-    GuiRenderer(TransientArena arena) {
+    GuiRenderer(ImmediateShaderAccess shaderAccess, VAO dummyVao, TransientArena arena) {
+        this.dummyVao = dummyVao;
         this.arena = arena;
+
         arenaSsbo = new SSBOView(new GLBuffer());
         drawInfo = new SSBOView(new GLBuffer());
         rectPayload = new SSBOView(new GLBuffer());
@@ -76,6 +90,11 @@ public class GuiRenderer {
             MemoryUtil.memFree(bezierPayloadWorkspace);
             MemoryUtil.memFree(idbWorkspace);
         });
+
+        Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simplegui_renderer.vert"));
+        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simplegui_renderer.frag"));
+        shaderAccess.submitToGL(vert, frag);
+        program = shaderAccess.makeProgram(vert, frag);
     }
 
     /**
@@ -95,13 +114,16 @@ public class GuiRenderer {
         }
     }
 
-    private static final int[] CURSOR = {0, 0, 0};
+    private static final int[] OUT = {0, 0, 0};
 
-    private int calcMaxCommandBatch(ByteBuffer buffer, int[] out) {
+    private static int calcMaxCommandBatch(ByteBuffer buffer, int[] out) {
         Preconditions.checkArgument(out.length == 3);
 
         int pos = 0;
         int end = buffer.limit();
+
+        int max0 = 0, max1 = 0, max2 = 0;
+        int count0 = 0, count1 = 0, count2 = 0;
 
         int maxCount = 0;
         int count = 0;
@@ -114,25 +136,65 @@ public class GuiRenderer {
                 count++;
 
                 if (op == SG_GuiOp.DRAW_RECT) {
-                    out[0]++;
+                    count0++;
                 } else if (op == SG_GuiOp.DRAW_LINES) {
-                    out[1]++;
+                    count1++;
                 } else {
-                    out[2]++;
+                    count2++;
                 }
             } else if (op == SG_GuiOp.PUSH_CLIP || op == SG_GuiOp.POP_CLIP) {
                 if (count > 0) {
                     count = 0;
                 }
+                if (count0 > 0) {
+                    count0 = 0;
+                }
+                if (count1 > 0) {
+                    count1 = 0;
+                }
+                if (count2 > 0) {
+                    count2 = 0;
+                }
             } else {
                 throw new IllegalStateException("Unknown SG_GuiOp: " + op);
             }
+
+            max0 = Math.max(max0, count0);
+            max1 = Math.max(max1, count1);
+            max2 = Math.max(max2, count2);
 
             maxCount = Math.max(maxCount, count);
             pos += size;
         }
 
+        out[0] = max0;
+        out[1] = max1;
+        out[2] = max2;
+
         return maxCount;
+    }
+
+    /**
+     * It resets all buffer workspaces: {@link #drawInfoWorkspace}, {@link #rectPayloadWorkspace},
+     * {@link #linesPayloadWorkspace}, {@link #bezierPayloadWorkspace}, {@link #idbWorkspace}.
+     * Calling {@link ByteBuffer#clear()} to be exact.
+     */
+    private void resetBufferWorkspaces() {
+        if (drawInfoWorkspace != null) {
+            drawInfoWorkspace.clear();
+        }
+        if (rectPayloadWorkspace != null) {
+            rectPayloadWorkspace.clear();
+        }
+        if (linesPayloadWorkspace != null) {
+            linesPayloadWorkspace.clear();
+        }
+        if (bezierPayloadWorkspace != null) {
+            bezierPayloadWorkspace.clear();
+        }
+        if (idbWorkspace != null) {
+            idbWorkspace.clear();
+        }
     }
 
     /**
@@ -142,7 +204,7 @@ public class GuiRenderer {
      * <p>Note: Some buffer may still remain <code>null</code> and unallocated after this call.</p>
      */
     private void initBufferWorkspaces(int commandCount, int rectCount, int linesCount, int bezierCount) {
-        int drawInfoSize = commandCount * DRAW_INFO_STRIDE;
+        int drawInfoSize = (int) (commandCount * DRAW_INFO_STRIDE * MEM_ALLOC_FACTOR);
         if (drawInfoSize > 0) {
             if (drawInfoWorkspace == null) {
                 drawInfoWorkspace = MemoryUtil.memAlloc(drawInfoSize);
@@ -153,7 +215,7 @@ public class GuiRenderer {
             drawInfoWorkspace.clear();
         }
 
-        int rectPayloadSize = rectCount * RECT_PAYLOAD_STRIDE;
+        int rectPayloadSize = (int) (rectCount * RECT_PAYLOAD_STRIDE * MEM_ALLOC_FACTOR);
         if (rectPayloadSize > 0) {
             if (rectPayloadWorkspace == null) {
                 rectPayloadWorkspace = MemoryUtil.memAlloc(rectPayloadSize);
@@ -164,7 +226,7 @@ public class GuiRenderer {
             rectPayloadWorkspace.clear();
         }
 
-        int linesPayloadSize = linesCount * LINES_PAYLOAD_STRIDE;
+        int linesPayloadSize = (int) (linesCount * LINES_PAYLOAD_STRIDE * MEM_ALLOC_FACTOR);
         if (linesPayloadSize > 0) {
             if (linesPayloadWorkspace == null) {
                 linesPayloadWorkspace = MemoryUtil.memAlloc(linesPayloadSize);
@@ -175,7 +237,7 @@ public class GuiRenderer {
             linesPayloadWorkspace.clear();
         }
 
-        int bezierPayloadSize = bezierCount * BEZIER_PAYLOAD_STRIDE;
+        int bezierPayloadSize = (int) (bezierCount * BEZIER_PAYLOAD_STRIDE * MEM_ALLOC_FACTOR);
         if (bezierPayloadSize > 0) {
             if (bezierPayloadWorkspace == null) {
                 bezierPayloadWorkspace = MemoryUtil.memAlloc(bezierPayloadSize);
@@ -186,7 +248,7 @@ public class GuiRenderer {
             bezierPayloadWorkspace.clear();
         }
 
-        int idbSize = commandCount * IDB_STRIDE;
+        int idbSize = (int) (commandCount * IDB_STRIDE * MEM_ALLOC_FACTOR);
         if (idbSize > 0) {
             if (idbWorkspace == null) {
                 idbWorkspace = MemoryUtil.memAlloc(idbSize);
@@ -204,15 +266,17 @@ public class GuiRenderer {
             boolean needsMesh = (flags & SG_GuiOp.FLAG_RADIUS) != 0;
             if (needsMesh) {
                 int vertexCountPos = pos + SG_CmdHeader.HEADER_SIZE + used + SG_CmdHeader.TAIL_SIZE + 4;
-                int vertexCount = buffer.getInt(vertexCountPos); // fan vert count
-                // todo: fan 2 tri mesh conversion
+                // the first vertex is the center
+                // minus one to get the actual vertex count
+                int vertexCount = buffer.getInt(vertexCountPos) - 1; // fan vert count
+                idbWorkspace.putInt(vertexCount * 3); // tris: vertexCount
             } else {
-                idbWorkspace.putInt(6); // 2 tris
+                idbWorkspace.putInt(6); // tris: 2
             }
         } else if (op == SG_GuiOp.DRAW_LINES) {
-
+            idbWorkspace.putInt(0); // todo
         } else if (op == SG_GuiOp.DRAW_BEZIER) {
-
+            idbWorkspace.putInt(0); // todo
         } else {
             throw new IllegalStateException("Invalid SG_GuiOp: " + op);
         }
@@ -228,7 +292,7 @@ public class GuiRenderer {
     }
 
     private int writeDrawInfo(ByteBuffer buffer, int op, int pos, int flags, int used, int payloadPos) {
-        int drawInfoPos = buffer.position();
+        int drawInfoPos = drawInfoWorkspace.position();
 
         // int drawType
         drawInfoWorkspace.putInt(op);
@@ -345,7 +409,7 @@ public class GuiRenderer {
 
         int next = alignUp(rectPayloadWorkspace.position(), RECT_PAYLOAD_STRIDE);
         while (rectPayloadWorkspace.position() < next) {
-            buffer.put((byte) 0);
+            rectPayloadWorkspace.put((byte) 0);
         }
 
         return payloadPos;
@@ -362,13 +426,10 @@ public class GuiRenderer {
     public void render(@NonNull GuiCommandStream stream) {
         Preconditions.checkNotNull(stream);
 
-        CURSOR[0] = 0;
-        CURSOR[1] = 0;
-        CURSOR[2] = 0;
-        int commandCount = calcMaxCommandBatch(stream.view(), CURSOR);
-        int rectCount = CURSOR[0];
-        int linesCount = CURSOR[1];
-        int bezierCount = CURSOR[2];
+        int commandCount = calcMaxCommandBatch(stream.view(), OUT);
+        int rectCount = OUT[0];
+        int linesCount = OUT[1];
+        int bezierCount = OUT[2];
         initBufferWorkspaces(commandCount, rectCount, linesCount, bezierCount);
 
         ByteBuffer view = stream.view();
@@ -388,31 +449,34 @@ public class GuiRenderer {
                     "Command (pos=%s, op=%s) must be compiled already.", pos, op);
 
             if (op == SG_GuiOp.DRAW_RECT) {
+                count++;
                 int _pos = writeRectPayload(view, pos, flags, used);
                 int __pos = writeDrawInfo(view, op, pos, flags, used, _pos);
                 writeIdb(view, op, pos, flags, used, __pos);
 
             } else if (op == SG_GuiOp.DRAW_LINES) {
+                count++;
                 int _pos = writeLinesPayload(view, pos, flags);
                 int __pos = writeDrawInfo(view, op, pos, flags, used, _pos);
                 writeIdb(view, op, pos, flags, used, __pos);
 
             } else if (op == SG_GuiOp.DRAW_BEZIER) {
+                count++;
                 int _pos = writeBezierPayload(view, pos, flags);
                 int __pos = writeDrawInfo(view, op, pos, flags, used, _pos);
                 writeIdb(view, op, pos, flags, used, __pos);
 
             } else if (op == SG_GuiOp.PUSH_CLIP) {
                 if (count > 0) {
+                    flush(count);
                     count = 0;
-                    flush();
                 }
                 pushClip();
 
             } else if (op == SG_GuiOp.POP_CLIP) {
                 if (count > 0) {
+                    flush(count);
                     count = 0;
-                    flush();
                 }
                 popClip();
 
@@ -420,13 +484,12 @@ public class GuiRenderer {
                 throw new IllegalStateException("Unknown SG_GuiOp: " + op);
             }
 
-            count++;
             pos += size;
         }
 
         if (count > 0) {
+            flush(count);
             count = 0;
-            flush();
         }
     }
 
@@ -438,7 +501,62 @@ public class GuiRenderer {
 
     }
 
-    private void flush() {
+    private void flush(int count) {
+        if (drawInfoWorkspace != null) {
+            drawInfoWorkspace.flip();
+            drawInfo.bind();
+            // orphaning
+            drawInfo.alloc(drawInfoWorkspace.remaining(), BufferUploadHint.STREAM_DRAW);
+            drawInfo.uploadBySubData(0, drawInfoWorkspace);
+        }
 
+        if (rectPayloadWorkspace != null) {
+            rectPayloadWorkspace.flip();
+            rectPayload.bind();
+            // orphaning
+            rectPayload.alloc(rectPayloadWorkspace.remaining(), BufferUploadHint.STREAM_DRAW);
+            rectPayload.uploadBySubData(0, rectPayloadWorkspace);
+        }
+
+        if (linesPayloadWorkspace != null) {
+            linesPayloadWorkspace.flip();
+            linesPayload.bind();
+            // orphaning
+            linesPayload.alloc(linesPayloadWorkspace.remaining(), BufferUploadHint.STREAM_DRAW);
+            linesPayload.uploadBySubData(0, linesPayloadWorkspace);
+        }
+
+        if (bezierPayloadWorkspace != null) {
+            bezierPayloadWorkspace.flip();
+            bezierPayload.bind();
+            // orphaning
+            bezierPayload.alloc(bezierPayloadWorkspace.remaining(), BufferUploadHint.STREAM_DRAW);
+            bezierPayload.uploadBySubData(0, bezierPayloadWorkspace);
+        }
+
+        if (idbWorkspace != null) {
+            idbWorkspace.flip();
+            idb.bind();
+            // orphaning
+            idb.alloc(idbWorkspace.remaining(), BufferUploadHint.STREAM_DRAW);
+            idb.uploadBySubData(0, idbWorkspace);
+        }
+
+        resetBufferWorkspaces();
+
+        arenaSsbo.bind();
+        // orphaning
+        arenaSsbo.alloc(arena.view().remaining(), BufferUploadHint.STREAM_DRAW);
+        arenaSsbo.uploadBySubData(0, arena.view());
+
+        program.use();
+
+        idb.bind();
+        dummyVao.bind();
+        GL43.glMultiDrawArraysIndirect(GL11.GL_TRIANGLES, 0, count, IDB_STRIDE);
+
+        program.use0();
+        SSBOView.bindRaw(0);
+        IDBView.bindRaw(0);
     }
 }

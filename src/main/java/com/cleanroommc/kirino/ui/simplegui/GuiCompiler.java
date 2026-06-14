@@ -97,7 +97,7 @@ public class GuiCompiler {
         int[] out = new int[2];
         buildRoundedRectMesh(x, y, width, height, radius, cornerType, out);
         int meshOffset = out[0];
-        int vertexCount = out[1];
+        int vertexCount = out[1]; // fan vert count
 
         Preconditions.checkState(used + SG_CmdHeader.TAIL_SIZE + 8 <= size,
                 "No reserved space for in-place rewrite (used=%s, want=%s, size=%s).",
@@ -174,7 +174,15 @@ public class GuiCompiler {
             ByteBuffer view = arena.view();
 
             out[0] = offset;
-            out[1] = cornerVertCount * 4;
+            out[1] = cornerVertCount * 4 + 1; // plus center
+
+            // put center at first
+            putVertex(
+                    view,
+                    offset,
+                    CURSOR[0]++,
+                    (tlx + trx) / 2f,
+                    (tly + bly) / 2f);
 
             emitArc(
                     view, offset, CURSOR,
@@ -218,9 +226,17 @@ public class GuiCompiler {
             ByteBuffer view = arena.view();
 
             out[0] = offset;
-            out[1] = cornerVertCount * 4;
+            out[1] = cornerVertCount * 4 + 1; // plus center
 
             float superellipseN = (cornerType == 2 || cornerType == 4) ? 4f : 5f;
+
+            // put center at first
+            putVertex(
+                    view,
+                    offset,
+                    CURSOR[0]++,
+                    (tlx + trx) / 2f,
+                    (tly + bly) / 2f);
 
             emitSuperellipseCorner(
                     view, offset, CURSOR,

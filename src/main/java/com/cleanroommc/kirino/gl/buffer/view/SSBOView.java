@@ -17,4 +17,8 @@ public class SSBOView extends BufferView {
     public int bindingTarget() {
         return GL43.GL_SHADER_STORAGE_BUFFER_BINDING;
     }
+
+    public static void bindRaw(int bufferID) {
+        GL15.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, bufferID);
+    }
 }

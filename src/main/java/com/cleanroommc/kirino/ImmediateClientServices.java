@@ -62,11 +62,11 @@ public final class ImmediateClientServices {
                 config,
                 new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 
-        guiRuntime = new SimpleGuiRuntime();
-
         AttributeLayout dummyLayout = new AttributeLayout();
         dummyLayout.push(new Stride(0));
         dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
+
+        guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
 
         ShutdownManager.register(freeTypeManager::destroy);
     }

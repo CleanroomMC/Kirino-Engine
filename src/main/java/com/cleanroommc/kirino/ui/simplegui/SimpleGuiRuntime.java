@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
+import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -12,12 +14,15 @@ public class SimpleGuiRuntime {
     private final GuiCompiler compiler;
     private final GuiRenderer renderer;
 
-    public SimpleGuiRuntime() {
+    public SimpleGuiRuntime(@NonNull ImmediateShaderAccess shaderAccess, @NonNull VAO dummyVao) {
+        Preconditions.checkNotNull(shaderAccess);
+        Preconditions.checkNotNull(dummyVao);
+
         // todo: grow mechanism
         arena = new TransientArena(1024);
         stream = new GuiCommandStream(1024);
         compiler = new GuiCompiler(arena);
-        renderer = new GuiRenderer(arena);
+        renderer = new GuiRenderer(shaderAccess, dummyVao, arena);
     }
 
     private boolean batch = false;

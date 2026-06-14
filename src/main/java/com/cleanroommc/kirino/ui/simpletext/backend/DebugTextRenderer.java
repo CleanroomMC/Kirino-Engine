@@ -72,8 +72,8 @@ public class DebugTextRenderer implements SimpleTextConsumer {
         instanceVbo = new VBOView(new GLBuffer());
         vao = new VAO(attributeLayout, null, instanceVbo);
 
-        Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font.vert"));
-        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font.frag"));
+        Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font_test.vert"));
+        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font_test.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
     }
@@ -183,6 +183,6 @@ public class DebugTextRenderer implements SimpleTextConsumer {
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
 
-        GL20.glUseProgram(0);
+        program.use0();
     }
 }

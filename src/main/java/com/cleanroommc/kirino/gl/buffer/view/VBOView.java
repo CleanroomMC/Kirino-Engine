@@ -17,4 +17,8 @@ public class VBOView extends BufferView {
     public int bindingTarget() {
         return GL15.GL_ARRAY_BUFFER_BINDING;
     }
+
+    public static void bindRaw(int bufferID) {
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, bufferID);
+    }
 }

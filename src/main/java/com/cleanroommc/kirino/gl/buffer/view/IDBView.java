@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl.buffer.view;
 
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL40;
 
 public class IDBView extends BufferView {
@@ -16,5 +17,9 @@ public class IDBView extends BufferView {
     @Override
     public int bindingTarget() {
         return GL40.GL_DRAW_INDIRECT_BUFFER_BINDING;
+    }
+
+    public static void bindRaw(int bufferID) {
+        GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, bufferID);
     }
 }

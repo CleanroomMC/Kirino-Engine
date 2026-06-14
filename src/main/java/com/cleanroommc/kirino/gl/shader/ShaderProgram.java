@@ -48,6 +48,14 @@ public class ShaderProgram extends GLDisposable {
         GL20.glUseProgram(programID);
     }
 
+    public void use0() {
+        GL20.glUseProgram(0);
+    }
+
+    public static void useRaw(int programID) {
+        GL20.glUseProgram(programID);
+    }
+
     @Override
     public int disposePriority() {
         return 100; // earlier than shaders
