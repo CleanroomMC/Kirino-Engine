@@ -24,6 +24,7 @@ public class InGameDebugHUDManager {
         private boolean alphaTest = false;
         private int shadeModel = 0;
         private boolean depthTest = false;
+        private boolean depthMask = false;
         private boolean cullFace = false;
         private int blendSrcRgb;
         private int blendDstRgb;
@@ -46,6 +47,7 @@ public class InGameDebugHUDManager {
             alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
             shadeModel = GL11.glGetInteger(GL11.GL_SHADE_MODEL);
             depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+            depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
             cullFace = GL11.glIsEnabled(GL11.GL_CULL_FACE);
             blendSrcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
             blendDstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
@@ -63,6 +65,7 @@ public class InGameDebugHUDManager {
             } else {
                 GlStateManager.disableCull();
             }
+            GlStateManager.depthMask(depthMask);
             if (depthTest) {
                 GlStateManager.enableDepth();
             } else {

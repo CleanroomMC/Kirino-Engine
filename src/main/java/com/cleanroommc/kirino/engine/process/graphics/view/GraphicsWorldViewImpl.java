@@ -212,13 +212,13 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 glStateBackup.storeStates();
                 int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
 
-                if (sceneViewState.scene.isMeshletRenderReady()) {
-                    rs().terrainGpuPass.render(
-                            storage,
-                            sceneViewState.camera,
-                            null,
-                            new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
-                }
+//                if (sceneViewState.scene.isMeshletRenderReady()) {
+//                    rs().terrainGpuPass.render(
+//                            storage,
+//                            sceneViewState.camera,
+//                            null,
+//                            new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
+//                }
 //                rs().chunkCpuPass.render(sceneViewState.camera);
 
                 glStateBackup.restoreStates();

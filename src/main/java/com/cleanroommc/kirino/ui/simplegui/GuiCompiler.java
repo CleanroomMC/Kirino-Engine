@@ -29,7 +29,10 @@ public class GuiCompiler {
             int size = view.getInt(pos + SG_CmdHeader.SIZE);
             int used = view.getInt(pos + SG_CmdHeader.USED);
 
-            // |---header---|---used---|---tail---|---other---|---padding---|
+            // |-----------used-----------|
+            // |------------------------------size-----------------------------|
+            // |---header---|---payload---|---tail---|---other---|---padding---|
+
             // tail = layer + depth
             if (op != SG_GuiOp.PUSH_CLIP && op != SG_GuiOp.POP_CLIP) {
                 view.putInt(pos + used, layer++);
@@ -96,14 +99,14 @@ public class GuiCompiler {
 
         int[] out = new int[2];
         buildRoundedRectMesh(x, y, width, height, radius, cornerType, out);
-        int meshOffset = out[0];
+        int meshOffset = out[0]; // unit: vertex
         int vertexCount = out[1]; // fan vert count
 
         Preconditions.checkState(used + SG_CmdHeader.TAIL_SIZE + 8 <= size,
                 "No reserved space for in-place rewrite (used=%s, want=%s, size=%s).",
                 used, used + SG_CmdHeader.TAIL_SIZE + 8, size);
 
-        int outputPos = used + SG_CmdHeader.TAIL_SIZE;
+        int outputPos = pos + used + SG_CmdHeader.TAIL_SIZE;
 
         buffer.putInt(outputPos, meshOffset);
         buffer.putInt(outputPos + 4, vertexCount);
@@ -169,11 +172,11 @@ public class GuiCompiler {
             // 0: 5 vertices
             // 1: 10 vertices
             int cornerVertCount = cornerType == 0 ? 5 : 10;
-            int size = cornerVertCount * 4 * 8; // 8 bytes per vert (vec2)
-            int offset = arena.alloc(size, 16);
+            int size = (cornerVertCount * 4 + 1) * 8; // 8 bytes per vert (vec2)
+            int offset = arena.alloc(size, 8);
             ByteBuffer view = arena.view();
 
-            out[0] = offset;
+            out[0] = offset / 8; // unit: vertex
             out[1] = cornerVertCount * 4 + 1; // plus center
 
             // put center at first
@@ -221,11 +224,11 @@ public class GuiCompiler {
             // 4: n=5, 8 vertices
             // 5: n=5, 16 vertices
             int cornerVertCount = (cornerType == 2 || cornerType == 4) ? 8 : 16;
-            int size = cornerVertCount * 4 * 8; // 8 bytes per vert (vec2)
-            int offset = arena.alloc(size, 16);
+            int size = (cornerVertCount * 4 + 1) * 8; // 8 bytes per vert (vec2)
+            int offset = arena.alloc(size, 8);
             ByteBuffer view = arena.view();
 
-            out[0] = offset;
+            out[0] = offset / 8; // unit: vertex
             out[1] = cornerVertCount * 4 + 1; // plus center
 
             float superellipseN = (cornerType == 2 || cornerType == 4) ? 4f : 5f;

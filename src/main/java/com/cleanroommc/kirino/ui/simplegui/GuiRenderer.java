@@ -10,6 +10,8 @@ import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
@@ -265,13 +267,27 @@ public class GuiRenderer {
         if (op == SG_GuiOp.DRAW_RECT) {
             boolean needsMesh = (flags & SG_GuiOp.FLAG_RADIUS) != 0;
             if (needsMesh) {
-                int vertexCountPos = pos + SG_CmdHeader.HEADER_SIZE + used + SG_CmdHeader.TAIL_SIZE + 4;
+                int vertexCountPos = pos + used + SG_CmdHeader.TAIL_SIZE + 4;
                 // the first vertex is the center
                 // minus one to get the actual vertex count
                 int vertexCount = buffer.getInt(vertexCountPos) - 1; // fan vert count
-                idbWorkspace.putInt(vertexCount * 3); // tris: vertexCount
+
+                boolean hasBorder = (flags & SG_GuiOp.FLAG_BORDER) != 0;
+                boolean hasShadow = (flags & SG_GuiOp.FLAG_SHADOW) != 0;
+
+                if (!hasBorder && !hasShadow) {
+                    vertexCount *= 3; // inner fan
+                } else if (hasBorder && !hasShadow) {
+                    vertexCount *= 9; // inner fan + outer ring
+                } else if (!hasBorder && hasShadow) {
+                    vertexCount *= 9; // inner fan + outer ring
+                } else if (hasBorder && hasShadow) {
+                    vertexCount *= 15; // todo: inner fan + first outer ring + sec outer ring
+                }
+
+                idbWorkspace.putInt(vertexCount);
             } else {
-                idbWorkspace.putInt(6); // tris: 2
+                idbWorkspace.putInt(6);
             }
         } else if (op == SG_GuiOp.DRAW_LINES) {
             idbWorkspace.putInt(0); // todo
@@ -312,7 +328,7 @@ public class GuiRenderer {
         }
 
         // float depth
-        int depthPos = pos + SG_CmdHeader.HEADER_SIZE + used + 4;
+        int depthPos = pos + used + 4;
         float depth = buffer.getFloat(depthPos);
         drawInfoWorkspace.putFloat(depth);
 
@@ -365,8 +381,8 @@ public class GuiRenderer {
         int vertexCount = 0;
         // needs mesh
         if (hasRadius) {
-            int meshOffsetPos = pos + SG_CmdHeader.HEADER_SIZE + used + SG_CmdHeader.TAIL_SIZE;
-            int vertexCountPos = pos + SG_CmdHeader.HEADER_SIZE + used + SG_CmdHeader.TAIL_SIZE + 4;
+            int meshOffsetPos = pos + used + SG_CmdHeader.TAIL_SIZE;
+            int vertexCountPos = pos + used + SG_CmdHeader.TAIL_SIZE + 4;
             meshOffset = buffer.getInt(meshOffsetPos);
             vertexCount = buffer.getInt(vertexCountPos);
         }
@@ -549,14 +565,29 @@ public class GuiRenderer {
         arenaSsbo.alloc(arena.view().remaining(), BufferUploadHint.STREAM_DRAW);
         arenaSsbo.uploadBySubData(0, arena.view());
 
+        GL30.glBindBufferBase(drawInfo.target(), 0, drawInfo.bufferID);
+        GL30.glBindBufferBase(rectPayload.target(), 1, rectPayload.bufferID);
+        GL30.glBindBufferBase(arenaSsbo.target(), 2, arenaSsbo.bufferID);
+
         program.use();
+
+        int scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
+        int useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
+
+        ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
+        float screenWidth = (float) resolution.getScaledWidth_double();
+        float screenHeight = (float) resolution.getScaledHeight_double();
+
+        GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
+        GL20.glUniform1i(useDepthLoc, 1);
 
         idb.bind();
         dummyVao.bind();
         GL43.glMultiDrawArraysIndirect(GL11.GL_TRIANGLES, 0, count, IDB_STRIDE);
-
-        program.use0();
+        VAO.bind(0);
         SSBOView.bindRaw(0);
         IDBView.bindRaw(0);
+
+        program.use0();
     }
 }

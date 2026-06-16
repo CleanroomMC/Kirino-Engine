@@ -21,6 +21,13 @@ const vec2 corners[4] = vec2[](
     vec2(1.0, 0.0),
     vec2(1.0, 1.0));
 
+vec2 res2Ndc(vec2 res, vec2 p)
+{
+    return vec2(
+        p.x / res.x * 2.0 - 1.0,
+        1.0 - p.y / res.y * 2.0);
+}
+
 void main()
 {
     vec2 corner = corners[gl_VertexID];
@@ -33,8 +40,5 @@ void main()
     Page = page;
     Hint = uint(hint);
 
-    vec2 ndc = pos / scaledRes * 2.0 - 1.0;
-    ndc.y = -ndc.y;
-
-    gl_Position = vec4(ndc, 0.0, 1.0);
+    gl_Position = vec4(res2Ndc(scaledRes, pos), 0.0, 1.0);
 }
