@@ -1,18 +1,26 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.kirino.engine.ShutdownManager;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
 public class GuiCommandStream {
 
-    private final int capacity;
-    private final ByteBuffer buffer;
+    private static final float MEM_GROW_FACTOR = 2f;
+    private static final int MAX_SIZE = 1024 * 1024 * 16; // 16 MB
+
+    private int capacity;
+    private ByteBuffer buffer;
 
     GuiCommandStream(int capacity) {
         this.capacity = capacity;
-        buffer = BufferUtils.createByteBuffer(capacity);
+        buffer = MemoryUtil.memAlloc(capacity);
+
+        ShutdownManager.registerAsync(() -> {
+            MemoryUtil.memFree(buffer);
+        });
     }
 
     @NonNull
@@ -26,8 +34,27 @@ public class GuiCommandStream {
         buffer.clear();
     }
 
+    private void grow(int target) {
+        ByteBuffer oldBuffer = view();
+        int newSize = (int) Math.max(target * MEM_GROW_FACTOR, oldBuffer.capacity() * MEM_GROW_FACTOR);
+
+        if (newSize > MAX_SIZE) {
+            throw new RuntimeException(String.format(
+                    "GuiCommandStream failed to grow: want=%d, max=%d",
+                    newSize, MAX_SIZE));
+        }
+
+        ByteBuffer newBuffer = MemoryUtil.memAlloc(newSize);
+        newBuffer.put(oldBuffer);
+
+        MemoryUtil.memFree(buffer);
+        buffer = newBuffer;
+        capacity = newSize;
+    }
+
     /**
-     * <p>Note: It assumes no arithmetic overflow and doesn't handle such situation.</p>
+     * <p>Note: It assumes no arithmetic overflow regarding alignment calculation,
+     * and doesn't handle such situation.</p>
      */
     private int begin(int op, int flags, int payload, int reserve) {
         int start = buffer.position();
@@ -36,9 +63,7 @@ public class GuiCommandStream {
         int size = (used + reserve + 15) & ~15;
 
         if (start + size > capacity) {
-            throw new RuntimeException(String.format(
-                    "GuiCommandStream overflow: current position=%d, capacity=%d",
-                    start + size, capacity));
+            grow(start + size);
         }
 
         buffer.putInt(op);

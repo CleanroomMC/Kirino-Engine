@@ -1,15 +1,19 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
 final class TransientArena {
 
-    private final int capacity;
-    private final ByteBuffer buffer;
+    private static final float MEM_GROW_FACTOR = 2f;
+    private static final int MAX_SIZE = 1024 * 1024 * 16; // 16 MB
+
+    private int capacity;
+    private ByteBuffer buffer;
 
     @NonNull
     ByteBuffer view() {
@@ -22,13 +26,36 @@ final class TransientArena {
         buffer.clear();
     }
 
+    private void grow(int target) {
+        ByteBuffer oldBuffer = view();
+        int newSize = (int) Math.max(target * MEM_GROW_FACTOR, oldBuffer.capacity() * MEM_GROW_FACTOR);
+
+        if (newSize > MAX_SIZE) {
+            throw new RuntimeException(String.format(
+                    "TransientArena failed to grow: want=%d, max=%d",
+                    newSize, MAX_SIZE));
+        }
+
+        ByteBuffer newBuffer = MemoryUtil.memAlloc(newSize);
+        newBuffer.put(oldBuffer);
+
+        MemoryUtil.memFree(buffer);
+        buffer = newBuffer;
+        capacity = newSize;
+    }
+
     TransientArena(int capacity) {
         this.capacity = capacity;
-        buffer = BufferUtils.createByteBuffer(capacity);
+        buffer = MemoryUtil.memAlloc(capacity);
+
+        ShutdownManager.registerAsync(() -> {
+            MemoryUtil.memFree(buffer);
+        });
     }
 
     /**
-     * <p>Note: It assumes no arithmetic overflow and doesn't handle such situation.</p>
+     * <p>Note: It assumes no arithmetic overflow regarding alignment calculation, and doesn't handle such situation.
+     * (i.e. don't input crazily big <code>align</code>)</p>
      *
      * @param align Must be power of 2 and >= 2
      */
@@ -38,14 +65,13 @@ final class TransientArena {
 
         int p = buffer.position();
         int aligned = (p + align - 1) & ~(align - 1);
+        int target = aligned + size;
 
-        if (aligned + size > capacity) {
-            throw new RuntimeException(String.format(
-                    "TransientArena overflow: current position=%d, capacity=%d",
-                    aligned + size, capacity));
+        while (target > capacity) {
+            grow(target);
         }
 
-        buffer.position(aligned + size);
+        buffer.position(target);
         return aligned;
     }
 }

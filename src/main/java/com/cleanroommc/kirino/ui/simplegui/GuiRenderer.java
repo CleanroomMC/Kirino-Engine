@@ -102,7 +102,8 @@ public class GuiRenderer {
     /**
      * Arbitrary alignment implementation (not necessarily power-of-two).
      *
-     * <p>Note: It assumes no arithmetic overflow and doesn't handle such situation.</p>
+     * <p>Note: It assumes no arithmetic overflow regarding alignment calculation,
+     * and doesn't handle such situation.</p>
      */
     private static int alignUp(int pos, int align) {
         if (align <= 1) {
@@ -282,7 +283,7 @@ public class GuiRenderer {
                 } else if (!hasBorder && hasShadow) {
                     vertexCount *= 9; // inner fan + outer ring
                 } else if (hasBorder && hasShadow) {
-                    vertexCount *= 15; // todo: inner fan + first outer ring + sec outer ring
+                    vertexCount *= 15; // inner fan + first outer ring + sec outer ring
                 }
 
                 idbWorkspace.putInt(vertexCount);

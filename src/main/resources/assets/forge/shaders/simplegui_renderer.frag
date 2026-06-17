@@ -24,7 +24,7 @@ in float RoundedRectDist;
 
 out vec4 FragColor;
 
-float directionalShadow(vec2 shadowOffset, vec4 rect, vec2 localPos, float roundedRectDist)
+float directionalShadow(vec2 shadowOffset, vec4 rect, vec2 localPos, float roundedRectDist, float shadowBlur)
 {
     vec2 shadowDir = normalize(shadowOffset);
     vec2 center = rect.zw * 0.5;
@@ -42,9 +42,11 @@ float directionalShadow(vec2 shadowOffset, vec4 rect, vec2 localPos, float round
         radialDir = shadowDir;
     }
 
+    float blur = 1.0 - clamp(shadowBlur, 0.0, 1.0);
+
     float directional = dot(radialDir, shadowDir);
     float t = clamp(directional * 0.5 + 0.5, 0.0, 1.0);
-    t = t * t * t;
+    t = pow(t, mix(1.0, 5.0, blur));
     float directionalFactor = mix(0.0, 1.0, t);
     float shadowT = clamp(roundedRectDist - 2.0, 0.0, 1.0);
     float shadowAlpha = (1.0 - smoothstep(0.0, 1.0, shadowT)) * directionalFactor;
@@ -62,7 +64,9 @@ void main()
 
         if (hasRadius)
         {
-            float aaWidth = 0.08;
+            float aaWidth = fwidth(RoundedRectDist);
+            aaWidth = max(aaWidth, 0.001);
+
             if (!hasBorder && !hasShadow)
             {
                 if (RoundedRectDist < 1.0 - aaWidth)
@@ -109,7 +113,7 @@ void main()
                 else if (RoundedRectDist < 1.0)
                 {
                     vec4 shadow = ShadowColor;
-                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist);
+                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist, ShadowBlur);
                     shadow = mix(shadow, Color, 1.0 - shadow.a);
                     float t = smoothstep(1.0 - aaWidth, 1.0, RoundedRectDist);
                     FragColor = mix(Color, shadow, t);
@@ -117,7 +121,7 @@ void main()
                 else
                 {
                     vec4 shadow = ShadowColor;
-                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist);
+                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist, ShadowBlur);
                     FragColor = shadow;
                 }
             }
@@ -139,7 +143,7 @@ void main()
                 else if (RoundedRectDist < 2.0)
                 {
                     vec4 shadow = ShadowColor;
-                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist);
+                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist, ShadowBlur);
                     shadow = mix(shadow, BorderColor, 1.0 - shadow.a);
                     float t = smoothstep(2.0 - aaWidth, 2.0, RoundedRectDist);
                     FragColor = mix(BorderColor, shadow, t);
@@ -147,7 +151,7 @@ void main()
                 else
                 {
                     vec4 shadow = ShadowColor;
-                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist);
+                    shadow.a *= directionalShadow(ShadowOffset, Rect, LocalPos, RoundedRectDist, ShadowBlur);
                     FragColor = shadow;
                 }
             }

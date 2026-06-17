@@ -18,7 +18,6 @@ public class SimpleGuiRuntime {
         Preconditions.checkNotNull(shaderAccess);
         Preconditions.checkNotNull(dummyVao);
 
-        // todo: grow mechanism
         arena = new TransientArena(1024);
         stream = new GuiCommandStream(1024);
         compiler = new GuiCompiler(arena);
