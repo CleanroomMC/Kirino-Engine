@@ -10,6 +10,10 @@ import java.awt.*;
 
 public class SimpleGuiDebugHUD implements ImmediateHUD {
 
+    private static final Color COLOR_1 = new Color(148, 172, 191);
+    private static final Color COLOR_2 = new Color(74, 98, 116);
+    private static final Color COLOR_3 = new Color(79, 175, 178);
+
     @Override
     public void draw(@NonNull HUDContext hud) {
         GlStateManager.disableCull();
@@ -19,73 +23,73 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
 
         ICS.instance().gui().begin()
                 .append((s) -> {
-                    s.rectEx(10, 10, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 0)
+                    s.rectEx(10, 10, 15, 15, COLOR_1.getRGB())
+                            .radius(5f, 1)
                             .emit();
-                    s.rectEx(35, 10, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 2)
+                    s.rectEx(35, 10, 15, 15, COLOR_1.getRGB())
+                            .radius(6f, 3)
                             .emit();
-                    s.rectEx(60, 10, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 5)
-                            .emit();
-                })
-                .append((s) -> {
-                    s.rectEx(10, 35, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 0)
-                            .border(2f, Color.WHITE.getRGB())
-                            .emit();
-                    s.rectEx(35, 35, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 2)
-                            .border(2f, Color.WHITE.getRGB())
-                            .emit();
-                    s.rectEx(60, 35, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 5)
-                            .border(2f, Color.WHITE.getRGB())
+                    s.rectEx(60, 10, 15, 15, COLOR_1.getRGB())
+                            .radius(7f, 5)
                             .emit();
                 })
                 .append((s) -> {
-                    s.rectEx(10, 85, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 0)
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
+                    s.rectEx(10, 35, 15, 15, COLOR_1.getRGB())
+                            .radius(5f, 1)
+                            .border(2f, COLOR_2.getRGB())
                             .emit();
-                    s.rectEx(35, 85, 20, 20, Color.RED.getRGB())
-                            .radius(7f, 2)
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
+                    s.rectEx(35, 35, 15, 15, COLOR_1.getRGB())
+                            .radius(6f, 3)
+                            .border(2f, COLOR_2.getRGB())
                             .emit();
-                    s.rectEx(60, 85, 20, 20, Color.RED.getRGB())
-                            .radius(8f, 5)
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
-                            .emit();
-                })
-                .append((s) -> {
-                    s.rectEx(10, 60, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 0)
-                            .border(2f, Color.WHITE.getRGB())
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
-                            .emit();
-                    s.rectEx(35, 60, 20, 20, Color.RED.getRGB())
-                            .radius(7f, 2)
-                            .border(2f, Color.WHITE.getRGB())
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
-                            .emit();
-                    s.rectEx(60, 60, 20, 20, Color.RED.getRGB())
-                            .radius(8f, 5)
-                            .border(2f, Color.WHITE.getRGB())
-                            .shadow(0f, 2f, 2f, Color.BLUE.getRGB())
+                    s.rectEx(60, 35, 15, 15, COLOR_1.getRGB())
+                            .radius(7f, 5)
+                            .border(2f, COLOR_2.getRGB())
                             .emit();
                 })
                 .append((s) -> {
-                    s.rectEx(90, 10, 20, 20, Color.RED.getRGB())
+                    s.rectEx(10, 85, 15, 15, COLOR_1.getRGB())
+                            .radius(5f, 1)
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
                             .emit();
-                    s.rectEx(115, 10, 20, 20, Color.RED.getRGB())
-                            .border(2f, Color.WHITE.getRGB())
+                    s.rectEx(35, 85, 15, 15, COLOR_1.getRGB())
+                            .radius(6f, 3)
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
                             .emit();
-                    s.rectEx(140, 10, 20, 20, Color.RED.getRGB())
-                            .shadow(0f, 1f, 1f, Color.BLUE.getRGB())
+                    s.rectEx(60, 85, 15, 15, COLOR_1.getRGB())
+                            .radius(7f, 5)
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
                             .emit();
-                    s.rectEx(165, 10, 20, 20, Color.RED.getRGB())
-                            .border(2f, Color.WHITE.getRGB())
-                            .shadow(0f, 1f, 1f, Color.BLUE.getRGB())
+                })
+                .append((s) -> {
+                    s.rectEx(10, 60, 15, 15, COLOR_1.getRGB())
+                            .radius(5f, 1)
+                            .border(2f, COLOR_2.getRGB())
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
+                            .emit();
+                    s.rectEx(35, 60, 15, 15, COLOR_1.getRGB())
+                            .radius(6f, 3)
+                            .border(2f, COLOR_2.getRGB())
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
+                            .emit();
+                    s.rectEx(60, 60, 15, 15, COLOR_1.getRGB())
+                            .radius(7f, 5)
+                            .border(2f, COLOR_2.getRGB())
+                            .shadow(0f, 2f, 2f, COLOR_3.getRGB())
+                            .emit();
+                })
+                .append((s) -> {
+                    s.rectEx(90, 10, 20, 20, COLOR_1.getRGB())
+                            .emit();
+                    s.rectEx(115, 10, 20, 20, COLOR_1.getRGB())
+                            .border(2f, COLOR_2.getRGB())
+                            .emit();
+                    s.rectEx(140, 10, 20, 20, COLOR_1.getRGB())
+                            .shadow(0f, 1f, 1f, COLOR_3.getRGB())
+                            .emit();
+                    s.rectEx(165, 10, 20, 20, COLOR_1.getRGB())
+                            .border(2f, COLOR_2.getRGB())
+                            .shadow(0f, 1f, 1f, COLOR_3.getRGB())
                             .emit();
                 })
                 .endDraw();
