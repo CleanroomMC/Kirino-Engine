@@ -579,7 +579,7 @@ public class GuiRenderer {
         float screenHeight = (float) resolution.getScaledHeight_double();
 
         GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
-        GL20.glUniform1i(useDepthLoc, 1);
+        GL20.glUniform1i(useDepthLoc, 0);
 
         idb.bind();
         dummyVao.bind();

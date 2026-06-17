@@ -13,8 +13,9 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
     @Override
     public void draw(@NonNull HUDContext hud) {
         GlStateManager.disableCull();
-        GlStateManager.enableDepth();
-        GlStateManager.depthMask(true);
+//        GlStateManager.enableDepth();
+//        GlStateManager.depthMask(true);
+        GlStateManager.enableBlend();
 
         ICS.instance().gui().begin()
 //                .append((s) -> {
@@ -49,12 +50,12 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
                             .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
                     s.rectEx(35, 60, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 2)
+                            .radius(7f, 2)
                             .border(2f, Color.WHITE.getRGB())
                             .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
                     s.rectEx(60, 60, 20, 20, Color.RED.getRGB())
-                            .radius(5f, 5)
+                            .radius(8f, 5)
                             .border(2f, Color.WHITE.getRGB())
                             .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
