@@ -28,18 +28,35 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
 //                            .radius(5f, 5)
 //                            .emit();
 //                })
+//                .append((s) -> {
+//                    s.rectEx(10, 35, 20, 20, Color.RED.getRGB())
+//                            .radius(5f, 0)
+//                            .border(2f, Color.WHITE.getRGB())
+//                            .emit();
+//                    s.rectEx(35, 35, 20, 20, Color.RED.getRGB())
+//                            .radius(5f, 2)
+//                            .border(2f, Color.WHITE.getRGB())
+//                            .emit();
+//                    s.rectEx(60, 35, 20, 20, Color.RED.getRGB())
+//                            .radius(5f, 5)
+//                            .border(2f, Color.WHITE.getRGB())
+//                            .emit();
+//                })
                 .append((s) -> {
-                    s.rectEx(10, 35, 20, 20, Color.RED.getRGB())
+                    s.rectEx(10, 60, 20, 20, Color.RED.getRGB())
                             .radius(5f, 0)
                             .border(2f, Color.WHITE.getRGB())
+                            .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
-                    s.rectEx(35, 35, 20, 20, Color.RED.getRGB())
+                    s.rectEx(35, 60, 20, 20, Color.RED.getRGB())
                             .radius(5f, 2)
                             .border(2f, Color.WHITE.getRGB())
+                            .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
-                    s.rectEx(60, 35, 20, 20, Color.RED.getRGB())
+                    s.rectEx(60, 60, 20, 20, Color.RED.getRGB())
                             .radius(5f, 5)
                             .border(2f, Color.WHITE.getRGB())
+                            .shadow(1f, 2f, 2f, Color.BLUE.getRGB())
                             .emit();
                 })
                 .endDraw();

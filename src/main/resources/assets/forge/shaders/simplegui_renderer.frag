@@ -20,7 +20,7 @@ in flat float ShadowBlur;
 in flat vec2 ShadowOffset;
 in flat float Radius;
 in flat float Pad;
-in float BorderDist;
+in float RoundedRectDist;
 
 out vec4 FragColor;
 
@@ -43,17 +43,17 @@ void main()
             else if (hasBorder && !hasShadow)
             {
                 float aaWidth = 0.08;
-                if (BorderDist < 1.0 - aaWidth)
+                if (RoundedRectDist < 1.0 - aaWidth)
                 {
                     FragColor = Color;
                 }
-                else if (BorderDist > 1.0 + aaWidth)
+                else if (RoundedRectDist > 1.0 + aaWidth)
                 {
                     FragColor = BorderColor;
                 }
                 else
                 {
-                    float t = smoothstep(1.0 - aaWidth, 1.0 + aaWidth, BorderDist);
+                    float t = smoothstep(1.0 - aaWidth, 1.0 + aaWidth, RoundedRectDist);
                     FragColor = mix(Color, BorderColor, t);
                 }
             }
@@ -63,7 +63,29 @@ void main()
             }
             else if (hasBorder && hasShadow)
             {
-
+                float aaWidth = 0.08;
+                if (RoundedRectDist < 1.0 - aaWidth)
+                {
+                    FragColor = Color;
+                }
+                else if (RoundedRectDist < 1.0 + aaWidth)
+                {
+                    float t = smoothstep(1.0 - aaWidth, 1.0 + aaWidth, RoundedRectDist);
+                    FragColor = mix(Color, BorderColor, t);
+                }
+                else if (RoundedRectDist < 2.0 - aaWidth)
+                {
+                    FragColor = BorderColor;
+                }
+                else if (RoundedRectDist < 2.0 + aaWidth)
+                {
+                    float t = smoothstep(2.0 - aaWidth, 2.0 + aaWidth, RoundedRectDist);
+                    FragColor = mix(BorderColor, ShadowColor, t);
+                }
+                else
+                {
+                    FragColor = ShadowColor;
+                }
             }
         }
         else
