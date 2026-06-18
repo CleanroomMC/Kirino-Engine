@@ -115,12 +115,12 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
                 })
                 .append((s) -> {
                     s.rectEx(90, 40, 50, 50, COLOR_1.getRGB())
-                            .radius(0f, 0)
+                            .radius(0f, 6)
                             .border(3f, COLOR_2.getRGB())
                             .shadow(1f, cos, sin, COLOR_3.getRGB())
                             .emit();
                     s.rectEx(150, 40, 50, 50, COLOR_1.getRGB())
-                            .radius(0f, 0)
+                            .radius(0f, 6)
                             .shadow(1f, cos, sin, COLOR_3.getRGB())
                             .emit();
                 })

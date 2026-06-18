@@ -213,10 +213,15 @@ public class GuiCompiler {
                         cornerType == 2 ||
                         cornerType == 3 ||
                         cornerType == 4 ||
-                        cornerType == 5,
-                "Argument \"cornerType\"=%s must be either 0, 1, 2, 3, 4, 5.", cornerType);
+                        cornerType == 5 ||
+                        cornerType == 6,
+                "Argument \"cornerType\"=%s must be either 0, 1, 2, 3, 4, 5, 6.", cornerType);
 
         boolean circle = cornerType == 0 || cornerType == 1;
+        boolean superellipse = cornerType == 2 ||
+                cornerType == 3 ||
+                cornerType == 4 ||
+                cornerType == 5;
 
         int[] cursor = {0};
 
@@ -282,7 +287,7 @@ public class GuiCompiler {
                     -(float) Math.PI * 0.5f,
                     -(float) Math.PI,
                     cornerVertCount);
-        } else {
+        } else if (superellipse) {
             // 2: n=4, 8 vertices
             // 3: n=4, 16 vertices
             // 4: n=5, 8 vertices
@@ -340,6 +345,106 @@ public class GuiCompiler {
                     -(float) Math.PI,
                     superellipseN,
                     cornerVertCount);
+        } else {
+            // 6: 12 vertices in total (square)
+            int size = 13 * 8; // 8 bytes per vert (vec2)
+            int offset = arena.alloc(size, 8);
+            ByteBuffer view = arena.view();
+
+            out[0] = offset / 8; // unit: vertex
+            out[1] = 13; // plus center
+
+            // put center at first
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    (tlx + trx) / 2f,
+                    (tly + bly) / 2f);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x,
+                    y);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    tlx,
+                    y);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    trx,
+                    y);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x + width,
+                    y);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x + width,
+                    try_);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x + width,
+                    bry);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x + width,
+                    y + height);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    brx,
+                    y + height);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    blx,
+                    y + height);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x,
+                    y + height);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x,
+                    bly);
+
+            putVertex(
+                    view,
+                    offset,
+                    cursor[0]++,
+                    x,
+                    tly);
         }
     }
 
