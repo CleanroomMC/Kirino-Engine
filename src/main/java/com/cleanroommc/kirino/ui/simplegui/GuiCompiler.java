@@ -42,8 +42,6 @@ public class GuiCompiler {
                 compileRect(view, pos, flags, used, size);
             } else if (op == SG_GuiOp.DRAW_LINES && (flags & SG_GuiOp.FLAG_COMPILED) == 0) {
                 compileLines(view, pos, flags, used, size);
-            } else if (op == SG_GuiOp.DRAW_BEZIER && (flags & SG_GuiOp.FLAG_COMPILED) == 0) {
-                compileBezier(view, pos, flags, used, size);
             } else if (op == SG_GuiOp.PUSH_CLIP && (flags & SG_GuiOp.FLAG_COMPILED) == 0) {
                 compilePushClip(view, pos, flags, used, size);
             } else if (op == SG_GuiOp.POP_CLIP && (flags & SG_GuiOp.FLAG_COMPILED) == 0) {
@@ -153,10 +151,6 @@ public class GuiCompiler {
         buffer.putInt(outputPos + 4, meshOffset1);
 
         buffer.putInt(pos + SG_CmdHeader.FLAGS, flags | SG_GuiOp.FLAG_COMPILED);
-    }
-
-    private void compileBezier(ByteBuffer buffer, int pos, int flags, int used, int size) {
-
     }
 
     private void compilePushClip(ByteBuffer buffer, int pos, int flags, int used, int size) {

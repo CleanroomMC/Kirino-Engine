@@ -4,7 +4,6 @@ final class SG_GuiOp {
 
     static final int DRAW_RECT = 1;
     static final int DRAW_LINES = 2;
-    static final int DRAW_BEZIER = 3;
     static final int PUSH_CLIP = 99;
     static final int POP_CLIP = 100;
 
