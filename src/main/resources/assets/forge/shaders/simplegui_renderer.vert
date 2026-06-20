@@ -8,6 +8,9 @@
 #define FLAG_BORDER 2
 #define FLAG_SHADOW 4
 
+#define FLAG_COLOR1 1
+#define FLAG_COLOR2 2
+
 struct DrawInfo
 {
     int drawType;
@@ -36,6 +39,9 @@ struct LinesPayload
     int formsLoop;
     int meshOffset0;
     int meshOffset1;
+    int color0;
+    int color1;
+    int color2;
 };
 
 layout(std430, binding = 0) readonly buffer DrawInfos
@@ -64,6 +70,8 @@ uniform bool useDepth;
 out flat int DrawType;
 out flat int Flags;
 out flat vec4 Color0;
+out flat vec4 Color1;
+out flat vec4 Color2;
 out flat vec4 BorderColor;
 out flat vec4 ShadowColor;
 out flat vec4 Rect;
@@ -490,6 +498,8 @@ void initOut(int drawType, int flags)
     DrawType = drawType;
     Flags = flags;
     Color0 = vec4(0.0);
+    Color1 = vec4(0.0);
+    Color2 = vec4(0.0);
     BorderColor = vec4(0.0);
     ShadowColor = vec4(0.0);
     Rect = vec4(0.0);
@@ -582,7 +592,17 @@ void main()
         pos = linesVertex(payload, uint(gl_VertexID));
 
         TotalLineLength = arenaVerts[payload.meshOffset1].x;
-        Color0 = vec4(1.0, 0.0, 0.0, 1.0);
+        Color0 = unpackARGB(payload.color0);
+
+        if ((info.flags & FLAG_COLOR1) != 0)
+        {
+            Color1 = unpackARGB(payload.color1);
+        }
+
+        if ((info.flags & FLAG_COLOR2) != 0)
+        {
+            Color2 = unpackARGB(payload.color2);
+        }
     }
     else if (info.drawType == DRAW_BEZIER)
     {

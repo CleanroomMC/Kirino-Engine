@@ -8,9 +8,14 @@
 #define FLAG_BORDER 2
 #define FLAG_SHADOW 4
 
+#define FLAG_COLOR1 1
+#define FLAG_COLOR2 2
+
 in flat int DrawType;
 in flat int Flags;
 in flat vec4 Color0;
+in flat vec4 Color1;
+in flat vec4 Color2;
 in flat vec4 BorderColor;
 in flat vec4 ShadowColor;
 in flat vec4 Rect;
@@ -257,7 +262,27 @@ void main()
         float aaWidth = fwidth(LineDist);
         aaWidth = max(aaWidth, 0.01);
 
-        vec4 targetColor = mix(Color0, vec4(0.0, 1.0, 0.0, 1.0), LineProgress / TotalLineLength);
+        vec4 targetColor = Color0;
+
+        bool hasColor1 = (Flags & FLAG_COLOR1) != 0;
+        bool hasColor2 = (Flags & FLAG_COLOR2) != 0;
+
+        if (hasColor1 && hasColor2)
+        {
+            float _half = TotalLineLength / 2.0;
+            if (LineProgress < _half)
+            {
+                targetColor = mix(Color0, Color1, LineProgress / _half);
+            }
+            else
+            {
+                targetColor = mix(Color1, Color2, (LineProgress - _half) / _half);
+            }
+        }
+        else if (hasColor1)
+        {
+            targetColor = mix(Color0, Color1, LineProgress / TotalLineLength);
+        }
 
         if (LineDist < 1.0 + aaWidth)
         {

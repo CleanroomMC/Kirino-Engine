@@ -128,12 +128,13 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
 
         ICS.instance().gui().begin()
                 .append((s) -> {
-                    s.lines(3, 4f, true)
+                    s.lines(3, 4f, true, COLOR_1.getRGB())
                             .put(100, 100)
                             .put(120, 120)
                             .put(140, 100)
                             .emit();
-                    s.lines(6, 4f, true)
+                    s.lines(6, 4f, true, COLOR_1.getRGB())
+                            .color1(COLOR_2.getRGB())
                             .put(150, 100)
                             .put(155, 130)
                             .put(160, 100)
@@ -141,7 +142,9 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
                             .put(170, 100)
                             .put(175, 130)
                             .emit();
-                    s.lines(3, 4f, false)
+                    s.lines(3, 4f, false, COLOR_1.getRGB())
+                            .color1(COLOR_2.getRGB())
+                            .color2(COLOR_3.getRGB())
                             .put(100, 140)
                             .put(105, 160)
                             .put(180, 140)

@@ -26,7 +26,7 @@ public class GuiRenderer {
     private static final int DRAW_INFO_STRIDE = 16;
     private static final int IDB_STRIDE = 16;
     private static final int RECT_PAYLOAD_STRIDE = 64;
-    private static final int LINES_PAYLOAD_STRIDE = 16;
+    private static final int LINES_PAYLOAD_STRIDE = 28;
     private static final int BEZIER_PAYLOAD_STRIDE = 1;
 
     private final ShaderProgram program;
@@ -59,11 +59,14 @@ public class GuiRenderer {
     private ByteBuffer rectPayloadWorkspace = null;
     private final SSBOView rectPayload;
 
-    // stride=16
+    // stride=28
     // int lineNum
     // int formsLoop
     // int meshOffset0 (for lines; refers to transient arena)
     // int meshOffset1 (for lines; refers to transient arena)
+    // int color0
+    // int color1
+    // int color2
     private ByteBuffer linesPayloadWorkspace = null;
     private final SSBOView linesPayload;
 
@@ -121,8 +124,6 @@ public class GuiRenderer {
             return r == 0 ? pos : pos + align - r;
         }
     }
-
-    private static final int[] OUT = {0, 0, 0};
 
     private static int calcMaxCommandBatch(ByteBuffer buffer, int[] out) {
         Preconditions.checkArgument(out.length == 3);
@@ -296,12 +297,21 @@ public class GuiRenderer {
                 idbWorkspace.putInt(6);
             }
         } else if (op == SG_GuiOp.DRAW_LINES) {
-            int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE;
+            int offset = 4;
+            if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+                offset += 4;
+            }
+            if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+                offset += 4;
+            }
+
+            int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE + offset;
             int vertexNum = buffer.getInt(vertexNumPos);
-            int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + 8 + (vertexNum * 2) * 4;
+            int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + offset + 8 + (vertexNum * 2) * 4;
             boolean formsLoop = (buffer.get(formsLoopPos) != 0);
+
             int lineNum = vertexNum - 1;
-            int vertexCount = lineNum * 6 + (formsLoop ? 6 : 0);
+            int vertexCount = (formsLoop ? lineNum + 1 : lineNum) * 6;
             idbWorkspace.putInt(vertexCount);
         } else if (op == SG_GuiOp.DRAW_BEZIER) {
             idbWorkspace.putInt(0); // todo
@@ -443,10 +453,18 @@ public class GuiRenderer {
         return payloadPos;
     }
 
-    private int writeLinesPayload(ByteBuffer buffer, int pos, int used) {
-        int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE;
+    private int writeLinesPayload(ByteBuffer buffer, int pos, int flags, int used) {
+        int offset = 4;
+        if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+            offset += 4;
+        }
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            offset += 4;
+        }
+
+        int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE + offset;
         int vertexNum = buffer.getInt(vertexNumPos);
-        int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + 8 + (vertexNum * 2) * 4;
+        int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + offset + 8 + (vertexNum * 2) * 4;
         boolean formsLoop = (buffer.get(formsLoopPos) != 0);
         int lineNum = vertexNum - 1;
 
@@ -454,6 +472,16 @@ public class GuiRenderer {
         int vertexCountPos = pos + used + SG_CmdHeader.TAIL_SIZE + 4;
         int meshOffset = buffer.getInt(meshOffsetPos);
         int vertexCount = buffer.getInt(vertexCountPos);
+
+        int color0 = buffer.getInt(pos + SG_CmdHeader.HEADER_SIZE);
+        int color1 = 0;
+        int color2 = 0;
+        if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+            color1 = buffer.getInt(pos + SG_CmdHeader.HEADER_SIZE + 4);
+        }
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            color2 = buffer.getInt(pos + SG_CmdHeader.HEADER_SIZE + 8);
+        }
 
         int payloadPos = linesPayloadWorkspace.position();
 
@@ -468,6 +496,15 @@ public class GuiRenderer {
 
         // int vertexCount
         linesPayloadWorkspace.putInt(vertexCount);
+
+        // int color0
+        linesPayloadWorkspace.putInt(color0);
+
+        // int color1
+        linesPayloadWorkspace.putInt(color1);
+
+        // int color2
+        linesPayloadWorkspace.putInt(color2);
 
         int next = alignUp(linesPayloadWorkspace.position(), LINES_PAYLOAD_STRIDE);
         while (linesPayloadWorkspace.position() < next) {
@@ -484,10 +521,11 @@ public class GuiRenderer {
     public void render(@NonNull GuiCommandStream stream) {
         Preconditions.checkNotNull(stream);
 
-        int commandCount = calcMaxCommandBatch(stream.view(), OUT);
-        int rectCount = OUT[0];
-        int linesCount = OUT[1];
-        int bezierCount = OUT[2];
+        int[] out = {0, 0, 0};
+        int commandCount = calcMaxCommandBatch(stream.view(), out);
+        int rectCount = out[0];
+        int linesCount = out[1];
+        int bezierCount = out[2];
         initBufferWorkspaces(commandCount, rectCount, linesCount, bezierCount);
 
         ByteBuffer view = stream.view();
@@ -514,7 +552,7 @@ public class GuiRenderer {
 
             } else if (op == SG_GuiOp.DRAW_LINES) {
                 count++;
-                int _pos = writeLinesPayload(view, pos, used);
+                int _pos = writeLinesPayload(view, pos, flags, used);
                 int __pos = writeDrawInfo(view, op, pos, flags, used, _pos);
                 writeIdb(view, op, pos, flags, used, __pos);
 

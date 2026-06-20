@@ -115,15 +115,24 @@ public class GuiCompiler {
     }
 
     private void compileLines(ByteBuffer buffer, int pos, int flags, int used, int size) {
-        int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE;
+        int offset = 4;
+        if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+            offset += 4;
+        }
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            offset += 4;
+        }
+
+        int vertexNumPos = pos + SG_CmdHeader.HEADER_SIZE + offset;
         int lineWidthPos = vertexNumPos + 4;
         int vertexNum = buffer.getInt(vertexNumPos);
         float lineWidth = buffer.getFloat(lineWidthPos);
-        int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + 8 + (vertexNum * 2) * 4;
+
+        int formsLoopPos = pos + SG_CmdHeader.HEADER_SIZE + offset + 8 + (vertexNum * 2) * 4;
         boolean formsLoop = (buffer.get(formsLoopPos) != 0);
 
         float[] vertices = new float[vertexNum * 2];
-        int verticesStartPos = pos + SG_CmdHeader.HEADER_SIZE + 8;
+        int verticesStartPos = pos + SG_CmdHeader.HEADER_SIZE + offset + 8;
         for (int i = 0; i < vertexNum; i++) {
             vertices[i * 2] = buffer.getFloat(verticesStartPos + i * 8);
             vertices[i * 2 + 1] = buffer.getFloat(verticesStartPos + i * 8 + 4);

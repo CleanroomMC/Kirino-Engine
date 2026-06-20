@@ -157,15 +157,42 @@ public class GuiCommandStream {
     }
 
     @NonNull
-    public CmdLinesBuilder lines(int vertexNum, float lineWidth, boolean formsLoop) {
-        return new CmdLinesBuilder(this, vertexNum, lineWidth, formsLoop);
+    public CmdLinesBuilder lines(int vertexNum, float lineWidth, boolean formsLoop, int color) {
+        return new CmdLinesBuilder(this, vertexNum, lineWidth, formsLoop, color);
     }
 
-    void writeLines(int vertexNum, float lineWidth, float[] vertices, boolean formsLoop) {
-        int payload = 8 + vertices.length * 4 + 1;
+    void writeLines(
+            int vertexNum,
+            float lineWidth,
+            float[] vertices,
+            boolean formsLoop,
+            int flags,
+            int color0,
+            int color1,
+            int color2) {
+
+        // color0 + vertexNum + lineWidth + vertices + formsLoop
+        int payload = 12 + vertices.length * 4 + 1;
+
+        if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+            payload += 4;
+        }
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            payload += 4;
+        }
 
         // plus 2 ints (meshOffset0 + meshOffset1)
-        int start = begin(SG_GuiOp.DRAW_LINES, 0, payload, SG_CmdHeader.TAIL_SIZE + 8);
+        int start = begin(SG_GuiOp.DRAW_LINES, flags, payload, SG_CmdHeader.TAIL_SIZE + 8);
+
+        buffer.putInt(color0);
+
+        if ((flags & SG_GuiOp.FLAG_COLOR1) != 0) {
+            buffer.putInt(color1);
+        }
+
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            buffer.putInt(color2);
+        }
 
         buffer.putInt(vertexNum);
         buffer.putFloat(lineWidth);

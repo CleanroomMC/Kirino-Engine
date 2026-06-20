@@ -13,5 +13,9 @@ final class SG_GuiOp {
     static final int FLAG_BORDER = 1 << 1;
     static final int FLAG_SHADOW = 1 << 2;
 
+    // DRAW_LINES
+    static final int FLAG_COLOR1 = 1;
+    static final int FLAG_COLOR2 = 1 << 1;
+
     static final int FLAG_COMPILED = 1 << 30;
 }
