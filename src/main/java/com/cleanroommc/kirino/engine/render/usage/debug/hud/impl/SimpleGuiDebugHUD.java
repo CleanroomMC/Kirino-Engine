@@ -124,9 +124,6 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
                             .shadow(1f, cos, sin, COLOR_3.getRGB())
                             .emit();
                 })
-                .endDraw();
-
-        ICS.instance().gui().begin()
                 .append((s) -> {
                     s.lines(3, 4f, true, COLOR_1.getRGB())
                             .put(100, 100)

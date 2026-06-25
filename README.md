@@ -45,11 +45,38 @@ rather than features, compatibility with legacy solutions, or similar concerns.
 
 > Jump to "**FAQs**" for more details
 
+## Dev Env / Build
+- Fork this repo (branch: `main`) / OR skip this step
+- Clone [Cleanroom](https://github.com/CleanroomMC/Cleanroom) (branch: `fix/lwjgl`) locally
+- _Everything below will be happened under your Cleanroom dev env_
+- Go to `.gitmodules`
+  ```
+  [submodule "projects/kirino"]
+    path = projects/kirino
+    url = https://github.com/CleanroomMC/Kirino-Engine.git
+  ```
+- Set the `url` to your fork (if you forked Kirino-Engine)
+- ```bash
+  git submodule init
+  git submodule update
+  ```
+- Import `build.gradle` and then `./gradlew setup`
+
+**Dev Tips**
+- `./gradlew cleanroomClient` to run the project
+- `./gradlew build` to build the project
+- `./gradlew genPatches` to generate patches if you modified Minecraft source code
+  (btw you'll have to push to Cleanroom repo if you intended modifying Minecraft source;
+  it'd be the best you contact us first before doing so)
+- `Cleanroom/projects/cleanroom/src/main/java/` is where you modify Minecraft source code
+- `Cleanroom/projects/kirino/src/main/java/` is where you modify your Kirino-Engine fork
+
+> Note:
+> Especially if you're using IDEA, you can literally develop Kirino-Engine _inside_ Cleanroom
+
 ## Contributing
-If you would like to contribute, please take a look at our
-[Contributing Page](https://github.com/CleanroomMC/Kirino-Engine?tab=contributing-ov-file)
-and the [Engine Overview](https://github.com/CleanroomMC/Kirino-Engine/blob/main/ENGINE_OVERVIEW.md)
-to understand the project’s assumptions and architectural direction.
+If you would like to contribute, please take a look at our [Contributing Page](CONTRIBUTING.md)
+and the `docs/` to understand the project’s assumptions and architectural direction.
 
 To keep discussions productive, please read the guidelines below.
 
@@ -96,10 +123,10 @@ proposed in good faith, incomplete and informal reasoning is still welcome.
 
 ## How Everything Works?
 See the `docs/` directory for a high-level overview of Kirino-Engine, 
-where you can understand our implicit assumptions and build the mental model gradually.
+where you can understand our implicit assumptions, build the mental model gradually, and find code usage explanations.
 
 ## Roadmap & Todos
-[View Project Board](https://github.com/orgs/CleanroomMC/projects/13) to track development progress, features and ideas.
+[View Project Board](https://github.com/orgs/CleanroomMC/projects/13)/[View Dev Blog](blog/dev_blog.md) to track development progress, features and ideas.
 
 ## FAQs
 

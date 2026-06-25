@@ -383,3 +383,27 @@ _SimpleText_
 - SimpleGUI: a ByteBuffer command stream driven GUI rendering helper layer (no layout etc.)
 - Engine Editor: `Document` oriented, no actual record classes for runtime data (generic database instead), easy undo,
   command driven, session oriented (no widget tree for docking)
+
+## June 2026
+**Done:**
+- Implement SimpleGUI
+  - Fully `ByteBuffer` driven: nearly no garbage produced
+  - Pipeline: `GuiCommandStream` -> `GuiCompiler` -> `GuiRenderer`
+  - Intricate usage of `glMultiDrawArraysIndirect` that batches all different kinds of primitives 
+    (Triangle, Triangle Fan, Quad, Line) & effects like shadow, border, color gradient etc.
+  - Built-in superellipse rect corner support
+  - Built-in AA support via a SDF-ish method powered by frag shader interpolation
+  - Minimum vertex gen on CPU side (only necessary control points) + GPU handles geometry expansion
+  - Shader wavefront/warp divergence is expected
+
+_SimpleGUI (single draw call for all of them)_
+![](gallery/2026-06-25.png)
+
+A zero GC, single draw call, lightweight, immediate style GUI rendering backend (text + rect + line) is nearly 
+ready for the further Editor GUI development.
+
+**Want To Implement:**
+- Complete missing features of SimpleGUI
+  - Depth/No Depth rendering path
+  - PushClip/PopClip via stencil
+  - Blend with depth on?

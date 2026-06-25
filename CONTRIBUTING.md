@@ -10,6 +10,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 
 - Fork this repo (branch: `main`)
 - Clone [Cleanroom](https://github.com/CleanroomMC/Cleanroom) (branch: `fix/lwjgl`) locally
+- _Everything below will be happened under your Cleanroom dev env_
 - Go to `.gitmodules`
   ```
   [submodule "projects/kirino"]
@@ -27,10 +28,10 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - `./gradlew cleanroomClient` to run the project
 - `./gradlew build` to build the project
 - `./gradlew genPatches` to generate patches if you modified Minecraft source code
-  (btw you'll have to push to Cleanroom repo if you modified Minecraft source; 
+  (btw you'll have to push to Cleanroom repo if you intended modifying Minecraft source;
   it'd be the best you contact us first before doing so)
 - `Cleanroom/projects/cleanroom/src/main/java/` is where you modify Minecraft source code
-- `Cleanroom/projects/kirino/src/main/java/` is where you modify your kirino fork
+- `Cleanroom/projects/kirino/src/main/java/` is where you modify your Kirino-Engine fork
 
 ## Ways to Contribute
 

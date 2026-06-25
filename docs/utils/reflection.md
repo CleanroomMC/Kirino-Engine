@@ -8,7 +8,7 @@ It provides a set of utility functions to get a `MethodHandle` for methods/field
 Common usage pattern:
 ```java
 // create an inner class to hold MethodHandle
-private static class MethodHolder {
+private static final class MethodHolder {
     static final Delegate DELEGATE;
 
     static {

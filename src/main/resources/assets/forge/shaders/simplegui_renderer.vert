@@ -2,7 +2,6 @@
 
 #define DRAW_RECT 1
 #define DRAW_LINES 2
-#define DRAW_BEZIER 3
 
 #define FLAG_RADIUS 1
 #define FLAG_BORDER 2
@@ -603,10 +602,6 @@ void main()
         {
             Color2 = unpackARGB(payload.color2);
         }
-    }
-    else if (info.drawType == DRAW_BEZIER)
-    {
-
     }
 
     float z = info.depth * 2.0 - 1.0;

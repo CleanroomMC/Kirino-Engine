@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
 public final class CmdRectBuilder {
@@ -33,6 +34,19 @@ public final class CmdRectBuilder {
 
     @NonNull
     public CmdRectBuilder radius(float r, int type) {
+        Preconditions.checkArgument(r >= 0f, "Argument \"r\" must be no smaller than 0.");
+        Preconditions.checkArgument(2f * r <= Math.min(width, height),
+                "\"2 * r\"=%s must be no greater than the minimum of \"width\"=%s and \"height\"=%s.",
+                2f * r, width, height);
+        Preconditions.checkArgument(
+                type == 0 ||
+                        type == 1 ||
+                        type == 2 ||
+                        type == 3 ||
+                        type == 4 ||
+                        type == 5 ||
+                        type == 6, "Argument \"type\"=%s must be either 0, 1, 2, 3, 4, 5, 6.", type);
+
         flags |= SG_GuiOp.FLAG_RADIUS;
         radius = r;
         cornerType = type;
@@ -41,6 +55,8 @@ public final class CmdRectBuilder {
 
     @NonNull
     public CmdRectBuilder border(float width, int color) {
+        Preconditions.checkArgument(width >= 0f, "Argument \"width\" must be no smaller than 0.");
+
         flags |= SG_GuiOp.FLAG_BORDER;
         borderWidth = width;
         borderColor = color;
@@ -49,6 +65,11 @@ public final class CmdRectBuilder {
 
     @NonNull
     public CmdRectBuilder shadow(float blur, float offsetX, float offsetY, int color) {
+        Preconditions.checkArgument(blur >= 0f, "Argument \"blur\" must be no smaller than 0.");
+        if ((flags & SG_GuiOp.FLAG_RADIUS) != 0) {
+            Preconditions.checkArgument(blur <= 1f, "Argument \"blur\" must be in [0, 1] when FLAG_RADIUS is on.");
+        }
+
         flags |= SG_GuiOp.FLAG_SHADOW;
         shadowBlur = blur;
         shadowX = offsetX;

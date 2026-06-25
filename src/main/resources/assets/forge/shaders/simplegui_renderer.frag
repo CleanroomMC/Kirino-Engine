@@ -2,7 +2,6 @@
 
 #define DRAW_RECT 1
 #define DRAW_LINES 2
-#define DRAW_BEZIER 3
 
 #define FLAG_RADIUS 1
 #define FLAG_BORDER 2
@@ -304,10 +303,6 @@ void main()
             float t = smoothstep(2.0 - aaWidth, 2.0, LineDist);
             FragColor = mix(targetColor, outsideColor, t);
         }
-    }
-    else if (DrawType == DRAW_BEZIER)
-    {
-
     }
     else
     {

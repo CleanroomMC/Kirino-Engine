@@ -69,6 +69,11 @@ public final class CmdLinesBuilder {
     }
 
     public void emit() {
+        if ((flags & SG_GuiOp.FLAG_COLOR2) != 0) {
+            Preconditions.checkState((flags & SG_GuiOp.FLAG_COLOR1) != 0,
+                    "When FLAG_COLOR2 is enabled, FLAG_COLOR1 must be enabled too.");
+        }
+
         out.writeLines(
                 vertexNum,
                 lineWidth,
