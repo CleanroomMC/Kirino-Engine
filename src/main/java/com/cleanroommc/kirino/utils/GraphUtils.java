@@ -34,11 +34,11 @@ public final class GraphUtils {
             public int compareTo(@NonNull VertexInfo<V> o) {
                 Preconditions.checkNotNull(o);
                 if (this.saturation != o.saturation) {
-                    return this.saturation - o.saturation;
-                } else if (this.degree != o.degree) {
-                    return this.degree - o.degree;
+                    return saturation - o.saturation;
+                } else if (degree != o.degree) {
+                    return degree - o.degree;
                 } else {
-                    return this.vertex.hashCode() - o.vertex.hashCode();
+                    return vertex.hashCode() - o.vertex.hashCode();
                 }
             }
         }

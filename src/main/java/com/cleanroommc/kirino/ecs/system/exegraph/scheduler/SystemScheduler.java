@@ -33,19 +33,19 @@ public final class SystemScheduler {
         Preconditions.checkNotNull(layout);
 
         this.componentRegistry = componentRegistry;
-        this.priorities = new Object2IntArrayMap<>();
+        priorities = new Object2IntArrayMap<>();
 
         //<editor-fold desc="Get Resource Count">
         try {
             final Class<ResourceLayout> resourceLayoutClass = ResourceLayout.class;
             final Field nextIDField = resourceLayoutClass.getDeclaredField("nextId");
-            this.resourceCount = nextIDField.getInt(layout);
+            resourceCount = nextIDField.getInt(layout);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
         //</editor-fold>
 
-        this.graph = new Hypergraph<>();
+        graph = new Hypergraph<>();
     }
 
     /**
@@ -63,7 +63,7 @@ public final class SystemScheduler {
         Preconditions.checkArgument(componentRegistry.componentExists(componentDependency));
 
         priorities.put(system, priority);
-        this.graph.add(new Edge(componentDependency), new Vertex(system, priority));
+        graph.add(new Edge(componentDependency), new Vertex(system, priority));
     }
 
     /**
@@ -80,7 +80,7 @@ public final class SystemScheduler {
         Preconditions.checkPositionIndex(resourceDependency, resourceCount);
 
         priorities.put(system, priority);
-        this.graph.add(new Edge(resourceDependency), new Vertex(system, priority));
+        graph.add(new Edge(resourceDependency), new Vertex(system, priority));
     }
 
     public void dependency(@NonNull CleanSystem dependency, @NonNull CleanSystem dependent) {
@@ -122,7 +122,7 @@ public final class SystemScheduler {
         public int compareTo(@NonNull Vertex o) {
             Preconditions.checkNotNull(system);
 
-            return this.priority - o.priority;
+            return priority - o.priority;
         }
     }
     //</editor-fold>

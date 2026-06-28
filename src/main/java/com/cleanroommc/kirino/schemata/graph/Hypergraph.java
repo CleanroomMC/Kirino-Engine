@@ -29,9 +29,9 @@ public class Hypergraph<V,E> {
      * Creates the hypergraph.
      */
     public Hypergraph() {
-        this.verticesPerEdge = HashMultimap.create();
-        this.edgesPerVertex = HashMultimap.create();
-        this.vertexToVertexDependencies = GraphBuilder.<V>directed().allowsSelfLoops(false).build();
+        verticesPerEdge = HashMultimap.create();
+        edgesPerVertex = HashMultimap.create();
+        vertexToVertexDependencies = GraphBuilder.<V>directed().allowsSelfLoops(false).build();
     }
 
     /**
@@ -43,16 +43,16 @@ public class Hypergraph<V,E> {
         Preconditions.checkNotNull(edge);
         Preconditions.checkNotNull(vertex);
 
-        this.edgesPerVertex.put(vertex, edge);
-        this.verticesPerEdge.put(edge, vertex);
-        this.vertexToVertexDependencies.addNode(vertex);
+        edgesPerVertex.put(vertex, edge);
+        verticesPerEdge.put(edge, vertex);
+        vertexToVertexDependencies.addNode(vertex);
     }
 
     public void addVertexDependency(@NonNull V dependency, @NonNull V dependent) {
         Preconditions.checkNotNull(dependency);
         Preconditions.checkNotNull(dependent);
 
-        this.vertexToVertexDependencies.putEdge(dependency, dependent);
+        vertexToVertexDependencies.putEdge(dependency, dependent);
     }
 
     /**
@@ -64,9 +64,9 @@ public class Hypergraph<V,E> {
         Preconditions.checkNotNull(edge);
         Preconditions.checkNotNull(vertex);
 
-        this.edgesPerVertex.remove(vertex, edge);
-        this.verticesPerEdge.remove(edge, vertex);
-        this.vertexToVertexDependencies.removeNode(vertex);
+        edgesPerVertex.remove(vertex, edge);
+        verticesPerEdge.remove(edge, vertex);
+        vertexToVertexDependencies.removeNode(vertex);
     }
 
     /**
