@@ -141,16 +141,6 @@ public final class SystemScheduler {
         public Edge(String name) {
             this(EdgeType.COMPONENT, name);
         }
-
-        public String component() {
-            Preconditions.checkState(type == EdgeType.COMPONENT);
-            return (String)id;
-        }
-
-        public int resource() {
-            Preconditions.checkState(type == EdgeType.RESOURCE);
-            return (Integer)id;
-        }
     }
     //</editor-fold>
 }
