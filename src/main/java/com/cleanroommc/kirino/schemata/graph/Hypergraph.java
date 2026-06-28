@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.schemata.graph;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
 import com.google.common.graph.*;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import org.jspecify.annotations.NonNull;
@@ -22,6 +23,7 @@ import java.util.Set;
 public class Hypergraph<V,E> {
     private final Multimap<E,V> verticesPerEdge;
     private final Multimap<V,E> edgesPerVertex;
+    private final MutableGraph<V> vertexToVertexDependencies;
 
     /**
      * Creates the hypergraph.
@@ -29,6 +31,7 @@ public class Hypergraph<V,E> {
     public Hypergraph() {
         this.verticesPerEdge = HashMultimap.create();
         this.edgesPerVertex = HashMultimap.create();
+        this.vertexToVertexDependencies = GraphBuilder.<V>directed().allowsSelfLoops(false).build();
     }
 
     /**
@@ -42,6 +45,14 @@ public class Hypergraph<V,E> {
 
         this.edgesPerVertex.put(vertex, edge);
         this.verticesPerEdge.put(edge, vertex);
+        this.vertexToVertexDependencies.addNode(vertex);
+    }
+
+    public void addVertexDependency(@NonNull V dependency, @NonNull V dependent) {
+        Preconditions.checkNotNull(dependency);
+        Preconditions.checkNotNull(dependent);
+
+        this.vertexToVertexDependencies.putEdge(dependency, dependent);
     }
 
     /**
@@ -55,6 +66,7 @@ public class Hypergraph<V,E> {
 
         this.edgesPerVertex.remove(vertex, edge);
         this.verticesPerEdge.remove(edge, vertex);
+        this.vertexToVertexDependencies.removeNode(vertex);
     }
 
     /**
@@ -76,7 +88,18 @@ public class Hypergraph<V,E> {
             }
         }
 
+        neighbours.addAll(vertexToVertexDependencies.adjacentNodes(vertex));
+
         return neighbours;
+    }
+
+    private boolean canReach(@NonNull V from, @NonNull V to) {
+        for (V vertex : Traverser.forGraph(vertexToVertexDependencies).breadthFirst(from)) {
+            if (vertex.equals(to)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -94,14 +117,24 @@ public class Hypergraph<V,E> {
                 .immutable();
 
         Set<V> vertices = edgesPerVertex.keySet();
+        Multimap<V, V> bannedRelationships = MultimapBuilder.hashKeys().hashSetValues().build();
 
         for (V vertex : vertices) {
             builder.addNode(vertex);
             Set<V> neighbours = getNeighbours(vertex);
             for (V tmp : vertices) {
-                if (!tmp.equals(vertex) && !neighbours.contains(tmp)) {
+                if (!tmp.equals(vertex)
+                        && !neighbours.contains(tmp)
+                        && !bannedRelationships.containsEntry(vertex, tmp)) {
+                    if (canReach(tmp, vertex)) {
+                        bannedRelationships.put(vertex, tmp);
+                        bannedRelationships.put(tmp, vertex);
+                        continue;
+                    }
                     builder.addNode(tmp);
                     builder.putEdge(vertex, tmp);
+                    neighbours.add(tmp);
+                    neighbours.addAll(vertexToVertexDependencies.adjacentNodes(tmp));
                 }
             }
         }
