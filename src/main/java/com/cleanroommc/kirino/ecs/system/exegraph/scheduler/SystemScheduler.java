@@ -106,7 +106,7 @@ public final class SystemScheduler {
             }
             for (int i = -1; i < stageNames.length; i++) {
                 for (int j = 0; j < colorQueues.length; j++) {
-                    while (!colorQueues[i].isEmpty()) {
+                    if (!colorQueues[j].isEmpty()) {
                         Vertex vertex = colorQueues[i].dequeue();
                         String from = i != -1 ? stageNames[i] : SystemExeFlowGraph.START_NODE;
                         String to = i != stageNames.length-1 ? stageNames[i+1] : SystemExeFlowGraph.END_NODE;
