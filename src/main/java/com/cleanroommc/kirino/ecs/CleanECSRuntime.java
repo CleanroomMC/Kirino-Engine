@@ -47,8 +47,12 @@ public class CleanECSRuntime {
         fieldRegistry = new FieldRegistry(structRegistry);
 
         // hard coded fields
+        fieldRegistry.registerFieldType("byte", byte.class, new FieldDef(ScalarType.BYTE));
+        fieldRegistry.registerFieldType("short", short.class, new FieldDef(ScalarType.SHORT));
         fieldRegistry.registerFieldType("int", int.class, new FieldDef(ScalarType.INT));
+        fieldRegistry.registerFieldType("long", long.class, new FieldDef(ScalarType.LONG));
         fieldRegistry.registerFieldType("float", float.class, new FieldDef(ScalarType.FLOAT));
+        fieldRegistry.registerFieldType("double", double.class, new FieldDef(ScalarType.DOUBLE));
         fieldRegistry.registerFieldType("bool", boolean.class, new FieldDef(ScalarType.BOOL));
         fieldRegistry.registerFieldType("vec2", Vector2f.class, new FieldDef(ScalarType.VEC2));
         fieldRegistry.registerFieldType("vec3", Vector3f.class, new FieldDef(ScalarType.VEC3));
