@@ -7,8 +7,12 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructDef;
  * The opposite concept is a struct ({@link StructDef}).
  */
 public enum ScalarType {
+    BYTE,
+    SHORT,
     INT,
+    LONG,
     FLOAT,
+    DOUBLE,
     BOOL,
     VEC2,
     VEC3,
