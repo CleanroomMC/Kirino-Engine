@@ -127,8 +127,12 @@ public class StructRegistry {
 
         // scalar field
         if (structDef.fields.get(index).fieldKind == FieldKind.SCALAR) {
-            if (structDef.fields.get(index).scalarType == ScalarType.INT ||
+            if (structDef.fields.get(index).scalarType == ScalarType.BYTE ||
+                    structDef.fields.get(index).scalarType == ScalarType.SHORT ||
+                    structDef.fields.get(index).scalarType == ScalarType.INT ||
+                    structDef.fields.get(index).scalarType == ScalarType.LONG ||
                     structDef.fields.get(index).scalarType == ScalarType.FLOAT ||
+                    structDef.fields.get(index).scalarType == ScalarType.DOUBLE ||
                     structDef.fields.get(index).scalarType == ScalarType.BOOL) {
                 if (fieldAccessChain.length == 1) {
                     return ordinal;
