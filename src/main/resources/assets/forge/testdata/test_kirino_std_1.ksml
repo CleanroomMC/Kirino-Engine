@@ -1,0 +1,10 @@
+@module test_kirino_std_1
+@gl_version 330 core
+
+@export
+@code """
+void simpleFunc1(int input)
+{
+
+}
+"""

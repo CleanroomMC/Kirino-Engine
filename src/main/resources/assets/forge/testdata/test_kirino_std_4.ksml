@@ -1,0 +1,15 @@
+@module test_kirino_std_4
+@gl_version 330 core
+
+
+
+// comment1
+// comment2
+// simpleFunc is defined on line 11
+@export
+@code """
+void simpleFunc(int input)
+{
+
+}
+"""

@@ -1,0 +1,24 @@
+@module kirino_std
+@gl_version 330 core
+
+@export
+@code """
+vec4 unpackARGB(uint c)
+{
+    return vec4(
+        ((c >> 16u) & 255u) / 255.0,
+        ((c >> 8u) & 255u) / 255.0,
+        (c & 255u) / 255.0,
+        ((c >> 24u) & 255u) / 255.0);
+}
+"""
+
+@export
+@code """
+vec2 res2Ndc(vec2 res, vec2 p)
+{
+    return vec2(
+        p.x / res.x * 2.0 - 1.0,
+        1.0 - p.y / res.y * 2.0);
+}
+"""

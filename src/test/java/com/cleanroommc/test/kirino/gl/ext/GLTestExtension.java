@@ -46,6 +46,10 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
 
     private static boolean initialized = false;
 
+    public static boolean isInitialized() {
+        return initialized;
+    }
+
     public static void assumeInitialized() {
         Assumptions.assumeTrue(initialized);
     }
