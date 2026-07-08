@@ -125,8 +125,12 @@ public class ComponentRegistry {
         ComponentDesc componentDesc = getComponentDesc(name);
         // scalar field
         if (componentDesc.fields.get(index).fieldKind == FieldKind.SCALAR) {
-            if (componentDesc.fields.get(index).scalarType == ScalarType.INT ||
+            if (componentDesc.fields.get(index).scalarType == ScalarType.BYTE ||
+                    componentDesc.fields.get(index).scalarType == ScalarType.SHORT ||
+                    componentDesc.fields.get(index).scalarType == ScalarType.INT ||
+                    componentDesc.fields.get(index).scalarType == ScalarType.LONG ||
                     componentDesc.fields.get(index).scalarType == ScalarType.FLOAT ||
+                    componentDesc.fields.get(index).scalarType == ScalarType.DOUBLE ||
                     componentDesc.fields.get(index).scalarType == ScalarType.BOOL) {
                 if (fieldAccessChain.length == 1) {
                     return ordinal;
