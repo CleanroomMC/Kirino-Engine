@@ -1,7 +1,7 @@
 
 # Kirino Engine (WIP) <img src="logo.png" alt="logo" width="160" align="right" style="margin-left: 16px; vertical-align: middle;"/>
 
-![Platform](https://img.shields.io/badge/Platform-Minecraft%201.12.2-brightgreen.svg)
+![Platform](https://img.shields.io/badge/Platform-Cleanroom%20Minecraft%201.12.2-brightgreen.svg)
 ![Status](https://img.shields.io/badge/Status-WIP-yellow.svg)
 [![License](https://img.shields.io/badge/License-Custom%20(Mod%20Permissions)-orange.svg)](LICENSE)
 
@@ -14,6 +14,7 @@ In terms of the **fundamental changes** we'd like to introduce:
 - Introduce a set of engine infrastructure on top of Minecraft
   - Enable less mixin work through explicit lifecycles and entrypoint
   - Provide reusable services such as ECS, GL abstraction layer
+  - Provide the engine editor GUI to inspect everything
   
 - Replace direct GL draw calls by abstracted render commands and defer the rendering process
   - No more concerns about the manual GL state management inside TESR/Entity/Item classes
@@ -126,7 +127,7 @@ See the `docs/` directory for a high-level overview of Kirino-Engine,
 where you can understand our implicit assumptions, build the mental model gradually, and find code usage explanations.
 
 ## Roadmap & Todos
-[View Project Board](https://github.com/orgs/CleanroomMC/projects/13)/[View Dev Blog](blog/dev_blog.md) to track development progress, features and ideas.
+[View Project Board](https://github.com/orgs/CleanroomMC/projects/13) / [View Dev Blog](blog/dev_blog.md) to track development progress, features and ideas.
 
 ## FAQs
 
