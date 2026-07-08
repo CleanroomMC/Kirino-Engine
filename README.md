@@ -6,17 +6,78 @@
 [![License](https://img.shields.io/badge/License-Custom%20(Mod%20Permissions)-orange.svg)](LICENSE)
 
 Minecraft rendering becomes difficult as implicit state and mixins couple rendering behavior.
-Our primary goal is to provide an explicit structure, overhaul most of Minecraft’s 
-rendering in a future-proof manner, and provide a set of advanced rendering APIs to mod developers.
+Our primary goal is 
+- To provide an explicit structure ([engine_overview](docs/engine_overview.md))
+- Overhaul most of Minecraft’s rendering in a future-proof manner ([engine_overview → Terrain Rendering](docs/engine_overview.md))
+- And provide a set of advanced rendering APIs to mod developers 
+
+## FAQs
+
+<details>
+<summary>Click to Expand</summary>
+
+- Is it like a normal render mod?
+  Like:
+  ```java
+  void update()
+  {
+      glEnable();
+      bind();
+      obj.render();
+      glDisable();
+  }
+  ```
+  - No, and we don't mistake convention for engineering.
+
+<br>
+
+- Why is it different compared to OptiFine / Sodium / Iris?
+  - Because Kirino-Engine wants to bring actual architectural changes, and pays less attention to
+    _optimization_ and _shaders_
+
+<br>
+
+- Will it be compatible with existing major render mods?
+  - No, because Kirino-Engine replaces the whole rendering pipeline
+  - _**But**_, it isn't coupled with rendering in order to remove the hard GL version requirement. 
+    A toggle, which defeats the point, is therefore provided to disable the rendering part of the engine
+
+<br>
+
+- What's the point of not being compatible with other render mods?
+  - To stop perpetuating legacy solutions and API-caller mindsets wrapped in modern graphics APIs
+  
+<br>
+
+- What can I _expect_ as a player/mod dev when it's out?
+  - We provide what we want (read the next section). You might coincidentally like some of it.
+
+<br>
+
+- Hmm, it looks... too promising?
+  - Feel free to wait until there's something stable.
+    Unfortunately, the goal isn't to sound revolutionary.
+    It's disappointing if it seems that way
+
+<br>
+
+- How do I download it?
+  - You don't. It'll be shipped with Cleanroom with rolling updates
+
+</details>
+
+## Description
 
 In terms of the **fundamental changes** we'd like to introduce:
 
-- Introduce a set of engine infrastructure on top of Minecraft
-  - Enable less mixin work through explicit lifecycles and entrypoint
-  - Provide reusable services such as ECS, GL abstraction layer
+- Introduce a set of engine infrastructure on top of Minecraft _(most prioritized)_
+  - Enable less mixin work through explicit lifecycles and entrypoint 
+    ([entrypoint](docs/entry_point.md))
+  - Provide reusable services such as ECS, GL abstraction layer 
+    ([ecs_usage_overview](docs/gl/gl_usage_overview.md), [gl_usage_overview](docs/gl/gl_usage_overview.md))
   - Provide the engine editor GUI to inspect everything
   
-- Replace direct GL draw calls by abstracted render commands and defer the rendering process
+- Replace direct GL draw calls by abstracted render commands and defer the rendering process _(most prioritized)_
   - No more concerns about the manual GL state management inside TESR/Entity/Item classes
   - No more unbatched and unoptimized draw calls
   - Deferred command execution allows _post_ render modification without mixins
@@ -28,7 +89,8 @@ In terms of the **fundamental changes** we'd like to introduce:
   
 - Implement a terrain rendering rewrite with meshlets
   - Normal-based meshlet clustering creates foundation for better lighting, finer culling,
-    GPU acceleration, and future visibility buffer techniques
+    GPU acceleration, and future visibility buffer techniques 
+    ([engine_overview → Terrain Rendering](docs/engine_overview.md))
 
 Looking further ahead, we'd like to pay more attention to lifecycles, phases, and systems, 
 rather than features, compatibility with legacy solutions, or similar concerns.
@@ -43,8 +105,6 @@ rather than features, compatibility with legacy solutions, or similar concerns.
 - Not an object-centric rendering engine
 - Not a finalized or frozen architecture
 - Not a high-fidelity path tracing solution
-
-> Jump to "**FAQs**" for more details
 
 ## Dev Env / Build
 - Fork this repo (branch: `main`) / OR skip this step
@@ -128,41 +188,6 @@ where you can understand our implicit assumptions, build the mental model gradua
 
 ## Roadmap & Todos
 [View Project Board](https://github.com/orgs/CleanroomMC/projects/13) / [View Dev Blog](blog/dev_blog.md) to track development progress, features and ideas.
-
-## FAQs
-
-<details>
-<summary>Click to Expand</summary>
-
-- Why is Kirino-Engine different compared to OptiFine / Sodium / Iris?
-  - Because Kirino-Engine wants to bring actual architectural level changes, and pays less attention to
-    optimization and _shaders_
-
-<br>
-
-- Will Kirino-Engine be compatible with OptiFine / Sodium / Iris?
-  - No, because Kirino-Engine replaces the whole rendering pipeline
-  - _**But**_, Kirino-Engine isn't tightly coupled with rendering. A toggle is
-    provided to disable the rendering part of the engine
-
-<br>
-
-- What can I _expect_ as a player when it's out?
-  - Performance wise: potentially smoother performance and FPS improvements
-  - Shader wise: modern lighting techniques and better global illumination
-  - Configurability: optional HDR, optional resolution up-scaling or down-scaling, optional post-processing, etc.
-  - Ecosystem: easily extensible rendering pipeline for community mods and shaders
-
-<br>
-
-- What can I _expect_ as a mod developer when it's out?
-  - Clean rendering APIs that hide OpenGL completely
-  - Versatile rendering APIs that focus on the concept of render commands
-  - Constrained and explicit engine lifecycle
-  - ECS runtime
-  - Features like emissive blocks, PBR, fogs, decals, screen post-processing
-
-</details>
 
 ## Credits
 

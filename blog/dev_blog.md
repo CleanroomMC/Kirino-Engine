@@ -1,4 +1,10 @@
 
+## August 2025 - Feb 2026
+Early stage development including
+- Basic ECS framework implementation
+- Basic GL abstraction layer
+- Engine infra
+
 ## Feb 2026
 **Want To Implement:**
 - Terrain meshlet double buffering
@@ -407,3 +413,14 @@ ready for the further Editor GUI development.
   - Depth/No Depth rendering path
   - PushClip/PopClip via stencil
   - Blend with depth on?
+
+## July 2026
+**Done:**
+- KSML spec v2
+- KSML compiler (courtesy of [ChAoS](https://github.com/ChAoSUnItY))
+- KSML idea plugin
+  - Real-time function call precondition analysis
+  - Code completion
+  - Go to declaration
+  - Find usages (usage UI inlay support)
+  - Rename function declaration and all occurrences
