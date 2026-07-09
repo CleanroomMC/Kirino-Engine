@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructDef;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -9,7 +8,7 @@ import java.util.Comparator;
 
 /**
  * A {@link ScalarType} is not by definition a scalar but more like built-in primitive types.
- * The opposite concept is a struct ({@link StructDef}).
+ * A {@link ScalarType} can be flattened into {@link FlattenedScalarType} which is strictly a scalar mathematically.
  */
 public enum ScalarType {
     BYTE,
@@ -35,8 +34,8 @@ public enum ScalarType {
 
     ScalarType(String... fields) {
         if (fields.length == 0) {
-            this.fieldNames = null;
-            this.ordinals = null;
+            fieldNames = null;
+            ordinals = null;
             return;
         }
 
@@ -47,14 +46,17 @@ public enum ScalarType {
             tmpOrdinals[i] = i;
         }
 
-        // This will be useful later
+        // this allows binary search based query
         Arrays.sort(tmpOrdinals, Comparator.comparing(lhs -> tmpFieldNames[lhs]));
         Arrays.sort(tmpFieldNames);
 
-        this.fieldNames = tmpFieldNames;
-        this.ordinals = tmpOrdinals;
+        fieldNames = tmpFieldNames;
+        ordinals = tmpOrdinals;
     }
 
+    /**
+     * If the query fails, it returns <code>0</code>.
+     */
     public int ordinalOffsetOfField(@NonNull String field) {
         Preconditions.checkNotNull(field);
 
@@ -62,6 +64,14 @@ public enum ScalarType {
             return 1;
         }
 
-        return ordinals[Arrays.binarySearch(this.fieldNames, field)]; // For larger matrices it will be an improvement, hopefully.
+        // this requires the field names to be sorted
+        int index = Arrays.binarySearch(fieldNames, field);
+        if (index < 0) {
+            return -1;
+        }
+
+        Preconditions.checkElementIndex(index, ordinals.length);
+
+        return ordinals[index];
     }
 }

@@ -95,12 +95,29 @@ public class ComponentRegistry {
         return componentDescFlattenedMap.get(name);
     }
 
+    private static String formatFieldAccessChain(String... fieldAccessChain) {
+        if (fieldAccessChain.length == 0) {
+            return "\"\"";
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("\".");
+        for (int i = 0; i < fieldAccessChain.length; i++) {
+            builder.append(fieldAccessChain[i]);
+            if (i != fieldAccessChain.length - 1) {
+                builder.append(".");
+            }
+        }
+        builder.append("\"");
+        return builder.toString();
+    }
+
     @SuppressWarnings("DataFlowIssue")
     public int getFieldOrdinal(String name, String... fieldAccessChain) {
         Preconditions.checkArgument(componentExists(name),
                 "Component type %s doesn't exist.", name);
         Preconditions.checkArgument(fieldAccessChain.length != 0,
-                "The given \"fieldAccessChain\" must not be empty.");
+                "The given \"fieldAccessChain\"=%s must not be empty.",
+                formatFieldAccessChain(fieldAccessChain));
 
         MemberLayout memberLayout = getClassMemberLayout(name);
         int index = 0;
@@ -114,7 +131,8 @@ public class ComponentRegistry {
         }
 
         Preconditions.checkArgument(match,
-                "Can't find a field that matches the \"fieldAccessChain\".");
+                "Can't find a field that matches the \"fieldAccessChain\"=%s.",
+                formatFieldAccessChain(fieldAccessChain));
 
         ComponentDescFlattened componentDescFlattened = getComponentDescFlattened(name);
         int ordinal = 0;
@@ -123,41 +141,62 @@ public class ComponentRegistry {
         }
 
         ComponentDesc componentDesc = getComponentDesc(name);
+        FieldDef fieldDef = componentDesc.fields.get(index);
         // scalar field
-        if (componentDesc.fields.get(index).fieldKind == FieldKind.SCALAR) {
-            if (componentDesc.fields.get(index).scalarType == ScalarType.BYTE ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.SHORT ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.INT ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.LONG ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.FLOAT ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.DOUBLE ||
-                    componentDesc.fields.get(index).scalarType == ScalarType.BOOL) {
+        if (fieldDef.fieldKind == FieldKind.SCALAR) {
+            // non flattenable: early escape
+            if (fieldDef.scalarType == ScalarType.BYTE ||
+                    fieldDef.scalarType == ScalarType.SHORT ||
+                    fieldDef.scalarType == ScalarType.INT ||
+                    fieldDef.scalarType == ScalarType.LONG ||
+                    fieldDef.scalarType == ScalarType.FLOAT ||
+                    fieldDef.scalarType == ScalarType.DOUBLE ||
+                    fieldDef.scalarType == ScalarType.BOOL) {
                 if (fieldAccessChain.length == 1) {
                     return ordinal;
                 } else {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" provides redundant terms after the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field.",
+                            formatFieldAccessChain(fieldAccessChain)));
                 }
+            // flattenable
             } else {
                 if (fieldAccessChain.length == 1) {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" can't reach the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s can't reach the deepest field.",
+                            formatFieldAccessChain(fieldAccessChain)));
                 } else if (fieldAccessChain.length == 2) {
-                    try {
-                        return componentDesc.fields.get(index).scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
-                    } catch (IndexOutOfBoundsException e) {
-                        throw new IllegalArgumentException("Can't find a field that matches the \"fieldAccessChain\".", e);
+                    int ordinalOffset = fieldDef.scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
+                    if (ordinalOffset == -1) {
+                        StringBuilder errorMsg = new StringBuilder();
+                        errorMsg.append(String.format("The given \"fieldAccessChain\"=%s is invalid.", formatFieldAccessChain(fieldAccessChain)));
+                        errorMsg.append(String.format(" Failed to query the ordinal offset of \"%s\" in the scalar type \"%s\".",
+                                fieldAccessChain[1],
+                                fieldDef.scalarType));
+                        if (Arrays.stream(fieldDef.scalarType.fieldNames).noneMatch((str -> str.equals(fieldAccessChain[1])))) {
+                            errorMsg.append(String.format(" The scalar type \"%s\" doesn't contain field \"%s\".",
+                                    fieldDef.scalarType,
+                                    fieldAccessChain[1]));
+                        }
+                        throw new IllegalArgumentException(errorMsg.toString());
                     }
+                    return ordinal + ordinalOffset;
                 } else {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" provides redundant terms after the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field.",
+                            formatFieldAccessChain(fieldAccessChain)));
                 }
             }
         // struct field
         } else {
             if (fieldAccessChain.length == 1) {
-                throw new IllegalArgumentException("The given \"fieldAccessChain\" can't reach the deepest field.");
+                throw new IllegalArgumentException(String.format(
+                        "The given \"fieldAccessChain\"=%s can't reach the deepest field.",
+                        formatFieldAccessChain(fieldAccessChain)));
             }
             String[] newFieldAccessChain = new String[fieldAccessChain.length - 1];
             System.arraycopy(fieldAccessChain, 1, newFieldAccessChain, 0, newFieldAccessChain.length);
-            return ordinal + fieldRegistry.structRegistry.getFieldOrdinal(componentDesc.fields.get(index).structTypeName, newFieldAccessChain);
+            return ordinal + fieldRegistry.structRegistry.getFieldOrdinal(fieldDef.structTypeName, newFieldAccessChain);
         }
     }
 
