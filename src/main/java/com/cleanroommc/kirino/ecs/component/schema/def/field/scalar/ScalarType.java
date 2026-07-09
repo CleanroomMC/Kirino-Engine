@@ -55,7 +55,7 @@ public enum ScalarType {
     }
 
     /**
-     * If the query fails, it returns <code>0</code>.
+     * If the query fails, it returns <code>-1</code>.
      */
     public int ordinalOffsetOfField(@NonNull String field) {
         Preconditions.checkNotNull(field);
