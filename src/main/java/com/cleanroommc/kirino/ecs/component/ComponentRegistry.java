@@ -142,7 +142,7 @@ public class ComponentRegistry {
                     throw new IllegalArgumentException("The given \"fieldAccessChain\" can't reach the deepest field.");
                 } else if (fieldAccessChain.length == 2) {
                     try {
-                        return ordinal + componentDesc.fields.get(index).scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
+                        return componentDesc.fields.get(index).scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
                     } catch (IndexOutOfBoundsException e) {
                         throw new IllegalArgumentException("Can't find a field that matches the \"fieldAccessChain\".", e);
                     }
