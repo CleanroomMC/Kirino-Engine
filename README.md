@@ -27,13 +27,13 @@ Our primary goal is
       glDisable();
   }
   ```
-  - No, and we don't mistake convention for engineering.
+  - No, and we don't mistake convention for engineering
 
 <br>
 
 - Why is it different compared to OptiFine / Sodium / Iris?
   - Because Kirino-Engine wants to bring actual architectural changes, and pays less attention to
-    _optimization_ and _shaders_
+    _optimizations_ and _shaders_
 
 <br>
 
@@ -50,7 +50,7 @@ Our primary goal is
 <br>
 
 - What can I _expect_ as a player/mod dev when it's out?
-  - We provide what we want (read the next section). You might coincidentally like some of it.
+  - We provide what we want (read the next section). You might coincidentally like some of it
 
 <br>
 

@@ -23,6 +23,17 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   git submodule update
   ```
 - Import `build.gradle` and then `./gradlew setup`
+- If kirino submodule's HEAD is detached, and you want the latest commit from `main`
+  ```bash
+  cd projects/kirino
+  git switch main  
+  ```
+
+**Extra Steps For Now**
+- Clone [KSMLC](https://github.com/CleanroomMC/KSML-Compiler) (branch: `main`) locally
+- Add shadow jar publishing logic to its buildscript
+- Build locally and `publishToMavenLocal`
+- Add `implementation("com.cleanroommc.ksmlc:ksml-compiler:1.0-SNAPSHOT")` to `dependencies` of `projects/cleanroom/build.gradle`
 
 **Dev Tips**
 - `./gradlew cleanroomClient` to run the project
@@ -236,6 +247,25 @@ Kirino Engine is a domain specific engine designed for Minecraft.
       ...) {
   
       // code...
+  }
+  ```
+  **Bad:**
+  ```java
+  void func() {
+      functionCall(
+              longLongLongArg1,
+              longLongLongArg2,
+              longLongLongArg3
+      );
+  }
+  ```
+  **Good:**
+  ```java
+  void func() {
+      functionCall(
+              longLongLongArg1,
+              longLongLongArg2,
+              longLongLongArg3);
   }
   ```
 - Use `//<editor-fold desc="your desc">` & `//</editor-fold>` if the code chunk is huge and boilerplate heavy 
