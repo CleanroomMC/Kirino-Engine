@@ -124,7 +124,7 @@ public class DrawQueue {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Every element in this {@link DrawQueue} is a {@link LowLevelDC}</li>
      * </ul>
@@ -199,7 +199,7 @@ public class DrawQueue {
 
     //<editor-fold desc="sort">
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Every element in this {@link DrawQueue} is a {@link LowLevelDC}</li>
      * </ul>

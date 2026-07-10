@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 /**
- * A {@link ScalarType} is not by definition a scalar but more like built-in primitive types.
+ * A {@link ScalarType} is not by definition a scalar but more like built-in atomic types.
  * A {@link ScalarType} can be flattened into {@link FlattenedScalarType} which is strictly a scalar mathematically.
  */
 public enum ScalarType {
@@ -54,14 +54,19 @@ public enum ScalarType {
         ordinals = tmpOrdinals;
     }
 
+    public boolean isSingular() {
+        return fieldNames == null;
+    }
+
     /**
      * If the query fails, it returns <code>-1</code>.
+     * Querying the ordinal offset of a singular type automatically fails.
      */
     public int ordinalOffsetOfField(@NonNull String field) {
         Preconditions.checkNotNull(field);
 
         if (ordinals == null) {
-            return 1;
+            return -1;
         }
 
         // this requires the field names to be sorted

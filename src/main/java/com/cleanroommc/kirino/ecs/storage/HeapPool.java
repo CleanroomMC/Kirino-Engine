@@ -77,7 +77,7 @@ public final class HeapPool extends ArchetypeDataPool{
     private int indexCounter = 0;
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      * </ul>

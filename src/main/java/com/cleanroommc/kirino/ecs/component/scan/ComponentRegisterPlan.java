@@ -6,6 +6,5 @@ public record ComponentRegisterPlan(
         String componentName,
         String componentClass,
         MemberLayout memberLayout,
-        String[] fieldTypeNames
-) {
+        String[] fieldTypeNames) {
 }

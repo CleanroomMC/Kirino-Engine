@@ -34,14 +34,24 @@ import java.util.List;
 import java.util.Map;
 
 public class CleanECSRuntime {
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final StructRegistry structRegistry;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final FieldRegistry fieldRegistry;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final ComponentRegistry componentRegistry;
+
     public final EntityManager entityManager;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final JobRegistry jobRegistry;
+
     public final JobScheduler jobScheduler;
 
-    @SuppressWarnings({"DataFlowIssue"})
+    @SuppressWarnings({"DataFlowIssue", "LoggingSimilarMessage"})
     private CleanECSRuntime(EventBus eventBus, Logger logger) {
         structRegistry = new StructRegistry();
         fieldRegistry = new FieldRegistry(structRegistry);
@@ -87,12 +97,15 @@ public class CleanECSRuntime {
                     structClass,
                     new FieldDef(plan.structName()));
 
-            logger.debug("Registered struct \"" + plan.structName() + "\". Loaded \"" + plan.structClass() + "\".");
+            logger.debug("Registered struct \"{}\". Loaded \"{}\".", plan.structName(), plan.structClass());
         }
 
-        logger.debug("Struct defs are as follows:" + (structRegistry.getStructDefMap().entrySet().isEmpty() ? " (Empty)" : ""));
+        structRegistry.lock();
+        fieldRegistry.lock();
+
+        logger.debug("Struct defs are as follows:{}", structRegistry.getStructDefMap().isEmpty() ? " (Empty)" : "");
         for (Map.Entry<String, StructDef> entry : structRegistry.getStructDefMap().entrySet()) {
-            logger.debug("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
+            logger.debug("  - {}: {}", entry.getKey(), entry.getValue().toString(structRegistry));
         }
 
         componentRegistry = new ComponentRegistry(fieldRegistry);
@@ -120,15 +133,17 @@ public class CleanECSRuntime {
                     plan.memberLayout(),
                     plan.fieldTypeNames());
 
-            logger.debug("Registered component \"" + plan.componentName() + "\". Loaded \"" + plan.componentClass() + "\".");
+            logger.debug("Registered component \"{}\". Loaded \"{}\".", plan.componentName(), plan.componentClass());
         }
 
-        logger.debug("Component descs are as follows:" + (componentRegistry.getComponentDescMap().entrySet().isEmpty() ? " (Empty)" : ""));
+        componentRegistry.lock();
+
+        logger.debug("Component descs are as follows:{}", componentRegistry.getComponentDescMap().isEmpty() ? " (Empty)" : "");
         ImmutableMap<String, ComponentDescFlattened> componentDescFlattenedMap = componentRegistry.getComponentDescFlattenedMap();
         for (Map.Entry<String, ComponentDesc> entry : componentRegistry.getComponentDescMap().entrySet()) {
             ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(entry.getKey());
-            logger.debug("  - " + entry.getKey() + ": " + entry.getValue().toString(structRegistry));
-            logger.debug("  - " + entry.getKey() + ": " + componentDescFlattened.toString());
+            logger.debug("  - {}: {}", entry.getKey(), entry.getValue().toString(structRegistry));
+            logger.debug("  - {}: {}", entry.getKey(), componentDescFlattened.toString());
         }
 
         entityManager = new EntityManager(componentRegistry);
@@ -138,43 +153,47 @@ public class CleanECSRuntime {
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
-        List<Class<? extends ParallelJob>> parallelJobs = getParallelJobs(jobRegistrationEvent);
+        List<Class<? extends ParallelJob>> parallelJobs = MethodHolder.getParallelJobs(jobRegistrationEvent);
         for (Class<? extends ParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
-            logger.debug("Parallel job \"" + clazz.getName() + "\" registered. Data queries are as follows:" +
-                    (jobRegistry.getParallelJobDataQueries(clazz).keySet().isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).keySet().isEmpty() ? " (Empty)" : ""));
+            logger.debug("Parallel job \"{}\" registered. Data queries are as follows:{}", clazz.getName(), jobRegistry.getParallelJobDataQueries(clazz).isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).isEmpty() ? " (Empty)" : "");
 
             List<String> arrayQueries = new ArrayList<>();
-            List<String> externalQueries = new ArrayList<>();
             for (JobDataQuery jobDataQuery : jobRegistry.getParallelJobDataQueries(clazz).keySet()) {
                 arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
             }
-            for (String fieldName : jobRegistry.getParallelJobExternalDataQueries(clazz).keySet()) {
-                externalQueries.add(fieldName);
-            }
+            List<String> externalQueries = new ArrayList<>(jobRegistry.getParallelJobExternalDataQueries(clazz).keySet());
             arrayQueries = arrayQueries.stream().sorted().toList();
             externalQueries = externalQueries.stream().sorted().toList();
 
             for (String query : arrayQueries) {
-                logger.debug("  - Array query: " + query);
+                logger.debug("  - Array query: {}", query);
             }
             for (String query : externalQueries) {
-                logger.debug("  - External query: " +  query);
+                logger.debug("  - External query: {}", query);
             }
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<Class<? extends ParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
-        MethodHandle parallelJobClassesGetter = ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class);
-        Preconditions.checkNotNull(parallelJobClassesGetter);
+    private static final class MethodHolder {
+        private static final Delegate DELEGATE;
 
-        List<Class<? extends ParallelJob>> parallelJobs;
-        try {
-            parallelJobs = (List<Class<? extends ParallelJob>>) parallelJobClassesGetter.invokeExact(jobRegistrationEvent);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+        static {
+            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class));
+
+            Preconditions.checkNotNull(DELEGATE.parallelJobsGetter);
         }
-        return parallelJobs;
+
+        @SuppressWarnings("unchecked")
+        static List<Class<? extends ParallelJob>> getParallelJobs(JobRegistrationEvent jobRegistrationEvent) {
+            try {
+                return (List<Class<? extends ParallelJob>>) DELEGATE.parallelJobsGetter.invokeExact(jobRegistrationEvent);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(MethodHandle parallelJobsGetter) {
+        }
     }
 }

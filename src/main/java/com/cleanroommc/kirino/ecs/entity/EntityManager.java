@@ -221,7 +221,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
@@ -243,7 +243,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
@@ -323,7 +323,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>entityID</code> must be valid</li>
      * </ul>

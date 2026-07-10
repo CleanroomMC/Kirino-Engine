@@ -75,7 +75,7 @@ public abstract class BijectiveMapFunction {
     public abstract SpaceSet construct(SpaceSet domain);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The input item is in the domain that passed to {@link #construct(SpaceSet)}</li>
      * </ul>

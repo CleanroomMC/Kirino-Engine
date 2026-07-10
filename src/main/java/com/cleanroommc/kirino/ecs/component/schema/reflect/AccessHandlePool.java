@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.ecs.component.schema.reflect;
 
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -17,6 +18,9 @@ public class AccessHandlePool {
     private final Map<Class<?>, Map<String, MethodHandle>> getterHandleMap = new HashMap<>();
 
     public void register(@NonNull Class<?> clazz, @NonNull MemberLayout memberLayout) {
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkNotNull(memberLayout);
+
         try {
             MethodHandle ctorHandle = ReflectionUtils.getConstructor(clazz);
             constructorHandleMap.put(clazz, ctorHandle);
@@ -33,15 +37,20 @@ public class AccessHandlePool {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
         memberLayoutMap.put(clazz, memberLayout);
     }
 
     public boolean classRegistered(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         return memberLayoutMap.containsKey(clazz);
     }
 
     @Nullable
     public Object newClass(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
         if (!classRegistered(clazz)) {
             return null;
         }
@@ -55,6 +64,10 @@ public class AccessHandlePool {
     }
 
     public void setFieldValue(@NonNull Class<?> clazz, @NonNull Object target, @NonNull String fieldName, @Nullable Object value) {
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkNotNull(target);
+        Preconditions.checkNotNull(fieldName);
+
         if (!classRegistered(clazz)) {
             return;
         }
@@ -72,6 +85,10 @@ public class AccessHandlePool {
 
     @Nullable
     public Object getFieldValue(@NonNull Class<?> clazz, @NonNull Object target, @NonNull String fieldName) {
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkNotNull(target);
+        Preconditions.checkNotNull(fieldName);
+
         if (!classRegistered(clazz)) {
             return null;
         }
