@@ -16,12 +16,18 @@ public final class StructDef {
 
     public StructDef(@NonNull List<@NonNull FieldDef> fields) {
         Preconditions.checkNotNull(fields);
+        for (FieldDef field : fields) {
+            Preconditions.checkNotNull(field);
+        }
 
         this.fields = ImmutableList.copyOf(fields);
     }
 
     public StructDef(@NonNull FieldDef @NonNull ... fields) {
         Preconditions.checkNotNull(fields);
+        for (FieldDef field : fields) {
+            Preconditions.checkNotNull(field);
+        }
 
         this.fields = ImmutableList.copyOf(fields);
     }
