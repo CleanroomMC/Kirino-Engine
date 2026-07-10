@@ -128,7 +128,8 @@ public enum ScalarType implements Scalar {
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 2) {
-                if (args[0] instanceof Float x && args[1] instanceof Float y) {
+                if (args[ordinalOffsetOfField("x")] instanceof Float x
+                        && args[ordinalOffsetOfField("y")] instanceof Float y) {
                     return new Vector2f(x,y);
                 }
             }
@@ -140,17 +141,20 @@ public enum ScalarType implements Scalar {
             Preconditions.checkArgument(scalarInstance instanceof Vector2f,
                     "Expected a org.joml.Vector2f. Got %s instead.", scalarInstance.getClass().getName());
 
+            Object[] flat = new Object[2];
             Vector2f obj = (Vector2f) scalarInstance;
-            return new Object[]{obj.x, obj.y};
+            flat[ordinalOffsetOfField("x")] = obj.x;
+            flat[ordinalOffsetOfField("y")] = obj.y;
+            return flat;
         }
     },
     VEC3("x", "y", "z") {
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 3) {
-                if (args[0] instanceof Float x
-                        && args[1] instanceof Float y
-                        && args[2] instanceof Float z) {
+                if (args[ordinalOffsetOfField("x")] instanceof Float x
+                        && args[ordinalOffsetOfField("y")] instanceof Float y
+                        && args[ordinalOffsetOfField("z")] instanceof Float z) {
                     return new Vector3f(x,y,z);
                 }
             }
@@ -162,18 +166,22 @@ public enum ScalarType implements Scalar {
             Preconditions.checkArgument(scalarInstance instanceof Vector3f,
                     "Expected a org.joml.Vector3f. Got %s instead.", scalarInstance.getClass().getName());
 
+            Object[] flat = new Object[3];
             Vector3f obj = (Vector3f) scalarInstance;
-            return new Object[]{obj.x, obj.y, obj.z};
+            flat[ordinalOffsetOfField("x")] = obj.x;
+            flat[ordinalOffsetOfField("y")] = obj.y;
+            flat[ordinalOffsetOfField("z")] = obj.z;
+            return flat;
         }
     },
     VEC4("x", "y", "z", "w") {
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 4) {
-                if (args[0] instanceof Float x
-                        && args[1] instanceof Float y
-                        && args[2] instanceof Float z
-                        && args[3] instanceof Float w) {
+                if (args[ordinalOffsetOfField("x")] instanceof Float x
+                        && args[ordinalOffsetOfField("y")] instanceof Float y
+                        && args[ordinalOffsetOfField("z")] instanceof Float z
+                        && args[ordinalOffsetOfField("w")] instanceof Float w) {
                     return new Vector4f(x,y,z,w);
                 }
             }
@@ -185,8 +193,13 @@ public enum ScalarType implements Scalar {
             Preconditions.checkArgument(scalarInstance instanceof Vector4f,
                     "Expected a org.joml.Vector4f. Got %s instead.", scalarInstance.getClass().getName());
 
+            Object[] flat = new Object[4];
             Vector4f obj = (Vector4f) scalarInstance;
-            return new Object[]{obj.x, obj.y, obj.z, obj.w};
+            flat[ordinalOffsetOfField("x")] = obj.x;
+            flat[ordinalOffsetOfField("y")] = obj.y;
+            flat[ordinalOffsetOfField("z")] = obj.z;
+            flat[ordinalOffsetOfField("w")] = obj.w;
+            return flat;
         }
     },
     MAT3("m00", "m01", "m02",
@@ -201,15 +214,15 @@ public enum ScalarType implements Scalar {
                     }
                 }
                 return new Matrix3f(
-                        (float) args[0],
-                        (float) args[1],
-                        (float) args[2],
-                        (float) args[3],
-                        (float) args[4],
-                        (float) args[5],
-                        (float) args[6],
-                        (float) args[7],
-                        (float) args[8]);
+                        (float) args[ordinalOffsetOfField("m00")],
+                        (float) args[ordinalOffsetOfField("m01")],
+                        (float) args[ordinalOffsetOfField("m02")],
+                        (float) args[ordinalOffsetOfField("m10")],
+                        (float) args[ordinalOffsetOfField("m11")],
+                        (float) args[ordinalOffsetOfField("m12")],
+                        (float) args[ordinalOffsetOfField("m20")],
+                        (float) args[ordinalOffsetOfField("m21")],
+                        (float) args[ordinalOffsetOfField("m22")]);
             }
             return null;
         }
@@ -219,10 +232,13 @@ public enum ScalarType implements Scalar {
             Preconditions.checkArgument(scalarInstance instanceof Matrix3f,
                     "Expected a org.joml.Matrix3f. Got %s instead.", scalarInstance.getClass().getName());
 
+            Object[] flat = new Object[9];
             Matrix3f matrix3f = (Matrix3f) scalarInstance;
-            return new Object[]{matrix3f.m00, matrix3f.m01, matrix3f.m02,
-                    matrix3f.m10, matrix3f.m11, matrix3f.m12,
-                    matrix3f.m20, matrix3f.m21, matrix3f.m22};
+            for (String field : fieldNames) {
+                flat[ordinalOffsetOfField(field)] = matrix3f.get(Integer.parseInt(String.valueOf(field.charAt(1))),
+                        Integer.parseInt(String.valueOf(field.charAt(2))));
+            }
+            return flat;
         }
     },
     MAT4("m00", "m01", "m02", "m03",
@@ -238,22 +254,22 @@ public enum ScalarType implements Scalar {
                     }
                 }
                 return new Matrix4f(
-                        (float) args[0],
-                        (float) args[1],
-                        (float) args[2],
-                        (float) args[3],
-                        (float) args[4],
-                        (float) args[5],
-                        (float) args[6],
-                        (float) args[7],
-                        (float) args[8],
-                        (float) args[9],
-                        (float) args[10],
-                        (float) args[11],
-                        (float) args[12],
-                        (float) args[13],
-                        (float) args[14],
-                        (float) args[15]);
+                        (float) args[ordinalOffsetOfField("m00")],
+                        (float) args[ordinalOffsetOfField("m01")],
+                        (float) args[ordinalOffsetOfField("m02")],
+                        (float) args[ordinalOffsetOfField("m03")],
+                        (float) args[ordinalOffsetOfField("m10")],
+                        (float) args[ordinalOffsetOfField("m11")],
+                        (float) args[ordinalOffsetOfField("m12")],
+                        (float) args[ordinalOffsetOfField("m13")],
+                        (float) args[ordinalOffsetOfField("m20")],
+                        (float) args[ordinalOffsetOfField("m21")],
+                        (float) args[ordinalOffsetOfField("m22")],
+                        (float) args[ordinalOffsetOfField("m23")],
+                        (float) args[ordinalOffsetOfField("m30")],
+                        (float) args[ordinalOffsetOfField("m31")],
+                        (float) args[ordinalOffsetOfField("m32")],
+                        (float) args[ordinalOffsetOfField("m33")]);
             }
             return null;
         }
@@ -263,11 +279,13 @@ public enum ScalarType implements Scalar {
             Preconditions.checkArgument(scalarInstance instanceof Matrix4f,
                     "Expected a org.joml.Matrix4f. Got %s instead.", scalarInstance.getClass().getName());
 
+            Object[] flat = new Object[16];
             Matrix4f matrix4f = (Matrix4f) scalarInstance;
-            return new Object[]{matrix4f.m00(), matrix4f.m01(), matrix4f.m02(), matrix4f.m03(),
-                    matrix4f.m10(), matrix4f.m11(), matrix4f.m12(), matrix4f.m13(),
-                    matrix4f.m20(), matrix4f.m21(), matrix4f.m22(), matrix4f.m23(),
-                    matrix4f.m30(), matrix4f.m31(), matrix4f.m32(), matrix4f.m33()};
+            for (String field : fieldNames) {
+                flat[ordinalOffsetOfField(field)] = matrix4f.get(Integer.parseInt(String.valueOf(field.charAt(1))),
+                        Integer.parseInt(String.valueOf(field.charAt(2))));
+            }
+            return flat;
         }
     };
 
