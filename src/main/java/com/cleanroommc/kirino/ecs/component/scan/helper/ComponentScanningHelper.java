@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.FieldInfo;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.*;
@@ -81,8 +82,15 @@ public final class ComponentScanningHelper {
      * @param fieldRegistry The field registry
      * @return A list of component register plans
      */
-    public static List<ComponentRegisterPlan> scanComponentClasses(ComponentScanningEvent event, FieldRegistry fieldRegistry) {
-        List<String> scanPackageNames = getScanPackageNames(event);
+    @NonNull
+    public static List<@NonNull ComponentRegisterPlan> scanComponentClasses(
+            @NonNull ComponentScanningEvent event,
+            @NonNull FieldRegistry fieldRegistry) {
+
+        Preconditions.checkNotNull(event);
+        Preconditions.checkNotNull(fieldRegistry);
+
+        List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
                 scanPackageNames,
                 "com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature");
@@ -97,17 +105,25 @@ public final class ComponentScanningHelper {
         return generatePlans(components, fieldRegistry);
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<String> getScanPackageNames(ComponentScanningEvent event) {
-        MethodHandle scanPackageNamesGetter = ReflectionUtils.getFieldGetter(ComponentScanningEvent.class, "scanPackageNames", List.class);
-        Preconditions.checkNotNull(scanPackageNamesGetter);
+    private static final class MethodHolder {
+        private static final Delegate DELEGATE;
 
-        List<String> scanPackageNames;
-        try {
-            scanPackageNames = (List<String>) scanPackageNamesGetter.invokeExact(event);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+        static {
+            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(ComponentScanningEvent.class, "scanPackageNames", List.class));
+
+            Preconditions.checkNotNull(DELEGATE.scanPackageNamesGetter);
         }
-        return scanPackageNames;
+
+        @SuppressWarnings("unchecked")
+        static List<String> getScanPackageNames(ComponentScanningEvent event) {
+            try {
+                return (List<String>) DELEGATE.scanPackageNamesGetter.invokeExact(event);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(MethodHandle scanPackageNamesGetter) {
+        }
     }
 }

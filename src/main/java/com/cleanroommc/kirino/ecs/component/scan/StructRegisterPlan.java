@@ -7,6 +7,5 @@ public record StructRegisterPlan(
         String structName,
         String structClass,
         MemberLayout memberLayout,
-        StructDef structDef
-) {
+        StructDef structDef) {
 }

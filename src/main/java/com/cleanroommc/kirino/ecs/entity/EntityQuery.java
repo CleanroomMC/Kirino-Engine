@@ -21,7 +21,7 @@ public final class EntityQuery {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>component</code> is valid and registered</li>
      * </ul>
@@ -36,7 +36,7 @@ public final class EntityQuery {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>component</code> is valid and registered</li>
      * </ul>

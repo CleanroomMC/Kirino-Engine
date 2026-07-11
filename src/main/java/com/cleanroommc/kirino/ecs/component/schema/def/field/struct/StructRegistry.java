@@ -5,7 +5,6 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import com.cleanroommc.kirino.ecs.component.schema.reflect.AccessHandlePool;
 import com.google.common.base.Preconditions;
@@ -23,6 +22,8 @@ public class StructRegistry {
     private final Map<String, Integer> structUnitCountMap = new HashMap<>();
     private final Map<String, MemberLayout> classMemberLayoutMap = new HashMap<>();
 
+    private boolean lockRegistry = false;
+
     /**
      * This method is the entry point to register struct types.
      * <code>memberLayout.fieldNames</code> must match <code>structDef.fields</code> one by one.
@@ -32,46 +33,86 @@ public class StructRegistry {
      * @param memberLayout The metadata of the struct class
      * @param structDef The actual struct type layout
      */
-    public void registerStructType(String name, Class<?> clazz, MemberLayout memberLayout, StructDef structDef) {
+    public void registerStructType(
+            @NonNull String name,
+            @NonNull Class<?> clazz,
+            @NonNull MemberLayout memberLayout,
+            @NonNull StructDef structDef) {
+
+        Preconditions.checkState(!lockRegistry, "The registry is already locked!");
+        Preconditions.checkNotNull(name);
+        Preconditions.checkState(!structTypeNameClassMapping.containsKey(name),
+                "Struct \"%s\" is already registered.", name);
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkNotNull(memberLayout);
+        Preconditions.checkNotNull(structDef);
+
         structTypeNameClassMapping.put(name, clazz);
         structDefMap.put(name, structDef);
         classMemberLayoutMap.put(name, memberLayout);
     }
 
+    /**
+     * Register calls are no longer allowed after the lock call.
+     */
+    public void lock() {
+        Preconditions.checkState(!lockRegistry, "The registry is already locked!");
+
+        lockRegistry = true;
+    }
+
+    //<editor-fold desc="getters & queries">
+    @NonNull
     public ImmutableMap<String, StructDef> getStructDefMap() {
         return ImmutableMap.copyOf(structDefMap);
     }
 
-    public boolean structTypeExists(Class<?> clazz) {
+    public boolean structTypeExists(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        // BiMap itself has an inverse cache
         return structTypeNameClassMapping.inverse().containsKey(clazz);
     }
 
-    public boolean structTypeExists(String name) {
+    public boolean structTypeExists(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return structTypeNameClassMapping.containsKey(name);
     }
 
     @Nullable
-    public MemberLayout getClassMemberLayout(String name) {
+    public MemberLayout getClassMemberLayout(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return classMemberLayoutMap.get(name);
     }
 
     @Nullable
-    public String getStructTypeName(Class<?> clazz) {
+    public String getStructTypeName(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        // BiMap itself has an inverse cache
         return structTypeNameClassMapping.inverse().get(clazz);
     }
 
     @Nullable
-    public Class<?> getStructClass(String name) {
+    public Class<?> getStructClass(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return structTypeNameClassMapping.get(name);
     }
 
     @Nullable
-    public StructDef getStructDef(String name) {
+    public StructDef getStructDef(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return structDefMap.get(name);
     }
+    //</editor-fold>
 
     @SuppressWarnings("DataFlowIssue")
-    public int flattenedUnitCount(String name) {
+    public int flattenedUnitCount(@NonNull String name) {
+        Preconditions.checkNotNull(name);
         Preconditions.checkArgument(structTypeExists(name),
                 "Struct type %s doesn't exist.", name);
 
@@ -93,12 +134,38 @@ public class StructRegistry {
         return unitCount;
     }
 
+    private static String formatFieldAccessChain(String... fieldAccessChain) {
+        if (fieldAccessChain.length == 0) {
+            return "\"\"";
+        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("\".");
+        for (int i = 0; i < fieldAccessChain.length; i++) {
+            builder.append(fieldAccessChain[i]);
+            if (i != fieldAccessChain.length - 1) {
+                builder.append(".");
+            }
+        }
+        builder.append("\"");
+        return builder.toString();
+    }
+
+    /**
+     * @param name Struct name must be valid
+     * @param fieldAccessChain The field access chain must be valid
+     */
     @SuppressWarnings("DataFlowIssue")
-    public int getFieldOrdinal(String name, String... fieldAccessChain) {
+    public int getFieldOrdinal(@NonNull String name, @NonNull String @NonNull ... fieldAccessChain) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(fieldAccessChain);
+        for (String field : fieldAccessChain) {
+            Preconditions.checkNotNull(field);
+        }
         Preconditions.checkArgument(structTypeExists(name),
                 "Struct type %s doesn't exist.", name);
         Preconditions.checkArgument(fieldAccessChain.length != 0,
-                "The given \"fieldAccessChain\" must not be empty.");
+                "The given \"fieldAccessChain\"=%s must not be empty.",
+                formatFieldAccessChain(fieldAccessChain));
 
         MemberLayout memberLayout = getClassMemberLayout(name);
         int index = 0;
@@ -112,7 +179,8 @@ public class StructRegistry {
         }
 
         Preconditions.checkArgument(match,
-                "Can't find a field that matches the \"fieldAccessChain\".");
+                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.",
+                name, formatFieldAccessChain(fieldAccessChain));
 
         StructDef structDef = getStructDef(name);
 
@@ -125,154 +193,56 @@ public class StructRegistry {
             }
         }
 
+        FieldDef fieldDef = structDef.fields.get(index);
         // scalar field
-        if (structDef.fields.get(index).fieldKind == FieldKind.SCALAR) {
-            if (structDef.fields.get(index).scalarType == ScalarType.INT ||
-                    structDef.fields.get(index).scalarType == ScalarType.FLOAT ||
-                    structDef.fields.get(index).scalarType == ScalarType.BOOL) {
+        if (fieldDef.fieldKind == FieldKind.SCALAR) {
+            // non flattenable: early escape
+            if (fieldDef.scalarType.isSingular()) {
                 if (fieldAccessChain.length == 1) {
                     return ordinal;
                 } else {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" provides redundant terms after the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
+                            formatFieldAccessChain(fieldAccessChain), name));
                 }
+            // flattenable
             } else {
                 if (fieldAccessChain.length == 1) {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" can't reach the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
+                            formatFieldAccessChain(fieldAccessChain), name));
                 } else if (fieldAccessChain.length == 2) {
-                    // manual enumeration
-                    switch (structDef.fields.get(index).scalarType) {
-                        case VEC2 -> {
-                            switch (fieldAccessChain[1]) {
-                                case "x" -> {
-                                    return ordinal;
-                                }
-                                case "y" -> {
-                                    return ordinal + 1;
-                                }
-                            }
+                    int ordinalOffset = fieldDef.scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
+                    if (ordinalOffset == -1) {
+                        StringBuilder errorMsg = new StringBuilder();
+                        errorMsg.append(String.format("The given \"fieldAccessChain\"=%s is invalid (for component \"%s\").",
+                                formatFieldAccessChain(fieldAccessChain),
+                                name));
+                        errorMsg.append(String.format(" Failed to query the ordinal offset of \"%s\" in the scalar type \"%s\".",
+                                fieldAccessChain[1],
+                                fieldDef.scalarType));
+                        if (Arrays.stream(fieldDef.scalarType.fieldNames).noneMatch((str -> str.equals(fieldAccessChain[1])))) {
+                            errorMsg.append(String.format(" The scalar type \"%s\" doesn't contain field \"%s\".",
+                                    fieldDef.scalarType,
+                                    fieldAccessChain[1]));
                         }
-                        case VEC3 -> {
-                            switch (fieldAccessChain[1]) {
-                                case "x" -> {
-                                    return ordinal;
-                                }
-                                case "y" -> {
-                                    return ordinal + 1;
-                                }
-                                case "z" -> {
-                                    return ordinal + 2;
-                                }
-                            }
-                        }
-                        case VEC4 -> {
-                            switch (fieldAccessChain[1]) {
-                                case "x" -> {
-                                    return ordinal;
-                                }
-                                case "y" -> {
-                                    return ordinal + 1;
-                                }
-                                case "z" -> {
-                                    return ordinal + 2;
-                                }
-                                case "w" -> {
-                                    return ordinal + 3;
-                                }
-                            }
-                        }
-                        case MAT3 -> {
-                            switch (fieldAccessChain[1]) {
-                                case "m00" -> {
-                                    return ordinal;
-                                }
-                                case "m01" -> {
-                                    return ordinal + 1;
-                                }
-                                case "m02" -> {
-                                    return ordinal + 2;
-                                }
-                                case "m10" -> {
-                                    return ordinal + 3;
-                                }
-                                case "m11" -> {
-                                    return ordinal + 4;
-                                }
-                                case "m12" -> {
-                                    return ordinal + 5;
-                                }
-                                case "m20" -> {
-                                    return ordinal + 6;
-                                }
-                                case "m21" -> {
-                                    return ordinal + 7;
-                                }
-                                case "m22" -> {
-                                    return ordinal + 8;
-                                }
-                            }
-                        }
-                        case MAT4 -> {
-                            switch (fieldAccessChain[1]) {
-                                case "m00" -> {
-                                    return ordinal;
-                                }
-                                case "m01" -> {
-                                    return ordinal + 1;
-                                }
-                                case "m02" -> {
-                                    return ordinal + 2;
-                                }
-                                case "m03" -> {
-                                    return ordinal + 3;
-                                }
-                                case "m10" -> {
-                                    return ordinal + 4;
-                                }
-                                case "m11" -> {
-                                    return ordinal + 5;
-                                }
-                                case "m12" -> {
-                                    return ordinal + 6;
-                                }
-                                case "m13" -> {
-                                    return ordinal + 7;
-                                }
-                                case "m20" -> {
-                                    return ordinal + 8;
-                                }
-                                case "m21" -> {
-                                    return ordinal + 9;
-                                }
-                                case "m22" -> {
-                                    return ordinal + 10;
-                                }
-                                case "m23" -> {
-                                    return ordinal + 11;
-                                }
-                                case "m30" -> {
-                                    return ordinal + 12;
-                                }
-                                case "m31" -> {
-                                    return ordinal + 13;
-                                }
-                                case "m32" -> {
-                                    return ordinal + 14;
-                                }
-                                case "m33" -> {
-                                    return ordinal + 15;
-                                }
-                            }
-                        }
+                        throw new IllegalArgumentException(errorMsg.toString());
                     }
-                    throw new IllegalArgumentException("Can't find a field that matches the \"fieldAccessChain\".");
+                    return ordinal + ordinalOffset;
                 } else {
-                    throw new IllegalArgumentException("The given \"fieldAccessChain\" provides redundant terms after the deepest field.");
+                    throw new IllegalArgumentException(String.format(
+                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
+                            formatFieldAccessChain(fieldAccessChain),
+                            name));
                 }
             }
         // struct field
         } else {
             if (fieldAccessChain.length == 1) {
-                throw new IllegalArgumentException("The given \"fieldAccessChain\" can't reach the deepest field.");
+                throw new IllegalArgumentException(String.format(
+                        "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
+                        formatFieldAccessChain(fieldAccessChain),
+                        name));
             }
             String[] newFieldAccessChain = new String[fieldAccessChain.length - 1];
             System.arraycopy(fieldAccessChain, 1, newFieldAccessChain, 0, newFieldAccessChain.length);
@@ -284,9 +254,19 @@ public class StructRegistry {
 
     private final AccessHandlePool structAccessHandlePool = new AccessHandlePool();
 
+    /**
+     * @param name Struct name is not necessarily valid
+     * @param args Arguments must match the flattened struct one-by-one
+     */
     @Nullable
     @SuppressWarnings("DataFlowIssue")
-    public Object newStruct(String name, Object... args) {
+    public Object newStruct(@NonNull String name, @NonNull Object @NonNull ... args) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(args);
+        for (Object arg : args) {
+            Preconditions.checkNotNull(arg);
+        }
+
         if (!structTypeExists(name)) {
             return null;
         }
@@ -326,7 +306,7 @@ public class StructRegistry {
     // -----Struct Deconstruction-----
 
     @SuppressWarnings("DataFlowIssue")
-    public @NonNull Object[] flattenStruct(@NonNull Object structInstance) {
+    public @NonNull Object @NonNull [] flattenStruct(@NonNull Object structInstance) {
         Preconditions.checkNotNull(structInstance);
         Preconditions.checkArgument(structTypeExists(structInstance.getClass()),
                 "Struct class %s isn't registered.", structInstance.getClass().getName());

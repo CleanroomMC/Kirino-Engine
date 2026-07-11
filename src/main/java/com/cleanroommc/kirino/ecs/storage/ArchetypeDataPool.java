@@ -34,7 +34,7 @@ public abstract class ArchetypeDataPool {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      * </ul>
@@ -57,7 +57,7 @@ public abstract class ArchetypeDataPool {
     public abstract boolean containsEntity(int entityID);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The entity represented by <code>entityID</code> is in this {@link ArchetypeDataPool}</li>
      *     <li><code>component</code> is in {@link ArchetypeDataPool#components}</li>
@@ -71,7 +71,7 @@ public abstract class ArchetypeDataPool {
     public abstract CleanComponent getComponent(int entityID, Class<? extends CleanComponent> component);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The entity represented by <code>entityID</code> is in this {@link ArchetypeDataPool}</li>
      *     <li>The class of <code>component</code> is in {@link ArchetypeDataPool#components}</li>
@@ -83,7 +83,7 @@ public abstract class ArchetypeDataPool {
     public abstract void setComponent(int entityID, CleanComponent component);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The entity represented by <code>entityID</code> is in this {@link ArchetypeDataPool}</li>
      *     <li>Classes of <code>components</code> must correspond to and form a bijection with {@link ArchetypeDataPool#components}</li>
@@ -95,7 +95,7 @@ public abstract class ArchetypeDataPool {
     public abstract void addEntity(int entityID, List<CleanComponent> components);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The entity represented by <code>entityID</code> is in this {@link ArchetypeDataPool}</li>
      * </ul>
@@ -105,7 +105,7 @@ public abstract class ArchetypeDataPool {
     public abstract void removeEntity(int entityID);
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>component</code> is in {@link ArchetypeDataPool#components}</li>
      *     <li><code>fieldAccessChain</code> points to a valid field</li>
