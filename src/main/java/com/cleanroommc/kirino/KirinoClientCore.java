@@ -16,11 +16,11 @@ import com.cleanroommc.kirino.engine.render.core.debug.shader.ShaderDebugResourc
 import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
 import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
 import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
-import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
-import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.FreeTypeDebugHUD;
-import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.MeshletGpuTimelineHUD;
-import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.SimpleGuiDebugHUD;
-import com.cleanroommc.kirino.engine.render.usage.debug.hud.impl.SimpleTextDebugHUD;
+import com.cleanroommc.kirino.engine.render.usage.debug.data.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.FreeTypeDebugHUD;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.MeshletGpuTimelineHUD;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.SimpleGuiDebugHUD;
+import com.cleanroommc.kirino.engine.render.usage.debug.hud.SimpleTextDebugHUD;
 import com.cleanroommc.kirino.engine.render.usage.task.job.*;
 import com.cleanroommc.kirino.gl.GLDeviceInfo;
 import com.cleanroommc.kirino.utils.ReflectionUtils;

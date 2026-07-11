@@ -6,7 +6,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.builtin.GizmosPass;
-import com.cleanroommc.kirino.engine.render.usage.pipeline.pass.impl.OpaqueTerrainPass;
+import com.cleanroommc.kirino.engine.render.usage.pipeline.pass.OpaqueTerrainPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DownscalingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.UpscalingPass;

@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.usage.pipeline.pass.impl;
+package com.cleanroommc.kirino.engine.render.usage.pipeline.pass;
 
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;

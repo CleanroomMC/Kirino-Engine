@@ -14,9 +14,9 @@ public class GuiCommandStream {
     private int capacity;
     private ByteBuffer buffer;
 
-    GuiCommandStream(int capacity) {
-        this.capacity = capacity;
-        buffer = MemoryUtil.memAlloc(capacity);
+    GuiCommandStream(int initCapacity) {
+        capacity = initCapacity;
+        buffer = MemoryUtil.memAlloc(initCapacity);
 
         ShutdownManager.registerAsync(() -> {
             MemoryUtil.memFree(buffer);

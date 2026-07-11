@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.usage.debug.data.impl;
+package com.cleanroommc.kirino.engine.render.usage.debug.data;
 
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataService;
 import com.google.common.base.Preconditions;
