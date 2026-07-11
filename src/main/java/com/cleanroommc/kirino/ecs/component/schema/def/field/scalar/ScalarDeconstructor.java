@@ -12,10 +12,6 @@ public final class ScalarDeconstructor {
         Preconditions.checkNotNull(scalarType);
         Preconditions.checkNotNull(scalarInstance);
 
-        try {
-            return scalarType.flattenScalar(scalarInstance);
-        } catch (Exception e) {
-            throw new IllegalStateException("Invalid scalar type."); // impossible
-        }
+        return scalarType.flattenScalar(scalarInstance);
     }
 }

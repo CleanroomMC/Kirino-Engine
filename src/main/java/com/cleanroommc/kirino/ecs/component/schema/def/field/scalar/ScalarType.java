@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 import com.google.common.base.Preconditions;
 import org.joml.*;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -12,12 +13,16 @@ import java.util.Comparator;
  * A {@link ScalarType} can be flattened into {@link FlattenedScalarType} which is strictly a scalar mathematically.
  */
 public enum ScalarType implements Scalar {
-    BYTE{
+
+    BYTE(byte.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Byte b) {
                 return b;
             }
+
             return null;
         }
 
@@ -25,15 +30,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Byte,
                     "Expected a java.lang.Byte. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    SHORT {
+    SHORT(short.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Short s) {
                 return s;
             }
+
             return null;
         }
 
@@ -41,15 +50,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Short,
                     "Expected a java.lang.Short. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    INT {
+    INT(int.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Integer i) {
                 return i;
             }
+
             return null;
         }
 
@@ -57,15 +70,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Integer,
                     "Expected a java.lang.Integer. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    LONG {
+    LONG(long.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Long l) {
                 return l;
             }
+
             return null;
         }
 
@@ -73,15 +90,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Long,
                     "Expected a java.lang.Long. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    FLOAT {
+    FLOAT(float.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Float f) {
                 return f;
             }
+
             return null;
         }
 
@@ -89,15 +110,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Float,
                     "Expected a java.lang.Float. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    DOUBLE {
+    DOUBLE(double.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Double d) {
                 return d;
             }
+
             return null;
         }
 
@@ -105,15 +130,19 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Double,
                     "Expected a java.lang.Double. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    BOOL {
+    BOOL(boolean.class) {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 1 && args[0] instanceof Boolean b) {
                 return b;
             }
+
             return null;
         }
 
@@ -121,18 +150,22 @@ public enum ScalarType implements Scalar {
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
             Preconditions.checkArgument(scalarInstance instanceof Boolean,
                     "Expected a java.lang.Boolean. Got %s instead.", scalarInstance.getClass().getName());
+
             return new Object[]{scalarInstance};
         }
     },
-    VEC2("x", "y") {
+    VEC2(Vector2f.class, "x", "y") {
+
         @Override
+        @Nullable
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 2) {
-                if (args[ordinalOffsetOfField("x")] instanceof Float x
-                        && args[ordinalOffsetOfField("y")] instanceof Float y) {
-                    return new Vector2f(x,y);
+                if (args[ordinalOffsetOfField("x")] instanceof Float x &&
+                        args[ordinalOffsetOfField("y")] instanceof Float y) {
+                    return new Vector2f(x, y);
                 }
             }
+
             return null;
         }
 
@@ -148,16 +181,19 @@ public enum ScalarType implements Scalar {
             return flat;
         }
     },
-    VEC3("x", "y", "z") {
+    VEC3(Vector3f.class, "x", "y", "z") {
+
+        @Nullable
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 3) {
-                if (args[ordinalOffsetOfField("x")] instanceof Float x
-                        && args[ordinalOffsetOfField("y")] instanceof Float y
-                        && args[ordinalOffsetOfField("z")] instanceof Float z) {
-                    return new Vector3f(x,y,z);
+                if (args[ordinalOffsetOfField("x")] instanceof Float x &&
+                        args[ordinalOffsetOfField("y")] instanceof Float y &&
+                        args[ordinalOffsetOfField("z")] instanceof Float z) {
+                    return new Vector3f(x, y, z);
                 }
             }
+
             return null;
         }
 
@@ -174,17 +210,20 @@ public enum ScalarType implements Scalar {
             return flat;
         }
     },
-    VEC4("x", "y", "z", "w") {
+    VEC4(Vector4f.class, "x", "y", "z", "w") {
+
+        @Nullable
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 4) {
-                if (args[ordinalOffsetOfField("x")] instanceof Float x
-                        && args[ordinalOffsetOfField("y")] instanceof Float y
-                        && args[ordinalOffsetOfField("z")] instanceof Float z
-                        && args[ordinalOffsetOfField("w")] instanceof Float w) {
-                    return new Vector4f(x,y,z,w);
+                if (args[ordinalOffsetOfField("x")] instanceof Float x &&
+                        args[ordinalOffsetOfField("y")] instanceof Float y &&
+                        args[ordinalOffsetOfField("z")] instanceof Float z &&
+                        args[ordinalOffsetOfField("w")] instanceof Float w) {
+                    return new Vector4f(x, y, z, w);
                 }
             }
+
             return null;
         }
 
@@ -202,14 +241,17 @@ public enum ScalarType implements Scalar {
             return flat;
         }
     },
-    MAT3("m00", "m01", "m02",
-                "m10", "m11", "m12",
-                "m20", "m21", "m22") {
+    MAT3(Matrix3f.class,
+            "m00", "m01", "m02",
+            "m10", "m11", "m12",
+            "m20", "m21", "m22") {
+
+        @Nullable
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 9) {
-                for (int i = 0; i < args.length; i++) {
-                    if (!(args[i] instanceof Float)) {
+                for (Object arg : args) {
+                    if (!(arg instanceof Float)) {
                         return null;
                     }
                 }
@@ -235,21 +277,25 @@ public enum ScalarType implements Scalar {
             Object[] flat = new Object[9];
             Matrix3f matrix3f = (Matrix3f) scalarInstance;
             for (String field : fieldNames) {
-                flat[ordinalOffsetOfField(field)] = matrix3f.get(Integer.parseInt(String.valueOf(field.charAt(1))),
+                flat[ordinalOffsetOfField(field)] = matrix3f.get(
+                        Integer.parseInt(String.valueOf(field.charAt(1))),
                         Integer.parseInt(String.valueOf(field.charAt(2))));
             }
             return flat;
         }
     },
-    MAT4("m00", "m01", "m02", "m03",
-                "m10", "m11", "m12", "m13",
-                "m20", "m21", "m22", "m23",
-                "m30", "m31", "m32", "m33") {
+    MAT4(Matrix4f.class,
+            "m00", "m01", "m02", "m03",
+            "m10", "m11", "m12", "m13",
+            "m20", "m21", "m22", "m23",
+            "m30", "m31", "m32", "m33") {
+
+        @Nullable
         @Override
         public Object newScalar(@NonNull Object @NonNull ... args) {
             if (args.length == 16) {
-                for (int i = 0; i < args.length; i++) {
-                    if (!(args[i] instanceof Float)) {
+                for (Object arg : args) {
+                    if (!(arg instanceof Float)) {
                         return null;
                     }
                 }
@@ -282,17 +328,21 @@ public enum ScalarType implements Scalar {
             Object[] flat = new Object[16];
             Matrix4f matrix4f = (Matrix4f) scalarInstance;
             for (String field : fieldNames) {
-                flat[ordinalOffsetOfField(field)] = matrix4f.get(Integer.parseInt(String.valueOf(field.charAt(1))),
+                flat[ordinalOffsetOfField(field)] = matrix4f.get(
+                        Integer.parseInt(String.valueOf(field.charAt(1))),
                         Integer.parseInt(String.valueOf(field.charAt(2))));
             }
             return flat;
         }
     };
 
+    public final Class<?> clazz;
     public final String[] fieldNames;
     private final Integer[] ordinals;
 
-    ScalarType(String... fields) {
+    ScalarType(Class<?> clazz, String... fields) {
+        this.clazz = clazz;
+
         if (fields.length == 0) {
             fieldNames = null;
             ordinals = null;
@@ -321,6 +371,8 @@ public enum ScalarType implements Scalar {
     /**
      * If the query fails, it returns <code>-1</code>.
      * Querying the ordinal offset of a singular type automatically fails.
+     *
+     * <p>Note: This mapping is strictly bijective.</p>
      */
     public int ordinalOffsetOfField(@NonNull String field) {
         Preconditions.checkNotNull(field);
