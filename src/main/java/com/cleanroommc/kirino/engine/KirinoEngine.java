@@ -208,8 +208,8 @@ public class KirinoEngine {
 
         framePhaseFsm.next();
 
-        headlessWorld.run(phase);
-        graphicsWorld.run(phase);
+        headlessWorld.run(phase, !afterFirstPrepare);
+        graphicsWorld.run(phase, !afterFirstPrepare);
 
         if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);
@@ -244,7 +244,7 @@ public class KirinoEngine {
             firstPrepareFinished = true;
         }
 
-        headlessWorld.run(phase);
+        headlessWorld.run(phase, !afterFirstPrepare);
 
         if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);

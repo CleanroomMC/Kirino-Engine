@@ -161,7 +161,7 @@ public final class GraphicsRuntimeBundleInit {
                 context.shaderi().defaultShaderAnalyzer);
 
         KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new GLViolationPolicy());
-        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("gl"));
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
 
         storage.put(context.graphicsb().renderer, renderer);
         storage.put(context.graphicsb().stagingBufferManager, stagingBufferManager);

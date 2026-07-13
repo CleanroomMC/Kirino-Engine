@@ -93,7 +93,7 @@ public class AnalyticalWorldViewImpl implements AnalyticalWorldView {
     }
 
     @Override
-    public void run(@NonNull FramePhase phase) {
+    public void run(@NonNull FramePhase phase, boolean firstPrepare) {
         Map<FramePhaseTiming, List<Consumer<WorldContext<Headless>>>> map = callbacks.get(phase);
         if (map != null) {
             List<Consumer<WorldContext<Headless>>> list = map.get(FramePhaseTiming.BEFORE);

@@ -100,13 +100,13 @@ public final class KirinoClientCore {
      *
      * <hr>
      * <p><b><code>RenderGlobal</code> Patch</b>:</p>
-     * <pre><code>
+     * <pre>{@code
      * public void notifyBlockUpdate(World worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags)
      * {
      *     ...
      *     com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyBlockUpdate(i, j, k, oldState, newState);
      * }
-     * </code></pre>
+     * }</pre>
      *
      * <br>
      * <hr>
@@ -131,13 +131,13 @@ public final class KirinoClientCore {
      *
      * <hr>
      * <p><b><code>RenderGlobal</code> Patch</b>:</p>
-     * <pre><code>
+     * <pre>{@code
      * public void notifyLightSet(BlockPos pos)
      * {
      *     ...
      *     com.cleanroommc.kirino.KirinoCore.RenderGlobal$notifyLightUpdate(pos.getX(), pos.getY(), pos.getZ());
      * }
-     * </code></pre>
+     * }</pre>
      *
      * <br>
      * <hr>
@@ -180,7 +180,7 @@ public final class KirinoClientCore {
      *
      * <hr>
      * <p><b><code>EntityRenderer</code> Patch</b>:</p>
-     * <pre><code>
+     * <pre>{@code
      * public void updateCameraAndRender(float partialTicks, long nanoTime)
      * {
      *     ...
@@ -196,7 +196,7 @@ public final class KirinoClientCore {
      *     }
      *     ...
      * }
-     * </code></pre>
+     * }</pre>
      *
      * <br>
      * <hr>
@@ -505,7 +505,8 @@ public final class KirinoClientCore {
             LOGGER.warn("OpenGL 4.6 not supported. Marking \"RENDER_UNSUPPORTED\"=true.");
         }
 
-        // it's a bad pratice to access resources like that, but i'd like to make an exception for debug services
+        // it's a bad practice to access resources like that
+        // debug service is the only exception
         DEBUG_SERVICE.register(RenderStatsFrame.class, new RenderStatsFrame(MethodHolder2.getGraphicsRuntimeBundle(KIRINO_ENGINE).debugHudManager));
         DEBUG_SERVICE.register(FpsHistory.class, new FpsHistory());
         DEBUG_SERVICE.register(MeshletGpuTimeline.class, new MeshletGpuTimeline());
