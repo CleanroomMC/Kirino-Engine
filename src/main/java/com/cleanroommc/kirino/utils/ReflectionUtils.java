@@ -26,7 +26,7 @@ import java.util.Optional;
  *
  * <hr>
  * <p>Example:<p/>
- * <pre><code>
+ * <pre>{@code
  * private static class MethodHolder {
  *     static final Delegate DELEGATE;
  *
@@ -47,7 +47,7 @@ import java.util.Optional;
  *     record Delegate(MethodHandle freeTypeManagerCtor) {
  *     }
  * }
- * </code></pre>
+ * }</pre>
  * <br>
  * <hr>
  *

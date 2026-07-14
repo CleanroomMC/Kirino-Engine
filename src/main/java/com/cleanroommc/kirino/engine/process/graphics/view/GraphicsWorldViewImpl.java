@@ -5,14 +5,14 @@ import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.*;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
-import com.cleanroommc.kirino.engine.render.core.pipeline.GLStateBackup;
+import com.cleanroommc.kirino.engine.render.core.gl.semantic.GLKnowledgeKeys;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
-import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
+import com.cleanroommc.kirino.engine.render.usage.McIntegrationBundle;
+import com.cleanroommc.kirino.engine.render.usage.McSceneViewState;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
@@ -20,12 +20,11 @@ import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,47 +32,55 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class GraphicsWorldViewImpl implements GraphicsWorldView {
+
+    //<editor-fold desc="boilerplate">
     private final CleanECSRuntime ecs;
     private final RenderStructure render;
     private final RenderExtensions extensions;
     private final EventBus eventBus;
     private final Logger logger;
     private final ResourceStorage storage;
-    private final BootstrapResources bootstrapResources;
-    private final GraphicsRuntimeServices graphicsRuntimeServices;
-    private final MinecraftIntegration minecraftIntegration;
-    private final MinecraftAssetProviders minecraftAssetProviders;
-    private final SceneViewState sceneViewState;
+    private final BuiltinShaderBundle builtinShaderBundle;
+    private final GraphicsRuntimeBundle graphicsRuntimeBundle;
+    private final McIntegrationBundle mcIntegrationBundle;
+    private final McSceneViewState mcSceneViewState;
     private final ShaderIntrospection shaderIntrospection;
 
-    private final Map<FramePhase,
-            Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>>> callbacks =
-            new Object2ObjectOpenHashMap<>();
-
     public GraphicsWorldViewImpl(
-            CleanECSRuntime ecs,
-            RenderStructure render,
-            RenderExtensions extensions,
-            EventBus eventBus,
-            Logger logger,
-            ResourceStorage storage,
-            BootstrapResources bootstrapResources,
-            GraphicsRuntimeServices graphicsRuntimeServices,
-            MinecraftIntegration minecraftIntegration,
-            MinecraftAssetProviders minecraftAssetProviders,
-            SceneViewState sceneViewState,
-            ShaderIntrospection shaderIntrospection) {
+            @NonNull CleanECSRuntime ecs,
+            @NonNull RenderStructure render,
+            @NonNull RenderExtensions extensions,
+            @NonNull EventBus eventBus,
+            @NonNull Logger logger,
+            @NonNull ResourceStorage storage,
+            @NonNull BuiltinShaderBundle builtinShaderBundle,
+            @NonNull GraphicsRuntimeBundle graphicsRuntimeBundle,
+            @NonNull McIntegrationBundle mcIntegrationBundle,
+            @NonNull McSceneViewState mcSceneViewState,
+            @NonNull ShaderIntrospection shaderIntrospection) {
+
+        Preconditions.checkNotNull(ecs);
+        Preconditions.checkNotNull(render);
+        Preconditions.checkNotNull(extensions);
+        Preconditions.checkNotNull(eventBus);
+        Preconditions.checkNotNull(logger);
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(builtinShaderBundle);
+        Preconditions.checkNotNull(graphicsRuntimeBundle);
+        Preconditions.checkNotNull(mcIntegrationBundle);
+        Preconditions.checkNotNull(mcSceneViewState);
+        Preconditions.checkNotNull(shaderIntrospection);
+
         this.ecs = ecs;
         this.render = render;
         this.extensions = extensions;
         this.eventBus = eventBus;
         this.logger = logger;
         this.storage = storage;
-        this.bootstrapResources = bootstrapResources;
-        this.graphicsRuntimeServices = graphicsRuntimeServices;
-        this.minecraftIntegration = minecraftIntegration;
-        this.minecraftAssetProviders = minecraftAssetProviders;
-        this.sceneViewState = sceneViewState;
+        this.builtinShaderBundle = builtinShaderBundle;
+        this.graphicsRuntimeBundle = graphicsRuntimeBundle;
+        this.mcIntegrationBundle = mcIntegrationBundle;
+        this.mcSceneViewState = mcSceneViewState;
         this.shaderIntrospection = shaderIntrospection;
     }
 
@@ -115,42 +122,53 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     @NonNull
     @Override
-    public ShaderIntrospection shaderIntrospection() {
+    public ShaderIntrospection shaderi() {
         return shaderIntrospection;
     }
 
     @NonNull
     @Override
-    public BootstrapResources bootstrapResources() {
-        return bootstrapResources;
+    public BuiltinShaderBundle shaderb() {
+        return builtinShaderBundle;
     }
 
     @NonNull
     @Override
-    public GraphicsRuntimeServices graphicsRuntimeServices() {
-        return graphicsRuntimeServices;
+    public GraphicsRuntimeBundle graphicsb() {
+        return graphicsRuntimeBundle;
     }
 
     @NonNull
     @Override
-    public MinecraftIntegration minecraftIntegration() {
-        return minecraftIntegration;
+    public McIntegrationBundle mcib() {
+        return mcIntegrationBundle;
     }
 
     @NonNull
     @Override
-    public MinecraftAssetProviders minecraftAssetProviders() {
-        return minecraftAssetProviders;
+    public McSceneViewState mcscene() {
+        return mcSceneViewState;
     }
 
-    @NonNull
-    @Override
-    public SceneViewState sceneViewState() {
-        return sceneViewState;
-    }
+    private final Map<FramePhase,
+            Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>>> callbacks =
+            new Object2ObjectOpenHashMap<>();
 
     @Override
-    public void run(@NonNull FramePhase phase) {
+    public void run(@NonNull FramePhase phase, boolean firstPrepare) {
+        KnowledgeRuntime glKnowledge = firstPrepare ? null : storage.get(graphicsb().glKnowledge);
+
+        if (!firstPrepare) {
+            switch (phase) {
+                case PRE_UPDATE -> enterPreUpdate(glKnowledge);
+                case UPDATE -> enterUpdate(glKnowledge);
+                case POST_UPDATE -> enterPostUpdate(glKnowledge);
+                case RENDER_OPAQUE -> enterRenderOpaque(glKnowledge);
+                case RENDER_TRANSPARENT -> enterRenderTransparent(glKnowledge);
+                case RENDER_OVERLAY -> enterRenderOverlay(glKnowledge);
+            }
+        }
+
         Map<FramePhaseTiming, List<Consumer<WorldContext<Graphics>>>> map = callbacks.get(phase);
         if (map != null) {
             List<Consumer<WorldContext<Graphics>>> list = map.get(FramePhaseTiming.BEFORE);
@@ -161,86 +179,14 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
             }
         }
 
-        switch (phase) {
-            case PRE_UPDATE -> {
-                // only read states once to prevent huge amount of pipeline stalls
-                GLStateBackup stateBackup = storage.get(graphicsRuntimeServices.stateBackup);
-                if (!stateBackup.isStored()) {
-                    stateBackup.storeStates();
-                }
-
-                FrameFinalizer frameFinalizer = storage.get(bootstrapResources.frameFinalizer);
-                frameFinalizer.updateResolution();
-
-                // current render target: main framebuffer
-                frameFinalizer.bindMainFramebuffer(true);
-                GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
-            }
-            case UPDATE -> {
-                storage.get(graphicsRuntimeServices.graphicResourceManager).runStaging();
-                sceneViewState.scene.tryUpdateWorld(Minecraft.getMinecraft().world);
-                sceneViewState.scene.update();
-            }
-            case POST_UPDATE -> {
-                GLStateBackup stateBackup = storage.get(graphicsRuntimeServices.stateBackup);
-                FrameFinalizer frameFinalizer = storage.get(bootstrapResources.frameFinalizer);
-
-                frameFinalizer.finalizeFramebuffer(storage);
-
-                // current render target: minecraft framebuffer
-                frameFinalizer.bindMinecraftFramebuffer(true);
-
-                // reset everything to prevent any unexpected behavior
-                stateBackup.restoreStates();
-                GL30.glBindVertexArray(0);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
-                GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-
-                HighLevelDC.nextGen();
-                LowLevelDC.nextGen();
-
-                // set up fixed-func overlay rendering
-                ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-                GL11.glMatrixMode(GL11.GL_PROJECTION);
-                GL11.glLoadIdentity();
-                GL11.glOrtho(0, resolution.getScaledWidth_double(), resolution.getScaledHeight_double(), 0, -1, 1);
-                GL11.glMatrixMode(GL11.GL_MODELVIEW);
-                GL11.glLoadIdentity();
-            }
-            case RENDER_OPAQUE -> {
-                // test
-                glStateBackup.storeStates();
-                int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-
-//                if (sceneViewState.scene.isMeshletRenderReady()) {
-//                    rs().terrainGpuPass.render(
-//                            storage,
-//                            sceneViewState.camera,
-//                            null,
-//                            new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
-//                }
-//                rs().chunkCpuPass.render(sceneViewState.camera);
-
-                glStateBackup.restoreStates();
-                GL30.glBindVertexArray(0);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-                GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-            }
-            case RENDER_TRANSPARENT -> {
-                // test
-                glStateBackup.storeStates();
-                int vbo = GL11.glGetInteger(GL15.GL_ARRAY_BUFFER_BINDING);
-
-                rs().gizmosPass.render(storage, sceneViewState.camera);
-
-                glStateBackup.restoreStates();
-                GL30.glBindVertexArray(0);
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo);
-                GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
-            }
-            case RENDER_OVERLAY -> {
-                InGameDebugHUDManager debugHudManager = storage.get(graphicsRuntimeServices.debugHudManager);
-                debugHudManager.updateAndRenderIfNeeded();
+        if (!firstPrepare) {
+            switch (phase) {
+                case PRE_UPDATE -> preUpdate(glKnowledge);
+                case UPDATE -> update(glKnowledge);
+                case POST_UPDATE -> postUpdate(glKnowledge);
+                case RENDER_OPAQUE -> renderOpaque(glKnowledge);
+                case RENDER_TRANSPARENT -> renderTransparent(glKnowledge);
+                case RENDER_OVERLAY -> renderOverlay(glKnowledge);
             }
         }
 
@@ -252,10 +198,18 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
                 }
             }
         }
-    }
 
-    // test
-    private GLStateBackup glStateBackup = new GLStateBackup();
+        if (!firstPrepare) {
+            switch (phase) {
+                case PRE_UPDATE -> exitPreUpdate(glKnowledge);
+                case UPDATE -> exitUpdate(glKnowledge);
+                case POST_UPDATE -> exitPostUpdate(glKnowledge);
+                case RENDER_OPAQUE -> exitRenderOpaque(glKnowledge);
+                case RENDER_TRANSPARENT -> exitRenderTransparent(glKnowledge);
+                case RENDER_OVERLAY -> exitRenderOverlay(glKnowledge);
+            }
+        }
+    }
 
     @Override
     public void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<Graphics>> consumer) {
@@ -267,4 +221,296 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         List<Consumer<WorldContext<Graphics>>> list = map.computeIfAbsent(timing, k -> new ArrayList<>());
         list.add(consumer);
     }
+    //</editor-fold>
+
+    private static void resetCommonBindings() {
+        GL20.glUseProgram(0);
+        GL30.glBindVertexArray(0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+        GL15.glBindBuffer(GL40.GL_DRAW_INDIRECT_BUFFER, 0);
+    }
+
+    //<editor-fold desc="enter phase">
+    private void enterPreUpdate(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.updateResolution();
+
+        // current render target: main framebuffer
+        frameFinalizer.bindMainFramebuffer(true);
+
+        GlStateManager.colorMask(true, true, true, true);
+        GlStateManager.depthMask(true);
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        GL11.glDisable(GL11.GL_STENCIL_TEST);
+        GL11.glStencilMask(0xFF);
+        GL11.glClearStencil(0);
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.COLOR_MASK_R, true);
+            cp.know(GLKnowledgeKeys.COLOR_MASK_G, true);
+            cp.know(GLKnowledgeKeys.COLOR_MASK_B, true);
+            cp.know(GLKnowledgeKeys.COLOR_MASK_A, true);
+            cp.know(GLKnowledgeKeys.DEPTH_MASK, true);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+
+    private void enterUpdate(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.bindMainFramebuffer(true);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+
+    private void enterRenderOpaque(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.bindMainFramebuffer(true);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+
+    private void enterRenderTransparent(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.bindMainFramebuffer(true);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+
+    private void enterPostUpdate(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.bindMainFramebuffer(true);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+
+    private void enterRenderOverlay(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+        frameFinalizer.bindMinecraftFramebuffer(true);
+
+        resetCommonBindings();
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
+            cp.know(GLKnowledgeKeys.VAO, 0);
+            cp.know(GLKnowledgeKeys.VBO, 0);
+            cp.know(GLKnowledgeKeys.EBO, 0);
+            cp.know(GLKnowledgeKeys.IDB, 0);
+        });
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="exit phase">
+    private void exitPreUpdate(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+    }
+
+    private void exitUpdate(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+    }
+
+    private void exitRenderOpaque(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+
+        // for compatibility purpose only:
+        // apply hardcoded states to restore a Minecraft baseline
+        resetCommonBindings();
+        GL11.glDisable(GL11.GL_BLEND);
+        GL14.glBlendEquation(GL14.GL_FUNC_ADD);
+        GL14.glBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+        GL11.glColorMask(true, true, true, true);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthFunc(GL11.GL_LEQUAL);
+        GL11.glDepthMask(true);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glCullFace(GL11.GL_BACK);
+        GL11.glFrontFace(GL11.GL_CCW);
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+        GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
+    }
+
+    private void exitRenderTransparent(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+
+        // for compatibility purpose only:
+        // apply hardcoded states to restore a Minecraft baseline
+        resetCommonBindings();
+        GL11.glEnable(GL11.GL_BLEND);
+        GL20.glBlendEquationSeparate(
+                GL14.GL_FUNC_ADD,
+                GL14.GL_FUNC_ADD);
+        GL14.glBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+        GL11.glColorMask(true, true, true, true);
+        GL11.glEnable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthFunc(GL11.GL_LEQUAL);
+        GL11.glDepthMask(false);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glCullFace(GL11.GL_BACK);
+        GL11.glFrontFace(GL11.GL_CCW);
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+        GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
+    }
+
+    private void exitPostUpdate(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+
+        // for compatibility purpose only:
+        // apply hardcoded states to restore a Minecraft baseline
+        resetCommonBindings();
+        GL11.glColorMask(true, true, true, true);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(true);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL20.glBlendEquationSeparate(
+                GL14.GL_FUNC_ADD,
+                GL14.GL_FUNC_ADD);
+        GL14.glBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+        GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
+        GL11.glFrontFace(GL11.GL_CCW);
+        GL30.glBindVertexArray(0);
+        GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        // set up fixed-func overlay rendering
+        ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glLoadIdentity();
+        GL11.glOrtho(0, resolution.getScaledWidth_double(), resolution.getScaledHeight_double(), 0, -1, 1);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+        GL11.glLoadIdentity();
+    }
+
+    private void exitRenderOverlay(KnowledgeRuntime glKnowledge) {
+        glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+
+        // for compatibility purpose only:
+        // apply hardcoded states to restore a Minecraft baseline
+        resetCommonBindings();
+        GL11.glColorMask(true, true, true, true);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(true);
+        GL11.glDisable(GL11.GL_CULL_FACE);
+        GL11.glEnable(GL11.GL_BLEND);
+        GL20.glBlendEquationSeparate(
+                GL14.GL_FUNC_ADD,
+                GL14.GL_FUNC_ADD);
+        GL14.glBlendFuncSeparate(
+                GL11.GL_SRC_ALPHA,
+                GL11.GL_ONE_MINUS_SRC_ALPHA,
+                GL11.GL_ONE,
+                GL11.GL_ZERO);
+        GL11.glPolygonMode(GL11.GL_FRONT_AND_BACK, GL11.GL_FILL);
+        GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
+        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="phase logic">
+    private void preUpdate(KnowledgeRuntime glKnowledge) {
+
+    }
+
+    private void update(KnowledgeRuntime glKnowledge) {
+        storage().get(graphicsb().graphicResourceManager).runStaging();
+        mcscene().scene.tryUpdateWorld(Minecraft.getMinecraft().world);
+        mcscene().scene.update();
+    }
+
+    private void renderOpaque(KnowledgeRuntime glKnowledge) {
+//        if (sceneViewState.scene.isMeshletRenderReady()) {
+//            rs().terrainGpuPass.render(
+//                    storage,
+//                    sceneViewState.camera,
+//                    null,
+//                    new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
+//        }
+//        rs().chunkCpuPass.render(sceneViewState.camera);
+    }
+
+    private void renderTransparent(KnowledgeRuntime glKnowledge) {
+        rs().gizmosPassDesc.acquire().render(storage(), glKnowledge, mcscene().camera);
+    }
+
+    private void postUpdate(KnowledgeRuntime glKnowledge) {
+        FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
+
+        frameFinalizer.finalizeFramebuffer(storage(), glKnowledge);
+
+        // current render target: minecraft framebuffer
+        frameFinalizer.bindMinecraftFramebuffer(true);
+
+        HighLevelDC.nextGen();
+        LowLevelDC.nextGen();
+    }
+
+    private void renderOverlay(KnowledgeRuntime glKnowledge) {
+        InGameDebugHUDManager debugHudManager = storage().get(graphicsb().debugHudManager);
+        debugHudManager.updateAndRenderIfNeeded(); // it will capture GL states and restore when enabled
+    }
+    //</editor-fold>
 }

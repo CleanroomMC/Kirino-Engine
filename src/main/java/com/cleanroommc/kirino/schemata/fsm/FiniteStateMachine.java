@@ -47,12 +47,12 @@ public interface FiniteStateMachine<S, I> {
     /**
      * Sets the state to the initial state and clears the backlog
      *
-     * @implNote <pre><code>
+     * @implNote <pre>{@code
      * if (!stack.isEmpty()) {
      *     state = stack.pollLast().state();
      *     stack.clear();
      * }
-     * </code></pre>
+     * }</pre>
      */
     void reset();
 

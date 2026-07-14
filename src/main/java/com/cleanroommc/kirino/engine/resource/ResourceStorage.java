@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 
 public final class ResourceStorage {
+
     private final Int2ObjectMap<Object> storage = new Int2ObjectOpenHashMap<>();
     private final Int2BooleanMap resourceSealed = new Int2BooleanOpenHashMap();
 
@@ -66,7 +67,7 @@ public final class ResourceStorage {
 
         T result = (T) storage.get(slot.id());
         Preconditions.checkNotNull(result,
-                "Can't resolve resource \"%s\".", slot.type().getName());
+                "Can't resolve the resource \"%s\".", slot.toString());
 
         return result;
     }

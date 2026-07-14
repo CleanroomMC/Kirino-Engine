@@ -1,9 +1,9 @@
-package com.cleanroommc.kirino.engine.render.usage.debug.hud.impl;
+package com.cleanroommc.kirino.engine.render.usage.debug.hud;
 
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
-import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.data.MeshletGpuTimeline;
 import org.joml.Vector2f;
 import org.jspecify.annotations.NonNull;
 import org.lwjglx.input.Keyboard;

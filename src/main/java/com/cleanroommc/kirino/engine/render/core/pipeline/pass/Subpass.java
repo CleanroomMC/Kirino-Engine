@@ -11,7 +11,9 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -32,11 +34,18 @@ public abstract class Subpass {
 
     public final void render(
             @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
             @NonNull DrawQueue drawQueue,
             @Nullable Camera camera,
             @NonNull GraphicResourceManager graphicResourceManager,
             @NonNull IndirectDrawBufferGenerator idbGenerator,
             @Nullable Object payload) {
+
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(glKnowledge);
+        Preconditions.checkNotNull(drawQueue);
+        Preconditions.checkNotNull(graphicResourceManager);
+        Preconditions.checkNotNull(idbGenerator);
 
         DrawQueue dq = drawQueue;
         if (hintCompileDrawQueue()) {
@@ -47,7 +56,7 @@ public abstract class Subpass {
         }
         dq = dq.sort();
 
-        storage.get(renderer).bindPipeline(pso);
+        storage.get(renderer).bindPipeline(pso, glKnowledge);
         updateShaderProgram(storage.get(pso.shaderProgram()), camera, payload);
 
         execute(storage, dq, payload);
@@ -62,7 +71,7 @@ public abstract class Subpass {
     protected abstract void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload);
 
     /**
-     * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(DrawQueue, Object)}.
+     * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(ResourceStorage, DrawQueue, Object)}}.
      *
      * @see DrawQueue#compile(GraphicResourceManager)
      * @return The hint
@@ -70,7 +79,7 @@ public abstract class Subpass {
     protected abstract boolean hintCompileDrawQueue();
 
     /**
-     * Whether to run {@link DrawQueue#simplify(IndirectDrawBufferGenerator)} before {@link #execute(DrawQueue, Object)}.
+     * Whether to run {@link DrawQueue#simplify(IndirectDrawBufferGenerator)} before {@link #execute(ResourceStorage, DrawQueue, Object)}.
      *
      * @see DrawQueue#simplify(IndirectDrawBufferGenerator)
      * @return The hint

@@ -3,19 +3,19 @@ package com.cleanroommc.kirino;
 import com.cleanroommc.kirino.engine.render.core.debug.data.DebugDataHandle;
 import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.FpsHistory;
 import com.cleanroommc.kirino.engine.render.core.debug.data.builtin.RenderStatsFrame;
-import com.cleanroommc.kirino.engine.render.usage.debug.data.impl.MeshletGpuTimeline;
+import com.cleanroommc.kirino.engine.render.usage.debug.data.MeshletGpuTimeline;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
 /**
- * This helper class is made possible by {@link KirinoClientCore#DEBUG_SERVICE}, and
+ * This helper class depends on {@link KirinoClientCore#DEBUG_SERVICE}, and
  * the purpose is to make {@link KirinoClientCore#DEBUG_SERVICE} calls shorter and simpler.
  * You are free to access {@link KirinoClientCore#DEBUG_SERVICE} directly as an alternative route.
  *
  * <p>Note: This class is client side only! You can access the class anywhere but only
  * access the methods on client side.</p>
  *
- * <p>Note: Must access the methods after {@link KirinoClientCore#init()} where
+ * <p>Note: Must only access the methods after {@link KirinoClientCore#init()} where
  * debug services are registered. Accessing methods too early will cause NPE.</p>
  */
 public final class KirinoClientDebug {

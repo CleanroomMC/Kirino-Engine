@@ -3,7 +3,8 @@ package com.cleanroommc.kirino.engine.render.core;
 import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
 
-public class ShaderIntrospection {
+public final class ShaderIntrospection {
+
     public final GLSLRegistry glslRegistry;
     public final DefaultShaderAnalyzer defaultShaderAnalyzer;
 
