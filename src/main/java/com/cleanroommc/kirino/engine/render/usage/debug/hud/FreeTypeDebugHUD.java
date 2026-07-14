@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.engine.render.usage.debug.hud.impl;
+package com.cleanroommc.kirino.engine.render.usage.debug.hud;
 
 import com.cleanroommc.kirino.ImmediateClientServices;
 import com.cleanroommc.kirino.engine.ShutdownManager;

@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.core.framebuffer;
 
 import net.minecraft.client.Minecraft;
+import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiConsumer;
 
@@ -21,24 +22,37 @@ public final class ResolutionContainer {
         return height;
     }
 
-    public ResolutionContainer(BiConsumer<Integer, Integer> resizeCallback, BiConsumer<Integer, Integer> synchronizeCallback) {
+    public ResolutionContainer(
+            @Nullable BiConsumer<Integer, Integer> resizeCallback,
+            @Nullable BiConsumer<Integer, Integer> synchronizeCallback) {
+
         width = MINECRAFT.displayWidth;
         height = MINECRAFT.displayHeight;
         this.resizeCallback = resizeCallback;
         this.synchronizeCallback = synchronizeCallback;
     }
 
+    /**
+     * Update screen resolution if needed and trigger {@link #resizeCallback} if needed.
+     */
     public void update() {
         if (width != MINECRAFT.displayWidth || height != MINECRAFT.displayHeight) {
             width = MINECRAFT.displayWidth;
             height = MINECRAFT.displayHeight;
-            resizeCallback.accept(width, height);
+            if (resizeCallback != null) {
+                resizeCallback.accept(width, height);
+            }
         }
     }
 
+    /**
+     * Force update screen resolution (even if there's no diff) and trigger {@link #synchronizeCallback} if needed.
+     */
     public void synchronize() {
         width = MINECRAFT.displayWidth;
         height = MINECRAFT.displayHeight;
-        synchronizeCallback.accept(width, height);
+        if (synchronizeCallback != null) {
+            synchronizeCallback.accept(width, height);
+        }
     }
 }

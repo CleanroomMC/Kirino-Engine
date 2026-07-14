@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -121,8 +122,11 @@ public class PostProcessingPass {
     /**
      * Only call this method if there are more than one post-processing subpasses.
      */
-    public void postProcess(@NonNull ResourceStorage storage) {
-        postProcess(storage, false);
+    public void postProcess(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge) {
+
+        postProcess(storage, glKnowledge, false);
     }
 
     /**
@@ -130,21 +134,25 @@ public class PostProcessingPass {
      *
      * @param startsWithIntermediate Whether to start with intermediate framebuffer OR post-processing framebuffer A. This option is only for the situation that <code>{@link #getSubpassCount()} == 1</code>
      */
-    public void postProcess(@NonNull ResourceStorage storage, boolean startsWithIntermediate) {
+    public void postProcess(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            boolean startsWithIntermediate) {
+
         if (subpassCount == 1) {
             // directly render to minecraft framebuffer
             Framebuffer.bind(minecraftFramebuffer.framebufferObject);
             GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
-            postProcessingPass.render(storage, null, null, new Object[]{startsWithIntermediate ? intermediateFramebuffer : pingPongFramebuffer.framebufferA()});
+            postProcessingPass.render(storage, glKnowledge, null, null, new Object[]{startsWithIntermediate ? intermediateFramebuffer : pingPongFramebuffer.framebufferA()});
         } else if (subpassCount >= 2) {
             // render to post-processing framebuffer B to start the ping-pong process
             pingPongFramebuffer.framebufferB().bind();
             GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
-            postProcessingPass.render(storage, null, subpassCallback, renderPayloads);
+            postProcessingPass.render(storage, glKnowledge, null, subpassCallback, renderPayloads);
             pingPongFramebuffer.reset();
         }
     }

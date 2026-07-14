@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBuffe
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.debug.KHRDebug;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 public final class RenderPass {
+
     private final Map<String, Subpass> subpassMap = new HashMap<>();
     private final Map<String, List<SubpassDecorator>> subpassDecoratorMap = new HashMap<>();
     private final List<String> subpassOrder = new ArrayList<>();
@@ -63,11 +65,24 @@ public final class RenderPass {
         list.add(decorator);
     }
 
-    public void render(@NonNull ResourceStorage storage, @Nullable Camera camera) {
-        render(storage, camera, null, null);
+    public void render(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @Nullable Camera camera) {
+
+        render(storage, glKnowledge, camera, null, null);
     }
 
-    public void render(@NonNull ResourceStorage storage, @Nullable Camera camera, @Nullable BiConsumer<String, Integer> subpassCallback, @Nullable Object @Nullable [] payloads) {
+    public void render(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @Nullable Camera camera,
+            @Nullable BiConsumer<String, Integer> subpassCallback,
+            @Nullable Object @Nullable [] payloads) {
+
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(glKnowledge);
+
         if (payloads != null) {
             Preconditions.checkArgument(payloads.length == size(),
                     "Payloads length (%s) must equal to the size (%s) of this render pass.", payloads.length, size());
@@ -89,6 +104,7 @@ public final class RenderPass {
 
             subpass.render(
                     storage,
+                    glKnowledge,
                     drawQueue,
                     camera,
                     storage.get(graphicResourceManager),

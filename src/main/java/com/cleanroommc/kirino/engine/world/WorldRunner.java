@@ -33,7 +33,7 @@ public final class WorldRunner<W extends WorldKind> {
         return runner;
     }
 
-    public void run(@NonNull FramePhase phase) {
-        context.run(phase);
+    public void run(@NonNull FramePhase phase, boolean firstPrepare) {
+        context.run(phase, firstPrepare);
     }
 }

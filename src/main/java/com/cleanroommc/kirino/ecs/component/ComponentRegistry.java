@@ -72,7 +72,7 @@ public class ComponentRegistry {
     }
 
     /**
-     * Register call is no longer allowed after the lock call.
+     * Register calls are no longer allowed after the lock call.
      */
     public void lock() {
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");

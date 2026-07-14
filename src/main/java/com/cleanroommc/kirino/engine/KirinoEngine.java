@@ -5,26 +5,8 @@ import com.cleanroommc.kirino.engine.process.analysis.install.AnalyticalWorldIns
 import com.cleanroommc.kirino.engine.process.graphics.install.GraphicsWorldInstaller;
 import com.cleanroommc.kirino.engine.process.graphics.view.GraphicsWorldViewImpl;
 import com.cleanroommc.kirino.engine.render.core.*;
-import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
-import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
-import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
-import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
-import com.cleanroommc.kirino.engine.render.usage.minecraft.patch.MinecraftCulling;
-import com.cleanroommc.kirino.engine.render.usage.minecraft.patch.MinecraftEntityRendering;
-import com.cleanroommc.kirino.engine.render.usage.minecraft.patch.MinecraftTESRRendering;
-import com.cleanroommc.kirino.engine.render.usage.minecraft.utils.BlockMeshGenerator;
-import com.cleanroommc.kirino.engine.render.core.pipeline.GLStateBackup;
-import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
-import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
-import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
-import com.cleanroommc.kirino.engine.render.usage.scene.MinecraftScene;
-import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletComputeSystem;
-import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletGpuRegistry;
-import com.cleanroommc.kirino.engine.render.core.shader.ShaderRegistry;
-import com.cleanroommc.kirino.engine.render.core.staging.StagingBufferManager;
+import com.cleanroommc.kirino.engine.render.usage.McIntegrationBundle;
+import com.cleanroommc.kirino.engine.render.usage.McSceneViewState;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
@@ -34,11 +16,8 @@ import com.cleanroommc.kirino.engine.world.event.ModuleInstallerRegistrationEven
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.engine.world.type.Headless;
 import com.cleanroommc.kirino.engine.process.analysis.view.AnalyticalWorldViewImpl;
-import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
-import com.cleanroommc.kirino.gl.vao.VAO;
-import com.cleanroommc.kirino.utils.ForkJoinPoolUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
@@ -48,24 +27,20 @@ import org.jspecify.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
 
 public class KirinoEngine {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final BootstrapResources bootstrapResources;
+    private final GraphicsRuntimeBundle graphicsRuntimeBundle;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final GraphicsRuntimeServices graphicsRuntimeServices;
+    private final BuiltinShaderBundle builtinShaderBundle;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final SceneViewState sceneViewState;
+    private final McSceneViewState mcSceneViewState;
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final MinecraftIntegration minecraftIntegration;
-
-    @SuppressWarnings("FieldCanBeLocal")
-    private final MinecraftAssetProviders minecraftAssetProviders;
+    private final McIntegrationBundle mcIntegrationBundle;
 
     @SuppressWarnings("FieldCanBeLocal")
     private final ShaderIntrospection shaderIntrospection;
@@ -98,96 +73,34 @@ public class KirinoEngine {
     private final WorldRunner<Headless> headlessWorld;
 
     /**
-     * Side-effect free.
+     * Side-effect free. Resource allocation is deferred via {@link ResourceSlot} or say virtualized.
+     * You can treat it like a compile-time safe late binding. This constructor doesn't even care
+     * if the engine is in <code>Graphics</code> mode or <code>Headless</code> mode.
+     * To be more specific, everything can be safely initialized and depended on without the GL context.
      */
     @SuppressWarnings("unchecked")
     private KirinoEngine(
-            EventBus eventBus,
-            Logger logger,
-            CleanECSRuntime ecsRuntime,
+            @NonNull EventBus eventBus,
+            @NonNull Logger logger,
+            @NonNull CleanECSRuntime ecsRuntime,
             boolean enableHDR,
             boolean enablePostProcessing) {
 
         ResourceLayout resourceLayout = MethodHolder.constructResourceLayout();
         storage = MethodHolder.constructResourceStorage();
 
-        ResourceSlot<GLStateBackup> stateBackup = resourceLayout.slot(GLStateBackup.class);
-        ResourceSlot<Renderer> renderer = resourceLayout.slot(Renderer.class);
-        ResourceSlot<GraphicResourceManager> graphicResourceManager = resourceLayout.slot(GraphicResourceManager.class);
-        ResourceSlot<IndirectDrawBufferGenerator> idbGenerator = resourceLayout.slot(IndirectDrawBufferGenerator.class);
-        ResourceSlot<GizmosManager> gizmosManager = resourceLayout.slot(GizmosManager.class);
-        ResourceSlot<VAO> fullscreenTriangleVao = resourceLayout.slot(VAO.class);
-        ResourceSlot<ShaderRegistry> shaderRegistry = resourceLayout.slot(ShaderRegistry.class);
-        ResourceSlot<FrameFinalizer> frameFinalizer = resourceLayout.slot(FrameFinalizer.class);
-        ResourceSlot<VAO> dummyVao = resourceLayout.slot(VAO.class);
-        ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry = resourceLayout.slot(MeshletGpuRegistry.class);
-        ResourceSlot<MeshletComputeSystem> meshletComputeSystem = resourceLayout.slot(MeshletComputeSystem.class);
-        ResourceSlot<BlockMeshGenerator> blockMeshGenerator = resourceLayout.slot(BlockMeshGenerator.class);
-        ResourceSlot<StagingBufferManager> stagingBufferManager = resourceLayout.slot(StagingBufferManager.class);
-        ResourceSlot<InGameDebugHUDManager> debugHudManager = resourceLayout.slot(InGameDebugHUDManager.class);
-        ResourceSlot<MinecraftCulling> minecraftCulling = resourceLayout.slot(MinecraftCulling.class);
-        ResourceSlot<MinecraftEntityRendering> minecraftEntityRendering = resourceLayout.slot(MinecraftEntityRendering.class);
-        ResourceSlot<MinecraftTESRRendering> minecraftTESRRendering = resourceLayout.slot(MinecraftTESRRendering.class);
+        graphicsRuntimeBundle = new GraphicsRuntimeBundle(resourceLayout);
 
-        ResourceSlot<ShaderProgram> terrainGpuPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> chunkCpuPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> gizmosPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> postProcessingDefaultProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> toneMappingPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> upscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> downscalingPassProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> meshletVertexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
-        ResourceSlot<ShaderProgram> meshletDrawIndexGenComputeProgram = resourceLayout.slot(ShaderProgram.class);
+        builtinShaderBundle = new BuiltinShaderBundle(resourceLayout);
 
-        bootstrapResources = new BootstrapResources(
-                frameFinalizer,
-                idbGenerator,
-                fullscreenTriangleVao,
-                dummyVao);
+        mcIntegrationBundle = new McIntegrationBundle(resourceLayout);
 
-        graphicsRuntimeServices = new GraphicsRuntimeServices(
-                stateBackup,
-                renderer,
-                stagingBufferManager,
-                graphicResourceManager,
-                gizmosManager,
-                debugHudManager,
-                shaderRegistry);
-
-        MinecraftCamera camera = new MinecraftCamera();
-
-        ForkJoinPool systemFlowPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystemFlow");
-        ForkJoinPool systemPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystem");
-
-        ShutdownManager.registerAsync(() -> {
-            ForkJoinPoolUtils.shutdownPool(systemFlowPool, 5);
-            ForkJoinPoolUtils.shutdownPool(systemPool, 5);
-        });
-
-        MinecraftScene scene = new MinecraftScene(
+        mcSceneViewState = new McSceneViewState(
                 storage,
-                ecsRuntime.entityManager,
-                ecsRuntime.jobScheduler,
-                blockMeshGenerator,
-                gizmosManager,
-                camera,
-                meshletGpuRegistry,
-                meshletComputeSystem,
-                systemFlowPool,
-                systemPool);
-
-        sceneViewState = new SceneViewState(
-                camera,
-                scene,
-                meshletGpuRegistry,
-                meshletComputeSystem);
-
-        minecraftIntegration = new MinecraftIntegration(
-                minecraftCulling,
-                minecraftEntityRendering,
-                minecraftTESRRendering);
-
-        minecraftAssetProviders = new MinecraftAssetProviders(blockMeshGenerator);
+                resourceLayout,
+                ecsRuntime,
+                graphicsRuntimeBundle,
+                mcIntegrationBundle);
 
         shaderIntrospection = new ShaderIntrospection(
                 new GLSLRegistry(),
@@ -196,32 +109,12 @@ public class KirinoEngine {
         renderStructure = new RenderStructure(
                 enableHDR,
                 enablePostProcessing,
-                renderer,
-                graphicResourceManager,
-                idbGenerator,
-                gizmosManager,
-                fullscreenTriangleVao,
-                terrainGpuPassProgram,
-                chunkCpuPassProgram,
-                gizmosPassProgram,
-                toneMappingPassProgram,
-                upscalingPassProgram,
-                downscalingPassProgram);
+                graphicsRuntimeBundle,
+                builtinShaderBundle);
 
         renderExtensions = new RenderExtensions(
-                renderer,
-                graphicResourceManager,
-                idbGenerator,
-                fullscreenTriangleVao,
-                postProcessingDefaultProgram,
-                terrainGpuPassProgram,
-                chunkCpuPassProgram,
-                gizmosPassProgram,
-                toneMappingPassProgram,
-                upscalingPassProgram,
-                downscalingPassProgram,
-                meshletVertexGenComputeProgram,
-                meshletDrawIndexGenComputeProgram);
+                graphicsRuntimeBundle,
+                builtinShaderBundle);
 
         ModuleInstallerRegistrationEvent event = new ModuleInstallerRegistrationEvent();
         eventBus.post(event);
@@ -232,10 +125,10 @@ public class KirinoEngine {
         graphicsInstallers.addFirst(new GraphicsWorldInstaller());
 
         for (ModuleInstaller<Headless> installer : headlessInstallers) {
-            logger.info("Registered headless module installer \"" + installer.getClass().getName() + "\".");
+            logger.info("Registered headless module installer \"{}\".", installer.getClass().getName());
         }
         for (ModuleInstaller<Graphics> installer : graphicsInstallers) {
-            logger.info("Registered graphics module installer \"" + installer.getClass().getName() + "\".");
+            logger.info("Registered graphics module installer \"{}\".", installer.getClass().getName());
         }
 
         graphicsWorld = WorldRunner.of(
@@ -246,11 +139,10 @@ public class KirinoEngine {
                         eventBus,
                         logger,
                         storage,
-                        bootstrapResources,
-                        graphicsRuntimeServices,
-                        minecraftIntegration,
-                        minecraftAssetProviders,
-                        sceneViewState,
+                        builtinShaderBundle,
+                        graphicsRuntimeBundle,
+                        mcIntegrationBundle,
+                        mcSceneViewState,
                         shaderIntrospection),
                 resourceLayout,
                 graphicsInstallers.toArray(ModuleInstaller[]::new));
@@ -275,10 +167,16 @@ public class KirinoEngine {
     private boolean firstPrepareFinished = false;
     private boolean afterFirstPrepare = false;
 
+    /**
+     * This will be toggled on forever during the second {@link #run(FramePhase)} or {@link #runHeadlessly(FramePhase)}.
+     * This information is important because the first {@link FramePhase#PREPARE} run is executed during
+     * the engine initialization instead of world ticking.
+     */
     public boolean isAfterFirstPrepare() {
         return afterFirstPrepare;
     }
 
+    //<editor-fold desc="run & runHeadlessly">
     /**
      * The {@link FramePhase} execution order is explicitly guaranteed by the FSM.
      * An error will be thrown on violations.
@@ -310,8 +208,8 @@ public class KirinoEngine {
 
         framePhaseFsm.next();
 
-        headlessWorld.run(phase);
-        graphicsWorld.run(phase);
+        headlessWorld.run(phase, !afterFirstPrepare);
+        graphicsWorld.run(phase, !afterFirstPrepare);
 
         if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);
@@ -346,13 +244,15 @@ public class KirinoEngine {
             firstPrepareFinished = true;
         }
 
-        headlessWorld.run(phase);
+        headlessWorld.run(phase, !afterFirstPrepare);
 
         if (phase == FramePhase.PREPARE && !storage.isStorageSealed()) {
             MethodHolder.sealResourceStorage(storage);
         }
     }
+    //</editor-fold>
 
+    //<editor-fold desc="method holder">
     private static final class MethodHolder {
         static final Delegate DELEGATE;
 
@@ -429,4 +329,5 @@ public class KirinoEngine {
                 MethodHandle graphicsInstallersGetter) {
         }
     }
+    //</editor-fold>
 }

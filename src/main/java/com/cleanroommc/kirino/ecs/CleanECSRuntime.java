@@ -57,18 +57,18 @@ public class CleanECSRuntime {
         fieldRegistry = new FieldRegistry(structRegistry);
 
         // hard coded fields
-        fieldRegistry.registerFieldType("byte", byte.class, new FieldDef(ScalarType.BYTE));
-        fieldRegistry.registerFieldType("short", short.class, new FieldDef(ScalarType.SHORT));
-        fieldRegistry.registerFieldType("int", int.class, new FieldDef(ScalarType.INT));
-        fieldRegistry.registerFieldType("long", long.class, new FieldDef(ScalarType.LONG));
-        fieldRegistry.registerFieldType("float", float.class, new FieldDef(ScalarType.FLOAT));
-        fieldRegistry.registerFieldType("double", double.class, new FieldDef(ScalarType.DOUBLE));
-        fieldRegistry.registerFieldType("bool", boolean.class, new FieldDef(ScalarType.BOOL));
-        fieldRegistry.registerFieldType("vec2", Vector2f.class, new FieldDef(ScalarType.VEC2));
-        fieldRegistry.registerFieldType("vec3", Vector3f.class, new FieldDef(ScalarType.VEC3));
-        fieldRegistry.registerFieldType("vec4", Vector4f.class, new FieldDef(ScalarType.VEC4));
-        fieldRegistry.registerFieldType("mat3", Matrix3f.class, new FieldDef(ScalarType.MAT3));
-        fieldRegistry.registerFieldType("mat4", Matrix4f.class, new FieldDef(ScalarType.MAT4));
+        fieldRegistry.registerFieldType("byte", ScalarType.BYTE.clazz, new FieldDef(ScalarType.BYTE));
+        fieldRegistry.registerFieldType("short", ScalarType.SHORT.clazz, new FieldDef(ScalarType.SHORT));
+        fieldRegistry.registerFieldType("int", ScalarType.INT.clazz, new FieldDef(ScalarType.INT));
+        fieldRegistry.registerFieldType("long", ScalarType.LONG.clazz, new FieldDef(ScalarType.LONG));
+        fieldRegistry.registerFieldType("float", ScalarType.FLOAT.clazz, new FieldDef(ScalarType.FLOAT));
+        fieldRegistry.registerFieldType("double", ScalarType.DOUBLE.clazz, new FieldDef(ScalarType.DOUBLE));
+        fieldRegistry.registerFieldType("bool", ScalarType.BOOL.clazz, new FieldDef(ScalarType.BOOL));
+        fieldRegistry.registerFieldType("vec2", ScalarType.VEC2.clazz, new FieldDef(ScalarType.VEC2));
+        fieldRegistry.registerFieldType("vec3", ScalarType.VEC3.clazz, new FieldDef(ScalarType.VEC3));
+        fieldRegistry.registerFieldType("vec4", ScalarType.VEC4.clazz, new FieldDef(ScalarType.VEC4));
+        fieldRegistry.registerFieldType("mat3", ScalarType.MAT3.clazz, new FieldDef(ScalarType.MAT3));
+        fieldRegistry.registerFieldType("mat4", ScalarType.MAT4.clazz, new FieldDef(ScalarType.MAT4));
 
         StructScanningEvent structScanningEvent = new StructScanningEvent();
         eventBus.post(structScanningEvent);

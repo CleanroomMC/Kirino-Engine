@@ -5,5 +5,5 @@ import com.cleanroommc.kirino.engine.world.type.Headless;
 import org.jspecify.annotations.NonNull;
 
 public interface AnalyticalWorldView extends WorldContext<Headless> {
-    @NonNull ShaderIntrospection shaderIntrospection();
+    @NonNull ShaderIntrospection shaderi();
 }

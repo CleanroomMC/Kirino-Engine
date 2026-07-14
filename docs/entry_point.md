@@ -30,22 +30,6 @@ Here are some events you want to listen from the engine setup:
 - `ModuleInstallerRegistrationEvent`
 - ...
 
-# Engine Mode
-
-For client side logic, the engine can run in two different modes depending on the config and environment.
-
-Two modes are:
-- `Headless`
-- `Graphics`
-
-If it was `Headless` mode, no GL related resources will be initialized; vanilla render 
-update will not be taken over; however, the engine will not pause but run in headless mode instead
-
-If it was `Graphics` mode, all functionalities will be activated, but they are still WIP.
-
-We introduced `Headless` mode to decouple the engine from rendering, so the ECS runtime and
-other GL agnostic modules can still run when the rendering part is disbaled or GL requirement isn't met.
-
 # Client Side Immediate Services
 
 In order to interact with the engine, you must utilize event listeners to register your classes.
@@ -77,12 +61,3 @@ while `anaglyph` can be easily added back via post-processing.
 
 `RenderGlobal$notifyBlockUpdate` and `RenderGlobal$notifyLightUpdate` are hooks injected 
 to Minecraft's `RenderGlobal` to listen rendering related updates.
-
-# Util Classes
-
-> Relevant classes:
-> <br>· `com.cleanroommc.kirino.utils.*`
-
-Similar to immediate services, feel free to utilize our util classes. Examples:
-- `MinecraftResourceUtils.readText(ResourceLocation, NewLineType)`
-- `ReflectionUtils` to unreflect fields, methods and get `MethodHandle`s

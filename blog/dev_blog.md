@@ -424,3 +424,18 @@ ready for the further Editor GUI development.
   - Go to declaration
   - Find usages (usage UI inlay support)
   - Rename function declaration and all occurrences
+
+**Want To Implement:**
+- The first step is to get `FrameFinalizer` and `GraphicsWorldViewImpl` refactored,
+  so the pipeline will therefore be stable enough to integrate SimpleGUI framebuffer stuff
+- SimpleGUI and SimpleText can be moved to `GraphicsWorldViewImpl` to remain the dependency injection access pattern,
+  but ICS singleton access isn't planned to be removed anyway.
+- SimpleText and SimpleGUI should be aware of their draw call context. i.e. when states and fbos are predictable
+- When the infra that helps to integrate SimpleText and SimpleGUI is done
+  - Implement SimpleGUI Depth/No Depth rendering path, PushClip/PopClip
+  - Implement a more feature rich version of the SimpleText text consumer
+  - Start working on the engine editor
+
+The plan is that:
+- When inside a world, `GraphicsWorldViewImpl` takes over editor rendering
+- For main menu, another more rudimentary path is needed

@@ -1,9 +1,10 @@
-package com.cleanroommc.kirino.engine.render.usage.debug.hud.impl;
+package com.cleanroommc.kirino.engine.render.usage.debug.hud;
 
 import com.cleanroommc.kirino.ICS;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.ui.simpletext.SimpleTextProducer;
+import net.minecraft.client.renderer.GlStateManager;
 import org.jspecify.annotations.NonNull;
 
 import java.awt.*;
@@ -12,6 +13,9 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
 
     @Override
     public void draw(@NonNull HUDContext hud) {
+        GlStateManager.disableCull();
+        GlStateManager.enableBlend();
+
         ICS.instance().text()
                 .begin()
                 .append("ABCabcijk", 0, 0, 12f, Color.GRAY.getRGB())

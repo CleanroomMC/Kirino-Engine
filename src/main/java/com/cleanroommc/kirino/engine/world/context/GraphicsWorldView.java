@@ -1,21 +1,19 @@
 package com.cleanroommc.kirino.engine.world.context;
 
-import com.cleanroommc.kirino.engine.render.core.BootstrapResources;
-import com.cleanroommc.kirino.engine.render.core.GraphicsRuntimeServices;
+import com.cleanroommc.kirino.engine.render.core.BuiltinShaderBundle;
+import com.cleanroommc.kirino.engine.render.core.GraphicsRuntimeBundle;
 import com.cleanroommc.kirino.engine.render.core.ShaderIntrospection;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftAssetProviders;
-import com.cleanroommc.kirino.engine.render.usage.MinecraftIntegration;
-import com.cleanroommc.kirino.engine.render.usage.SceneViewState;
+import com.cleanroommc.kirino.engine.render.usage.McIntegrationBundle;
+import com.cleanroommc.kirino.engine.render.usage.McSceneViewState;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import org.jspecify.annotations.NonNull;
 
 public interface GraphicsWorldView extends WorldContext<Graphics> {
     @NonNull ResourceStorage storage();
-    @NonNull ShaderIntrospection shaderIntrospection();
-    @NonNull BootstrapResources bootstrapResources();
-    @NonNull GraphicsRuntimeServices graphicsRuntimeServices();
-    @NonNull MinecraftIntegration minecraftIntegration();
-    @NonNull MinecraftAssetProviders minecraftAssetProviders();
-    @NonNull SceneViewState sceneViewState();
+    @NonNull ShaderIntrospection shaderi();
+    @NonNull BuiltinShaderBundle shaderb();
+    @NonNull GraphicsRuntimeBundle graphicsb();
+    @NonNull McIntegrationBundle mcib();
+    @NonNull McSceneViewState mcscene();
 }
