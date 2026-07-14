@@ -59,7 +59,8 @@ public final class MinecraftResourceUtils {
 
         File resources1 = new File(repo, "src/main/resources/assets/forge");
         File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/forge");
-        Preconditions.checkState(resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory(),
+        File resources3 = new File(repo, "src/test/resources/assets/forge");
+        Preconditions.checkState(resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory() && resources3.exists() && resources3.isDirectory(),
                 "This is not the dev env.");
 
         String target = rl.getPath();
@@ -76,6 +77,11 @@ public final class MinecraftResourceUtils {
         File candidate2 = new File(resources2, target);
         if (candidate2.isFile()) {
             return candidate2.getAbsolutePath();
+        }
+
+        File candidate3 = new File(resources3, target);
+        if (candidate3.isFile()) {
+            return candidate3.getAbsolutePath();
         }
 
         return null;
