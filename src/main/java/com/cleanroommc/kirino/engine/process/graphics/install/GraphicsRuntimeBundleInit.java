@@ -46,7 +46,7 @@ public final class GraphicsRuntimeBundleInit {
 
         FrameFinalizer frameFinalizer = new FrameFinalizer(
                 context.logger(),
-                context.ext().postProcessingPass,
+                context.ext().postProcessingManager,
                 context.rs().toneMappingPassDesc,
                 context.rs().upscalingPassDesc,
                 context.rs().downscalingPassDesc,

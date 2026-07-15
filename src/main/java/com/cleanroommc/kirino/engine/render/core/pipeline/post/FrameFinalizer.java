@@ -1,9 +1,9 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 
-import com.cleanroommc.kirino.engine.render.core.RenderStructure;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.PingPongFramebuffer;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.ResolutionContainer;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.ScalableFramebuffer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
@@ -30,10 +30,10 @@ public class FrameFinalizer {
     public final boolean enableHDR;
     public final boolean enablePostProcessing;
 
-    private final PostProcessingPass postProcessingPass;
-    private final RenderStructure.PassDescriptor toneMappingPassDesc;
-    private final RenderStructure.PassDescriptor upscalingPassDesc;
-    private final RenderStructure.PassDescriptor downscalingPassDesc;
+    private final PostProcessingManager postProcessingManager;
+    private final PassDescriptor toneMappingPassDesc;
+    private final PassDescriptor upscalingPassDesc;
+    private final PassDescriptor downscalingPassDesc;
 
     private ResolutionContainer resolution;
     private ScalableFramebuffer mainFramebuffer;
@@ -63,16 +63,16 @@ public class FrameFinalizer {
 
     public FrameFinalizer(
             Logger logger,
-            PostProcessingPass postProcessingPass,
-            RenderStructure.PassDescriptor toneMappingPassDesc,
-            RenderStructure.PassDescriptor upscalingPassDesc,
-            RenderStructure.PassDescriptor downscalingPassDesc,
+            PostProcessingManager postProcessingManager,
+            PassDescriptor toneMappingPassDesc,
+            PassDescriptor upscalingPassDesc,
+            PassDescriptor downscalingPassDesc,
             boolean enableHDR,
             boolean enablePostProcessing) {
 
         this.enableHDR = enableHDR;
         this.enablePostProcessing = enablePostProcessing;
-        this.postProcessingPass = postProcessingPass;
+        this.postProcessingManager = postProcessingManager;
         this.toneMappingPassDesc = toneMappingPassDesc;
         this.upscalingPassDesc = upscalingPassDesc;
         this.downscalingPassDesc = downscalingPassDesc;
@@ -88,14 +88,14 @@ public class FrameFinalizer {
         this.minecraftFramebuffer = minecraftFramebuffer;
 
         logger.info("Framebuffer HDR: " + (enableHDR ? "ON" : "OFF"));
-        logger.info("Framebuffer Post-processing: " + (enablePostProcessing ? "ON" : "OFF") + "; Pass Count: " + postProcessingPass.getSubpassCount());
+        logger.info("Framebuffer Post-processing: " + (enablePostProcessing ? "ON" : "OFF") + "; Pass Count: " + postProcessingManager.getSubpassCount());
 
         mainFramebuffer = new ScalableFramebuffer(MINECRAFT.displayWidth, MINECRAFT.displayHeight, 1f);
         logger.info("Initiated the main frambuffer: " + mainFramebuffer.framebuffer.width() + ", " + mainFramebuffer.framebuffer.height());
 
         // these two are mutually exclusive
-        final boolean useIntermediate = (enableHDR && !enablePostProcessing) || (enablePostProcessing && postProcessingPass.getSubpassCount() == 1);
-        final boolean usePingPong = enablePostProcessing && postProcessingPass.getSubpassCount() >= 2;
+        final boolean useIntermediate = (enableHDR && !enablePostProcessing) || (enablePostProcessing && postProcessingManager.getSubpassCount() == 1);
+        final boolean usePingPong = enablePostProcessing && postProcessingManager.getSubpassCount() >= 2;
 
         if (useIntermediate) {
             intermediateFramebuffer = new Framebuffer(MINECRAFT.displayWidth, MINECRAFT.displayHeight);
@@ -435,7 +435,7 @@ public class FrameFinalizer {
         //<editor-fold desc="hdr ANY & post-processing">
         if (enablePostProcessing) {
             if (mainFramebuffer.getRatio() == 1f) {
-                if (postProcessingPass.getSubpassCount() == 1) {
+                if (postProcessingManager.getSubpassCount() == 1) {
                     ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
                     ColorAttachment colorAttachmentDest = ((ColorAttachment) intermediateFramebuffer.getColorAttachment(0));
                     GL43.glCopyImageSubData(
@@ -450,8 +450,8 @@ public class FrameFinalizer {
                             1);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPass.getSubpassCount() >= 2) {
+                    postProcessingManager.postProcess(storage, glKnowledge, true);
+                } else if (postProcessingManager.getSubpassCount() >= 2) {
                     ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
                     ColorAttachment colorAttachmentDest = ((ColorAttachment) pingPongFramebuffer.framebufferA().getColorAttachment(0));
                     GL43.glCopyImageSubData(
@@ -466,10 +466,10 @@ public class FrameFinalizer {
                             1);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge);
+                    postProcessingManager.postProcess(storage, glKnowledge);
                 }
             } else if (mainFramebuffer.getRatio() < 1f) {
-                if (postProcessingPass.getSubpassCount() == 1) {
+                if (postProcessingManager.getSubpassCount() == 1) {
                     // todo: upscale impl
                     GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
@@ -481,8 +481,8 @@ public class FrameFinalizer {
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPass.getSubpassCount() >= 2) {
+                    postProcessingManager.postProcess(storage, glKnowledge, true);
+                } else if (postProcessingManager.getSubpassCount() >= 2) {
                     // todo: upscale impl
                     GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, pingPongFramebuffer.framebufferA().fboID);
@@ -494,10 +494,10 @@ public class FrameFinalizer {
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge);
+                    postProcessingManager.postProcess(storage, glKnowledge);
                 }
             } else if (mainFramebuffer.getRatio() > 1f) {
-                if (postProcessingPass.getSubpassCount() == 1) {
+                if (postProcessingManager.getSubpassCount() == 1) {
                     // todo: downscale impl
                     GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
@@ -509,8 +509,8 @@ public class FrameFinalizer {
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPass.getSubpassCount() >= 2) {
+                    postProcessingManager.postProcess(storage, glKnowledge, true);
+                } else if (postProcessingManager.getSubpassCount() >= 2) {
                     // todo: downscale impl
                     GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
                     GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, pingPongFramebuffer.framebufferA().fboID);
@@ -522,7 +522,7 @@ public class FrameFinalizer {
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                     GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingPass.postProcess(storage, glKnowledge);
+                    postProcessingManager.postProcess(storage, glKnowledge);
                 }
             }
         }

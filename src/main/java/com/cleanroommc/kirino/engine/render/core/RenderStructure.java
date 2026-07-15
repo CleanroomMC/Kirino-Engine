@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.core;
 
 import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
+import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.builtin.GizmosPass;
 import com.cleanroommc.kirino.engine.render.usage.pipeline.pass.OpaqueTerrainPass;
@@ -15,61 +16,6 @@ import org.jspecify.annotations.NonNull;
  * and is the only one that possesses {@link RenderPass}.
  */
 public final class RenderStructure {
-
-    public static final class PassDescriptor {
-
-        public enum Availability {
-            AVAILABLE,
-            NOT_IMPLEMENTED,
-            DEP_UNSATISFIED
-        }
-
-        private final RenderPass pass;
-        private final Availability availability;
-        private final String unavailableReason;
-
-        /**
-         * @param availability The availability is only about the internal implementation of a pass.
-         *                     Like, whether the implementation has implicit dependencies or unfinished
-         */
-        public PassDescriptor(
-                @NonNull RenderPass pass,
-                @NonNull Availability availability,
-                @NonNull String unavailableReason) {
-
-            Preconditions.checkNotNull(pass);
-            Preconditions.checkNotNull(availability);
-            Preconditions.checkNotNull(unavailableReason);
-
-            this.pass = pass;
-            this.availability = availability;
-            this.unavailableReason = unavailableReason;
-        }
-
-        /**
-         * It registers an <i><b>available</b></i> pass.
-         */
-        public PassDescriptor(@NonNull RenderPass pass) {
-            Preconditions.checkNotNull(pass);
-
-            this.pass = pass;
-            this.availability = Availability.AVAILABLE;
-            this.unavailableReason = "";
-        }
-
-        @NonNull
-        public RenderPass acquire() {
-            if (availability == Availability.AVAILABLE) {
-                return pass;
-            }
-
-            throw new IllegalStateException(String.format(
-                    "Failed to acquire the RenderPass \"%s\". Reason [%s]: %s",
-                    pass.passName,
-                    availability.toString(),
-                    unavailableReason));
-        }
-    }
 
     public final boolean enableHDR;
     public final boolean enablePostProcessing;

@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.core;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingManager;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
@@ -23,7 +23,7 @@ import java.util.*;
  */
 public final class RenderExtensions {
 
-    public final PostProcessingPass postProcessingPass;
+    public final PostProcessingManager postProcessingManager;
 
     public final Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders;
     public final List<Triple<
@@ -43,7 +43,7 @@ public final class RenderExtensions {
         Preconditions.checkNotNull(graphicsRuntimeBundle);
         Preconditions.checkNotNull(builtinShaderBundle);
 
-        postProcessingPass = new PostProcessingPass(
+        postProcessingManager = new PostProcessingManager(
                 new RenderPass("Post-Processing", graphicsRuntimeBundle.graphicResourceManager, graphicsRuntimeBundle.idbGenerator),
                 graphicsRuntimeBundle.renderer,
                 graphicsRuntimeBundle.fullscreenTriangleVao);

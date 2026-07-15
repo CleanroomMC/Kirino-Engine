@@ -15,6 +15,7 @@ public final class KnowledgeSupervisor {
 
     private final Map<KnowledgeKey<?>, Entry<?>> knowledge = new HashMap<>();
     private final Set<KnowledgeKey<?>> frozen = new HashSet<>();
+    private final Map<KnowledgeKey<?>, Integer> claims = new HashMap<>();
 
     private final ViolationPolicy violationPolicy;
 
@@ -29,6 +30,26 @@ public final class KnowledgeSupervisor {
         Preconditions.checkNotNull(owner);
 
         return new Access(this, owner);
+    }
+
+    private void checkCommitConflict(
+            @NonNull KnowledgeOwner requester,
+            @NonNull KnowledgeKey<?> key,
+            @NonNull KnowledgeValue<?> commitValue) {
+
+        Preconditions.checkNotNull(requester);
+        Preconditions.checkNotNull(key);
+        Preconditions.checkNotNull(commitValue);
+
+        Integer depth = claims.get(key);
+
+        if (depth != null && depth > 0) {
+            violationPolicy.onViolation(new KnowledgeViolation(
+                    ViolationKind.COMMIT_CONFLICT,
+                    key,
+                    commitValue,
+                    requester));
+        }
     }
 
     private void commit(
@@ -47,16 +68,18 @@ public final class KnowledgeSupervisor {
         for (String domain : checkpoint.unknownDomains()) {
             for (Map.Entry<KnowledgeKey<?>, Entry<?>> entry : next.entrySet()) {
                 if (entry.getKey().domain().equals(domain)) {
+                    checkCommitConflict(owner, entry.getKey(), KnowledgeValue.unknown());
                     entry.setValue(Entry.unknown());
                 }
             }
         }
 
-        for (Map.Entry<KnowledgeKey<?>, KnowledgeCheckpoint.Change<?>> item : checkpoint.changes().entrySet()) {
+        for (Map.Entry<KnowledgeKey<?>, KnowledgeCheckpoint.Change<?>> entry : checkpoint.changes().entrySet()) {
             applyChange(
+                    owner,
                     next,
-                    item.getKey(),
-                    item.getValue());
+                    entry.getKey(),
+                    entry.getValue());
         }
 
         knowledge.clear();
@@ -70,11 +93,13 @@ public final class KnowledgeSupervisor {
         }
     }
 
-    private static void applyChange(
+    private void applyChange(
+            @NonNull KnowledgeOwner owner,
             @NonNull Map<KnowledgeKey<?>, Entry<?>> target,
             @NonNull KnowledgeKey<?> key,
             KnowledgeCheckpoint.@NonNull Change<?> change) {
 
+        Preconditions.checkNotNull(owner);
         Preconditions.checkNotNull(target);
         Preconditions.checkNotNull(key);
         Preconditions.checkNotNull(change);
@@ -88,10 +113,12 @@ public final class KnowledgeSupervisor {
                         key.type().getName(),
                         key);
 
+                checkCommitConflict(owner, key, KnowledgeValue.known(value));
                 target.put(key, Entry.known(value));
                 break;
 
             case UNKNOWN:
+                checkCommitConflict(owner, key, KnowledgeValue.unknown());
                 target.put(key, Entry.unknown());
                 break;
 
@@ -151,6 +178,26 @@ public final class KnowledgeSupervisor {
                     key,
                     actual,
                     reporter));
+        }
+    }
+
+    private <T> ClaimedScopeHandle<T> claim(@NonNull KnowledgeKey<T> key) {
+        Preconditions.checkNotNull(key);
+
+        claims.merge(key, 1, Integer::sum);
+        return new ClaimedScopeHandle<>(this, key);
+    }
+
+    void release(KnowledgeKey<?> key) {
+        Integer depth = claims.get(key);
+
+        Preconditions.checkState(depth != null,
+                "The key=\"%s\" isn't claimed yet. Must not release it.", key.toString());
+
+        if (depth == 1) {
+            claims.remove(key);
+        } else {
+            claims.put(key, depth - 1);
         }
     }
 
@@ -226,6 +273,14 @@ public final class KnowledgeSupervisor {
             Preconditions.checkNotNull(key);
 
             supervisor.reportMutation(owner, key);
+        }
+
+        @NonNull
+        @Override
+        public <T> ClaimedScopeHandle<T> claim(@NonNull KnowledgeKey<T> key) {
+            Preconditions.checkNotNull(key);
+
+            return supervisor.claim(key);
         }
 
         @NonNull

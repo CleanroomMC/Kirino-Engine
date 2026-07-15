@@ -25,7 +25,8 @@ import java.util.function.BiConsumer;
  * <br><br>
  * This class is highly coupled with {@link FrameFinalizer}, and the post-processing process is fully guided by {@link FrameFinalizer#finalizeFramebuffer()}.
  */
-public class PostProcessingPass {
+public class PostProcessingManager {
+
     private net.minecraft.client.shader.Framebuffer minecraftFramebuffer;
     private PingPongFramebuffer pingPongFramebuffer;
     private Framebuffer intermediateFramebuffer;
@@ -50,6 +51,7 @@ public class PostProcessingPass {
             net.minecraft.client.shader.Framebuffer minecraftFramebuffer,
             PingPongFramebuffer pingPongFramebuffer,
             Framebuffer intermediateFramebuffer) {
+
         subpassCount = getSubpassCount();
 
         this.minecraftFramebuffer = minecraftFramebuffer;
@@ -83,7 +85,7 @@ public class PostProcessingPass {
         }
     }
 
-    public PostProcessingPass(RenderPass postProcessingPass, ResourceSlot<Renderer> renderer, ResourceSlot<VAO> fullscreenTriangleVao) {
+    public PostProcessingManager(RenderPass postProcessingPass, ResourceSlot<Renderer> renderer, ResourceSlot<VAO> fullscreenTriangleVao) {
         this.postProcessingPass = postProcessingPass;
         this.renderer = renderer;
         this.fullscreenTriangleVao = fullscreenTriangleVao;
@@ -94,7 +96,7 @@ public class PostProcessingPass {
     }
 
     /**
-     * Must use an unique <code>subpassName</code>. Otherwise the addition will be ignored silently.
+     * Must use an unique <code>subpassName</code>. Otherwise, the addition will be ignored silently.
      */
     public void addSubpass(String subpassName, ResourceSlot<ShaderProgram> shaderProgram, TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass> subpassCtor) {
         Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");

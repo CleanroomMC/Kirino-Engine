@@ -6,11 +6,20 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.RasterState;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 public final class PSOPresets {
-    public static PipelineStateObject createScreenOverwritePSO(ResourceSlot<ShaderProgram> shaderProgram) {
+
+    private PSOPresets() {
+    }
+
+    @NonNull
+    public static PipelineStateObject createScreenOverwritePSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -41,7 +50,10 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createGizmosPSO(ResourceSlot<ShaderProgram> shaderProgram) {
+    @NonNull
+    public static PipelineStateObject createGizmosPSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
         return new PipelineStateObject(
                 new BlendState(
                         true,
@@ -72,7 +84,10 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createOpaquePSO(ResourceSlot<ShaderProgram> shaderProgram) {
+    @NonNull
+    public static PipelineStateObject createOpaquePSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -103,7 +118,10 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createCutoutPSO(ResourceSlot<ShaderProgram> shaderProgram) {
+    @NonNull
+    public static PipelineStateObject createCutoutPSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
         return new PipelineStateObject(
                 new BlendState(
                         false,
@@ -134,7 +152,10 @@ public final class PSOPresets {
         );
     }
 
-    public static PipelineStateObject createTransparentPSO(ResourceSlot<ShaderProgram> shaderProgram) {
+    @NonNull
+    public static PipelineStateObject createTransparentPSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
         return new PipelineStateObject(
                 new BlendState(
                         true,

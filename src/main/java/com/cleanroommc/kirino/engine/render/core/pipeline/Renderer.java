@@ -16,15 +16,22 @@ import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
 public final class Renderer {
+
     private final ResourceStorage resourceStorage;
     private final VAO dummyVao;
 
-    public Renderer(ResourceStorage resourceStorage, VAO dummyVao) {
+    public Renderer(@NonNull ResourceStorage resourceStorage, @NonNull VAO dummyVao) {
+        Preconditions.checkNotNull(resourceStorage);
+        Preconditions.checkNotNull(dummyVao);
+
         this.resourceStorage = resourceStorage;
         this.dummyVao = dummyVao;
     }
 
     //<editor-fold desc="submit pso">
+    /**
+     * @see PipelineStateObject
+     */
     public void bindPipeline(
             @NonNull PipelineStateObject pso,
             @NonNull KnowledgeRuntime glKnowledge) {
