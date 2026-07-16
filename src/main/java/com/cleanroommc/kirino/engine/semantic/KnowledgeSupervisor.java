@@ -181,14 +181,27 @@ public final class KnowledgeSupervisor {
         }
     }
 
-    private <T> ClaimedScopeHandle<T> claim(@NonNull KnowledgeKey<T> key) {
+    private <T> ClaimedScopeHandle claim(@NonNull KnowledgeKey<T> key) {
         Preconditions.checkNotNull(key);
 
         claims.merge(key, 1, Integer::sum);
-        return new ClaimedScopeHandle<>(this, key);
+        return new ClaimedScopeHandleImpl<>(this, key);
     }
 
-    void release(KnowledgeKey<?> key) {
+    private ClaimedScopeHandle claim(@NonNull KnowledgeKey<?>[] keys) {
+        Preconditions.checkNotNull(keys);
+
+        for (KnowledgeKey<?> key : keys) {
+            Preconditions.checkNotNull(key);
+
+            claims.merge(key, 1, Integer::sum);
+        }
+        return new ClaimedMultiScopeHandleImpl(this, keys);
+    }
+
+    void release(@NonNull KnowledgeKey<?> key) {
+        Preconditions.checkNotNull(key);
+
         Integer depth = claims.get(key);
 
         Preconditions.checkState(depth != null,
@@ -277,10 +290,21 @@ public final class KnowledgeSupervisor {
 
         @NonNull
         @Override
-        public <T> ClaimedScopeHandle<T> claim(@NonNull KnowledgeKey<T> key) {
+        public <T> ClaimedScopeHandle claim(@NonNull KnowledgeKey<T> key) {
             Preconditions.checkNotNull(key);
 
             return supervisor.claim(key);
+        }
+
+        @NonNull
+        @Override
+        public ClaimedScopeHandle claim(@NonNull KnowledgeKey<?> @NonNull ... keys) {
+            Preconditions.checkNotNull(keys);
+            for (KnowledgeKey<?> key : keys) {
+                Preconditions.checkNotNull(key);
+            }
+
+            return supervisor.claim(keys);
         }
 
         @NonNull

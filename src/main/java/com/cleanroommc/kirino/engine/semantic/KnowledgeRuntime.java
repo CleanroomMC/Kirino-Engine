@@ -12,6 +12,7 @@ public interface KnowledgeRuntime {
      * the claimed keys.
      *
      * @see #claim(KnowledgeKey)
+     * @see #claim(KnowledgeKey[])
      */
     void commit(@NonNull Consumer<KnowledgeCheckpoint> checkpoint);
 
@@ -41,9 +42,21 @@ public interface KnowledgeRuntime {
      * To claim a certain key so the corresponding value can't be committed until the release call.
      *
      * <p>Explanation: It means that the program is going to rely on certain knowledge for a while.</p>
+     *
+     * @see #claim(KnowledgeKey[])
      */
     @NonNull
-    <T> ClaimedScopeHandle<T> claim(@NonNull KnowledgeKey<T> key);
+    <T> ClaimedScopeHandle claim(@NonNull KnowledgeKey<T> key);
+
+    /**
+     * To claim a set of keys so the corresponding values can't be committed until the release call.
+     *
+     * <p>Explanation: It means that the program is going to rely on certain knowledge for a while.</p>
+     *
+     * @see #claim(KnowledgeKey)
+     */
+    @NonNull
+    ClaimedScopeHandle claim(@NonNull KnowledgeKey<?> @NonNull ... keys);
 
     @NonNull
     KnowledgeOwner owner();

@@ -22,7 +22,7 @@ public class KnowledgeModelTest {
     }
 
     @Test
-    public void testCommitConflict() {
+    public void testFullUsage1() {
         KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
         KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
 
@@ -32,5 +32,42 @@ public class KnowledgeModelTest {
                 glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 2));
             });
         }
+
+        Assertions.assertDoesNotThrow(() -> {
+            glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 2));
+        });
+
+        glKnowledge.require(GLKnowledgeKeys.VAO, 2);
+    }
+
+    @Test
+    public void testFullUsage2() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 1));
+        try (var handle = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+            Assertions.assertThrows(RuntimeException.class, () -> {
+                glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+            });
+        }
+
+        Assertions.assertDoesNotThrow(() -> {
+            glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+        });
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            glKnowledge.requireKnown(GLKnowledgeKeys.VAO);
+        });
+    }
+
+    @Test
+    public void testUnknown() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            glKnowledge.requireKnown(GLKnowledgeKeys.VAO);
+        });
     }
 }

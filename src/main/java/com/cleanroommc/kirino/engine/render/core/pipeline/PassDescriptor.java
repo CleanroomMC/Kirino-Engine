@@ -20,7 +20,7 @@ public final class PassDescriptor {
      * It registers a pass with availability conditions.
      *
      * @param availability The availability is only about the internal implementation of a pass.
-     *                     Like, whether the implementation has implicit dependencies or unfinished
+     *                     Like, whether the implementation has implicit dependencies or is unfinished
      */
     public PassDescriptor(
             @NonNull RenderPass pass,
