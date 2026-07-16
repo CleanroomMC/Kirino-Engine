@@ -161,7 +161,7 @@ Most of the rendering things are rendering-agnostic in our engine.
 GL state management is like the last piece of the puzzle regarding infrastructure and groundwork.
 
 GL state management strategies are hard to distinguish without explicit clarifications since they are 
-fundamentally just a bunch of `glEnable`/`glDisable` calls, and even devs feel lost while facing the whole 
+fundamentally just a bunch of `glEnable`/`glDisable` calls, and devs tend to feel lost while facing the whole 
 globally mutable state machine.
 
 Regarding the state management strategy:
@@ -173,42 +173,17 @@ Regarding the state management strategy:
 > We only care about the GL state management inside `ourVersionOfRenderWorld()`. 
 > It's easier to take over the state management when the executions are centralized.
 
-### `glKnowledge` & Immutable Time Slice Model
-
-We've introduced a temporal model for GL states.
-You can treat it like the users are allowed to divide a frame into multiple slices.
-```java
-|--- Slice 1 ---|--- Slice 2 ---|--- Slice 3 ---|--- ...
-```
-
-For each slice, the GL states are all treated immutable. If you want to change anything, you'll have to commit another slice.
-However, GL states intrinsically can't be immutable. That's why our strategy is more like enforcing a _contract_ instead of straight
-up "Vulkan-like immutable pipeline".
-
-For each slice, users can get access to the knowledge runtime called `glKnowledge`, and they are allowed to 
-```java
-void commit(the known GL state changes) // commit the next slice
-void require(key, expected value) // check if something conflicts your knowledge about gl states
-void requireKnown(key) // check if something is known
-void reportMutation(key) // report if you are sure that some gl state knowledge won't be reliable anymore
-```
-
-The main idea is to divide the timeline and every piece of it is supposed to be immutable.
-
-As you can see, our modeling isn't related to the _GL truth_ but the GL states to the best of our knowledge.
-The uncertainty itself is also the first-class object here, and the systems are allowed to "risk it" when 
-GL knowledge violations happen.
-
 ### Clarifications On "GL State Leaks"
 
 GL state leakage describes a situation where a certain state is supposed to be the expected value but not.
-The reason behind is that no one knows what's the expected GL state at this moment, especially with nested rendering classes.
+The reason behind is that no one knows what are the expected GL states for a certain period, especially with nested rendering calls.
 
-GL state tracker doesn't resolve the issue that every render class is unaware of the current GL state requirements.
-Instead, it allows external render code to mess up every state during a certain period and then "roll back."
+Either it was the GL state tracker or change/restore pattern, they don't resolve the issue that every render call is 
+unaware of the current GL state requirements. Instead, they allow external render code to mess up 
+every state during a certain period and then "roll back."
 
-However, even with the ability to roll back a certain time period. The scope of that period, 
-also known as granularity, defines GL state leakage.
+However, the ability to roll back isn't enough OR _wanted_. The scope of the rewindable period,
+also known as granularity, defines the GL state leakage.
 
 For example, the following render code might result in artifact.
 ```java
@@ -219,36 +194,64 @@ void render()
 }
 ```
 If the first `renderTexture` call binds its own texture and the second `renderText` call doesn't,
-then `renderText` isn't going to display glyphs correctly aka GL state leakage. In the meanwhile,
-the GL state tracker tracks state changes and will roll back everything after the `render` call. 
+then `renderText` is therefore _not_ going to display glyphs correctly aka GL state leakage. In the meanwhile,
+the GL state tracker tracks state changes and rolls back everything after the `render` call.
 Obvisouly, it doesn't help.
 
-### Uses Of `glKnowledge`
+### The Ability To Claim
 
-The purpose of `glKnowledge` is to help identifying the current GL state requirements.
-It's harder to leak states when everyone knows what they are doing, and we don't like rolling back states and keeping
-every part of the system blind.
+We've introduced a temporal knowledge model for GL states.
 
-- `commit()` can be seen as a way to declare what I want for this time slice
-  - For each `RenderPass`, an immutable `PipelineStateObject` is required to apply, which sets GL states and
-    calls `commit()` to update the known GL knowledge
-  - Subsystems are therefore aware of "what are the states to set back?"
-- `require` doesn't tell you what are the state requirements
-  - It helps you to examine your belief about the current time slice
-  - You can't see what have been committed. They are contract-driven / defined in docs
+```java
+void commit(the known GL state changes)
+void claim(the knowledge key)
+```
+Firstly, users are allowed to commit their GL related knowledge and most importantly they are allowed
+to claim certain knowledge for a while.
 
-The whole knowledge model only makes the bad GL assumptions break explicitly, and it acts as a way to enforce
-our contract of rendering which intrinsically avoids GL state leakage.
+```java
+glKnowledge.commit(...);
+glKnowledge.claim(A);
 
-### Bonus Points
+// ----------------------------
+glKnowledge.commit(A); // commit conflict!
+// ----------------------------
 
-The `glKnowledge` and immutable time slice model allows you to divide a frame into infinitely many slices,
-thus enforcing infinitely many contracts.
+glKnowledge.release(A);
+```
 
-For the predefined engine phases, like `RENDER_OPAQUE`, `RENDER_TRANSPARENT`, they will commit their knowledge to
-enforce their contracts. Similarly, you can make your own contracts for your own subsystems. Of course, you're free
-to do so without the existence of `glKnowledge`, but an explicit knowledge runtime makes you feel "safer" and helps bad
-code to fail fast.
+As a result, the action of `commit` is somewhat privileged from a temporal aspect. That is, you're now able to
+declare what are the needs for your render calls.
+
+### The Ability To Check
+
+Regarding our rendering pipeline, each `RenderPass` is required to apply an immutable `PipelineStateObject`, 
+which sets the GL states and calls `commit()`/`claim()` to update the knowledge runtime. 
+Subsystems are therefore aware of the requirements, "what are the states to set back?"
+
+```java
+void require(key, expected value) // check if something conflicts your knowledge about gl states
+void requireKnown(key) // check if something is known
+```
+
+Moreover, for heavily nested render calls, when the responsibility blurs,
+the knowledge model allows users to check preconditions with `require()` and `requireKnown()` calls.
+
+The reason why we've introduced `requireKnown()` is that our modeling isn't focused on _GL truth_ 
+but the GL states to the best of our knowledge. The uncertainty itself is also the first-class object here, 
+and the systems are allowed to "risk it" when weak GL knowledge violations happen.
+
+### Violations
+
+The main violation is the commit conflict described from the previous section. However, the implicit immutability 
+implied by the action `commit()` isn't reliable as well since raw GL calls are accessible everywhere.
+That's why our strategy is more like enforcing a _contract_ instead of straight
+up "Vulkan-like immutable pipeline".
+
+A `reportMutation()` call is available anyway just in case you are sure that some GL state knowledge won't be reliable 
+anymore but can't tell anything more than that.
+
+The action of how we actively avoid violations essentially builds the whole GL state contract via code itself.
 
 ### Compatibility Details
 
@@ -290,8 +293,9 @@ void ourVersionOfRenderWorld()
 }
 ```
 
-Where the GL temporal contract is applied to each phase, and exiting a phase automatically invalidates
-the current knowledge about GL. Vanilla implementations are treated like the outside world.
+Where the GL temporal contract is applied to each phase. 
+Exiting a phase automatically invalidates the current knowledge about GL. 
+Vanilla implementations are treated like the outside world.
 
 Users are allowed to register their callbacks to each phase and interact with the runtimes including `glKnowledge`.
 
@@ -299,7 +303,7 @@ Users are allowed to register their callbacks to each phase and interact with th
 glKnowledge.require(...);
 glKnowledge.requireKnown(...);
 ```
-Interacting with the `glKnowledge` is a perfect way to explicitly assert your assumptions. 
+Interacting with the `glKnowledge` is a perfect way to explicitly assert your assumptions and claim your needs. 
 As a result, your callbacks are allowed to work in a more transparent environment.
 
 Anyway, the engine frame phase callback acts as a low-level entrypoint to interact with the engine.
