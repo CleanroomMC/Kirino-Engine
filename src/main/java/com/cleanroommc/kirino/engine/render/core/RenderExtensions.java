@@ -1,23 +1,19 @@
 package com.cleanroommc.kirino.engine.render.core;
 
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
-import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingEntry;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingManager;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
-import com.cleanroommc.kirino.engine.resource.ResourceSlot;
-import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.lang3.function.TriFunction;
-import org.apache.commons.lang3.tuple.Triple;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
 /**
+ * No one is allowed to modify its resources except the engine kernel.
+ *
  * @see com.cleanroommc.kirino.engine.process.graphics.install.RenderExtensionsInit
  * @see com.cleanroommc.kirino.engine.process.analysis.install.RenderExtensionsInit
  */
@@ -26,14 +22,7 @@ public final class RenderExtensions {
     public final PostProcessingManager postProcessingManager;
 
     public final Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders;
-    public final List<Triple<
-            String,
-            String[],
-            TriFunction<
-                    ResourceSlot<Renderer>,
-                    PipelineStateObject,
-                    ResourceSlot<VAO>,
-                    AbstractPostProcessingPass>>> postProcessingEntries; // todo: definitely want to refactor
+    public final List<PostProcessingEntry> postProcessingEntries;
     public final List<ImmediateHUD> debugHuds;
 
     public RenderExtensions(

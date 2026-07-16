@@ -1,9 +1,15 @@
 package com.cleanroommc.kirino.engine.process.graphics.install;
 
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingEntry;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingManager;
+import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
+import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
+
+import java.lang.invoke.MethodHandle;
 
 /**
  * @see com.cleanroommc.kirino.engine.render.core.RenderExtensions
@@ -12,20 +18,64 @@ public final class RenderExtensionsInit {
 
     static void init(GraphicsWorldView context) {
         ResourceStorage storage = context.storage();
-        PostProcessingManager pass = context.ext().postProcessingManager;
+        PostProcessingManager ppManager = context.ext().postProcessingManager;
 
-        pass.lock();
         if (context.rs().enablePostProcessing) {
-            Preconditions.checkState(pass.getSubpassCount() >= 1,
-                    "Post-processing is enabled. Post-processing pass must have at least one subpasses at runtime to work as expected.");
+            MethodHolder.openRegister(ppManager);
+            for (PostProcessingEntry entry : context.ext().postProcessingEntries) {
+                // this shader program slot is dynamically generated during RuntimeShaderBundleInit
+                ResourceSlot<ShaderProgram> slot = ppManager.addSubpass(entry);
+                ShaderProgram shaderProgram = storage.get(context.graphicsb().shaderRegistry).newShaderProgram(entry.shaders);
+                storage.put(slot, shaderProgram);
+            }
+            MethodHolder.closeRegister(ppManager);
+        }
+
+        if (context.rs().enablePostProcessing) {
+            Preconditions.checkState(!context.ext().postProcessingEntries.isEmpty(),
+                    "Post-processing is enabled. Post-processing manager must have at least one subpass at runtime to work as expected.");
 
             context.ext().postProcessingManager.lateInit(
                     storage.get(context.graphicsb().frameFinalizer).getMinecraftFramebuffer(),
                     storage.get(context.graphicsb().frameFinalizer).getPingPongFramebuffer(),
                     storage.get(context.graphicsb().frameFinalizer).getIntermediateFramebuffer());
         } else {
-            Preconditions.checkState(pass.getSubpassCount() == 0,
-                    "Post-processing is disabled. Post-processing pass must have exactly zero subpasses at runtime to work as expected.");
+            Preconditions.checkState(context.ext().postProcessingEntries.isEmpty(),
+                    "Post-processing is disabled. Post-processing manager must have exactly zero subpass at runtime to work as expected.");
+        }
+    }
+
+    private static final class MethodHolder {
+        private static final Delegate DELEGATE;
+
+        static {
+            DELEGATE = new Delegate(
+                    ReflectionUtils.getMethod(PostProcessingManager.class, "openRegister", void.class),
+                    ReflectionUtils.getMethod(PostProcessingManager.class, "closeRegister", void.class));
+
+            Preconditions.checkNotNull(DELEGATE.openRegister);
+            Preconditions.checkNotNull(DELEGATE.closeRegister);
+        }
+
+        static void openRegister(PostProcessingManager owner) {
+            try {
+                DELEGATE.openRegister.invokeExact(owner);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        static void closeRegister(PostProcessingManager owner) {
+            try {
+                DELEGATE.closeRegister.invokeExact(owner);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(
+                MethodHandle openRegister,
+                MethodHandle closeRegister) {
         }
     }
 }

@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.config.KirinoConfigHub;
 import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.KirinoEngine;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
@@ -168,13 +169,12 @@ public final class KirinoCommonCore {
         event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
     }
 
-    // todo: abstraction
     @SubscribeEvent
     public static void onPostProcessingRegister(PostProcessingRegistrationEvent event) {
-//        event.register(
-//                "Tone Mapping Pass",
-//                event.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"),
-//                DefaultPostProcessingPass::new);
+        event.register(
+                "Tone Mapping Pass",
+                new String[]{"forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"},
+                DefaultPostProcessingPass::new);
     }
 
     @SubscribeEvent

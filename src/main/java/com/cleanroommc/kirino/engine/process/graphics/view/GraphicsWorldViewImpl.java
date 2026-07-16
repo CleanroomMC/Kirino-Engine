@@ -41,6 +41,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     private final Logger logger;
     private final ResourceStorage storage;
     private final BuiltinShaderBundle builtinShaderBundle;
+    private final RuntimeShaderBundle runtimeShaderBundle;
     private final GraphicsRuntimeBundle graphicsRuntimeBundle;
     private final McIntegrationBundle mcIntegrationBundle;
     private final McSceneViewState mcSceneViewState;
@@ -54,6 +55,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
             @NonNull Logger logger,
             @NonNull ResourceStorage storage,
             @NonNull BuiltinShaderBundle builtinShaderBundle,
+            @NonNull RuntimeShaderBundle runtimeShaderBundle,
             @NonNull GraphicsRuntimeBundle graphicsRuntimeBundle,
             @NonNull McIntegrationBundle mcIntegrationBundle,
             @NonNull McSceneViewState mcSceneViewState,
@@ -66,6 +68,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         Preconditions.checkNotNull(logger);
         Preconditions.checkNotNull(storage);
         Preconditions.checkNotNull(builtinShaderBundle);
+        Preconditions.checkNotNull(runtimeShaderBundle);
         Preconditions.checkNotNull(graphicsRuntimeBundle);
         Preconditions.checkNotNull(mcIntegrationBundle);
         Preconditions.checkNotNull(mcSceneViewState);
@@ -78,6 +81,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         this.logger = logger;
         this.storage = storage;
         this.builtinShaderBundle = builtinShaderBundle;
+        this.runtimeShaderBundle = runtimeShaderBundle;
         this.graphicsRuntimeBundle = graphicsRuntimeBundle;
         this.mcIntegrationBundle = mcIntegrationBundle;
         this.mcSceneViewState = mcSceneViewState;
@@ -128,8 +132,14 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     @NonNull
     @Override
-    public BuiltinShaderBundle shaderb() {
+    public BuiltinShaderBundle shaderbb() {
         return builtinShaderBundle;
+    }
+
+    @NonNull
+    @Override
+    public RuntimeShaderBundle shaderrb() {
+        return runtimeShaderBundle;
     }
 
     @NonNull

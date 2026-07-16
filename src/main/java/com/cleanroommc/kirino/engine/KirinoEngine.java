@@ -37,6 +37,9 @@ public class KirinoEngine {
     private final BuiltinShaderBundle builtinShaderBundle;
 
     @SuppressWarnings("FieldCanBeLocal")
+    private final RuntimeShaderBundle runtimeShaderBundle;
+
+    @SuppressWarnings("FieldCanBeLocal")
     private final McSceneViewState mcSceneViewState;
 
     @SuppressWarnings("FieldCanBeLocal")
@@ -93,6 +96,8 @@ public class KirinoEngine {
 
         builtinShaderBundle = new BuiltinShaderBundle(resourceLayout);
 
+        runtimeShaderBundle = new RuntimeShaderBundle(resourceLayout);
+
         mcIntegrationBundle = new McIntegrationBundle(resourceLayout);
 
         mcSceneViewState = new McSceneViewState(
@@ -140,6 +145,7 @@ public class KirinoEngine {
                         logger,
                         storage,
                         builtinShaderBundle,
+                        runtimeShaderBundle,
                         graphicsRuntimeBundle,
                         mcIntegrationBundle,
                         mcSceneViewState,

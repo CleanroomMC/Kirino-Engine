@@ -5,7 +5,6 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.SubpassDecorator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
-import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
@@ -13,7 +12,6 @@ import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
-import org.apache.commons.lang3.function.TriFunction;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 
@@ -23,7 +21,7 @@ import java.util.function.BiConsumer;
  * It must have at least one subpass at runtime to work as expected. Otherwise, disable post-processing instead.
  * It must have zero subpasses at runtime when post-processing is disabled.
  * <br><br>
- * This class is highly coupled with {@link FrameFinalizer}, and the post-processing process is fully guided by {@link FrameFinalizer#finalizeFramebuffer()}.
+ * This class is highly coupled with {@link FrameFinalizer}, and the post-processing process is fully guided by {@link FrameFinalizer#finalizeFramebuffer(ResourceStorage, KnowledgeRuntime)}.
  */
 public class PostProcessingManager {
 
@@ -35,13 +33,18 @@ public class PostProcessingManager {
     private final ResourceSlot<Renderer> renderer;
     private final ResourceSlot<VAO> fullscreenTriangleVao;
 
-    private boolean lock = false;
+    private boolean registrationPeriod = false;
+
     private int subpassCount;
     private BiConsumer<String, Integer> subpassCallback = null;
     private Object[] renderPayloads = null;
 
-    public void lock() {
-        lock = true;
+    private void openRegister() {
+        registrationPeriod = true;
+    }
+
+    private void closeRegister() {
+        registrationPeriod = false;
     }
 
     /**
@@ -52,7 +55,7 @@ public class PostProcessingManager {
             PingPongFramebuffer pingPongFramebuffer,
             Framebuffer intermediateFramebuffer) {
 
-        subpassCount = getSubpassCount();
+        subpassCount = postProcessingPass.size();
 
         this.minecraftFramebuffer = minecraftFramebuffer;
         this.pingPongFramebuffer = pingPongFramebuffer;
@@ -91,34 +94,41 @@ public class PostProcessingManager {
         this.fullscreenTriangleVao = fullscreenTriangleVao;
     }
 
-    public int getSubpassCount() {
-        return postProcessingPass.size();
-    }
-
     /**
      * Must use an unique <code>subpassName</code>. Otherwise, the addition will be ignored silently.
      */
-    public void addSubpass(String subpassName, ResourceSlot<ShaderProgram> shaderProgram, TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass> subpassCtor) {
-        Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");
+    public ResourceSlot<ShaderProgram> addSubpass(PostProcessingEntry entry) {
+        Preconditions.checkState(registrationPeriod,
+                "Only call this method during the registration period.");
 
-        AbstractPostProcessingPass subpass = subpassCtor.apply(renderer, PSOPresets.createScreenOverwritePSO(shaderProgram), fullscreenTriangleVao);
-        postProcessingPass.addSubpass(subpassName, subpass);
+        ResourceSlot<ShaderProgram> shaderProgram = entry.getShaderProgram();
+
+        AbstractPostProcessingPass subpass = entry.ctor.construct(
+                renderer,
+                PSOPresets.createScreenOverwritePSO(shaderProgram),
+                fullscreenTriangleVao);
+
+        postProcessingPass.addSubpass(entry.subpassName, subpass);
+
+        return shaderProgram;
     }
 
     public void removeSubpass(String subpassName) {
-        Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");
+        Preconditions.checkState(registrationPeriod,
+                "Only call this method during the registration period.");
 
         postProcessingPass.removeSubpass(subpassName);
     }
 
-    public boolean hasSubpass(String subpassName) {
-        return postProcessingPass.hasSubpass(subpassName);
-    }
-
     public void attachSubpassDecorator(String subpassName, SubpassDecorator decorator) {
-        Preconditions.checkState(!lock, "Only call this method before the lock and lateInit().");
+        Preconditions.checkState(registrationPeriod,
+                "Only call this method during the registration period.");
 
         postProcessingPass.attachSubpassDecorator(subpassName, decorator);
+    }
+
+    public boolean hasSubpass(String subpassName) {
+        return postProcessingPass.hasSubpass(subpassName);
     }
 
     /**

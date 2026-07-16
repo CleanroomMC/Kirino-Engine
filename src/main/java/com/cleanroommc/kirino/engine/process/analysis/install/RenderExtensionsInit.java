@@ -2,20 +2,14 @@ package com.cleanroommc.kirino.engine.process.analysis.install;
 
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.event.DebugHUDRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingEntry;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
-import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
-import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.world.context.AnalyticalWorldView;
-import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
-import org.apache.commons.lang3.function.TriFunction;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.lang.invoke.MethodHandle;
 import java.util.List;
@@ -72,10 +66,10 @@ public final class RenderExtensionsInit {
         }
 
         @SuppressWarnings("unchecked")
-        static List<Triple<String, String[], TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass>>> getPostProcessingEntries(PostProcessingRegistrationEvent postProcessingRegistrationEvent) {
-            List<Triple<String, String[], TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass>>> postProcessingEntries;
+        static List<PostProcessingEntry> getPostProcessingEntries(PostProcessingRegistrationEvent postProcessingRegistrationEvent) {
+            List<PostProcessingEntry> postProcessingEntries;
             try {
-                postProcessingEntries = (List<Triple<String, String[], TriFunction<ResourceSlot<Renderer>, PipelineStateObject, ResourceSlot<VAO>, AbstractPostProcessingPass>>>) DELEGATE.postProcessingEntriesGetter.invokeExact(postProcessingRegistrationEvent);
+                postProcessingEntries = (List<PostProcessingEntry>) DELEGATE.postProcessingEntriesGetter.invokeExact(postProcessingRegistrationEvent);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }

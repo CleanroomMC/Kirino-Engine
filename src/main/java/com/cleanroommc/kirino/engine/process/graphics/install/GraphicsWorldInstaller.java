@@ -30,6 +30,7 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
         GraphicsRuntimeBundleInit.init(view);
         BuiltinShaderBundleInit.init(view);
+        RuntimeShaderBundleInit.init(view);
         McIntegrationBundleInit.init(view);
         McSceneViewStateInit.init(view);
         RenderExtensionsInit.init(view);

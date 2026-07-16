@@ -21,6 +21,7 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL20;
 
 public abstract class AbstractPostProcessingPass extends Subpass {
+
     private final ResourceSlot<VAO> fullscreenTriangleVao;
 
     /**

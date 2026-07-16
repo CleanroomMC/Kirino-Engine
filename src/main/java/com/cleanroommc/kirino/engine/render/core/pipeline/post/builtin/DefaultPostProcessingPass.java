@@ -1,6 +1,7 @@
-package com.cleanroommc.kirino.engine.render.core.pipeline.post;
+package com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin;
 
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.AbstractPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.vao.VAO;

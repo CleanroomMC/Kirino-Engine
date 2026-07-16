@@ -11,50 +11,50 @@ public final class BuiltinShaderBundleInit {
     static void init(GraphicsWorldView context) {
         ResourceStorage storage = context.storage();
 
-        storage.put(context.shaderb().postProcessingDefaultProgram,
+        storage.put(context.shaderbb().postProcessingDefaultProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
-        storage.put(context.shaderb().terrainGpuPassProgram,
+        storage.put(context.shaderbb().terrainGpuPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/opaque_terrain.vert", "forge:shaders/opaque_terrain.frag"));
 
-        storage.put(context.shaderb().chunkCpuPassProgram,
+        storage.put(context.shaderbb().chunkCpuPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
 
-        storage.put(context.shaderb().gizmosPassProgram,
+        storage.put(context.shaderbb().gizmosPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
 
-        storage.put(context.shaderb().toneMappingPassProgram,
+        storage.put(context.shaderbb().toneMappingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
-        storage.put(context.shaderb().upscalingPassProgram,
+        storage.put(context.shaderbb().upscalingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
-        storage.put(context.shaderb().downscalingPassProgram,
+        storage.put(context.shaderbb().downscalingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
 
-        storage.put(context.shaderb().meshletVertexGenComputeProgram,
+        storage.put(context.shaderbb().meshletVertexGenComputeProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/meshlets2vertices.comp"));
 
-        storage.put(context.shaderb().meshletDrawIndexGenComputeProgram,
+        storage.put(context.shaderbb().meshletDrawIndexGenComputeProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
                         "forge:shaders/meshlet_draw_index_gen.comp"));
 
-        storage.sealResource(context.shaderb().postProcessingDefaultProgram);
-        storage.sealResource(context.shaderb().terrainGpuPassProgram);
-        storage.sealResource(context.shaderb().chunkCpuPassProgram);
-        storage.sealResource(context.shaderb().gizmosPassProgram);
-        storage.sealResource(context.shaderb().toneMappingPassProgram);
-        storage.sealResource(context.shaderb().upscalingPassProgram);
-        storage.sealResource(context.shaderb().downscalingPassProgram);
-        storage.sealResource(context.shaderb().meshletVertexGenComputeProgram);
-        storage.sealResource(context.shaderb().meshletDrawIndexGenComputeProgram);
+        storage.sealResource(context.shaderbb().postProcessingDefaultProgram);
+        storage.sealResource(context.shaderbb().terrainGpuPassProgram);
+        storage.sealResource(context.shaderbb().chunkCpuPassProgram);
+        storage.sealResource(context.shaderbb().gizmosPassProgram);
+        storage.sealResource(context.shaderbb().toneMappingPassProgram);
+        storage.sealResource(context.shaderbb().upscalingPassProgram);
+        storage.sealResource(context.shaderbb().downscalingPassProgram);
+        storage.sealResource(context.shaderbb().meshletVertexGenComputeProgram);
+        storage.sealResource(context.shaderbb().meshletDrawIndexGenComputeProgram);
     }
 }

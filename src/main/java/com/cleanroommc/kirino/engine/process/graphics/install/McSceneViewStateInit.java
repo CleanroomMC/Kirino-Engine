@@ -17,8 +17,8 @@ public final class McSceneViewStateInit {
         meshletGpuRegistry.lateInit();
 
         MeshletComputeSystem meshletComputeSystem = new MeshletComputeSystem(
-                context.shaderb().meshletVertexGenComputeProgram,
-                context.shaderb().meshletDrawIndexGenComputeProgram);
+                context.shaderbb().meshletVertexGenComputeProgram,
+                context.shaderbb().meshletDrawIndexGenComputeProgram);
         meshletComputeSystem.lateInit();
 
         storage.put(context.mcscene().meshletGpuRegistry, meshletGpuRegistry);

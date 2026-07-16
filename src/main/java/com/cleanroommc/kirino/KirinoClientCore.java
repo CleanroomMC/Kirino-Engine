@@ -782,31 +782,13 @@ public final class KirinoClientCore {
 
         static {
             DELEGATE = new KirinoEngineDelegate(
-                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "builtinShaderBundle", BuiltinShaderBundle.class),
                     ReflectionUtils.getFieldGetter(KirinoEngine.class, "graphicsRuntimeBundle", GraphicsRuntimeBundle.class),
                     ReflectionUtils.getFieldGetter(KirinoEngine.class, "mcSceneViewState", McSceneViewState.class),
-                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "mcIntegrationBundle", McIntegrationBundle.class),
-                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "shaderIntrospection", ShaderIntrospection.class),
-                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "renderStructure", RenderStructure.class),
-                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "renderExtensions", RenderExtensions.class));
+                    ReflectionUtils.getFieldGetter(KirinoEngine.class, "mcIntegrationBundle", McIntegrationBundle.class));
 
-            Preconditions.checkNotNull(DELEGATE.builtinShaderBundleGetter);
             Preconditions.checkNotNull(DELEGATE.graphicsRuntimeBundleGetter);
             Preconditions.checkNotNull(DELEGATE.mcSceneViewStateGetter);
             Preconditions.checkNotNull(DELEGATE.mcIntegrationBundleGetter);
-            Preconditions.checkNotNull(DELEGATE.shaderIntrospectionGetter);
-            Preconditions.checkNotNull(DELEGATE.renderStructureGetter);
-            Preconditions.checkNotNull(DELEGATE.renderExtensionsGetter);
-        }
-
-        static BuiltinShaderBundle getBuiltinShaderBundle(KirinoEngine engine) {
-            BuiltinShaderBundle result;
-            try {
-                result = (BuiltinShaderBundle) DELEGATE.builtinShaderBundleGetter.invokeExact(engine);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            return result;
         }
 
         static GraphicsRuntimeBundle getGraphicsRuntimeBundle(KirinoEngine engine) {
@@ -839,47 +821,13 @@ public final class KirinoClientCore {
             return result;
         }
 
-        static ShaderIntrospection getShaderIntrospection(KirinoEngine engine) {
-            ShaderIntrospection result;
-            try {
-                result = (ShaderIntrospection) DELEGATE.shaderIntrospectionGetter.invokeExact(engine);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            return result;
-        }
-
-        static RenderStructure getRenderStructure(KirinoEngine engine) {
-            RenderStructure result;
-            try {
-                result = (RenderStructure) DELEGATE.renderStructureGetter.invokeExact(engine);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            return result;
-        }
-
-        static RenderExtensions getRenderExtensions(KirinoEngine engine) {
-            RenderExtensions result;
-            try {
-                result = (RenderExtensions) DELEGATE.renderExtensionsGetter.invokeExact(engine);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-            return result;
-        }
-
         /**
          * Holds handles for KirinoEngine private fields.
          */
         record KirinoEngineDelegate(
-                MethodHandle builtinShaderBundleGetter,
                 MethodHandle graphicsRuntimeBundleGetter,
                 MethodHandle mcSceneViewStateGetter,
-                MethodHandle mcIntegrationBundleGetter,
-                MethodHandle shaderIntrospectionGetter,
-                MethodHandle renderStructureGetter,
-                MethodHandle renderExtensionsGetter) {
+                MethodHandle mcIntegrationBundleGetter) {
         }
     }
     //</editor-fold>
