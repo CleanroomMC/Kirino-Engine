@@ -183,7 +183,7 @@ unaware of the current GL state requirements. Instead, they allow external rende
 every state during a certain period and then "roll back."
 
 However, the ability to roll back isn't enough OR _wanted_. The scope of the rewindable period,
-also known as granularity, defines the GL state leakage.
+also known as granularity, defines the way GL leaks.
 
 For example, the following render code might result in artifact.
 ```java
@@ -197,6 +197,8 @@ If the first `renderTexture` call binds its own texture and the second `renderTe
 then `renderText` is therefore _not_ going to display glyphs correctly aka GL state leakage. In the meanwhile,
 the GL state tracker tracks state changes and rolls back everything after the `render` call.
 Obvisouly, it doesn't help.
+
+From our perspective, the so-called GL state leakage is more like a contract leakage.
 
 ### The Ability To Claim
 
