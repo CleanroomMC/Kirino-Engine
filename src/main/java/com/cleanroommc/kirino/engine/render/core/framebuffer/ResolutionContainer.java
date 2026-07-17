@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.function.BiConsumer;
 
 public final class ResolutionContainer {
+
     private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
 
     private int width;

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ComponentScanningEvent extends Event {
+
     private final List<String> scanPackageNames = new ArrayList<>();
 
     public void register(@NonNull String packageName) {

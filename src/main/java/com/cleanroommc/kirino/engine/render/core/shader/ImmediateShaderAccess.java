@@ -53,7 +53,7 @@ public class ImmediateShaderAccess {
         return MethodHolder.initShaderProgram(shaders);
     }
 
-    public void submitToGL(Shader... shaders) {
+    public void submitToGL(@NonNull Shader @NonNull ... shaders) {
         Preconditions.checkNotNull(shaders);
 
         for (Shader shader : shaders) {

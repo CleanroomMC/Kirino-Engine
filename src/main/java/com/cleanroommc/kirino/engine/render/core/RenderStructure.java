@@ -19,6 +19,8 @@ public final class RenderStructure {
 
     public final boolean enableHDR;
     public final boolean enablePostProcessing;
+    public final boolean enableKhrDebug;
+    public final boolean enableShaderDebug;
 
     public final PassDescriptor terrainGpuPassDesc;
     public final PassDescriptor chunkCpuPassDesc;
@@ -31,6 +33,8 @@ public final class RenderStructure {
     public RenderStructure(
             boolean enableHDR,
             boolean enablePostProcessing,
+            boolean enableKhrDebug,
+            boolean enableShaderDebug,
             @NonNull GraphicsRuntimeBundle graphicsRuntimeBundle,
             @NonNull BuiltinShaderBundle builtinShaderBundle) {
 
@@ -39,6 +43,8 @@ public final class RenderStructure {
 
         this.enableHDR = enableHDR;
         this.enablePostProcessing = enablePostProcessing;
+        this.enableKhrDebug = enableKhrDebug;
+        this.enableShaderDebug = enableShaderDebug;
 
         RenderPass terrainGpuPass = new RenderPass(
                 "Terrain GPU",

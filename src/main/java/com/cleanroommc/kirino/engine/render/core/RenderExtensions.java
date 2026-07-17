@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core;
 
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
-import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingEntry;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingManager;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
@@ -33,7 +32,8 @@ public final class RenderExtensions {
         Preconditions.checkNotNull(builtinShaderBundle);
 
         postProcessingManager = new PostProcessingManager(
-                new RenderPass("Post-Processing", graphicsRuntimeBundle.graphicResourceManager, graphicsRuntimeBundle.idbGenerator),
+                graphicsRuntimeBundle.graphicResourceManager,
+                graphicsRuntimeBundle.idbGenerator,
                 graphicsRuntimeBundle.renderer,
                 graphicsRuntimeBundle.fullscreenTriangleVao);
 

@@ -28,7 +28,7 @@ public final class ResourceStorage {
     public <T> boolean isResourceSealed(@NonNull ResourceSlot<T> slot) {
         Preconditions.checkNotNull(slot);
         Preconditions.checkState(has(slot),
-                "Resource \"%s\" isn't in the storage yet.", slot.type().getName());
+                "Resource \"%s\" isn't in the storage yet.", slot.toString());
 
         return isResourceSealedInternal(slot);
     }
@@ -49,7 +49,7 @@ public final class ResourceStorage {
     public <T> void sealResource(@NonNull ResourceSlot<T> slot) {
         Preconditions.checkNotNull(slot);
         Preconditions.checkState(has(slot),
-                "Resource \"%s\" isn't in the storage yet.", slot.type().getName());
+                "Resource \"%s\" isn't in the storage yet.", slot.toString());
 
         resourceSealed.put(slot.id(), true);
     }
@@ -78,7 +78,7 @@ public final class ResourceStorage {
         Preconditions.checkNotNull(slot);
         Preconditions.checkNotNull(resource);
         Preconditions.checkState(!isResourceSealedInternal(slot),
-                "The resource \"%s\" is sealed. You are no longer allowed to make changes.", slot.type().getName());
+                "The resource \"%s\" is sealed. You are no longer allowed to make changes.", slot.toString());
 
         storage.put(slot.id(), resource);
     }
@@ -88,7 +88,7 @@ public final class ResourceStorage {
                 "The storage is sealed. You are no longer allowed to make changes.");
         Preconditions.checkNotNull(slot);
         Preconditions.checkState(!isResourceSealedInternal(slot),
-                "The resource \"%s\" is sealed. You are no longer allowed to make changes.", slot.type().getName());
+                "The resource \"%s\" is sealed. You are no longer allowed to make changes.", slot.toString());
 
         storage.remove(slot.id());
     }

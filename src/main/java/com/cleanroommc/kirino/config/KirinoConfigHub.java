@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.config;
 
 public final class KirinoConfigHub {
+
     KirinoConfigHub() {
     }
 
@@ -12,7 +13,7 @@ public final class KirinoConfigHub {
         public boolean enableRenderDelegate = true;
         public boolean enableHDR = true;
         public boolean enablePostProcessing = false;
-
+        public boolean enableKhrDebug = false;
         public boolean enableShaderDebug = false;
 
         public int targetWorkloadPerThread = 5000;
@@ -52,6 +53,10 @@ public final class KirinoConfigHub {
 
     public boolean isEnablePostProcessing() {
         return requiresRestart.enablePostProcessing;
+    }
+
+    public boolean isEnableKhrDebug() {
+        return requiresRestart.enableKhrDebug;
     }
 
     public boolean isEnableShaderDebug() {

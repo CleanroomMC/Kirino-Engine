@@ -8,6 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import java.util.*;
 
 public final class ShaderDebugInjection {
+
     private ShaderDebugInjection() {
     }
 

@@ -86,8 +86,12 @@ public class KirinoEngine {
             @NonNull EventBus eventBus,
             @NonNull Logger logger,
             @NonNull CleanECSRuntime ecsRuntime,
-            boolean enableHDR,
-            boolean enablePostProcessing) {
+            @NonNull EngineInitParams params) {
+
+        Preconditions.checkNotNull(eventBus);
+        Preconditions.checkNotNull(logger);
+        Preconditions.checkNotNull(ecsRuntime);
+        Preconditions.checkNotNull(params);
 
         ResourceLayout resourceLayout = MethodHolder.constructResourceLayout();
         storage = MethodHolder.constructResourceStorage();
@@ -112,8 +116,10 @@ public class KirinoEngine {
                 new DefaultShaderAnalyzer());
 
         renderStructure = new RenderStructure(
-                enableHDR,
-                enablePostProcessing,
+                params.enableHDR(),
+                params.enablePostProcessing(),
+                params.enableKhrDebug(),
+                params.enableShaderDebug(),
                 graphicsRuntimeBundle,
                 builtinShaderBundle);
 

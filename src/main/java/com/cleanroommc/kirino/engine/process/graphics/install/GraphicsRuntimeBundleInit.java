@@ -148,7 +148,12 @@ public final class GraphicsRuntimeBundleInit {
         ShaderRegistry shaderRegistry = new ShaderRegistry();
 
         for (Map.Entry<ResourceLocation, Optional<ShaderCompileOptions>> entry : context.ext().rawShaders.entrySet()) {
-            Shader shader = shaderRegistry.register(context.logger(), entry.getKey(), entry.getValue().isPresent() ? entry.getValue().get() : null);
+            Shader shader = shaderRegistry.register(
+                    context.logger(),
+                    entry.getKey(),
+                    entry.getValue().isPresent() ? entry.getValue().get() : null,
+                    context.rs().enableShaderDebug);
+
             context.logger().info("Registered " + shader.getShaderType().toString() + " shader \"" + entry.getKey() + "\".");
             if (shader.getShaderSource().isEmpty()) {
                 context.logger().info("Warning! \"" + entry.getKey() + "\" is empty.");

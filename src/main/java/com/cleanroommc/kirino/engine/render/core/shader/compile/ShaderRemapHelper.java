@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.shader.compile;
 import java.util.Map;
 
 public final class ShaderRemapHelper {
+
     private ShaderRemapHelper() {
     }
 

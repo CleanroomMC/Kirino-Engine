@@ -3,8 +3,10 @@ package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.PingPongFramebuffer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.SubpassDecorator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
+import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
@@ -29,7 +31,7 @@ public class PostProcessingManager {
     private PingPongFramebuffer pingPongFramebuffer;
     private Framebuffer intermediateFramebuffer;
 
-    private final RenderPass postProcessingPass;
+    private final RenderPass placeholderPass;
     private final ResourceSlot<Renderer> renderer;
     private final ResourceSlot<VAO> fullscreenTriangleVao;
 
@@ -55,7 +57,7 @@ public class PostProcessingManager {
             PingPongFramebuffer pingPongFramebuffer,
             Framebuffer intermediateFramebuffer) {
 
-        subpassCount = postProcessingPass.size();
+        subpassCount = placeholderPass.size();
 
         this.minecraftFramebuffer = minecraftFramebuffer;
         this.pingPongFramebuffer = pingPongFramebuffer;
@@ -88,16 +90,28 @@ public class PostProcessingManager {
         }
     }
 
-    public PostProcessingManager(RenderPass postProcessingPass, ResourceSlot<Renderer> renderer, ResourceSlot<VAO> fullscreenTriangleVao) {
-        this.postProcessingPass = postProcessingPass;
+    public PostProcessingManager(
+            @NonNull ResourceSlot<GraphicResourceManager> graphicResourceManager,
+            @NonNull ResourceSlot<IndirectDrawBufferGenerator> idbGenerator,
+            @NonNull ResourceSlot<Renderer> renderer,
+            @NonNull ResourceSlot<VAO> fullscreenTriangleVao) {
+
+        Preconditions.checkNotNull(graphicResourceManager);
+        Preconditions.checkNotNull(idbGenerator);
+        Preconditions.checkNotNull(renderer);
+        Preconditions.checkNotNull(fullscreenTriangleVao);
+
+        this.placeholderPass = new RenderPass("Post-Processing", graphicResourceManager, idbGenerator);
         this.renderer = renderer;
         this.fullscreenTriangleVao = fullscreenTriangleVao;
     }
 
     /**
-     * Must use an unique <code>subpassName</code>. Otherwise, the addition will be ignored silently.
+     * This is not meant to be called by clients.
      */
-    public ResourceSlot<ShaderProgram> addSubpass(PostProcessingEntry entry) {
+    @NonNull
+    public ResourceSlot<ShaderProgram> addSubpass(@NonNull PostProcessingEntry entry) {
+        Preconditions.checkNotNull(entry);
         Preconditions.checkState(registrationPeriod,
                 "Only call this method during the registration period.");
 
@@ -108,27 +122,30 @@ public class PostProcessingManager {
                 PSOPresets.createScreenOverwritePSO(shaderProgram),
                 fullscreenTriangleVao);
 
-        postProcessingPass.addSubpass(entry.subpassName, subpass);
+        placeholderPass.addSubpass(entry.subpassName, subpass);
 
         return shaderProgram;
     }
 
-    public void removeSubpass(String subpassName) {
+    /**
+     * This is not meant to be called by clients.
+     */
+    public void attachSubpassDecorator(@NonNull String subpassName, @NonNull SubpassDecorator decorator) {
+        Preconditions.checkNotNull(subpassName);
+        Preconditions.checkNotNull(decorator);
         Preconditions.checkState(registrationPeriod,
                 "Only call this method during the registration period.");
 
-        postProcessingPass.removeSubpass(subpassName);
+        placeholderPass.attachSubpassDecorator(subpassName, decorator);
     }
 
-    public void attachSubpassDecorator(String subpassName, SubpassDecorator decorator) {
-        Preconditions.checkState(registrationPeriod,
-                "Only call this method during the registration period.");
+    /**
+     * This information is only reliable after the engine initialization.
+     */
+    public boolean hasSubpass(@NonNull String subpassName) {
+        Preconditions.checkNotNull(subpassName);
 
-        postProcessingPass.attachSubpassDecorator(subpassName, decorator);
-    }
-
-    public boolean hasSubpass(String subpassName) {
-        return postProcessingPass.hasSubpass(subpassName);
+        return placeholderPass.hasSubpass(subpassName);
     }
 
     /**
@@ -157,14 +174,14 @@ public class PostProcessingManager {
             GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
-            postProcessingPass.render(storage, glKnowledge, null, null, new Object[]{startsWithIntermediate ? intermediateFramebuffer : pingPongFramebuffer.framebufferA()});
+            placeholderPass.render(storage, glKnowledge, null, null, new Object[]{startsWithIntermediate ? intermediateFramebuffer : pingPongFramebuffer.framebufferA()});
         } else if (subpassCount >= 2) {
             // render to post-processing framebuffer B to start the ping-pong process
             pingPongFramebuffer.framebufferB().bind();
             GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
             GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
-            postProcessingPass.render(storage, glKnowledge, null, subpassCallback, renderPayloads);
+            placeholderPass.render(storage, glKnowledge, null, subpassCallback, renderPayloads);
             pingPongFramebuffer.reset();
         }
     }

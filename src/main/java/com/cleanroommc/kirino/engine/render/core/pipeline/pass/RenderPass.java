@@ -51,6 +51,7 @@ public final class RenderPass {
         if (subpassMap.containsKey(subpassName)) {
             return;
         }
+
         subpassMap.put(subpassName, subpass);
         subpassOrder.add(subpassName);
     }
