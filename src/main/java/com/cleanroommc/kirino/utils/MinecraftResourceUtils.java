@@ -59,7 +59,16 @@ public final class MinecraftResourceUtils {
 
         File resources1 = new File(repo, "src/main/resources/assets/forge");
         File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/forge");
-        Preconditions.checkState(resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory(),
+        File resources3 = new File(repo, "src/test/resources/assets/forge");
+        File resources4 = new File(repo, "projects/kirino/src/test/resources/assets/forge");
+        Preconditions.checkState(resources1.exists() &&
+                        resources1.isDirectory() &&
+                        resources2.exists() &&
+                        resources2.isDirectory() &&
+                        resources3.exists() &&
+                        resources3.isDirectory() &&
+                        resources4.exists() &&
+                        resources4.isDirectory(),
                 "This is not the dev env.");
 
         String target = rl.getPath();
@@ -76,6 +85,16 @@ public final class MinecraftResourceUtils {
         File candidate2 = new File(resources2, target);
         if (candidate2.isFile()) {
             return candidate2.getAbsolutePath();
+        }
+
+        File candidate3 = new File(resources3, target);
+        if (candidate3.isFile()) {
+            return candidate3.getAbsolutePath();
+        }
+
+        File candidate4 = new File(resources4, target);
+        if (candidate4.isFile()) {
+            return candidate4.getAbsolutePath();
         }
 
         return null;
@@ -104,7 +123,16 @@ public final class MinecraftResourceUtils {
             File repo = current.getParentFile();
             File resources1 = new File(repo, "src/main/resources");
             File resources2 = new File(repo, "projects/kirino/src/main/resources");
-            devEnv = resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory();
+            File resources3 = new File(repo, "src/test/resources");
+            File resources4 = new File(repo, "projects/kirino/src/test/resources");
+            devEnv = resources1.exists() &&
+                    resources1.isDirectory() &&
+                    resources2.exists() &&
+                    resources2.isDirectory() &&
+                    resources3.exists() &&
+                    resources3.isDirectory() &&
+                    resources4.exists() &&
+                    resources4.isDirectory();
             return devEnv;
         } catch (Exception e) {
             devEnv = false;
