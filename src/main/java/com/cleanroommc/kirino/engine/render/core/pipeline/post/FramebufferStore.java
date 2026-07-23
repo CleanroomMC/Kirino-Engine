@@ -34,9 +34,9 @@ public class FramebufferStore {
     private net.minecraft.client.shader.Framebuffer minecraftFramebuffer;
 
     /**
-     * <code>chainMode</code> can be seen as a corollary of the subpass count, which implicitly relies on
-     * the immutability of the {@link PostProcessingSchedule} owned by the engine runtime.
-     * Nevertheless, the {@link PostProcessingSchedule} is designed to be immutable.
+     * <code>chainMode</code> can be seen as a corollary <code>f(enableHDR, enablePostProcessing, postProcessingSchedule)</code>,
+     * which implicitly relies on the immutability of the configurations owned by the engine runtime.
+     * Nevertheless, the framebuffer config is designed to be immutable.
      *
      * @see #allocate(Logger, net.minecraft.client.shader.Framebuffer, boolean, boolean, PostProcessingSchedule)
      */
