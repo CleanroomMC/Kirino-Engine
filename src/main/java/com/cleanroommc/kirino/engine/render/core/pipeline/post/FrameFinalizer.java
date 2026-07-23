@@ -138,13 +138,11 @@ public class FrameFinalizer {
 
         FramebufferStore store = acquireFramebufferStore();
 
-        // todo: (FIX) blit depth from D24S8 to D32 is invalid. must confirm Minecraft fbo behavior when stencil==false
-//        Preconditions.checkState(store.getMinecraftFramebuffer().isStencilEnabled());
-        if (!store.getMinecraftFramebuffer().isStencilEnabled()) {
-            store.getMinecraftFramebuffer().enableStencil();
-        }
+        // when Minecraft framebuffer stencil enabled: D24S8
+        // when Minecraft framebuffer stencil disabled: D24
+        // D24S8 (main framebuffer) --blit-depth--> D24S8/D24 is always valid
 
-        //<editor-fold desc="blit depth to minecraft framebuffer">
+        //<editor-fold desc="blit depth to Minecraft framebuffer">
         if (store.getMainFramebuffer().getRatio() == 1f) {
             // just in case the size and format of the main framebuffer and minecraft framebuffer mismatch
             if (store.getMainFramebuffer().framebuffer.width() != store.getMinecraftFramebuffer().framebufferTextureWidth ||
