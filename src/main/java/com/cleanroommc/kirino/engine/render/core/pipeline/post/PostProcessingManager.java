@@ -115,7 +115,7 @@ public class PostProcessingManager {
                 }
             }
 
-            return glKnowledge.claim(GLKnowledgeKeys.FBO_DRAW, GLKnowledgeKeys.VIEWPORT);
+            return glKnowledge.claim(GLKnowledgeKeys.FBO_DRAW, GLKnowledgeKeys.FBO_READ, GLKnowledgeKeys.VIEWPORT);
         }
     }
 

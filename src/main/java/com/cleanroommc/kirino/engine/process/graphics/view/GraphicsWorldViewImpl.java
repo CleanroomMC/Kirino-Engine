@@ -9,13 +9,16 @@ import com.cleanroommc.kirino.engine.render.core.gl.semantic.GLKnowledgeKeys;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.FrameFinalizer;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.FramebufferStore;
 import com.cleanroommc.kirino.engine.render.usage.McIntegrationBundle;
 import com.cleanroommc.kirino.engine.render.usage.McSceneViewState;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.ClaimedScopeHandle;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
 import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
+import com.cleanroommc.kirino.gl.framebuffer.GLRenderBuffer;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
@@ -23,6 +26,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
+import org.joml.Vector4i;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
@@ -168,14 +172,15 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     public void run(@NonNull FramePhase phase, boolean firstPrepare) {
         KnowledgeRuntime glKnowledge = firstPrepare ? null : storage.get(graphicsb().glKnowledge);
 
+        ClaimedScopeHandle handle = null;
         if (!firstPrepare) {
             switch (phase) {
-                case PRE_UPDATE -> enterPreUpdate(glKnowledge);
-                case UPDATE -> enterUpdate(glKnowledge);
-                case POST_UPDATE -> enterPostUpdate(glKnowledge);
-                case RENDER_OPAQUE -> enterRenderOpaque(glKnowledge);
-                case RENDER_TRANSPARENT -> enterRenderTransparent(glKnowledge);
-                case RENDER_OVERLAY -> enterRenderOverlay(glKnowledge);
+                case PRE_UPDATE -> handle = enterPreUpdate(glKnowledge);
+                case UPDATE -> handle = enterUpdate(glKnowledge);
+                case POST_UPDATE -> handle = enterPostUpdate(glKnowledge);
+                case RENDER_OPAQUE -> handle = enterRenderOpaque(glKnowledge);
+                case RENDER_TRANSPARENT -> handle = enterRenderTransparent(glKnowledge);
+                case RENDER_OVERLAY -> handle = enterRenderOverlay(glKnowledge);
             }
         }
 
@@ -193,7 +198,7 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
             switch (phase) {
                 case PRE_UPDATE -> preUpdate(glKnowledge);
                 case UPDATE -> update(glKnowledge);
-                case POST_UPDATE -> postUpdate(glKnowledge);
+                case POST_UPDATE -> handle = postUpdate(glKnowledge, handle);
                 case RENDER_OPAQUE -> renderOpaque(glKnowledge);
                 case RENDER_TRANSPARENT -> renderTransparent(glKnowledge);
                 case RENDER_OVERLAY -> renderOverlay(glKnowledge);
@@ -211,12 +216,12 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
         if (!firstPrepare) {
             switch (phase) {
-                case PRE_UPDATE -> exitPreUpdate(glKnowledge);
-                case UPDATE -> exitUpdate(glKnowledge);
-                case POST_UPDATE -> exitPostUpdate(glKnowledge);
-                case RENDER_OPAQUE -> exitRenderOpaque(glKnowledge);
-                case RENDER_TRANSPARENT -> exitRenderTransparent(glKnowledge);
-                case RENDER_OVERLAY -> exitRenderOverlay(glKnowledge);
+                case PRE_UPDATE -> exitPreUpdate(glKnowledge, handle);
+                case UPDATE -> exitUpdate(glKnowledge, handle);
+                case POST_UPDATE -> exitPostUpdate(glKnowledge, handle);
+                case RENDER_OPAQUE -> exitRenderOpaque(glKnowledge, handle);
+                case RENDER_TRANSPARENT -> exitRenderTransparent(glKnowledge, handle);
+                case RENDER_OVERLAY -> exitRenderOverlay(glKnowledge, handle);
             }
         }
     }
@@ -242,9 +247,11 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
     }
 
     //<editor-fold desc="enter phase">
-    private void enterPreUpdate(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterPreUpdate(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.updateResolution();
+        GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0); // todo: commit these two
+        GLRenderBuffer.bind(0);
 
         // current render target: main framebuffer
         frameFinalizer.bindMainFramebuffer(true);
@@ -260,8 +267,10 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height()));
             cp.know(GLKnowledgeKeys.COLOR_MASK_R, true);
             cp.know(GLKnowledgeKeys.COLOR_MASK_G, true);
             cp.know(GLKnowledgeKeys.COLOR_MASK_B, true);
@@ -273,104 +282,147 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
-    private void enterUpdate(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterUpdate(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.bindMainFramebuffer(true);
 
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height()));
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
-    private void enterRenderOpaque(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterRenderOpaque(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.bindMainFramebuffer(true);
 
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height()));
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
-    private void enterRenderTransparent(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterRenderTransparent(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.bindMainFramebuffer(true);
 
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height()));
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
-    private void enterPostUpdate(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterPostUpdate(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.bindMainFramebuffer(true);
 
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height()));
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
-    private void enterRenderOverlay(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle enterRenderOverlay(KnowledgeRuntime glKnowledge) {
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
         frameFinalizer.bindMinecraftFramebuffer(true);
 
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMinecraftFramebuffer().framebufferObject);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMinecraftFramebuffer().framebufferObject);
+            FramebufferStore store = frameFinalizer.acquireFramebufferStore();
+            cp.know(GLKnowledgeKeys.FBO_DRAW, store.getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.FBO_READ, store.getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, store.getMinecraftFramebuffer().framebufferWidth, store.getMinecraftFramebuffer().framebufferHeight));
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
             cp.know(GLKnowledgeKeys.EBO, 0);
             cp.know(GLKnowledgeKeys.IDB, 0);
         });
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
     //</editor-fold>
 
     //<editor-fold desc="exit phase">
-    private void exitPreUpdate(KnowledgeRuntime glKnowledge) {
+    private void exitPreUpdate(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
     }
 
-    private void exitUpdate(KnowledgeRuntime glKnowledge) {
+    private void exitUpdate(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
     }
 
-    private void exitRenderOpaque(KnowledgeRuntime glKnowledge) {
+    private void exitRenderOpaque(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
 
         // for compatibility purpose only:
@@ -394,7 +446,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
     }
 
-    private void exitRenderTransparent(KnowledgeRuntime glKnowledge) {
+    private void exitRenderTransparent(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
 
         // for compatibility purpose only:
@@ -420,7 +473,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         GL11.glDisable(GL11.GL_POLYGON_OFFSET_FILL);
     }
 
-    private void exitPostUpdate(KnowledgeRuntime glKnowledge) {
+    private void exitPostUpdate(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
 
         // for compatibility purpose only:
@@ -455,7 +509,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         GL11.glLoadIdentity();
     }
 
-    private void exitRenderOverlay(KnowledgeRuntime glKnowledge) {
+    private void exitRenderOverlay(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
         glKnowledge.commit(cp -> cp.unknownDomain("gl"));
 
         // for compatibility purpose only:
@@ -506,16 +561,20 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         rs().gizmosPassDesc.acquire().render(storage(), glKnowledge, mcscene().camera);
     }
 
-    private void postUpdate(KnowledgeRuntime glKnowledge) {
+    private ClaimedScopeHandle postUpdate(KnowledgeRuntime glKnowledge, ClaimedScopeHandle handle) {
+        handle.close();
+
         FrameFinalizer frameFinalizer = storage().get(graphicsb().frameFinalizer);
-
         frameFinalizer.finalizeFramebuffer(storage(), glKnowledge);
-
         // current render target: minecraft framebuffer
-        frameFinalizer.bindMinecraftFramebuffer(true);
 
         HighLevelDC.nextGen();
         LowLevelDC.nextGen();
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.FBO_DRAW,
+                GLKnowledgeKeys.FBO_READ,
+                GLKnowledgeKeys.VIEWPORT);
     }
 
     private void renderOverlay(KnowledgeRuntime glKnowledge) {

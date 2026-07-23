@@ -163,7 +163,7 @@ public class FrameFinalizer {
 
         //<editor-fold desc="blit depth to Minecraft framebuffer">
         if (store.getMainFramebuffer().getRatio() == 1f) {
-            // just in case the size and format of the main framebuffer and minecraft framebuffer mismatch
+            // just in case the size or format of the main framebuffer and Minecraft framebuffer mismatch
             if (store.getMainFramebuffer().framebuffer.width() != store.getMinecraftFramebuffer().framebufferTextureWidth ||
                     store.getMainFramebuffer().framebuffer.height() != store.getMinecraftFramebuffer().framebufferTextureHeight ||
                     !store.getMinecraftFramebuffer().isStencilEnabled()) {
@@ -213,7 +213,7 @@ public class FrameFinalizer {
         //<editor-fold desc="no hdr & no post-processing">
         if (!enableHDR && !enablePostProcessing) {
             if (store.getMainFramebuffer().getRatio() == 1f) {
-                // just in case the size of the main framebuffer and minecraft framebuffer mismatches
+                // just in case the size of the main framebuffer and Minecraft framebuffer mismatches
                 if (store.getMainFramebuffer().framebuffer.width() != store.getMinecraftFramebuffer().framebufferTextureWidth ||
                         store.getMainFramebuffer().framebuffer.height() != store.getMinecraftFramebuffer().framebufferTextureHeight) {
 

@@ -8,7 +8,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
- * It provides the render scope, but it'll get executed before the render call.
+ * It provides the render scope, and it'll get executed before the render call.
  *
  * @see SubpassCallback
  */

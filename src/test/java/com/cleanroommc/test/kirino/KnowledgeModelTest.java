@@ -27,7 +27,7 @@ public class KnowledgeModelTest {
         KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
 
         glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 1));
-        try (var handle = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
             Assertions.assertThrows(RuntimeException.class, () -> {
                 glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 2));
             });
@@ -46,7 +46,7 @@ public class KnowledgeModelTest {
         KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
 
         glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 1));
-        try (var handle = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
             Assertions.assertThrows(RuntimeException.class, () -> {
                 glKnowledge.commit(cp -> cp.unknownDomain("gl"));
             });
@@ -69,5 +69,56 @@ public class KnowledgeModelTest {
         Assertions.assertThrows(RuntimeException.class, () -> {
             glKnowledge.requireKnown(GLKnowledgeKeys.VAO);
         });
+    }
+
+    @Test
+    public void testNoCommitConflict1() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 1));
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+            Assertions.assertDoesNotThrow(() -> {
+                glKnowledge.commit(cp -> cp.know(GLKnowledgeKeys.VAO, 1));
+            });
+        }
+    }
+
+    @Test
+    public void testNoCommitConflict2() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        glKnowledge.commit(cp -> cp.unknown(GLKnowledgeKeys.VAO));
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+            Assertions.assertDoesNotThrow(() -> {
+                glKnowledge.commit(cp -> cp.unknown(GLKnowledgeKeys.VAO));
+            });
+        }
+    }
+
+    @Test
+    public void testNoCommitConflict3() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        glKnowledge.commit(cp -> cp.unknown(GLKnowledgeKeys.VAO));
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+            Assertions.assertDoesNotThrow(() -> {
+                glKnowledge.commit(cp -> cp.unknownDomain("gl"));
+            });
+        }
+    }
+
+    @Test
+    public void testNoCommitConflict4() {
+        KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new Policy());
+        KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
+
+        try (var ignored = glKnowledge.claim(GLKnowledgeKeys.VAO)) {
+            Assertions.assertDoesNotThrow(() -> {
+                glKnowledge.commit(cp -> cp.unknown(GLKnowledgeKeys.VAO));
+            });
+        }
     }
 }

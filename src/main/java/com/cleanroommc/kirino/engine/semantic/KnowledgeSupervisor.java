@@ -43,7 +43,27 @@ public final class KnowledgeSupervisor {
 
         Integer depth = claims.get(key);
 
+        boolean report = false;
         if (depth != null && depth > 0) {
+            Entry<?> rawEntry = knowledge.get(key);
+            if (rawEntry == null) {
+                if (commitValue.isKnown()) {
+                    report = true;
+                }
+            } else {
+                if (!rawEntry.value.isKnown() && commitValue.isKnown()) {
+                    report = true;
+                }
+                if (rawEntry.value.isKnown() && !commitValue.isKnown()) {
+                    report = true;
+                }
+                if (rawEntry.value.isKnown() && commitValue.isKnown() && rawEntry.value.value() != commitValue.value()) {
+                    report = true;
+                }
+            }
+        }
+
+        if (report) {
             violationPolicy.onViolation(new KnowledgeViolation(
                     ViolationKind.COMMIT_CONFLICT,
                     key,
