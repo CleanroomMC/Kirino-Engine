@@ -9,6 +9,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletRenderPayload;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
@@ -28,7 +29,7 @@ public class OpaqueTerrainPass extends Subpass {
     }
 
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
+    protected void updateShaderProgram(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @Nullable Camera camera, @Nullable Object payload, @NonNull ShaderProgram shaderProgram) {
         int worldOffset = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "worldOffset");
         int viewRot = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "viewRot");
         int projection = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "projection");
@@ -73,7 +74,7 @@ public class OpaqueTerrainPass extends Subpass {
 //    static long counter = 0;
 
     @Override
-    protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
+    protected void execute(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
         MeshletRenderPayload meshletRenderPayload = (MeshletRenderPayload) payload;
         if (meshletRenderPayload.indexCount() != 0) {
 //            GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);

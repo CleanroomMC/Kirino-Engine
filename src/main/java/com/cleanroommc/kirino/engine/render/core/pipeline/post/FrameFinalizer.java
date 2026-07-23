@@ -1,448 +1,299 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 
-import com.cleanroommc.kirino.engine.render.core.framebuffer.PingPongFramebuffer;
-import com.cleanroommc.kirino.engine.render.core.framebuffer.ResolutionContainer;
-import com.cleanroommc.kirino.engine.render.core.framebuffer.ScalableFramebuffer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
-import com.cleanroommc.kirino.gl.texture.GLTexture;
-import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
-import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
-import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
-import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
-import net.minecraft.client.Minecraft;
+import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GL42;
 import org.lwjgl.opengl.GL43;
 
-// todo: FrameFinalizer logic must not couple with postProcessingPassCount.
-//       must introduce post processing config
 public class FrameFinalizer {
-
-    private static final Minecraft MINECRAFT = Minecraft.getMinecraft();
-    private final Logger logger;
 
     public final boolean enableHDR;
     public final boolean enablePostProcessing;
 
-    private final int postProcessingPassCount;
     private final PostProcessingManager postProcessingManager;
     private final PassDescriptor toneMappingPassDesc;
     private final PassDescriptor upscalingPassDesc;
     private final PassDescriptor downscalingPassDesc;
 
-    private ResolutionContainer resolution;
-    private ScalableFramebuffer mainFramebuffer;
-    private PingPongFramebuffer pingPongFramebuffer;
-    private Framebuffer intermediateFramebuffer;
-    private net.minecraft.client.shader.Framebuffer minecraftFramebuffer;
+    private boolean isResourcesInit = false;
+    private FramebufferStore framebufferStore = null;
 
-    public ResolutionContainer getResolution() {
-        return resolution;
-    }
+    @NonNull
+    public FramebufferStore acquireFramebufferStore() {
+        Preconditions.checkState(isResourcesInit,
+                "\"FrameFinalizer#initResources\" must be finished before the acquire call.");
 
-    public ScalableFramebuffer getMainFramebuffer() {
-        return mainFramebuffer;
-    }
-
-    public PingPongFramebuffer getPingPongFramebuffer() {
-        return pingPongFramebuffer;
-    }
-
-    public Framebuffer getIntermediateFramebuffer() {
-        return intermediateFramebuffer;
-    }
-
-    public net.minecraft.client.shader.Framebuffer getMinecraftFramebuffer() {
-        return minecraftFramebuffer;
+        return Preconditions.checkNotNull(framebufferStore);
     }
 
     public FrameFinalizer(
-            Logger logger,
-            int postProcessingPassCount,
-            PostProcessingManager postProcessingManager,
-            PassDescriptor toneMappingPassDesc,
-            PassDescriptor upscalingPassDesc,
-            PassDescriptor downscalingPassDesc,
+            @NonNull PostProcessingManager postProcessingManager,
+            @NonNull PassDescriptor toneMappingPassDesc,
+            @NonNull PassDescriptor upscalingPassDesc,
+            @NonNull PassDescriptor downscalingPassDesc,
             boolean enableHDR,
             boolean enablePostProcessing) {
 
+        Preconditions.checkNotNull(postProcessingManager);
+        Preconditions.checkNotNull(toneMappingPassDesc);
+        Preconditions.checkNotNull(upscalingPassDesc);
+        Preconditions.checkNotNull(downscalingPassDesc);
+
         this.enableHDR = enableHDR;
         this.enablePostProcessing = enablePostProcessing;
-        this.postProcessingPassCount = postProcessingPassCount;
         this.postProcessingManager = postProcessingManager;
         this.toneMappingPassDesc = toneMappingPassDesc;
         this.upscalingPassDesc = upscalingPassDesc;
         this.downscalingPassDesc = downscalingPassDesc;
-        this.logger = logger;
     }
 
     /**
-     * It modifies framebuffer binding, clear hint, and viewport. Restore these OpenGL states on your own after this call.
+     * It initializes {@link #framebufferStore} based on the given {@link #enableHDR}, {@link #enablePostProcessing},
+     * <code>postProcessingSchedule</code>.
+     * <p>
+     * This late initialization logic totally relies on <code>postProcessingSchedule</code>.
+     * And, the resources allocated with the given configuration will be immutable during runtime.
+     *
+     * <p>Note: It modifies GL framebuffer binding, clear hint, and viewport.
+     * Restore these OpenGL states on your own after this call or not.</p>
+     *
+     * <p>Note: <code>postProcessingSchedule</code> must contain the tone mapping process when
+     * <code>{@link #enableHDR} == true</code>.</p>
      *
      * @param minecraftFramebuffer The Minecraft's framebuffer
      */
-    public void initResources(net.minecraft.client.shader.Framebuffer minecraftFramebuffer) {
-        this.minecraftFramebuffer = minecraftFramebuffer;
+    public void initResources(
+            @NonNull Logger logger,
+            net.minecraft.client.shader.@NonNull Framebuffer minecraftFramebuffer,
+            @NonNull PostProcessingSchedule postProcessingSchedule) {
 
-        logger.info("Framebuffer HDR: " + (enableHDR ? "ON" : "OFF"));
-        logger.info("Framebuffer Post-processing: " + (enablePostProcessing ? "ON" : "OFF") + "; Pass Count: " + postProcessingPassCount);
+        Preconditions.checkNotNull(logger);
+        Preconditions.checkNotNull(minecraftFramebuffer);
+        Preconditions.checkNotNull(postProcessingSchedule);
 
-        mainFramebuffer = new ScalableFramebuffer(MINECRAFT.displayWidth, MINECRAFT.displayHeight, 1f);
-        logger.info("Initiated the main frambuffer: " + mainFramebuffer.framebuffer.width() + ", " + mainFramebuffer.framebuffer.height());
+        framebufferStore = new FramebufferStore();
+        framebufferStore.allocate(
+                logger,
+                minecraftFramebuffer,
+                enableHDR,
+                enablePostProcessing,
+                postProcessingSchedule);
 
-        // these two are mutually exclusive
-        final boolean useIntermediate = (enableHDR && !enablePostProcessing) || (enablePostProcessing && postProcessingPassCount == 1);
-        final boolean usePingPong = enablePostProcessing && postProcessingPassCount >= 2;
-
-        if (useIntermediate) {
-            intermediateFramebuffer = new Framebuffer(MINECRAFT.displayWidth, MINECRAFT.displayHeight);
-            logger.info("Initiated the intermediate frambuffer: " + intermediateFramebuffer.width() + ", " + intermediateFramebuffer.height());
-        }
-        if (usePingPong) {
-            pingPongFramebuffer = new PingPongFramebuffer(MINECRAFT.displayWidth, MINECRAFT.displayHeight);
-            logger.info("Initiated the ping-pong frambuffer: " + pingPongFramebuffer.width() + ", " + pingPongFramebuffer.height());
-        }
-
-        //<editor-fold desc="resolution and callbacks">
-        resolution = new ResolutionContainer((width, height) -> {
-
-            // display resized callback
-            mainFramebuffer.framebuffer.resize(
-                    (int) (width * mainFramebuffer.getRatio()),
-                    (int) (height * mainFramebuffer.getRatio()));
-
-            if (useIntermediate) {
-                intermediateFramebuffer.resize(width, height);
-            }
-            if (usePingPong) {
-                pingPongFramebuffer.resize(width, height);
-            }
-
-            logger.info("Display size updated. Current display width & height: " + width + ", " + height);
-            logger.info("Main framebuffer resized: width=" + mainFramebuffer.framebuffer.width() + ", height=" + mainFramebuffer.framebuffer.height() + ", ratio=" + mainFramebuffer.getRatio());
-
-            if (useIntermediate) {
-                logger.info("Intermediate framebuffer resized: width=" + intermediateFramebuffer.width() + ", height=" + intermediateFramebuffer.height());
-            }
-            if (usePingPong) {
-                logger.info("Ping-pong framebuffer resized: width=" + pingPongFramebuffer.width() + ", height=" + pingPongFramebuffer.height());
-            }
-
-        }, (width, height) -> {
-
-            // ratio changed callback
-            mainFramebuffer.framebuffer.resize(
-                    (int) (width * mainFramebuffer.getTargetRatio()),
-                    (int) (height * mainFramebuffer.getTargetRatio()));
-
-            if (useIntermediate) {
-                intermediateFramebuffer.resize(width, height);
-            }
-            if (usePingPong) {
-                pingPongFramebuffer.resize(width, height);
-            }
-
-            logger.info("Main framebuffer ratio changed: " + mainFramebuffer.getRatio() + " -> " + mainFramebuffer.getTargetRatio());
-            logger.info("Main framebuffer resized: width=" + mainFramebuffer.framebuffer.width() + ", height=" + mainFramebuffer.framebuffer.height() + ", ratio=" + mainFramebuffer.getTargetRatio());
-
-            if (useIntermediate) {
-                logger.info("Intermediate framebuffer resized: width=" + intermediateFramebuffer.width() + ", height=" + intermediateFramebuffer.height());
-            }
-            if (usePingPong) {
-                logger.info("Ping-pong framebuffer resized: width=" + pingPongFramebuffer.width() + ", height=" + pingPongFramebuffer.height());
-            }
-
-        });
-        //</editor-fold>
-
-        //<editor-fold desc="main framebuffer initialization">
-        {
-            mainFramebuffer.framebuffer.bind();
-
-            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
-            color0Tex.bind();
-            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
-            color0Tex.bind(0);
-            mainFramebuffer.framebuffer.attach(new ColorAttachment(0, color0Tex));
-
-            Texture2DAccessor depthTex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
-            depthTex.bind();
-            depthTex.highlevel().allocEmpty(true, TextureFormat.D24S8);
-            depthTex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
-            depthTex.bind(0);
-            mainFramebuffer.framebuffer.attach(new DepthStencilAttachment(depthTex));
-
-            mainFramebuffer.framebuffer.check();
-
-            GL11.glViewport(0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height());
-            GL11.glClearColor(0, 0, 0, 0);
-            GL11.glClearDepth(1);
-            GL11.glClearStencil(0);
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
-
-            logger.info("Main framebuffer created. ID: " + mainFramebuffer.framebuffer.fboID);
-        }
-        //</editor-fold>
-
-        //<editor-fold desc="intermediate framebuffer initialization">
-        if (useIntermediate) {
-            intermediateFramebuffer.bind();
-
-            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, intermediateFramebuffer.width(), intermediateFramebuffer.height()));
-            color0Tex.bind();
-            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
-            color0Tex.bind(0);
-            intermediateFramebuffer.attach(new ColorAttachment(0, color0Tex));
-
-            intermediateFramebuffer.check();
-
-            GL11.glViewport(0, 0, intermediateFramebuffer.width(), intermediateFramebuffer.height());
-            GL11.glClearColor(0, 0, 0, 0);
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-
-            logger.info("Intermediate framebuffer created. ID: " + intermediateFramebuffer.fboID);
-        }
-        //</editor-fold>
-
-        //<editor-fold desc="ping-pong framebuffer A initialization">
-        if (usePingPong) {
-            pingPongFramebuffer.framebufferA().bind();
-
-            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
-            color0Tex.bind();
-            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
-            color0Tex.bind(0);
-            pingPongFramebuffer.framebufferA().attach(new ColorAttachment(0, color0Tex));
-
-            pingPongFramebuffer.framebufferA().check();
-
-            GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
-            GL11.glClearColor(0, 0, 0, 0);
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-
-            logger.info("Ping-pong framebuffer A created. ID: " + pingPongFramebuffer.framebufferA().fboID);
-        }
-        //</editor-fold>
-
-        //<editor-fold desc="ping-pong framebuffer B initialization">
-        if (usePingPong) {
-            pingPongFramebuffer.framebufferB().bind();
-
-            Texture2DAccessor color0Tex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, pingPongFramebuffer.width(), pingPongFramebuffer.height()));
-            color0Tex.bind();
-            color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
-            color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
-            color0Tex.bind(0);
-            pingPongFramebuffer.framebufferB().attach(new ColorAttachment(0, color0Tex));
-
-            pingPongFramebuffer.framebufferB().check();
-
-            GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
-            GL11.glClearColor(0, 0, 0, 0);
-            GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-
-            logger.info("Ping-pong framebuffer B created. ID: " + pingPongFramebuffer.framebufferB().fboID);
-        }
-        //</editor-fold>
+        isResourcesInit = true;
     }
 
     public void updateResolution() {
-        if (mainFramebuffer.isScheduledToResize()) {
-            resolution.synchronize();
-            mainFramebuffer.finishResize();
+        FramebufferStore store = acquireFramebufferStore();
+
+        if (store.getMainFramebuffer().isScheduledToResize()) {
+            store.getResolution().synchronize();
+            store.getMainFramebuffer().finishResize();
         }
-        resolution.update();
+        store.getResolution().update();
     }
 
     public void bindMainFramebuffer(boolean viewport) {
-        mainFramebuffer.framebuffer.bind();
+        FramebufferStore store = acquireFramebufferStore();
+
+        store.getMainFramebuffer().framebuffer.bind();
         if (viewport) {
-            GL11.glViewport(0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height());
+            GL11.glViewport(0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height());
         }
     }
 
     public void bindMinecraftFramebuffer(boolean viewport) {
-        Framebuffer.bind(minecraftFramebuffer.framebufferObject);
+        FramebufferStore store = acquireFramebufferStore();
+
+        Framebuffer.bind(store.getMinecraftFramebuffer().framebufferObject);
         if (viewport) {
-            GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
+            GL11.glViewport(0, 0, store.getMinecraftFramebuffer().framebufferWidth, store.getMinecraftFramebuffer().framebufferHeight);
         }
     }
 
-    // todo: fix pipeline stall
+    // todo: fix potential pipeline stall
     /**
-     * <p><b>Input Framebuffer</b>: {@link #mainFramebuffer}</p>
-     * <p><b>Output Framebuffer</b>: {@link #minecraftFramebuffer}</p>
+     * <p><b>Read Framebuffer</b>: {@link FramebufferStore#getMainFramebuffer()}</p>
+     * <p><b>Draw Framebuffer</b>: {@link FramebufferStore#getMinecraftFramebuffer()}</p>
      * <br>
-     * Scales the input if necessary and then post-processes it if necessary, and also handles HDR tone mapping.
-     * Whichever combination it is, the result will be blitted to minecraft framebuffer.
+     * It scales the input if necessary and then post-processes it if necessary, and also handles HDR tone mapping.
+     * Whichever combination it is, the result will be drawn to Minecraft framebuffer.
      * <br>
      * Framebuffer binding will be chaotic after this final pass. Bind framebuffer on your own after this pass.
-     *
-     * <p><b>⚠ WARNING: Combinatorial logic here is over complicated but it works! Must not touch this method and its related resources unless necessary.</b></p>
+     * You most likely want to bind Minecraft framebuffer after this call.
      */
     public void finalizeFramebuffer(
             @NonNull ResourceStorage storage,
             @NonNull KnowledgeRuntime glKnowledge) {
 
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(glKnowledge);
+
+        FramebufferStore store = acquireFramebufferStore();
+
+        // todo: (FIX) blit depth from D24S8 to D32 is invalid. must confirm Minecraft fbo behavior when stencil==false
+//        Preconditions.checkState(store.getMinecraftFramebuffer().isStencilEnabled());
+        if (!store.getMinecraftFramebuffer().isStencilEnabled()) {
+            store.getMinecraftFramebuffer().enableStencil();
+        }
+
         //<editor-fold desc="blit depth to minecraft framebuffer">
-        if (mainFramebuffer.getRatio() == 1f) {
-            // just in case the size and format of main framebuffer and minecraft frambuffer mismatch
-            if (mainFramebuffer.framebuffer.width() != MINECRAFT.getFramebuffer().framebufferTextureWidth ||
-                    mainFramebuffer.framebuffer.height() != MINECRAFT.getFramebuffer().framebufferTextureHeight ||
-                    !MINECRAFT.getFramebuffer().isStencilEnabled()) {
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+        if (store.getMainFramebuffer().getRatio() == 1f) {
+            // just in case the size and format of the main framebuffer and minecraft framebuffer mismatch
+            if (store.getMainFramebuffer().framebuffer.width() != store.getMinecraftFramebuffer().framebufferTextureWidth ||
+                    store.getMainFramebuffer().framebuffer.height() != store.getMinecraftFramebuffer().framebufferTextureHeight ||
+                    !store.getMinecraftFramebuffer().isStencilEnabled()) {
+
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
                 GL30.glBlitFramebuffer(
-                        0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                        0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
-                        MINECRAFT.getFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
+                        0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                        0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
+                        store.getMinecraftFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT,
+                        GL11.GL_NEAREST);
             } else {
-                ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
+                DepthStencilAttachment depthAttachmentSrc = ((DepthStencilAttachment) store.getMainFramebuffer().framebuffer.getDepthAttachment());
+                Preconditions.checkNotNull(depthAttachmentSrc);
+
                 GL43.glCopyImageSubData(
-                        colorAttachmentSrc.texture2D.texture.textureID,
-                        colorAttachmentSrc.texture2D.target(),
+                        depthAttachmentSrc.texture2D.texture.textureID,
+                        depthAttachmentSrc.texture2D.target(),
                         0, 0, 0, 0,
-                        MINECRAFT.getFramebuffer().framebufferTexture,
-                        GL11.GL_TEXTURE_2D,
+                        store.getMinecraftFramebuffer().depthBuffer,
+                        GL30.GL_RENDERBUFFER,
                         0, 0, 0, 0,
-                        colorAttachmentSrc.texture2D.texture.extentX(),
-                        colorAttachmentSrc.texture2D.texture.extentY(),
+                        depthAttachmentSrc.texture2D.texture.extentX(),
+                        depthAttachmentSrc.texture2D.texture.extentY(),
                         1);
-                GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
             }
-        } else if (mainFramebuffer.getRatio() < 1f) {
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+        } else if (store.getMainFramebuffer().getRatio() < 1f) {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
             GL30.glBlitFramebuffer(
-                    0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                    0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
-                    MINECRAFT.getFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
-        } else if (mainFramebuffer.getRatio() > 1f) {
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+                    0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                    0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
+                    store.getMinecraftFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT,
+                    GL11.GL_NEAREST);
+        } else if (store.getMainFramebuffer().getRatio() > 1f) {
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
             GL30.glBlitFramebuffer(
-                    0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                    0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
-                    MINECRAFT.getFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT, GL11.GL_NEAREST);
+                    0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                    0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
+                    store.getMinecraftFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT,
+                    GL11.GL_NEAREST);
         }
         //</editor-fold>
 
-        // main framebuffer -> minecraft framebuffer
+        // main framebuffer -> Minecraft framebuffer
         //<editor-fold desc="no hdr & no post-processing">
         if (!enableHDR && !enablePostProcessing) {
-            if (mainFramebuffer.getRatio() == 1f) {
-                // just in case the size of main framebuffer and minecraft frambuffer mismatches
-                if (mainFramebuffer.framebuffer.width() != MINECRAFT.getFramebuffer().framebufferTextureWidth ||
-                        mainFramebuffer.framebuffer.height() != MINECRAFT.getFramebuffer().framebufferTextureHeight) {
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+            if (store.getMainFramebuffer().getRatio() == 1f) {
+                // just in case the size of the main framebuffer and minecraft framebuffer mismatches
+                if (store.getMainFramebuffer().framebuffer.width() != store.getMinecraftFramebuffer().framebufferTextureWidth ||
+                        store.getMainFramebuffer().framebuffer.height() != store.getMinecraftFramebuffer().framebufferTextureHeight) {
+
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
                     GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL30.glBlitFramebuffer(
-                            0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                            0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
+                            0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                            0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                 } else {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
+                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
                             0, 0, 0, 0,
-                            MINECRAFT.getFramebuffer().framebufferTexture,
+                            store.getMinecraftFramebuffer().framebufferTexture,
                             GL11.GL_TEXTURE_2D,
                             0, 0, 0, 0,
                             colorAttachmentSrc.texture2D.texture.extentX(),
                             colorAttachmentSrc.texture2D.texture.extentY(),
                             1);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
                 }
-            } else if (mainFramebuffer.getRatio() < 1f) {
+            } else if (store.getMainFramebuffer().getRatio() < 1f) {
                 // todo: upscale impl
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
                 GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL30.glBlitFramebuffer(
-                        0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                        0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
+                        0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                        0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
                         GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-            } else if (mainFramebuffer.getRatio() > 1f) {
+            } else if (store.getMainFramebuffer().getRatio() > 1f) {
                 // todo: downscale impl
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, MINECRAFT.getFramebuffer().framebufferObject);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getMinecraftFramebuffer().framebufferObject);
                 GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL30.glBlitFramebuffer(
-                        0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                        0, 0, MINECRAFT.getFramebuffer().framebufferTextureWidth, MINECRAFT.getFramebuffer().framebufferTextureHeight,
+                        0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                        0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
                         GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
             }
         }
         //</editor-fold>
 
-        // main framebuffer -(skipped when no scaling)-> intermediate framebuffer -> minecraft framebuffer
+        // main framebuffer -(skipped when no scaling)-> intermediate framebuffer -> Minecraft framebuffer
         //<editor-fold desc="hdr & no post-processing">
         if (enableHDR && !enablePostProcessing) {
-            if (mainFramebuffer.getRatio() == 1f) {
-                Framebuffer.bind(MINECRAFT.getFramebuffer().framebufferObject);
-                GL11.glViewport(0, 0, MINECRAFT.getFramebuffer().framebufferWidth, MINECRAFT.getFramebuffer().framebufferHeight);
+            if (store.getMainFramebuffer().getRatio() == 1f) {
+                Framebuffer.bind(store.getMinecraftFramebuffer().framebufferObject);
+                GL11.glViewport(0, 0, store.getMinecraftFramebuffer().framebufferWidth, store.getMinecraftFramebuffer().framebufferHeight);
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-                GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
-                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, new Object[]{mainFramebuffer.framebuffer});
-            } else if (mainFramebuffer.getRatio() < 1f) {
+                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, null, new Object[]{store.getMainFramebuffer().framebuffer});
+            } else if (store.getMainFramebuffer().getRatio() < 1f) {
                 // todo: upscale impl
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getIntermediateFramebuffer().fboID);
                 GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL30.glBlitFramebuffer(
-                        0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                        0, 0, intermediateFramebuffer.width(), intermediateFramebuffer.height(),
+                        0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                        0, 0, store.getIntermediateFramebuffer().width(), store.getIntermediateFramebuffer().height(),
                         GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                Framebuffer.bind(MINECRAFT.getFramebuffer().framebufferObject);
-                GL11.glViewport(0, 0, MINECRAFT.getFramebuffer().framebufferWidth, MINECRAFT.getFramebuffer().framebufferHeight);
+                Framebuffer.bind(store.getMinecraftFramebuffer().framebufferObject);
+                GL11.glViewport(0, 0, store.getMinecraftFramebuffer().framebufferWidth, store.getMinecraftFramebuffer().framebufferHeight);
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, new Object[]{intermediateFramebuffer});
-            } else if (mainFramebuffer.getRatio() > 1f) {
+                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, null, new Object[]{store.getIntermediateFramebuffer()});
+            } else if (store.getMainFramebuffer().getRatio() > 1f) {
                 // todo: downscale impl
-                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getIntermediateFramebuffer().fboID);
                 GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                 GL30.glBlitFramebuffer(
-                        0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                        0, 0, intermediateFramebuffer.width(), intermediateFramebuffer.height(),
+                        0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                        0, 0, store.getIntermediateFramebuffer().width(), store.getIntermediateFramebuffer().height(),
                         GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                Framebuffer.bind(MINECRAFT.getFramebuffer().framebufferObject);
-                GL11.glViewport(0, 0, MINECRAFT.getFramebuffer().framebufferWidth, MINECRAFT.getFramebuffer().framebufferHeight);
+                Framebuffer.bind(store.getMinecraftFramebuffer().framebufferObject);
+                GL11.glViewport(0, 0, store.getMinecraftFramebuffer().framebufferWidth, store.getMinecraftFramebuffer().framebufferHeight);
                 GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, new Object[]{intermediateFramebuffer});
+                toneMappingPassDesc.acquire().render(storage, glKnowledge, null, null, null, new Object[]{store.getIntermediateFramebuffer()});
             }
         }
         //</editor-fold>
 
-        // main framebuffer -> intermediate framebuffer / ping-pong framebuffer A -> post-process -> minecraft framebuffer
+        // main framebuffer -> intermediate framebuffer / ping-pong framebuffer A -> post-process -> Minecraft framebuffer
         //<editor-fold desc="hdr ANY & post-processing">
         if (enablePostProcessing) {
-            if (mainFramebuffer.getRatio() == 1f) {
-                if (postProcessingPassCount == 1) {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
-                    ColorAttachment colorAttachmentDest = ((ColorAttachment) intermediateFramebuffer.getColorAttachment(0));
+            if (store.getMainFramebuffer().getRatio() == 1f) {
+                if (store.getChainMode() == FramebufferChainMode.INTERMEDIATE) {
+                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
+                    ColorAttachment colorAttachmentDest = ((ColorAttachment) store.getIntermediateFramebuffer().getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
@@ -453,12 +304,11 @@ public class FrameFinalizer {
                             colorAttachmentSrc.texture2D.texture.extentX(),
                             colorAttachmentSrc.texture2D.texture.extentY(),
                             1);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingManager.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPassCount >= 2) {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) mainFramebuffer.framebuffer.getColorAttachment(0));
-                    ColorAttachment colorAttachmentDest = ((ColorAttachment) pingPongFramebuffer.framebufferA().getColorAttachment(0));
+                    postProcessingManager.postProcess(storage, glKnowledge);
+                } else if (store.getChainMode() == FramebufferChainMode.PING_PONG) {
+                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
+                    ColorAttachment colorAttachmentDest = ((ColorAttachment) store.getPingPongFramebuffer().framebufferA().getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
@@ -469,63 +319,58 @@ public class FrameFinalizer {
                             colorAttachmentSrc.texture2D.texture.extentX(),
                             colorAttachmentSrc.texture2D.texture.extentY(),
                             1);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
                     postProcessingManager.postProcess(storage, glKnowledge);
                 }
-            } else if (mainFramebuffer.getRatio() < 1f) {
-                if (postProcessingPassCount == 1) {
+            } else if (store.getMainFramebuffer().getRatio() < 1f) {
+                if (store.getChainMode() == FramebufferChainMode.INTERMEDIATE) {
                     // todo: upscale impl
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getIntermediateFramebuffer().fboID);
                     GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL30.glBlitFramebuffer(
-                            0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                            0, 0, intermediateFramebuffer.width(), intermediateFramebuffer.height(),
+                            0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                            0, 0, store.getIntermediateFramebuffer().width(), store.getIntermediateFramebuffer().height(),
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingManager.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPassCount >= 2) {
+                    postProcessingManager.postProcess(storage, glKnowledge);
+                } else if (store.getChainMode() == FramebufferChainMode.PING_PONG) {
                     // todo: upscale impl
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, pingPongFramebuffer.framebufferA().fboID);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getPingPongFramebuffer().framebufferA().fboID);
                     GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL30.glBlitFramebuffer(
-                            0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                            0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height(),
+                            0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                            0, 0, store.getPingPongFramebuffer().width(), store.getPingPongFramebuffer().height(),
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
                     postProcessingManager.postProcess(storage, glKnowledge);
                 }
-            } else if (mainFramebuffer.getRatio() > 1f) {
-                if (postProcessingPassCount == 1) {
+            } else if (store.getMainFramebuffer().getRatio() > 1f) {
+                if (store.getChainMode() == FramebufferChainMode.INTERMEDIATE) {
                     // todo: downscale impl
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, intermediateFramebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getIntermediateFramebuffer().fboID);
                     GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL30.glBlitFramebuffer(
-                            0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                            0, 0, intermediateFramebuffer.width(), intermediateFramebuffer.height(),
+                            0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                            0, 0, store.getIntermediateFramebuffer().width(), store.getIntermediateFramebuffer().height(),
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
-                    postProcessingManager.postProcess(storage, glKnowledge, true);
-                } else if (postProcessingPassCount >= 2) {
+                    postProcessingManager.postProcess(storage, glKnowledge);
+                } else if (store.getChainMode() == FramebufferChainMode.PING_PONG) {
                     // todo: downscale impl
-                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, mainFramebuffer.framebuffer.fboID);
-                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, pingPongFramebuffer.framebufferA().fboID);
+                    GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, store.getMainFramebuffer().framebuffer.fboID);
+                    GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, store.getPingPongFramebuffer().framebufferA().fboID);
                     GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL11.glDrawBuffer(GL30.GL_COLOR_ATTACHMENT0);
                     GL30.glBlitFramebuffer(
-                            0, 0, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height(),
-                            0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height(),
+                            0, 0, store.getMainFramebuffer().framebuffer.width(), store.getMainFramebuffer().framebuffer.height(),
+                            0, 0, store.getPingPongFramebuffer().width(), store.getPingPongFramebuffer().height(),
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
-                    GL42.glMemoryBarrier(GL42.GL_TEXTURE_FETCH_BARRIER_BIT | GL42.GL_FRAMEBUFFER_BARRIER_BIT);
 
                     postProcessingManager.postProcess(storage, glKnowledge);
                 }

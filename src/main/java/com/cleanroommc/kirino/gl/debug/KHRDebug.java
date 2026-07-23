@@ -19,6 +19,9 @@ public final class KHRDebug {
         return enable;
     }
 
+    /**
+     * <p>Note: <b>it must never be called by clients!</b></p>
+     */
     public static void enable(@NonNull Logger logger, @NonNull List<@NonNull DebugMessageFilter> messageFilters) {
         if (enable) {
             return;
@@ -46,6 +49,9 @@ public final class KHRDebug {
         enable = true;
     }
 
+    /**
+     * <p>Note: <b>it must never be called by clients!</b></p>
+     */
     public static void disable() {
         if (!enable) {
             return;

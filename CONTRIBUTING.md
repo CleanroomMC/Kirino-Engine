@@ -92,7 +92,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   }
   ```
 - Keep lines reasonably short to maintain readability, but there is no explicit char count limit.
-- Don't use `this.` if not necessary.
+- Don't use `this.` when there's no naming conflict. It doesn't mean you have to avoid using `this`.
 
   **Bad:**
   ```java
@@ -145,7 +145,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   Ctor(int a) {
   }
   ```
-- Line-comments begin with a lowercase letter.
+- Line-comments begin with a lowercase letter unless it begins with an acronym, code identifier, etc.
 
   **Bad:**
   ```java
@@ -211,7 +211,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
       func2(1, 2, 3, 4 + 5, new float[]{1f, 2f}); // { 1f, 2f } is also fine
   }
   ```
-- Add a single space everywhere if possible.
+- Use conventional Java spacing everywhere.
 
   **Bad:**
   ```java
@@ -225,7 +225,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
       return;
   }
   ```
-- Line wrap rules
+- Line wrap rules (apply this to either `{}`, `[]`, `()`)
 
   **Bad:**
   ```java

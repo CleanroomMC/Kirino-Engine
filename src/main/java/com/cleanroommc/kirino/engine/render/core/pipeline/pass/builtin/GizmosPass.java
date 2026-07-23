@@ -11,6 +11,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import org.joml.Vector3f;
@@ -35,7 +36,7 @@ public class GizmosPass extends Subpass {
     }
 
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
+    protected void updateShaderProgram(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @Nullable Camera camera, @Nullable Object payload, @NonNull ShaderProgram shaderProgram) {
         int worldOffset = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "worldOffset");
         int viewRot = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "viewRot");
         int projection = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "projection");
@@ -65,7 +66,7 @@ public class GizmosPass extends Subpass {
     }
 
     @Override
-    protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
+    protected void execute(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
         while (drawQueue.dequeue() instanceof LowLevelDC command) {
             storage.get(renderer).draw(command);
         }

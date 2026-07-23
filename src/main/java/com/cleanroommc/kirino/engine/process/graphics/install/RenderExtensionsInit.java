@@ -35,10 +35,9 @@ public final class RenderExtensionsInit {
             Preconditions.checkState(!context.ext().postProcessingEntries.isEmpty(),
                     "Post-processing is enabled. Post-processing manager must have at least one subpass at runtime to work as expected.");
 
-            context.ext().postProcessingManager.lateInit(
-                    storage.get(context.graphicsb().frameFinalizer).getMinecraftFramebuffer(),
-                    storage.get(context.graphicsb().frameFinalizer).getPingPongFramebuffer(),
-                    storage.get(context.graphicsb().frameFinalizer).getIntermediateFramebuffer());
+            ppManager.lateInit(
+                    storage.get(context.graphicsb().frameFinalizer).acquireFramebufferStore(),
+                    context.rs().postProcessingSchedule);
         } else {
             Preconditions.checkState(context.ext().postProcessingEntries.isEmpty(),
                     "Post-processing is disabled. Post-processing manager must have exactly zero subpass at runtime to work as expected.");

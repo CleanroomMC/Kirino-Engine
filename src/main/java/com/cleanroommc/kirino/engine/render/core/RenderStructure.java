@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.builtin.GizmosPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
 import com.cleanroommc.kirino.engine.render.usage.pipeline.pass.OpaqueTerrainPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DownscalingPass;
@@ -21,6 +22,7 @@ public final class RenderStructure {
     public final boolean enablePostProcessing;
     public final boolean enableKhrDebug;
     public final boolean enableShaderDebug;
+    public final PostProcessingSchedule postProcessingSchedule;
 
     public final PassDescriptor terrainGpuPassDesc;
     public final PassDescriptor chunkCpuPassDesc;
@@ -35,6 +37,7 @@ public final class RenderStructure {
             boolean enablePostProcessing,
             boolean enableKhrDebug,
             boolean enableShaderDebug,
+            PostProcessingSchedule postProcessingSchedule,
             @NonNull GraphicsRuntimeBundle graphicsRuntimeBundle,
             @NonNull BuiltinShaderBundle builtinShaderBundle) {
 
@@ -45,6 +48,7 @@ public final class RenderStructure {
         this.enablePostProcessing = enablePostProcessing;
         this.enableKhrDebug = enableKhrDebug;
         this.enableShaderDebug = enableShaderDebug;
+        this.postProcessingSchedule = postProcessingSchedule;
 
         RenderPass terrainGpuPass = new RenderPass(
                 "Terrain GPU",

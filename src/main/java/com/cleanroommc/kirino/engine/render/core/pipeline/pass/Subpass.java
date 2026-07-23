@@ -11,15 +11,15 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.render.core.resource.GraphicResourceManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.ClaimedScopeHandle;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.function.BiConsumer;
-
 public abstract class Subpass {
+
     protected final ResourceSlot<Renderer> renderer;
     private final PipelineStateObject pso;
 
@@ -28,6 +28,9 @@ public abstract class Subpass {
      * @param pso A pipeline state object (pipeline parameters)
      */
     public Subpass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso) {
+        Preconditions.checkNotNull(renderer);
+        Preconditions.checkNotNull(pso);
+
         this.renderer = renderer;
         this.pso = pso;
     }
@@ -47,31 +50,33 @@ public abstract class Subpass {
         Preconditions.checkNotNull(graphicResourceManager);
         Preconditions.checkNotNull(idbGenerator);
 
-        DrawQueue dq = drawQueue;
         if (hintCompileDrawQueue()) {
-            dq = dq.compile(graphicResourceManager);
+            drawQueue.compile(graphicResourceManager);
         }
         if (hintSimplifyDrawQueue()) {
-            dq = dq.simplify(idbGenerator);
+            drawQueue.simplify(idbGenerator);
         }
-        dq = dq.sort();
+        drawQueue.sort();
 
-        storage.get(renderer).bindPipeline(pso, glKnowledge);
-        updateShaderProgram(storage.get(pso.shaderProgram()), camera, payload);
-
-        execute(storage, dq, payload);
+        // this is the pso scope
+        try (ClaimedScopeHandle ignored = storage.get(renderer).bindPipeline(pso, glKnowledge)) {
+            updateShaderProgram(storage, glKnowledge, camera, payload, storage.get(pso.shaderProgram()));
+            execute(storage, glKnowledge, drawQueue, payload);
+        }
 
         // ensure that everything is cleaned at the end
+        // since there is no constraint that all commands must be consumed
         DrawCommand item;
-        while ((item = dq.dequeue()) != null) {
+        while ((item = drawQueue.dequeue()) != null) {
             item.recycle();
         }
     }
 
-    protected abstract void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload);
+    @NonNull
+    public abstract PassHint passHint();
 
     /**
-     * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(ResourceStorage, DrawQueue, Object)}}.
+     * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(ResourceStorage, KnowledgeRuntime, DrawQueue, Object)}.
      *
      * @see DrawQueue#compile(GraphicResourceManager)
      * @return The hint
@@ -79,35 +84,63 @@ public abstract class Subpass {
     protected abstract boolean hintCompileDrawQueue();
 
     /**
-     * Whether to run {@link DrawQueue#simplify(IndirectDrawBufferGenerator)} before {@link #execute(ResourceStorage, DrawQueue, Object)}.
+     * Whether to run {@link DrawQueue#simplify(IndirectDrawBufferGenerator)} before {@link #execute(ResourceStorage, KnowledgeRuntime, DrawQueue, Object)}.
      *
      * @see DrawQueue#simplify(IndirectDrawBufferGenerator)
      * @return The hint
      */
     protected abstract boolean hintSimplifyDrawQueue();
 
-    @NonNull
-    public abstract PassHint passHint();
+    /**
+     * It'll be executed right before {@link #execute(ResourceStorage, KnowledgeRuntime, DrawQueue, Object)}
+     *
+     * <p>Note: During its execution, the corresponding PSO is applied and GL knowledge is claimed.</p>
+     *
+     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, KnowledgeRuntime, Camera, SubpassCallback, Object[])}
+     */
+    protected abstract void updateShaderProgram(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @Nullable Camera camera,
+            @Nullable Object payload,
+            @NonNull ShaderProgram shaderProgram);
 
     /**
-     * Draw all {@link LowLevelDC}s here via {@link Renderer}.
+     * It's intended to consume all {@link LowLevelDC}s here via {@link Renderer}, OR draw your own stuff and apply your own logic.
+     * It'll be executed right after {@link #updateShaderProgram(ResourceStorage, KnowledgeRuntime, Camera, Object, ShaderProgram)}
      *
-     * @implSpec Default implementation: <br/><code>while (drawQueue.dequeue() instanceof LowLevelDC command) { ... }</code>
-     * @param drawQueue The queue that stores <b>low-level</b> draw commands
-     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, Camera, BiConsumer, Object[])}
+     * <p>Note: During its execution, the corresponding PSO is applied and GL knowledge is claimed.</p>
+     *
+     * @param drawQueue The queue that stores only <b>low-level</b> draw commands
+     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, KnowledgeRuntime, Camera, SubpassCallback, SubpassScopeProvider, Object[])}
+     * @implNote Default implementation: <br/><code>while (drawQueue.dequeue() instanceof LowLevelDC command) { ... }</code>
      */
-    protected abstract void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload);
+    protected abstract void execute(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @NonNull DrawQueue drawQueue,
+            @Nullable Object payload);
 
     /**
      * Enqueue draw commands, {@link LowLevelDC} or {@link HighLevelDC}, here.
      * Use methods like {@link LowLevelDC#acquire()} to build commands manually OR
      * consume commands from elsewhere.
      *
-     * @param drawQueue The draw queue
+     * @param drawQueue The draw queue to be enqueued
      */
-    public abstract void collectCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue);
+    public abstract void collectCommands(
+            @NonNull ResourceStorage storage,
+            @NonNull DrawQueue drawQueue);
 
-    public final void decorateCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @NonNull SubpassDecorator decorator) {
+    public final void decorateCommands(
+            @NonNull ResourceStorage storage,
+            @NonNull DrawQueue drawQueue,
+            @NonNull SubpassDecorator decorator) {
+
+        Preconditions.checkNotNull(storage);
+        Preconditions.checkNotNull(drawQueue);
+        Preconditions.checkNotNull(decorator);
+
         // todo
     }
 }

@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.DepthState;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.RasterState;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.ClaimedScopeHandle;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeCheckpoint;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -32,7 +33,8 @@ public final class Renderer {
     /**
      * @see PipelineStateObject
      */
-    public void bindPipeline(
+    @NonNull
+    public ClaimedScopeHandle bindPipeline(
             @NonNull PipelineStateObject pso,
             @NonNull KnowledgeRuntime glKnowledge) {
 
@@ -48,6 +50,30 @@ public final class Renderer {
         GL20.glUseProgram(program);
 
         glKnowledge.commit(cp -> commitPipeline(cp, pso, program));
+
+        return glKnowledge.claim(
+                GLKnowledgeKeys.BLEND,
+                GLKnowledgeKeys.BLEND_FUNC_SRC_RGB,
+                GLKnowledgeKeys.BLEND_FUNC_DST_RGB,
+                GLKnowledgeKeys.BLEND_FUNC_SRC_ALPHA,
+                GLKnowledgeKeys.BLEND_FUNC_DST_ALPHA,
+                GLKnowledgeKeys.BLEND_EQ_RGB,
+                GLKnowledgeKeys.BLEND_EQ_ALPHA,
+                GLKnowledgeKeys.COLOR_MASK_R,
+                GLKnowledgeKeys.COLOR_MASK_G,
+                GLKnowledgeKeys.COLOR_MASK_B,
+                GLKnowledgeKeys.COLOR_MASK_A,
+                GLKnowledgeKeys.DEPTH,
+                GLKnowledgeKeys.DEPTH_FUNC,
+                GLKnowledgeKeys.DEPTH_MASK,
+                GLKnowledgeKeys.CULL,
+                GLKnowledgeKeys.CULL_FACE,
+                GLKnowledgeKeys.FRONT_FACE,
+                GLKnowledgeKeys.POLYGON_MODE_FRONT_N_BACK,
+                GLKnowledgeKeys.POLYGON_OFFSET,
+                GLKnowledgeKeys.POLYGON_OFFSET_FACTOR,
+                GLKnowledgeKeys.POLYGON_OFFSET_UNITS,
+                GLKnowledgeKeys.SHADER_PROGRAM);
     }
 
     private static void commitPipeline(KnowledgeCheckpoint cp, PipelineStateObject pso, int program) {

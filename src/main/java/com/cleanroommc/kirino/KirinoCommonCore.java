@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.EngineInitParams;
 import com.cleanroommc.kirino.engine.KirinoEngine;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
@@ -143,7 +144,8 @@ public final class KirinoCommonCore {
                     KIRINO_CONFIG_HUB.isEnableHDR(),
                     KIRINO_CONFIG_HUB.isEnablePostProcessing(),
                     KIRINO_CONFIG_HUB.isEnableKhrDebug(),
-                    KIRINO_CONFIG_HUB.isEnableShaderDebug());
+                    KIRINO_CONFIG_HUB.isEnableShaderDebug(),
+                    KIRINO_CONFIG_HUB.getPostProcessingSchedule());
 
             KIRINO_ENGINE = ctor.newInstance(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, params);
         } catch (Throwable throwable) {
@@ -182,6 +184,10 @@ public final class KirinoCommonCore {
         event.register(
                 "Blit Pass",
                 new String[]{"forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"},
+                DefaultPostProcessingPass::new);
+        event.register(
+                "Tone Mapping",
+                new String[]{"forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"},
                 DefaultPostProcessingPass::new);
     }
 

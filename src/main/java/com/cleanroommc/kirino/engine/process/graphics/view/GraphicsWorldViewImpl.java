@@ -260,8 +260,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
             cp.know(GLKnowledgeKeys.COLOR_MASK_R, true);
             cp.know(GLKnowledgeKeys.COLOR_MASK_G, true);
             cp.know(GLKnowledgeKeys.COLOR_MASK_B, true);
@@ -282,8 +282,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
@@ -299,8 +299,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
@@ -316,8 +316,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
@@ -333,8 +333,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMainFramebuffer().framebuffer.fboID);
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);
@@ -350,8 +350,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         resetCommonBindings();
 
         glKnowledge.commit(cp -> {
-            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.getMinecraftFramebuffer().framebufferObject);
-            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, frameFinalizer.acquireFramebufferStore().getMinecraftFramebuffer().framebufferObject);
+            cp.know(GLKnowledgeKeys.FBO_READ, frameFinalizer.acquireFramebufferStore().getMinecraftFramebuffer().framebufferObject);
             cp.know(GLKnowledgeKeys.SHADER_PROGRAM, 0);
             cp.know(GLKnowledgeKeys.VAO, 0);
             cp.know(GLKnowledgeKeys.VBO, 0);

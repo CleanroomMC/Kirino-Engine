@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -22,7 +23,7 @@ public class UpscalingPass extends Subpass {
     }
 
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
+    protected void updateShaderProgram(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @Nullable Camera camera, @Nullable Object payload, @NonNull ShaderProgram shaderProgram) {
 
     }
 
@@ -43,7 +44,7 @@ public class UpscalingPass extends Subpass {
     }
 
     @Override
-    protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
+    protected void execute(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
 
     }
 

@@ -120,6 +120,7 @@ public class KirinoEngine {
                 params.enablePostProcessing(),
                 params.enableKhrDebug(),
                 params.enableShaderDebug(),
+                params.postProcessingSchedule(),
                 graphicsRuntimeBundle,
                 builtinShaderBundle);
 
