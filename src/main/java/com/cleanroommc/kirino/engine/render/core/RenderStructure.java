@@ -37,10 +37,11 @@ public final class RenderStructure {
             boolean enablePostProcessing,
             boolean enableKhrDebug,
             boolean enableShaderDebug,
-            PostProcessingSchedule postProcessingSchedule,
+            @NonNull PostProcessingSchedule postProcessingSchedule,
             @NonNull GraphicsRuntimeBundle graphicsRuntimeBundle,
             @NonNull BuiltinShaderBundle builtinShaderBundle) {
 
+        Preconditions.checkNotNull(postProcessingSchedule);
         Preconditions.checkNotNull(graphicsRuntimeBundle);
         Preconditions.checkNotNull(builtinShaderBundle);
 
@@ -59,6 +60,7 @@ public final class RenderStructure {
                 new OpaqueTerrainPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createOpaquePSO(builtinShaderBundle.terrainGpuPassProgram)));
+        terrainGpuPass.seal();
 
         terrainGpuPassDesc = new PassDescriptor(terrainGpuPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented.");
@@ -72,6 +74,7 @@ public final class RenderStructure {
                 new GizmosPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createOpaquePSO(builtinShaderBundle.chunkCpuPassProgram), graphicsRuntimeBundle.gizmosManager));
+        chunkCpuPass.seal();
 
         chunkCpuPassDesc = new PassDescriptor(chunkCpuPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented.");
@@ -85,6 +88,7 @@ public final class RenderStructure {
                 new GizmosPass(
                         graphicsRuntimeBundle.renderer, PSOPresets.createGizmosPSO(builtinShaderBundle.gizmosPassProgram),
                         graphicsRuntimeBundle.gizmosManager));
+        gizmosPass.seal();
 
         gizmosPassDesc = new PassDescriptor(gizmosPass);
 
@@ -98,6 +102,7 @@ public final class RenderStructure {
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.toneMappingPassProgram),
                         graphicsRuntimeBundle.fullscreenTriangleVao));
+        toneMappingPass.seal();
 
         toneMappingPassDesc = new PassDescriptor(toneMappingPass);
 
@@ -110,6 +115,7 @@ public final class RenderStructure {
                 new UpscalingPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.upscalingPassProgram)));
+        upscalingPass.seal();
 
         upscalingPassDesc = new PassDescriptor(upscalingPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented");
@@ -123,6 +129,7 @@ public final class RenderStructure {
                 new DownscalingPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.downscalingPassProgram)));
+        downscalingPass.seal();
 
         downscalingPassDesc = new PassDescriptor(downscalingPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented");

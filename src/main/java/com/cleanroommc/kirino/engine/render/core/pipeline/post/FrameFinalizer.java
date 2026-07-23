@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 
+import com.cleanroommc.kirino.engine.render.core.gl.semantic.GLKnowledgeKeys;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
@@ -8,6 +9,7 @@ import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.Logger;
+import org.joml.Vector4i;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
@@ -78,6 +80,8 @@ public class FrameFinalizer {
         Preconditions.checkNotNull(logger);
         Preconditions.checkNotNull(minecraftFramebuffer);
         Preconditions.checkNotNull(postProcessingSchedule);
+        Preconditions.checkState(!isResourcesInit,
+                "Must only initialize resources once.");
 
         framebufferStore = new FramebufferStore();
         framebufferStore.allocate(
@@ -90,6 +94,12 @@ public class FrameFinalizer {
         isResourcesInit = true;
     }
 
+    /**
+     * Handle GL knowledge updates by yourself!
+     *
+     * <p>Note: It potentially modifies texture and renderbuffer bindings based on the framebuffer
+     * attachments.</p>
+     */
     public void updateResolution() {
         FramebufferStore store = acquireFramebufferStore();
 
@@ -100,6 +110,11 @@ public class FrameFinalizer {
         store.getResolution().update();
     }
 
+    /**
+     * Handle GL knowledge updates by yourself!
+     *
+     * <p>Note: It modifies framebuffer bindings and viewport based on your input.</p>
+     */
     public void bindMainFramebuffer(boolean viewport) {
         FramebufferStore store = acquireFramebufferStore();
 
@@ -109,6 +124,11 @@ public class FrameFinalizer {
         }
     }
 
+    /**
+     * Handle GL knowledge updates by yourself!
+     *
+     * <p>Note: It modifies framebuffer bindings and viewport based on your input.</p>
+     */
     public void bindMinecraftFramebuffer(boolean viewport) {
         FramebufferStore store = acquireFramebufferStore();
 
@@ -120,14 +140,13 @@ public class FrameFinalizer {
 
     // todo: fix potential pipeline stall
     /**
-     * <p><b>Read Framebuffer</b>: {@link FramebufferStore#getMainFramebuffer()}</p>
-     * <p><b>Draw Framebuffer</b>: {@link FramebufferStore#getMinecraftFramebuffer()}</p>
+     * <p><b>Input Framebuffer</b>: {@link FramebufferStore#getMainFramebuffer()}</p>
+     * <p><b>Output Framebuffer</b>: {@link FramebufferStore#getMinecraftFramebuffer()}</p>
      * <br>
-     * It scales the input if necessary and then post-processes it if necessary, and also handles HDR tone mapping.
+     * It scales the Input Framebuffer if necessary and then post-processes it if necessary, and also handles HDR tone mapping.
      * Whichever combination it is, the result will be drawn to Minecraft framebuffer.
-     * <br>
-     * Framebuffer binding will be chaotic after this final pass. Bind framebuffer on your own after this pass.
-     * You most likely want to bind Minecraft framebuffer after this call.
+     * <p>
+     * Both Read/Draw Framebuffer binding will be changed to Minecraft framebuffer after this finalization pass.
      */
     public void finalizeFramebuffer(
             @NonNull ResourceStorage storage,
@@ -375,5 +394,16 @@ public class FrameFinalizer {
             }
         }
         //</editor-fold>
+
+        final net.minecraft.client.shader.Framebuffer minecraftFramebuffer = framebufferStore.getMinecraftFramebuffer();
+
+        Framebuffer.bind(minecraftFramebuffer.framebufferObject);
+        GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
+
+        glKnowledge.commit(cp -> {
+            cp.know(GLKnowledgeKeys.FBO_READ, minecraftFramebuffer.framebufferObject);
+            cp.know(GLKnowledgeKeys.FBO_DRAW, minecraftFramebuffer.framebufferObject);
+            cp.know(GLKnowledgeKeys.VIEWPORT, new Vector4i(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight));
+        });
     }
 }

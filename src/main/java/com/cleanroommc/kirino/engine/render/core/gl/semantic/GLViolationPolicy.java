@@ -8,6 +8,7 @@ public class GLViolationPolicy implements ViolationPolicy {
 
     @Override
     public void onViolation(@NonNull KnowledgeViolation violation) {
-
+        // todo: better crash report / warning
+        throw new RuntimeException(violation.toString());
     }
 }

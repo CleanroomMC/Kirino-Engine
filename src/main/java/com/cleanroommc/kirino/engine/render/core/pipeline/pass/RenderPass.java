@@ -29,6 +29,15 @@ public final class RenderPass {
     private final ResourceSlot<GraphicResourceManager> graphicResourceManager;
     private final ResourceSlot<IndirectDrawBufferGenerator> idbGenerator;
 
+    private boolean sealed = false;
+
+    /**
+     * You are no longer allowed to modify subpasses and decorators after the <code>seal</code> call.
+     */
+    public void seal() {
+        sealed = true;
+    }
+
     public int size() {
         return subpassMap.size();
     }
@@ -53,12 +62,15 @@ public final class RenderPass {
         return subpassMap.containsKey(subpassName);
     }
 
+    //<editor-fold desc="modify">
     /**
      * It silently fails when receiving a duplicate <code>subpassName</code>.
      */
     public void addSubpass(@NonNull String subpassName, @NonNull Subpass subpass) {
         Preconditions.checkNotNull(subpassName);
         Preconditions.checkNotNull(subpass);
+        Preconditions.checkState(!sealed,
+                "Must not modify subpasses when a RenderPass is sealed.");
 
         if (subpassMap.containsKey(subpassName)) {
             return;
@@ -71,6 +83,8 @@ public final class RenderPass {
     @Nullable
     public Subpass removeSubpass(@NonNull String subpassName) {
         Preconditions.checkNotNull(subpassName);
+        Preconditions.checkState(!sealed,
+                "Must not modify subpasses when a RenderPass is sealed.");
 
         Subpass subpass = subpassMap.remove(subpassName);
         subpassOrder.remove(subpassName);
@@ -79,6 +93,9 @@ public final class RenderPass {
     }
 
     public void clearSubpasses() {
+        Preconditions.checkState(!sealed,
+                "Must not modify subpasses when a RenderPass is sealed.");
+
         subpassMap.clear();
         subpassOrder.clear();
     }
@@ -86,10 +103,13 @@ public final class RenderPass {
     public void attachSubpassDecorator(@NonNull String subpassName, @NonNull SubpassDecorator decorator) {
         Preconditions.checkNotNull(subpassName);
         Preconditions.checkNotNull(decorator);
+        Preconditions.checkState(!sealed,
+                "Must not modify decorators when a RenderPass is sealed.");
 
         List<SubpassDecorator> list = subpassDecoratorMap.computeIfAbsent(subpassName, k -> new ArrayList<>());
         list.add(decorator);
     }
+    //</editor-fold>
 
     /**
      * @param camera The optional camera instance

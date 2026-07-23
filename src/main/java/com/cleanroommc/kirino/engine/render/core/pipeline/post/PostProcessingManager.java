@@ -61,7 +61,6 @@ public class PostProcessingManager {
 
                     Framebuffer.bind(minecraftFramebuffer.framebufferObject);
                     GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
-                    GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
                     glKnowledge.commit(cp -> {
                         cp.know(GLKnowledgeKeys.FBO_READ, minecraftFramebuffer.framebufferObject);
@@ -75,7 +74,6 @@ public class PostProcessingManager {
 
                     pingPongFramebuffer.framebufferB().bind();
                     GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
-                    GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
                     glKnowledge.commit(cp -> {
                         cp.know(GLKnowledgeKeys.FBO_READ, pingPongFramebuffer.framebufferB().fboID);
@@ -94,7 +92,6 @@ public class PostProcessingManager {
 
                     Framebuffer.bind(minecraftFramebuffer.framebufferObject);
                     GL11.glViewport(0, 0, minecraftFramebuffer.framebufferWidth, minecraftFramebuffer.framebufferHeight);
-                    GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
                     glKnowledge.commit(cp -> {
                         cp.know(GLKnowledgeKeys.FBO_READ, minecraftFramebuffer.framebufferObject);
@@ -109,7 +106,6 @@ public class PostProcessingManager {
                     pingPongFramebuffer.swap();
                     pingPongFramebuffer.framebufferB().bind();
                     GL11.glViewport(0, 0, pingPongFramebuffer.width(), pingPongFramebuffer.height());
-                    GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
 
                     glKnowledge.commit(cp -> {
                         cp.know(GLKnowledgeKeys.FBO_READ, pingPongFramebuffer.framebufferB().fboID);
@@ -188,6 +184,8 @@ public class PostProcessingManager {
             PostProcessingSchedule.ScheduledPass scheduledPass = schedule.getSubpass(i);
             placeholderPass.addSubpass(scheduledPass.getRegisteredName(), subpasses.get(scheduledPass.getRegisteredName()));
         }
+
+        placeholderPass.seal();
 
         framebufferStore = store;
         subpassScopeProvider = new SubpassScopeProviderImpl(store);

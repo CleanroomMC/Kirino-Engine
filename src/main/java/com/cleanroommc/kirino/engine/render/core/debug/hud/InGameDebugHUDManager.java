@@ -141,7 +141,10 @@ public class InGameDebugHUDManager {
     }
 
     /**
-     * Handles input and draw the HUDs via the OpenGL fixed-function pipeline if HUDs are active.
+     * Handles input and draw the HUDs via the immediate mode pipeline if HUDs are active.
+     *
+     * <p>Note: <b>This is only for debug purposes!</b> This is the only place where a GL state change/restore
+     * pattern would be applied.</p>
      */
     public void updateAndRenderIfNeeded() {
         handleInput();

@@ -8,6 +8,12 @@ import java.util.*;
 
 /**
  * This is the designed to be an immutable schedule.
+ *
+ * <p>Implicit prerequisites include:</p>
+ * <ul>
+ *     <li>When HDR is on, it must contain a tone mapping subpass</li>
+ *     <li>Must not contain duplicate subpasses, it'll fail silently during runtime</li>
+ * </ul>
  */
 public final class PostProcessingSchedule {
 
