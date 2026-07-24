@@ -123,6 +123,7 @@ public class DrawQueue {
     record VAOKey(int vao, int mode, int elementType) {
     }
 
+    // todo: refactor simplify. it must respect the draw queue order. only performs local merge
     /**
      * <p>Prerequisites include:</p>
      * <ul>
@@ -130,7 +131,7 @@ public class DrawQueue {
      * </ul>
      *
      * It combines and simplifies {@link LowLevelDC}s, especially combines commands into <code>MULTI_ELEMENTS_INDIRECT</code> commands.
-     * Usually it's called after {@link #compile(GraphicResourceManager)} which compiles everything into {@link LowLevelDC}s.
+     * It'll be called after {@link #compile(GraphicResourceManager)} and {@link #sort(DrawQueuePolicy)}.
      *
      * @param idbGenerator The indirect draw buffer manager
      * @return The <code>DrawQueue</code> itself
@@ -171,11 +172,11 @@ public class DrawQueue {
                 }
             }
 
-            // combine units and upload to idb
             if (mdiUnits.isEmpty()) {
                 continue;
             }
 
+            // combine units and upload to idb
             int start = 0;
             while (start < mdiUnits.size()) {
                 int end = Math.min(start + KirinoCommonCore.KIRINO_CONFIG_HUB.getMaxMultiDrawIndirectUnitCount(), mdiUnits.size());
@@ -204,11 +205,11 @@ public class DrawQueue {
      *     <li>Every element in this {@link DrawQueue} is a {@link LowLevelDC}</li>
      * </ul>
      *
-     * It sorts all {@link LowLevelDC}s, which is the final stage of command processing.
+     * It sorts all {@link LowLevelDC}s, which is the middle stage of command processing.
      *
      * @return The <code>DrawQueue</code> itself
      */
-    public DrawQueue sort() {
+    public DrawQueue sort(DrawQueuePolicy policy) {
 
         return this;
     }

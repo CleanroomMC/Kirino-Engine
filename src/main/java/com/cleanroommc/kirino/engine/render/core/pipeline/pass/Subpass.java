@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.pass;
 
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueuePolicy;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.IndirectDrawBufferGenerator;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.DrawCommand;
@@ -53,10 +54,13 @@ public abstract class Subpass {
         if (hintCompileDrawQueue()) {
             drawQueue.compile(graphicResourceManager);
         }
+        DrawQueuePolicy policy = hintDrawQueuePolicy();
+        if (policy != null && policy.allowsReordering()) {
+            drawQueue.sort(policy);
+        }
         if (hintSimplifyDrawQueue()) {
             drawQueue.simplify(idbGenerator);
         }
-        drawQueue.sort();
 
         // this is the pso scope
         try (ClaimedScopeHandle ignored = storage.get(renderer).bindPipeline(pso, glKnowledge)) {
@@ -72,8 +76,8 @@ public abstract class Subpass {
         }
     }
 
-    @NonNull
-    public abstract PassHint passHint();
+    @Nullable
+    public abstract DrawQueuePolicy hintDrawQueuePolicy();
 
     /**
      * Whether to run {@link DrawQueue#compile(GraphicResourceManager)} before {@link #execute(ResourceStorage, KnowledgeRuntime, DrawQueue, Object)}.
@@ -96,7 +100,7 @@ public abstract class Subpass {
      *
      * <p>Note: During its execution, the corresponding PSO is applied and GL knowledge is claimed.</p>
      *
-     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, KnowledgeRuntime, Camera, SubpassCallback, Object[])}
+     * @param payload The payload that comes from {@link RenderPass#render(ResourceStorage, KnowledgeRuntime, Camera, SubpassCallback, SubpassScopeProvider, Object[])}
      */
     protected abstract void updateShaderProgram(
             @NonNull ResourceStorage storage,

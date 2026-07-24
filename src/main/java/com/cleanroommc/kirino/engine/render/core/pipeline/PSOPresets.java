@@ -17,6 +17,40 @@ public final class PSOPresets {
     }
 
     @NonNull
+    public static PipelineStateObject createGuiPSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
+        Preconditions.checkNotNull(shaderProgram);
+
+        return new PipelineStateObject(
+                new BlendState(
+                        true,
+                        true,
+                        GL11.GL_SRC_ALPHA,
+                        GL11.GL_ONE_MINUS_SRC_ALPHA,
+                        GL11.GL_ONE,
+                        GL11.GL_ONE_MINUS_SRC_ALPHA,
+                        GL14.GL_FUNC_ADD,
+                        GL14.GL_FUNC_ADD,
+                        0b1111
+                ),
+                new DepthState(
+                        false,
+                        false,
+                        GL11.GL_ALWAYS
+                ),
+                new RasterState(
+                        false,
+                        GL11.GL_BACK,
+                        GL11.GL_CCW,
+                        false,
+                        0.0f,
+                        0.0f,
+                        GL11.GL_FILL
+                ),
+                shaderProgram
+        );
+    }
+
+    @NonNull
     public static PipelineStateObject createScreenOverwritePSO(@NonNull ResourceSlot<ShaderProgram> shaderProgram) {
         Preconditions.checkNotNull(shaderProgram);
 

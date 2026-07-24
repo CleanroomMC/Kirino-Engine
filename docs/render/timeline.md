@@ -42,7 +42,7 @@ void renderUpdate()
 
 > Note:<br>
 > The phrase `GL Requirements` doesn't mean that you can't interact with the raw GL, but
-> - You must set the states back if you want a transient mutation
+> - You must set the states back for the claimed keys (aka `requirements`) if you want a transient mutation
 > - You must not call `glKnowledge.commit()` to mutate the claimed keys (aka `requirements`)
 
 > Note:<br>

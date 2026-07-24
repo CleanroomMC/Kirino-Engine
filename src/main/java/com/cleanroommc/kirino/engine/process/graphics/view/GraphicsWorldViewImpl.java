@@ -262,6 +262,8 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
         GL11.glDisable(GL11.GL_STENCIL_TEST);
         GL11.glStencilMask(0xFF);
         GL11.glClearStencil(0);
+//        GL11.glClearColor(0f, 0f, 0f, 0f); // clear color depends on Minecraft
+        GL11.glClearDepth(1d);
         GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT);
 
         resetCommonBindings();

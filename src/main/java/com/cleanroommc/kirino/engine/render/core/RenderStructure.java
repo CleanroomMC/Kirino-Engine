@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.PSOPresets;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.RenderPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.builtin.GizmosPass;
+import com.cleanroommc.kirino.engine.render.core.pipeline.pass.builtin.GuiPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
 import com.cleanroommc.kirino.engine.render.usage.pipeline.pass.OpaqueTerrainPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
@@ -22,11 +23,12 @@ public final class RenderStructure {
     public final boolean enablePostProcessing;
     public final boolean enableKhrDebug;
     public final boolean enableShaderDebug;
-    public final PostProcessingSchedule postProcessingSchedule;
+    public final @NonNull PostProcessingSchedule postProcessingSchedule;
 
     public final PassDescriptor terrainGpuPassDesc;
     public final PassDescriptor chunkCpuPassDesc;
     public final PassDescriptor gizmosPassDesc;
+    public final PassDescriptor guiPassDesc;
 
     public final PassDescriptor toneMappingPassDesc;
     public final PassDescriptor upscalingPassDesc;
@@ -51,12 +53,13 @@ public final class RenderStructure {
         this.enableShaderDebug = enableShaderDebug;
         this.postProcessingSchedule = postProcessingSchedule;
 
+        //<editor-fold desc="terrain gpu pass">
         RenderPass terrainGpuPass = new RenderPass(
                 "Terrain GPU",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         terrainGpuPass.addSubpass(
-                "Opaque Pass",
+                "Opaque Subpass",
                 new OpaqueTerrainPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createOpaquePSO(builtinShaderBundle.terrainGpuPassProgram)));
@@ -64,40 +67,64 @@ public final class RenderStructure {
 
         terrainGpuPassDesc = new PassDescriptor(terrainGpuPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented.");
+        //</editor-fold>
 
+        //<editor-fold desc="chunk cpu pass">
         RenderPass chunkCpuPass = new RenderPass(
                 "Chunk CPU",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         chunkCpuPass.addSubpass(
-                "Opaque Pass",
+                "Opaque Subpass",
                 new GizmosPass(
                         graphicsRuntimeBundle.renderer,
-                        PSOPresets.createOpaquePSO(builtinShaderBundle.chunkCpuPassProgram), graphicsRuntimeBundle.gizmosManager));
+                        PSOPresets.createOpaquePSO(builtinShaderBundle.chunkCpuPassProgram),
+                        graphicsRuntimeBundle.gizmosManager));
         chunkCpuPass.seal();
 
         chunkCpuPassDesc = new PassDescriptor(chunkCpuPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented.");
+        //</editor-fold>
 
+        //<editor-fold desc="gizmos pass">
         RenderPass gizmosPass = new RenderPass(
                 "Gizmos",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         gizmosPass.addSubpass(
-                "Gizmos Pass",
+                "Gizmos Subpass",
                 new GizmosPass(
-                        graphicsRuntimeBundle.renderer, PSOPresets.createGizmosPSO(builtinShaderBundle.gizmosPassProgram),
+                        graphicsRuntimeBundle.renderer,
+                        PSOPresets.createGizmosPSO(builtinShaderBundle.gizmosPassProgram),
                         graphicsRuntimeBundle.gizmosManager));
         gizmosPass.seal();
 
         gizmosPassDesc = new PassDescriptor(gizmosPass);
+        //</editor-fold>
 
+        //<editor-fold desc="gui pass">
+        // we don't need a shader program for the gui pass. pass a dummy program
+        RenderPass guiPass = new RenderPass(
+                "GUI",
+                graphicsRuntimeBundle.graphicResourceManager,
+                graphicsRuntimeBundle.idbGenerator);
+        guiPass.addSubpass(
+                "GUI Subpass",
+                new GuiPass(
+                        graphicsRuntimeBundle.renderer,
+                        PSOPresets.createGuiPSO(builtinShaderBundle.postProcessingDefaultProgram)));
+        guiPass.seal();
+
+        guiPassDesc = new PassDescriptor(guiPass);
+        //</editor-fold>
+
+        //<editor-fold desc="tone mapping pass">
         RenderPass toneMappingPass = new RenderPass(
                 "Tone Mapping",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         toneMappingPass.addSubpass(
-                "Tone Mapping Pass",
+                "Tone Mapping Subpass",
                 new DefaultPostProcessingPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.toneMappingPassProgram),
@@ -105,13 +132,15 @@ public final class RenderStructure {
         toneMappingPass.seal();
 
         toneMappingPassDesc = new PassDescriptor(toneMappingPass);
+        //</editor-fold>
 
+        //<editor-fold desc="up scaling pass">
         RenderPass upscalingPass = new RenderPass(
                 "Upscaling",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         upscalingPass.addSubpass(
-                "Upscaling Pass",
+                "Upscaling Subpass",
                 new UpscalingPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.upscalingPassProgram)));
@@ -119,13 +148,15 @@ public final class RenderStructure {
 
         upscalingPassDesc = new PassDescriptor(upscalingPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented");
+        //</editor-fold>
 
+        //<editor-fold desc="down scaling pass">
         RenderPass downscalingPass = new RenderPass(
                 "Downscaling",
                 graphicsRuntimeBundle.graphicResourceManager,
                 graphicsRuntimeBundle.idbGenerator);
         downscalingPass.addSubpass(
-                "Downscaling Pass",
+                "Downscaling Subpass",
                 new DownscalingPass(
                         graphicsRuntimeBundle.renderer,
                         PSOPresets.createScreenOverwritePSO(builtinShaderBundle.downscalingPassProgram)));
@@ -133,5 +164,6 @@ public final class RenderStructure {
 
         downscalingPassDesc = new PassDescriptor(downscalingPass, PassDescriptor.Availability.NOT_IMPLEMENTED,
                 "Not fully implemented");
+        //</editor-fold>
     }
 }

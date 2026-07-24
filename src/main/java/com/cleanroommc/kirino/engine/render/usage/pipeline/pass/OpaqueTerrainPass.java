@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.engine.render.usage.pipeline.pass;
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
-import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueuePolicy;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletRenderPayload;
@@ -20,16 +20,39 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
 
 public class OpaqueTerrainPass extends Subpass {
+
     /**
      * @param renderer A global renderer
-     * @param pso      A pipeline state object (pipeline parameters)
+     * @param pso A pipeline state object (pipeline parameters)
      */
     public OpaqueTerrainPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso) {
         super(renderer, pso);
     }
 
+    @Nullable
     @Override
-    protected void updateShaderProgram(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @Nullable Camera camera, @Nullable Object payload, @NonNull ShaderProgram shaderProgram) {
+    public DrawQueuePolicy hintDrawQueuePolicy() {
+        return null;
+    }
+
+    @Override
+    protected boolean hintCompileDrawQueue() {
+        return false;
+    }
+
+    @Override
+    protected boolean hintSimplifyDrawQueue() {
+        return false;
+    }
+
+    @Override
+    protected void updateShaderProgram(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @Nullable Camera camera,
+            @Nullable Object payload,
+            @NonNull ShaderProgram shaderProgram) {
+
         int worldOffset = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "worldOffset");
         int viewRot = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "viewRot");
         int projection = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "projection");
@@ -56,25 +79,15 @@ public class OpaqueTerrainPass extends Subpass {
         GL13.glActiveTexture(texUnit);
     }
 
-    @Override
-    protected boolean hintCompileDrawQueue() {
-        return false;
-    }
-
-    @Override
-    protected boolean hintSimplifyDrawQueue() {
-        return false;
-    }
-
-    @Override
-    public @NonNull PassHint passHint() {
-        return PassHint.OPAQUE;
-    }
-
 //    static long counter = 0;
 
     @Override
-    protected void execute(@NonNull ResourceStorage storage, @NonNull KnowledgeRuntime glKnowledge, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
+    protected void execute(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @NonNull DrawQueue drawQueue,
+            @Nullable Object payload) {
+
         MeshletRenderPayload meshletRenderPayload = (MeshletRenderPayload) payload;
         if (meshletRenderPayload.indexCount() != 0) {
 //            GL30.glBindBufferBase(ShaderDebugResource.RESOURCE.getSsboCounter().target(), 15, ShaderDebugResource.RESOURCE.getSsboCounter().bufferID);
@@ -96,5 +109,6 @@ public class OpaqueTerrainPass extends Subpass {
 
     @Override
     public void collectCommands(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue) {
+        // NO OP
     }
 }

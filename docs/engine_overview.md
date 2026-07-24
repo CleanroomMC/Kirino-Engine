@@ -69,6 +69,9 @@ We pay less attention to implementations that look modern but essentially follow
 Like, replacing Minecraft textures & buffers with the DSA ones (via mixins) may accelerate things up, but we don't
 chase FPS boost in this way.
 
+> Note:
+> The terrain rendering part is non-essential but still expected to be done well.
+
 ## ECS
 
 The ECS runtime will be provided by the engine if users register their services through our lifecycle and entrypoint.

@@ -7,7 +7,7 @@
 
 Minecraft rendering becomes difficult as implicit state and mixins couple rendering behavior.
 Our primary goal is 
-- To provide an explicit structure ([engine_overview](docs/engine_overview.md))
+- To provide an explicit structure ([engine_overview](docs/engine_overview.md), [timeline](docs/render/timeline.md))
 - Overhaul most of Minecraft’s rendering in a future-proof manner ([engine_overview → Terrain Rendering](docs/engine_overview.md))
 - And provide a set of advanced rendering APIs to mod developers 
 
