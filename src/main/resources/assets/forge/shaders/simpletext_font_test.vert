@@ -34,6 +34,10 @@ void main()
 
     vec2 pos = rect.xy + corner * rect.zw;
 
+    // italic
+    float italicScope = 0.22;
+    pos.x += (1.0 - corner.y) * rect.w * italicScope;
+
     UV = mix(uv.xy, uv.zw, corner);
 
     Color = uint(color);
