@@ -55,6 +55,8 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                 .appendBelow("font size 4", 4, Color.WHITE.getRGB())
                 .appendBelow("font size 3", 3, Color.WHITE.getRGB())
                 .appendBelow("font size 2", 2, Color.WHITE.getRGB())
+                .appendBelow("——————————————————", 7, Color.WHITE.getRGB())
+                .appendBelow("CJK Test 么麽さかㄱㄴㄷ", 7, Color.WHITE.getRGB())
                 .endDraw();
     }
 }

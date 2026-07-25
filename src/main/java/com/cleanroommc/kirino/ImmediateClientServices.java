@@ -61,7 +61,8 @@ public final class ImmediateClientServices {
                 },
                 shaderAccess,
                 config,
-                new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
+//                new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
+                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
 
         AttributeLayout dummyLayout = new AttributeLayout();
         dummyLayout.push(new Stride(0));
