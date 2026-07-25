@@ -61,7 +61,7 @@ public final class ImmediateClientServices {
                 },
                 shaderAccess,
                 config,
-                new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
+                new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 
         AttributeLayout dummyLayout = new AttributeLayout();
         dummyLayout.push(new Stride(0));

@@ -60,7 +60,7 @@ public class ShaderRegistry {
         // todo: temp; to be refactored
         if (debugTypes != null && debugTypes.contains(ShaderDebugInjection.Type.VEC3F_DEBUG)) {
             shaderSource = ShaderDebugInjection.inject(shaderSource, MinecraftResourceUtils.readText(
-                    new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
+                    new ResourceLocation("kirino:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
                     MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
         }
 

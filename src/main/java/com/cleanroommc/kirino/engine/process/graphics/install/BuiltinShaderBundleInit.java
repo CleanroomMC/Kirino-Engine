@@ -13,39 +13,39 @@ public final class BuiltinShaderBundleInit {
 
         storage.put(context.shaderbb().postProcessingDefaultProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
+                        "kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"));
 
         storage.put(context.shaderbb().terrainGpuPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/opaque_terrain.vert", "forge:shaders/opaque_terrain.frag"));
+                        "kirino:shaders/opaque_terrain.vert", "kirino:shaders/opaque_terrain.frag"));
 
         storage.put(context.shaderbb().chunkCpuPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
+                        "kirino:shaders/gizmos.vert", "kirino:shaders/gizmos.frag"));
 
         storage.put(context.shaderbb().gizmosPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/gizmos.vert", "forge:shaders/gizmos.frag"));
+                        "kirino:shaders/gizmos.vert", "kirino:shaders/gizmos.frag"));
 
         storage.put(context.shaderbb().toneMappingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
+                        "kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"));
 
         storage.put(context.shaderbb().upscalingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
+                        "kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"));
 
         storage.put(context.shaderbb().downscalingPassProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"));
+                        "kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"));
 
         storage.put(context.shaderbb().meshletVertexGenComputeProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/meshlets2vertices.comp"));
+                        "kirino:shaders/meshlets2vertices.comp"));
 
         storage.put(context.shaderbb().meshletDrawIndexGenComputeProgram,
                 storage.get(context.graphicsb().shaderRegistry).newShaderProgram(
-                        "forge:shaders/meshlet_draw_index_gen.comp"));
+                        "kirino:shaders/meshlet_draw_index_gen.comp"));
 
         storage.sealResource(context.shaderbb().postProcessingDefaultProgram);
         storage.sealResource(context.shaderbb().terrainGpuPassProgram);

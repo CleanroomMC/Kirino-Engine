@@ -95,8 +95,8 @@ public class GuiRenderer {
             MemoryUtil.memFree(idbWorkspace);
         });
 
-        Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simplegui_renderer.vert"));
-        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simplegui_renderer.frag"));
+        Shader vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.vert"));
+        Shader frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
     }

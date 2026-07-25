@@ -12,7 +12,7 @@ public class MinecraftResourceUtilsTest {
     public void testRead() {
         assertDoesNotThrow(() -> {
             MinecraftResourceUtils.readText(
-                    new ResourceLocation("forge:testdata/test_simple.glsl"),
+                    new ResourceLocation("kirino:testdata/test_simple.glsl"),
                     MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
         });
     }

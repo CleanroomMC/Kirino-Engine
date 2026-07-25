@@ -56,7 +56,7 @@ textRuntime = new SimpleTextRuntime(
         },
         shaderAccess,
         config,
-        new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
+        new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
 ```
 
 You should create your own text runtime to take full control.

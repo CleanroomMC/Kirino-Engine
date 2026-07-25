@@ -15,7 +15,7 @@ public final class MinecraftResourceUtils {
     }
 
     /**
-     * It returns the input stream for a file with the absolute path.
+     * It returns the input stream for a file with the valid absolute path.
      */
     @NonNull
     private static InputStream getInputStream(@NonNull String absolutePath) {
@@ -35,12 +35,15 @@ public final class MinecraftResourceUtils {
 
     /**
      * It finds the absolute path for resources inside the dev env.
+     *
+     * <p>Note: It's only able to find a subset of dev env resources:
+     * <code>forge</code> and <code>kirino</code> resources including test data to be exact.</p>
      */
     @Nullable
     private static String findResource(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
-        Preconditions.checkState(rl.getNamespace().equals("forge"),
-                "Provided ResourceLocation \"%s\" must have a forge namespace.", rl.toString());
+        Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"),
+                "Provided ResourceLocation \"%s\" must either be \"forge\" or \"kirino\" namespace.", rl.toString());
 
         File repo;
         try {
@@ -58,9 +61,9 @@ public final class MinecraftResourceUtils {
         Preconditions.checkNotNull(repo);
 
         File resources1 = new File(repo, "src/main/resources/assets/forge");
-        File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/forge");
+        File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/kirino");
         File resources3 = new File(repo, "src/test/resources/assets/forge");
-        File resources4 = new File(repo, "projects/kirino/src/test/resources/assets/forge");
+        File resources4 = new File(repo, "projects/kirino/src/test/resources/assets/kirino");
         Preconditions.checkState(resources1.exists() &&
                         resources1.isDirectory() &&
                         resources2.exists() &&
@@ -77,24 +80,32 @@ public final class MinecraftResourceUtils {
             target = target.substring(1);
         }
 
-        File candidate1 = new File(resources1, target);
-        if (candidate1.isFile()) {
-            return candidate1.getAbsolutePath();
+        if (rl.getNamespace().equals("forge")) {
+            File candidate1 = new File(resources1, target);
+            if (candidate1.isFile()) {
+                return candidate1.getAbsolutePath();
+            }
         }
 
-        File candidate2 = new File(resources2, target);
-        if (candidate2.isFile()) {
-            return candidate2.getAbsolutePath();
+        if (rl.getNamespace().equals("kirino")) {
+            File candidate2 = new File(resources2, target);
+            if (candidate2.isFile()) {
+                return candidate2.getAbsolutePath();
+            }
         }
 
-        File candidate3 = new File(resources3, target);
-        if (candidate3.isFile()) {
-            return candidate3.getAbsolutePath();
+        if (rl.getNamespace().equals("forge")) {
+            File candidate3 = new File(resources3, target);
+            if (candidate3.isFile()) {
+                return candidate3.getAbsolutePath();
+            }
         }
 
-        File candidate4 = new File(resources4, target);
-        if (candidate4.isFile()) {
-            return candidate4.getAbsolutePath();
+        if (rl.getNamespace().equals("kirino")) {
+            File candidate4 = new File(resources4, target);
+            if (candidate4.isFile()) {
+                return candidate4.getAbsolutePath();
+            }
         }
 
         return null;
@@ -153,7 +164,7 @@ public final class MinecraftResourceUtils {
         InputStream stream;
 
         // dev env runtime path
-        if (isDevEnv() && rl.getNamespace().equals("forge")) {
+        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"))) {
             String path = findResource(rl);
             Preconditions.checkNotNull(path,
                     "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.", rl.toString());

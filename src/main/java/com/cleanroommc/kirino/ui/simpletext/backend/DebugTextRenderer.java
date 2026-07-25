@@ -72,8 +72,8 @@ public class DebugTextRenderer implements SimpleTextConsumer {
         instanceVbo = new VBOView(new GLBuffer());
         vao = new VAO(attributeLayout, null, instanceVbo);
 
-        Shader vert = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font_test.vert"));
-        Shader frag = shaderAccess.makeShader(new ResourceLocation("forge:shaders/simpletext_font_test.frag"));
+        Shader vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font_test.vert"));
+        Shader frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font_test.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
     }

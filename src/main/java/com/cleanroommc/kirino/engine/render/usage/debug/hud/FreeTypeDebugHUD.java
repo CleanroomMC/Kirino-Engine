@@ -175,7 +175,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
     private static FT_Face face() {
         if (freeTypeFace == null) {
             freeTypeFace = ImmediateClientServices.instance().freetype().load(
-                    new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"),
+                    new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"),
                     0,
                     48);
         }
@@ -184,8 +184,8 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
 
     private static void drawSdfChar(HUDContext hud, int texId, float x, float y, float width, float height) {
         if (!shaderSetup) {
-            Shader vert = ImmediateClientServices.instance().shader().makeShader(new ResourceLocation("forge:shaders/font_test.vert"));
-            Shader frag = ImmediateClientServices.instance().shader().makeShader(new ResourceLocation("forge:shaders/font_test.frag"));
+            Shader vert = ImmediateClientServices.instance().shader().makeShader(new ResourceLocation("kirino:shaders/font_test.vert"));
+            Shader frag = ImmediateClientServices.instance().shader().makeShader(new ResourceLocation("kirino:shaders/font_test.frag"));
             ImmediateClientServices.instance().shader().submitToGL(vert, frag);
             shaderProgram = ImmediateClientServices.instance().shader().makeProgram(vert, frag);
             shaderSetup = true;

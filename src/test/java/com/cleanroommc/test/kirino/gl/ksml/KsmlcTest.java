@@ -37,9 +37,9 @@ public class KsmlcTest {
     @Test
     public void testSimpleCompile() {
         SourceFile glsl = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_simple.glsl"));
+                "kirino:testdata/test_simple.glsl"));
         SourceFile ksml = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_1.ksml"));
+                "kirino:testdata/test_kirino_std_1.ksml"));
 
         KSMLCompiler compiler = new KSMLCompiler(glsl, new SourceFile[]{ksml}, null);
 
@@ -53,11 +53,11 @@ public class KsmlcTest {
     @Test
     public void testTwoKsmlImports() {
         SourceFile glsl = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_two_imports.glsl"));
+                "kirino:testdata/test_two_imports.glsl"));
         SourceFile ksml1 = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_1.ksml"));
+                "kirino:testdata/test_kirino_std_1.ksml"));
         SourceFile ksml2 = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_2.ksml"));
+                "kirino:testdata/test_kirino_std_2.ksml"));
 
         KSMLCompiler compiler = new KSMLCompiler(glsl, new SourceFile[]{ksml1, ksml2}, null);
 
@@ -71,11 +71,11 @@ public class KsmlcTest {
     @Test
     public void testNamespace() {
         SourceFile glsl = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_namespace.glsl"));
+                "kirino:testdata/test_namespace.glsl"));
         SourceFile ksml1 = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_2.ksml"));
+                "kirino:testdata/test_kirino_std_2.ksml"));
         SourceFile ksml2 = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_3.ksml"));
+                "kirino:testdata/test_kirino_std_3.ksml"));
 
         KSMLCompiler compiler = new KSMLCompiler(glsl, new SourceFile[]{ksml1, ksml2}, null);
 
@@ -89,9 +89,9 @@ public class KsmlcTest {
     @Test
     public void testLineDirective() {
         SourceFile glsl = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_line_directive.glsl"));
+                "kirino:testdata/test_line_directive.glsl"));
         SourceFile ksml = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_4.ksml"));
+                "kirino:testdata/test_kirino_std_4.ksml"));
 
         KSMLCompiler compiler = new KSMLCompiler(glsl, new SourceFile[]{ksml}, null);
 
@@ -110,9 +110,9 @@ public class KsmlcTest {
     @Test
     public void testLineDirectiveBehavior() {
         SourceFile glsl = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_line_directive_behavior.glsl"));
+                "kirino:testdata/test_line_directive_behavior.glsl"));
         SourceFile ksml = KsmlcUtils.buildKsmlcSourceFile(new ResourceLocation(
-                "forge:testdata/test_kirino_std_4.ksml"));
+                "kirino:testdata/test_kirino_std_4.ksml"));
 
         KSMLCompiler compiler = new KSMLCompiler(glsl, new SourceFile[]{ksml}, null);
 

@@ -167,27 +167,27 @@ public final class KirinoCommonCore {
 
     @SubscribeEvent
     public static void onShaderRegister(ShaderRegistrationEvent event) {
-        event.register(new ResourceLocation("forge:shaders/test.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.frag"));
-        event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
-        event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
-        event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
-        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"), ShaderDebugInjection.VEC3F_DEBUG);
-        event.register(new ResourceLocation("forge:shaders/meshlet_draw_index_gen.comp"));
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.vert"), ShaderDebugInjection.VEC3F_DEBUG);
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
+        event.register(new ResourceLocation("kirino:shaders/test.vert"));
+        event.register(new ResourceLocation("kirino:shaders/gizmos.vert"));
+        event.register(new ResourceLocation("kirino:shaders/gizmos.frag"));
+        event.register(new ResourceLocation("kirino:shaders/post_processing.vert"));
+        event.register(new ResourceLocation("kirino:shaders/pp_default.frag"));
+        event.register(new ResourceLocation("kirino:shaders/pp_tone_mapping.frag"));
+        event.register(new ResourceLocation("kirino:shaders/meshlets2vertices.comp"), ShaderDebugInjection.VEC3F_DEBUG);
+        event.register(new ResourceLocation("kirino:shaders/meshlet_draw_index_gen.comp"));
+        event.register(new ResourceLocation("kirino:shaders/opaque_terrain.vert"), ShaderDebugInjection.VEC3F_DEBUG);
+        event.register(new ResourceLocation("kirino:shaders/opaque_terrain.frag"));
     }
 
     @SubscribeEvent
     public static void onPostProcessingRegister(PostProcessingRegistrationEvent event) {
         event.register(
                 "Blit Pass",
-                new String[]{"forge:shaders/post_processing.vert", "forge:shaders/pp_default.frag"},
+                new String[]{"kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"},
                 DefaultPostProcessingPass::new);
         event.register(
                 "Tone Mapping",
-                new String[]{"forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"},
+                new String[]{"kirino:shaders/post_processing.vert", "kirino:shaders/pp_tone_mapping.frag"},
                 DefaultPostProcessingPass::new);
     }
 
