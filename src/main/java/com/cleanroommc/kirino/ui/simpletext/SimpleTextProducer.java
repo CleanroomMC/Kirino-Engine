@@ -8,7 +8,7 @@ import org.jspecify.annotations.Nullable;
 public interface SimpleTextProducer {
 
     /**
-     * It resembles a builder pattern. Call {@link #set(float, float, float, float, float, float)}
+     * It resembles a builder pattern. Call {@link #set(float, float, float, float, float, float, int, float[])}
      * to initialize the line info.
      */
     final class LineInfo {
@@ -21,6 +21,21 @@ public interface SimpleTextProducer {
         private float maxX;
         private float minY;
         private float maxY;
+        private int codepointCount;
+        private float[] progressiveLength;
+
+        public int getCodepointCount() {
+            return codepointCount;
+        }
+
+        /**
+         * <p>Unit: Minecraft scaled resolution</p>
+         */
+        public float getProgressiveLengthAt(int index) {
+            Preconditions.checkElementIndex(index, codepointCount);
+
+            return progressiveLength[index];
+        }
 
         /**
          * <p>Unit: Minecraft scaled resolution</p>
@@ -80,8 +95,11 @@ public interface SimpleTextProducer {
                 float minX,
                 float maxX,
                 float minY,
-                float maxY) {
+                float maxY,
+                int codepointCount,
+                float @NonNull [] progressiveLength) {
 
+            Preconditions.checkNotNull(progressiveLength);
             Preconditions.checkState(empty,
                     "LineInfo must be empty. Must not set parameters twice.");
 
@@ -93,6 +111,8 @@ public interface SimpleTextProducer {
             this.maxX = maxX;
             this.minY = minY;
             this.maxY = maxY;
+            this.codepointCount = codepointCount;
+            this.progressiveLength = progressiveLength;
         }
     }
 
@@ -101,9 +121,22 @@ public interface SimpleTextProducer {
 
     /**
      * <p>Note: Font size is unitless and intended as a guideline only.
-     * Actual implementations interpret it as appropriate</p>
+     * Actual implementations interpret it as appropriate.</p>
      */
     float standardFontSize();
+
+    /**
+     * Line height is also known as the <code>LineTopToBaseline</code>.
+     *
+     * <p>Unit: Minecraft scaled resolution</p>
+     *
+     * @param text The text to evaluate
+     * @param fontSize This parameter is unitless and intended as a guideline only.
+     *                 Actual implementations interpret it as appropriate
+     *
+     * @see LineInfo#getLineTopToBaseline()
+     */
+    float calcLineHeight(@NonNull String text, float fontSize);
 
     /**
      * @param text The raw text to be drawn

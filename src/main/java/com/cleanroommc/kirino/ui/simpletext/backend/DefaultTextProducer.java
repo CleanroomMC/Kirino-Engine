@@ -33,7 +33,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     private final SimpleTextRuntime context;
     private final int pixelSize;
-    private final TextCommandList cmdList = new TextCommandList(1024);
+    private final TextCommandList cmdList = new TextCommandList(64);
 
     private boolean batching;
 
@@ -71,7 +71,8 @@ public class DefaultTextProducer implements SimpleTextProducer {
         lineHeightEstimate = lineHeight[0] * 1.05f;
     }
 
-    public DefaultTextProducer(SimpleTextRuntime context, int pixelSize) {
+    public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize) {
+        Preconditions.checkNotNull(context);
         Preconditions.checkState(context.getFont().type() == ST_FontBackendType.FREE_TYPE,
                 "Must have a FreeType backend context.");
 
@@ -84,14 +85,14 @@ public class DefaultTextProducer implements SimpleTextProducer {
     /**
      * @return Pixel -> Minecraft scaled resolution
      */
-    private float pixel2screen(float pixel, float glyphSize) {
-        return (pixel / (float) pixelSize) * glyphSize;
+    private float pixel2screen(float pixel, float fontSize) {
+        return (pixel / (float) pixelSize) * fontSize;
     }
 
     /**
      * It moves the pen position instead of returning something.
      */
-    private void kerning(int leftGlyph, int rightGlyph, float glyphSize) {
+    private void kerning(int leftGlyph, int rightGlyph, float fontSize) {
         if (leftGlyph == 0 || rightGlyph == 0) {
             return;
         }
@@ -118,8 +119,8 @@ public class DefaultTextProducer implements SimpleTextProducer {
                 float advanceX = vector.x() / 64f;
                 float advanceY = vector.y() / 64f;
 
-                penX += pixel2screen(advanceX, glyphSize);
-                penY += pixel2screen(advanceY, glyphSize);
+                penX += pixel2screen(advanceX, fontSize);
+                penY += pixel2screen(advanceY, fontSize);
             }
         }
     }
@@ -127,7 +128,21 @@ public class DefaultTextProducer implements SimpleTextProducer {
     /**
      * <p>Unit: Minecraft scaled resolution</p>
      */
-    private float calcLineHeight(String text, float glyphSize) {
+    private float calcMissingGlyphSize(float fontSize) {
+        return fontSize;
+    }
+
+    @Override
+    public float standardFontSize() {
+        return STANDARD_GLYPH_SIZE;
+    }
+
+    /**
+     * <p>Unit: Minecraft scaled resolution</p>
+     */
+    public float calcLineHeight(@NonNull String text, float fontSize) {
+        Preconditions.checkNotNull(text);
+
         final float[] lineHeight = {lineHeightEstimate};
 
         (new CodepointIterator(text)).forEachRemaining((IntConsumer) (codepoint) -> {
@@ -140,19 +155,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
             lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), STANDARD_GLYPH_SIZE));
         });
 
-        return lineHeight[0] / STANDARD_GLYPH_SIZE * glyphSize;
-    }
-
-    /**
-     * <p>Unit: Minecraft scaled resolution</p>
-     */
-    private float calcMissingGlyphSize(float glyphSize) {
-        return glyphSize;
-    }
-
-    @Override
-    public float standardFontSize() {
-        return STANDARD_GLYPH_SIZE;
+        return lineHeight[0] / STANDARD_GLYPH_SIZE * fontSize;
     }
 
     public void beginBatch() {
@@ -202,6 +205,13 @@ public class DefaultTextProducer implements SimpleTextProducer {
         int index = 0;
         CodepointIterator iterator = new CodepointIterator(text);
 
+        int codepointCount = 0;
+        float[] progressiveLength = null;
+        if (outLineInfo != null) {
+            codepointCount = CodepointIterator.count(text);
+            progressiveLength = new float[codepointCount];
+        }
+
         while (iterator.hasNext()) {
             int codepoint = iterator.nextInt();
             int glyph = context.getFont().getGlyphIndex(codepoint);
@@ -223,7 +233,8 @@ public class DefaultTextProducer implements SimpleTextProducer {
                 float drawX =
                         penX
                         + pixel2screen(metrics.getBearingX() - metrics.getSdfPadding(), fontSize);
-                float drawY = baselineY
+                float drawY =
+                        baselineY
                         + pixel2screen(- metrics.getBearingY() - metrics.getSdfPadding(), fontSize);
 
                 cmdList.push(
@@ -241,6 +252,10 @@ public class DefaultTextProducer implements SimpleTextProducer {
                 maxBearingY = Math.max(maxBearingY, pixel2screen(metrics.getBearingY(), fontSize));
             }
 
+            if (outLineInfo != null) {
+                progressiveLength[index] = penX;
+            }
+
             prevGlyph = glyph;
             index++;
         }
@@ -252,7 +267,9 @@ public class DefaultTextProducer implements SimpleTextProducer {
                     initPenX,
                     penX,
                     initPenY + lineHeight - maxBearingY,
-                    maxY);
+                    maxY,
+                    codepointCount,
+                    progressiveLength);
         }
     }
 
