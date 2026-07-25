@@ -10,7 +10,7 @@ layout(location = 5) in int hint;
 uniform vec2 scaledRes;
 
 out vec2 UV;
-
+flat out vec4 UVRect;
 flat out uint Color;
 flat out uint Page;
 flat out uint Hint;
@@ -39,6 +39,7 @@ void main()
     pos.x += (1.0 - corner.y) * rect.w * italicScope;
 
     UV = mix(uv.xy, uv.zw, corner);
+    UVRect = uv;
 
     Color = uint(color);
     Page = page;

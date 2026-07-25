@@ -22,3 +22,32 @@ vec2 res2Ndc(vec2 res, vec2 p)
         1.0 - p.y / res.y * 2.0);
 }
 """
+
+@export
+@code """
+uint hashUint(uint x)
+{
+    x ^= x >> 16u;
+    x *= 0x7feb352du;
+    x ^= x >> 15u;
+    x *= 0x846ca68bu;
+    x ^= x >> 16u;
+    return x;
+}
+"""
+
+@export
+@code """
+float hash01(uint x)
+{
+    return float(kirino_std.hashUint(x)) * (1.0 / 4294967295.0);
+}
+"""
+
+@export
+@code """
+float hash11(uint x)
+{
+    return kirino_std.hash01(x) * 2.0 - 1.0;
+}
+"""

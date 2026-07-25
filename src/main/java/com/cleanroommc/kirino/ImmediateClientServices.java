@@ -53,7 +53,8 @@ public final class ImmediateClientServices {
                             context,
                             new SDFGeneratorBruteForceImpl(context.getConfig().sdfPadding(), context.getConfig().sdfSpread()),
                             new Tex2DGlyphAtlas(1024, 1024),
-                            context.getShaderAccess());
+                            context.getShaderAccess(),
+                            context.getConfig().sdfSpread());
                 },
                 (context) -> {
                     return new DefaultTextProducer(context, context.getConfig().pixelSize());

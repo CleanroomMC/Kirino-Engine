@@ -21,10 +21,7 @@ import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.util.ResourceLocation;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL20;
-import org.lwjgl.opengl.GL31;
+import org.lwjgl.opengl.*;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
@@ -38,6 +35,7 @@ public class DebugTextRenderer implements SimpleTextConsumer {
     private final SimpleTextRuntime context;
     private final SDFGenerator generator;
     private final Tex2DGlyphAtlas glyphAtlas;
+    private final int sdfSpread;
 
     // key: glyph index
     private final Map<Integer, AbstractPagedAtlas.SlotHandle<Texture2DAccessor>> glyphSlotCache = new HashMap<>();
@@ -64,8 +62,10 @@ public class DebugTextRenderer implements SimpleTextConsumer {
             SimpleTextRuntime context,
             SDFGenerator generator,
             Tex2DGlyphAtlas glyphAtlas,
-            ImmediateShaderAccess shaderAccess) {
+            ImmediateShaderAccess shaderAccess,
+            int sdfSpread) {
 
+        this.sdfSpread = sdfSpread;
         this.context = context;
         this.generator = generator;
         this.glyphAtlas = glyphAtlas;
@@ -165,6 +165,8 @@ public class DebugTextRenderer implements SimpleTextConsumer {
 
         int scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
         int atlasLoc = GL20.glGetUniformLocation(program.getProgramID(), "atlas");
+        int tickLoc = GL20.glGetUniformLocation(program.getProgramID(), "tick");
+        int sdfSpreadLoc = GL20.glGetUniformLocation(program.getProgramID(), "sdfSpread");
 
         ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
         float screenWidth = (float) resolution.getScaledWidth_double();
@@ -172,6 +174,8 @@ public class DebugTextRenderer implements SimpleTextConsumer {
 
         GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
         GL20.glUniform1i(atlasLoc, 6);
+        GL30.glUniform1ui(tickLoc, (int) (System.nanoTime() / 80_000_000L));
+        GL30.glUniform1ui(sdfSpreadLoc, sdfSpread);
 
         GL13.glActiveTexture(GL13.GL_TEXTURE6);
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, glyphAtlas.getPage(0).textureID());
