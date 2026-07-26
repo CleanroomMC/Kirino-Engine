@@ -33,7 +33,17 @@ out vec4 FragColor;
 
 float directionalShadow(vec2 shadowOffset, vec4 rect, vec2 localPos, float roundedRectDist, float shadowBlur)
 {
-    vec2 shadowDir = normalize(shadowOffset);
+    vec2 shadowDir;
+    float shadowOffsetLen = length(shadowOffset);
+    if (shadowOffsetLen > 0.001)
+    {
+        shadowDir = normalize(shadowOffset);
+    }
+    else
+    {
+        shadowDir = normalize(vec2(1.0, -1.0));
+    }
+
     vec2 center = rect.zw * 0.5;
     vec2 fromCenter = localPos - center;
 
