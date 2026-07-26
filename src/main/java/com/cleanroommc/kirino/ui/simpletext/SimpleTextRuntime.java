@@ -4,6 +4,8 @@ import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.ui.simpletext.text.CodepointIterator;
+import com.cleanroommc.kirino.ui.simpletext.text.ParagraphLineBreaker;
+import com.cleanroommc.kirino.ui.simpletext.text.WrapBreak;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.text.BreakIterator;
 import net.minecraft.util.ResourceLocation;
@@ -44,8 +46,7 @@ public class SimpleTextRuntime {
     private final SimpleTextProducer textProducer;
     private final SimpleTextProducer dummyTextProducer;
 
-    private final BreakIterator lineBreakIterator = BreakIterator.getLineInstance(Locale.ROOT);
-    private final BreakIterator characterBreakIterator = BreakIterator.getCharacterInstance(Locale.ROOT);
+    private final ParagraphLineBreaker paragraphLineBreaker;
 
     public SimpleTextRuntime(
             @NonNull BiFunction<ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
@@ -77,6 +78,10 @@ public class SimpleTextRuntime {
         textConsumer = consumerFactory.apply(this);
         textProducer = producerFactory.apply(this);
         dummyTextProducer = producerFactory.apply(this);
+
+        BreakIterator lineBreakIterator = BreakIterator.getLineInstance(Locale.ROOT);
+        BreakIterator characterBreakIterator = BreakIterator.getCharacterInstance(Locale.ROOT);
+        paragraphLineBreaker = new ParagraphLineBreaker(lineBreakIterator, characterBreakIterator);
 
 //        int[] outParallelism = new int[1];
 //        ForkJoinPool workerPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoSimpleTextSDF", outParallelism);
@@ -307,7 +312,7 @@ public class SimpleTextRuntime {
         int start = 0;
 
         while (start < text.length()) {
-            int hardBreak = findHardBreak(text, start);
+            int hardBreak = ParagraphLineBreaker.findHardBreak(text, start);
             int end = hardBreak < 0 ? text.length() : hardBreak;
 
             if (start == end) {
@@ -330,21 +335,10 @@ public class SimpleTextRuntime {
                 break;
             }
 
-            start = hardBreak + hardBreakLength(text, hardBreak);
+            start = hardBreak + ParagraphLineBreaker.hardBreakLength(text, hardBreak);
         }
 
         return this;
-    }
-
-    private static final class WrapBreak {
-
-        private final int consumeEnd;
-        private final int renderEnd;
-
-        private WrapBreak(int consumeEnd, int renderEnd) {
-            this.consumeEnd = consumeEnd;
-            this.renderEnd = renderEnd;
-        }
     }
 
     private void appendWrappedSegment(
@@ -363,36 +357,18 @@ public class SimpleTextRuntime {
             String remaining = text.substring(lineStart);
             SimpleTextProducer.LineInfo lineInfo = simulate(remaining, 0f, 0f, fontSize);
 
-            int cpCount = lineInfo.getCodepointCount();
-            if (cpCount == 0) {
+            if (lineInfo.getCodepointCount() == 0) {
                 return;
             }
 
-            int fittingCpCount = findFittingCodepointCount(lineInfo, maxWidth);
-            if (fittingCpCount == cpCount) {
-                appendParagraphLine(
-                        remaining,
-                        x,
-                        lineY,
-                        fontSize,
-                        overrideColor,
-                        color);
-                return;
-            }
+            WrapBreak wrapBreak = paragraphLineBreaker.findWrapBreak(remaining, lineInfo, maxWidth);
 
-            int maxUtf16Offset = remaining.offsetByCodePoints(0, fittingCpCount);
-
-            WrapBreak wrapBreak = findPreferredLineBreak(remaining, maxUtf16Offset);
-            if (wrapBreak == null) {
-                wrapBreak = findEmergencyBreak(remaining, maxUtf16Offset);
-            }
-
-            Preconditions.checkState(wrapBreak.consumeEnd > 0,
+            Preconditions.checkState(wrapBreak.consumeEnd() > 0,
                     "Wrapping must always make progress.");
 
-            if (wrapBreak.renderEnd > 0) {
+            if (wrapBreak.renderEnd() > 0) {
                 appendParagraphLine(
-                        remaining.substring(0, wrapBreak.renderEnd),
+                        remaining.substring(0, wrapBreak.renderEnd()),
                         x,
                         lineY,
                         fontSize,
@@ -402,84 +378,8 @@ public class SimpleTextRuntime {
                 lineY = penY;
             }
 
-            lineStart += wrapBreak.consumeEnd;
+            lineStart += wrapBreak.consumeEnd();
         }
-    }
-
-    /**
-     * It returns how many codepoints can fit within <code>maxWidth</code>.
-     */
-    private static int findFittingCodepointCount(
-            SimpleTextProducer.@NonNull LineInfo lineInfo,
-            float maxWidth) {
-
-        int cpCount = lineInfo.getCodepointCount();
-
-        for (int i = 0; i < cpCount; i++) {
-            if (lineInfo.getProgressiveLengthAt(i) > maxWidth) {
-                return i;
-            }
-        }
-
-        return cpCount;
-    }
-
-    /**
-     * It finds the last ICU legal line-break position that can fit inside
-     * <code>maxUtf16Offset</code>.
-     */
-    @Nullable
-    private WrapBreak findPreferredLineBreak(@NonNull String text, int maxUtf16Offset) {
-        lineBreakIterator.setText(text);
-
-        WrapBreak best = null;
-
-        lineBreakIterator.first();
-
-        for (int boundary = lineBreakIterator.next();
-             boundary != BreakIterator.DONE;
-             boundary = lineBreakIterator.next()) {
-
-            int trimmedBoundary = trimTrailingWrapWhitespace(text, boundary);
-            if (trimmedBoundary > maxUtf16Offset) {
-                break;
-            }
-
-            if (boundary <= maxUtf16Offset) {
-                best = new WrapBreak(boundary, boundary);
-            } else if (trimmedBoundary > 0) {
-                best = new WrapBreak(boundary, trimmedBoundary);
-            }
-        }
-
-        return best;
-    }
-
-    /**
-     * It's used when there is no proper Unicode line-break opportunity
-     * like a single extremely long English word.
-     */
-    @NonNull
-    private WrapBreak findEmergencyBreak(@NonNull String text, int maxUtf16Offset) {
-        characterBreakIterator.setText(text);
-
-        int boundary = 0;
-        if (maxUtf16Offset > 0) {
-            if (characterBreakIterator.isBoundary(maxUtf16Offset)) {
-                boundary = maxUtf16Offset;
-            } else {
-                boundary = characterBreakIterator.preceding(maxUtf16Offset);
-            }
-        }
-
-        if (boundary <= 0) {
-            boundary = characterBreakIterator.following(0);
-            if (boundary == BreakIterator.DONE) {
-                boundary = Character.charCount(text.codePointAt(0));
-            }
-        }
-
-        return new WrapBreak(boundary, boundary);
     }
 
     private void appendParagraphLine(
@@ -522,35 +422,6 @@ public class SimpleTextRuntime {
 
         penX = x;
         penY = y + outLineInfo.getLineTopToBaseline() + LINE_GAP;
-    }
-
-    private static int trimTrailingWrapWhitespace(@NonNull String text, int end) {
-        while (end > 0) {
-            int cp = text.codePointBefore(end);
-            if (!Character.isWhitespace(cp)) {
-                break;
-            }
-
-            end -= Character.charCount(cp);
-        }
-        return end;
-    }
-
-    private static int findHardBreak(@NonNull String text, int fromIndex) {
-        for (int i = fromIndex; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (c == '\n' || c == '\r') {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private static int hardBreakLength(@NonNull String text, int index) {
-        if (text.charAt(index) == '\r' && index + 1 < text.length() && text.charAt(index + 1) == '\n') {
-            return 2;
-        }
-        return 1;
     }
     //</editor-fold>
 }
