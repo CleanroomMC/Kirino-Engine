@@ -57,7 +57,7 @@ public final class KnowledgeSupervisor {
                 if (rawEntry.value.isKnown() && !commitValue.isKnown()) {
                     report = true;
                 }
-                if (rawEntry.value.isKnown() && commitValue.isKnown() && rawEntry.value.value() != commitValue.value()) {
+                if (rawEntry.value.isKnown() && commitValue.isKnown() && !Objects.equals(rawEntry.value.value(), commitValue.value())) {
                     report = true;
                 }
             }
@@ -128,7 +128,7 @@ public final class KnowledgeSupervisor {
             case KNOWN:
                 Object value = change.value();
                 Preconditions.checkState(key.type().isInstance(value),
-                        "Value %s doesn't much %s for %s.",
+                        "Value %s doesn't match %s for %s.",
                         value,
                         key.type().getName(),
                         key);
