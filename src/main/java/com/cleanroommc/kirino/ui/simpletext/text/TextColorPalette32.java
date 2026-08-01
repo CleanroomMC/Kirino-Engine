@@ -40,6 +40,8 @@ import com.google.common.base.Preconditions;
  * 31 pink
  * </pre>
  *
+ * <p>Note: Everything is based on ARGB format.</p>
+ *
  * @see TextHintABI
  */
 final class TextColorPalette32 {

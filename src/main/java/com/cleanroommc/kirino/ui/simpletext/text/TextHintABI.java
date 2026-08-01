@@ -70,7 +70,7 @@ final class TextHintABI {
         }
     }
 
-    record Bit(String name, int offset) {
+    record Bit(@NonNull String name, int offset) {
 
         Bit {
             Preconditions.checkNotNull(name);

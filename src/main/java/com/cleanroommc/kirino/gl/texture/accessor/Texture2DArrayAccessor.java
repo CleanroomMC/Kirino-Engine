@@ -6,7 +6,10 @@ import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.lwjgl.opengl.*;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.GL45;
 
 import java.nio.ByteBuffer;
 
@@ -21,14 +24,15 @@ import java.nio.ByteBuffer;
  *     <li><code>copyTexSubImage3D</code></li>
  * </ul>
  */
-public class Texture3DAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
+public class Texture2DArrayAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
 
     public final GLTexture texture;
 
-    public Texture3DAccessor(boolean dsa, GLTexture texture) {
+    public Texture2DArrayAccessor(boolean dsa, @NonNull GLTexture texture) {
         super(dsa);
-        Preconditions.checkState(texture.type == TextureType.TEX_3D,
-                "Texture type must be TEX_3D.");
+        Preconditions.checkNotNull(texture);
+        Preconditions.checkState(texture.type == TextureType.TEX_2D_ARRAY,
+                "Texture type must be TEX_2D_ARRAY.");
 
         this.texture = texture;
     }
@@ -51,7 +55,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
     @NonNull
     @Override
     public TextureType type() {
-        return TextureType.TEX_3D;
+        return TextureType.TEX_2D_ARRAY;
     }
 
     @Override
@@ -94,15 +98,17 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             int zOffset,
             int width,
             int height,
-            int depthOrLayer,
+            int depthOrLayers,
             int format,
             int type,
             @NonNull ByteBuffer data) {
 
+        Preconditions.checkNotNull(data);
+
         if (dsa) {
-            GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayer, format, type, data);
+            GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, type, data);
         } else {
-            GL12.glTexSubImage3D(target(), level, xOffset, yOffset, zOffset, width, height, depthOrLayer, format, type, data);
+            GL12.glTexSubImage3D(target(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, type, data);
         }
     }
 
@@ -142,6 +148,13 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
         }
     }
 
+    /**
+     * It copies a two-dimensional framebuffer region into one array layer.
+     *
+     * <p><b>Source</b>: <code>GL_READ_FRAMEBUFFER</code> + <code>GL_READ_BUFFER</code></p>
+     *
+     * @param zOffset The destination array layer
+     */
     @Override
     public void copyTexSubImage3D(
             int level,
@@ -160,12 +173,12 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
         }
     }
 
-    private static class HighlevelOperatorImpl implements HighlevelOperator {
+    private static final class HighlevelOperatorImpl implements HighlevelOperator {
 
-        private final Texture3DAccessor accessor;
+        private final Texture2DArrayAccessor accessor;
 
-        private HighlevelOperatorImpl(Texture3DAccessor accessor) {
-            this.accessor = accessor;
+        private HighlevelOperatorImpl(Texture2DArrayAccessor accessor) {
+            this.accessor = Preconditions.checkNotNull(accessor);
         }
 
         //<editor-fold desc="convenient allocation overloads">
@@ -173,7 +186,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers) {
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-            MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
             TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
             if (format == null) {
                 allocEmpty(true);
@@ -188,7 +201,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-            MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
 
             allocEmpty(true, format);
         }
@@ -199,7 +212,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-            MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
             TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
             if (format == null) {
                 alloc(true, byteBuffer);
@@ -215,7 +228,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-            MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
 
             alloc(true, byteBuffer, format);
         }
@@ -235,10 +248,10 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             MethodHolder.setCurrentFormat(accessor.texture, format);
 
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), 0, format.format, format.type, byteBuffer);
+                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), 0, format.format, format.type, byteBuffer);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ());
-                accessor.texSubImage3D(0, 0, 0, 0, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), format.format, format.type, byteBuffer);
+                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers());
+                accessor.texSubImage3D(0, 0, 0, 0, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), format.format, format.type, byteBuffer);
             }
         }
 
@@ -254,9 +267,9 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             MethodHolder.setCurrentFormat(accessor.texture, format);
 
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), 0, format.format, format.type, null);
+                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), 0, format.format, format.type, null);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ());
+                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers());
             }
         }
         //</editor-fold>

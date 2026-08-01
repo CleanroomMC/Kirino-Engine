@@ -44,7 +44,7 @@ public interface TextureAccessor {
         return GL11.glGetInteger(bindingTarget());
     }
 
-    default void unit(int unit) {
+    default void activeUnit(int unit) {
         GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit);
     }
 

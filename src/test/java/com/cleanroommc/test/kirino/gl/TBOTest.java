@@ -162,7 +162,7 @@ public class TBOTest {
                     .flip());
 
             tbo.texBuffer(TextureFormat.R32UI.internalFormat, vbo.bufferID);
-            tbo.unit(0);
+            tbo.bindUnit(0);
 
             int loc = GL20.glGetUniformLocation(programID, "inputBuffer");
             GL20.glUniform1i(loc, 0);

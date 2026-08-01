@@ -10,6 +10,17 @@ import org.lwjgl.opengl.*;
 
 import java.nio.ByteBuffer;
 
+/**
+ * <p>Available raw GL operations:</p>
+ * <ul>
+ *     <li><code>texStorage2D</code></li>
+ *     <li><code>texImage2D</code></li>
+ *     <li><code>texSubImage2D</code></li>
+ *     <li><code>compressedTexImage2D</code></li>
+ *     <li><code>compressedTexSubImage2D</code></li>
+ *     <li><code>copyTexSubImage2D</code></li>
+ * </ul>
+ */
 public class Texture2DAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
 
     public final GLTexture texture;
@@ -147,6 +158,7 @@ public class Texture2DAccessor extends TextureAccessorExt implements TextureAcce
             this.accessor = accessor;
         }
 
+        //<editor-fold desc="convenient allocation overloads">
         @Override
         public void resizeAndAllocEmpty(int width, int height) {
             MethodHolder.setExtentX(accessor.texture, width);
@@ -233,6 +245,7 @@ public class Texture2DAccessor extends TextureAccessorExt implements TextureAcce
                 accessor.texStorage2D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY());
             }
         }
+        //</editor-fold>
     }
 
     private HighlevelOperatorImpl highlevelOperator = null;
