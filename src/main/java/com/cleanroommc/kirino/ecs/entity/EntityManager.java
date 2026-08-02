@@ -166,6 +166,7 @@ public class EntityManager {
                             destroyCallback.beforeDestroy(destroyContext);
                         }
                         pool.removeEntity(command.index);
+                        freeIndexes.add(command.index);
                     }
                     case SET_COM -> {
                         ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
