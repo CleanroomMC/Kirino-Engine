@@ -341,7 +341,6 @@ public class EntityManager {
 
         // update generation
         entityGenerations.set(entityID, entityGenerations.get(entityID) + 1);
-        freeIndexes.add(entityID);
 
         synchronized (commandBuffer) {
             EntityCommand command = new EntityCommand(entityID, EntityCommand.Type.DESTROY);
