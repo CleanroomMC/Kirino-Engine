@@ -261,6 +261,7 @@ public final class HeapPool extends ArchetypeDataPool{
                 bytePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
                 shortPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
                 intPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
+                longPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
                 floatPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
                 doublePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
                 booleanPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
