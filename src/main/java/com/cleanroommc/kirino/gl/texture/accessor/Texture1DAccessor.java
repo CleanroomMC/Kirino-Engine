@@ -350,7 +350,8 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
             accessor.genMipmap();
         }
 
-        private void setMipRange(int levels) {
+        @Override
+        public void setMipRange(int levels) {
             accessor.texParamI(GL12.GL_TEXTURE_BASE_LEVEL, 0);
             accessor.texParamI(GL12.GL_TEXTURE_MAX_LEVEL, levels - 1);
         }

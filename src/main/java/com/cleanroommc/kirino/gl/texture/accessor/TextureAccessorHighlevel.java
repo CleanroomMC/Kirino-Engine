@@ -19,6 +19,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -30,6 +31,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -43,6 +45,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -54,6 +57,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -67,6 +71,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -78,6 +83,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -93,6 +99,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -104,6 +111,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -117,6 +125,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -128,6 +137,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -141,6 +151,7 @@ public interface TextureAccessorHighlevel {
          * previously specified texture format.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -152,6 +163,7 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: Mipmap count defaults to <code>1</code>.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code></p>
          */
@@ -220,6 +232,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -233,6 +248,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -246,6 +264,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -261,6 +282,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -275,6 +299,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -289,6 +316,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          * <p>Note: Must not call resize on an immutable storage! (must not reallocate)</p>
          * <p><b>Resize Path:</b> <code>unallocated</code>/<code>mutable</code> -> <code>mutable</code>/<code>immutable</code></p>
          *
@@ -305,6 +335,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          *
          * @param options Must not call resize on immutable storage! (must not reallocate)
          * @param generateMipmaps Whether immediately generates mipmaps altogether
@@ -317,6 +350,9 @@ public interface TextureAccessorHighlevel {
          * Allocates with the given <code>format</code>.
          *
          * <p>Note: Every allocation specifies the texture format, so does it.</p>
+         * <p>Note: For <code>mutable</code> mipmap reallocations, it won't
+         * delete the old mipmaps but only override. And, <code>immutable</code> storage
+         * simply doesn't allow reallocations.</p>
          *
          * @param options Must not call resize on immutable storage! (must not reallocate)
          */
@@ -338,6 +374,7 @@ public interface TextureAccessorHighlevel {
          * Uploads with the given <code>format</code>.
          *
          * <p>Note: It doesn't modify/specificy texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
          */
         default void uploadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
             throw new UnsupportedOperationException("\"uploadLevel\" is not implemented.");
@@ -349,6 +386,15 @@ public interface TextureAccessorHighlevel {
          */
         default void generateMipmaps() {
             throw new UnsupportedOperationException("\"generateMipmaps\" is not implemented.");
+        }
+
+        /**
+         * It sets the range to <code>0 .. levels-1</code>.
+         * It only modifies the global GL states to guide {@link #generateMipmaps()} behavior.
+         * Don't expect any shadow states to be maintained internally.
+         */
+        default void setMipRange(int levels) {
+            throw new UnsupportedOperationException("\"setMipRange\" is not implemented.");
         }
     }
 

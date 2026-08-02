@@ -246,6 +246,138 @@ public class Texture2DAccessor extends TextureAccessorExt implements TextureAcce
             }
         }
         //</editor-fold>
+
+        //<editor-fold desc="canonical allocation methods">
+        @Override
+        public void resizeAndAllocEmpty(int width, int height, @NonNull StorageOptions options, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(format);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            allocEmpty(options, format);
+        }
+
+        @Override
+        public void resizeAndAlloc(int width, int height, @NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            alloc(options, data, format, generateMipmaps);
+        }
+
+        @Override
+        public void alloc(@NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+
+            int width = accessor.texture.extentX();
+            int height = accessor.texture.extentY();
+            int levels = options.levels();
+
+            Preconditions.checkState(width > 0);
+            Preconditions.checkState(height > 0);
+            Preconditions.checkState(levels > 0);
+
+            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            Preconditions.checkState(levels <= maxMipmapCount,
+                    "Too many mipmap levels. Input=%s; Expected Max=%s",
+                    levels, maxMipmapCount);
+
+            setMipRange(levels);
+
+            if (options.mutable()) {
+                if (generateMipmaps) {
+                    accessor.texImage2D(0, format.internalFormat, width, height, 0, format.format, format.type, data);
+                } else {
+                    for (int level = 0; level < levels; level++) {
+                        accessor.texImage2D(level, format.internalFormat, mipExtent(width, level), mipExtent(height, level), 0, format.format, format.type, level == 0 ? data : null);
+                    }
+                }
+            } else {
+                accessor.texStorage2D(levels, format.internalFormat, width, height);
+                accessor.texSubImage2D(0, 0, 0, width, height, format.format, format.type, data);
+            }
+
+            if (generateMipmaps && levels > 1) {
+                accessor.genMipmap();
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+
+        @Override
+        public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(format);
+
+            int width = accessor.texture.extentX();
+            int height = accessor.texture.extentY();
+            int levels = options.levels();
+
+            Preconditions.checkState(width > 0);
+            Preconditions.checkState(height > 0);
+            Preconditions.checkState(levels > 0);
+
+            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            Preconditions.checkState(levels <= maxMipmapCount,
+                    "Too many mipmap levels. Input=%s; Expected Max=%s",
+                    levels, maxMipmapCount);
+
+            setMipRange(levels);
+
+            if (options.mutable()) {
+                for (int level = 0; level < levels; level++) {
+                    accessor.texImage2D(level, format.internalFormat, mipExtent(width, level), mipExtent(height, level), 0, format.format, format.type, null);
+                }
+            } else {
+                accessor.texStorage2D(levels, format.internalFormat, width, height);
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+        //</editor-fold>
+
+        @Override
+        public void uploadLevel(int level, @NonNull ByteBuffer data) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            uploadLevel(level, data, format);
+        }
+
+        @Override
+        public void uploadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.texSubImage2D(level, 0, 0, mipExtent(accessor.texture.extentX(), level), mipExtent(accessor.texture.extentY(), level), format.format, format.type, data);
+        }
+
+        @Override
+        public void generateMipmaps() {
+            accessor.genMipmap();
+        }
+
+        @Override
+        public void setMipRange(int levels) {
+            accessor.texParamI(GL12.GL_TEXTURE_BASE_LEVEL, 0);
+            accessor.texParamI(GL12.GL_TEXTURE_MAX_LEVEL, levels - 1);
+        }
+
+        private static int mipExtent(int baseExtent, int level) {
+            return Math.max(1, baseExtent >> level);
+        }
     }
 
     private HighlevelOperatorImpl highlevelOperator = null;
