@@ -162,7 +162,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            entryCallbacks[state] = callback;
+            entryCallbacks[state - lowerStateBound] = callback;
             return this;
         }
 
@@ -173,7 +173,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
                     "State %s out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
 
-            exitCallbacks[state] = callback;
+            exitCallbacks[state - lowerStateBound] = callback;
             return this;
         }
 
