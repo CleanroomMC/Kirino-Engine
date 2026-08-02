@@ -149,7 +149,7 @@ public final class HeapPrimitiveArray implements PrimitiveArray {
         Preconditions.checkState(type == PrimitiveArrayType.DOUBLE,
                 "This is not a double-typed array.");
 
-        return byteArray[index];
+        return doubleArray[index];
     }
 
     @SuppressWarnings("DataFlowIssue")
