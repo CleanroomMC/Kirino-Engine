@@ -44,8 +44,7 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
     private final @Nullable Runnable finishCallback;
     private final CleanWorld world;
     private final List<BarrierNode> topo;
-    private volatile boolean executing = false;
-    private final ReentrantLock lock = new ReentrantLock();
+    private final AtomicBoolean executing = new AtomicBoolean(false);
 
     protected AbstractFlow(@NonNull CleanWorld world, @NonNull List<@NonNull BarrierNode> topo, @Nullable Runnable finishCallback) {
         this.finishCallback = finishCallback;
@@ -55,11 +54,10 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
 
     @Override
     public void execute() {
-        if (!lock.tryLock()) {
+        if (!executing.compareAndSet(false, true)) {
             throw new IllegalStateException("Must not execute while executing!");
         }
 
-        executing = true;
         try {
             for (BarrierNode node : topo) {
                 for (Transition edge : node.incoming) {
@@ -84,8 +82,7 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
                     finishCallback.run();
                 }
             } finally {
-                executing = false;
-                lock.unlock();
+                executing.set(false);
             }
         }
     }
@@ -93,11 +90,10 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
     @NonNull
     @Override
     public CompletableFuture<Void> executeAsync(Executor executor) {
-        if (!lock.tryLock()) {
+        if (!executing.compareAndSet(false, true)) {
             throw new IllegalStateException("Must not execute while executing!");
         }
 
-        executing = true;
         try {
             return CompletableFuture.runAsync(() -> {
                 try {
@@ -124,20 +120,18 @@ public abstract class AbstractFlow implements SystemExeFlowGraph {
                             finishCallback.run();
                         }
                     } finally {
-                        executing = false;
-                        lock.unlock();
+                        executing.set(false);
                     }
                 }
             }, executor);
         } catch (Throwable t) {
-            executing = false;
-            lock.unlock();
+            executing.set(false);
             throw t;
         }
     }
 
     @Override
     public boolean isExecuting() {
-        return executing;
+        return executing.get();
     }
 }
