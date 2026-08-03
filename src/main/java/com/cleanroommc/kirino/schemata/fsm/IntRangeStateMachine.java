@@ -59,18 +59,24 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
                 input, lowerInputBound, upperInputBound);
 
         int idx = index(input, state);
-        if (transitionMap[idx] != -1) {
+        int next = transitionMap[idx];
+        if (next != -1) {
+            int nextState = next + lowerStateBound;
             backlog.push(new FSMBacklogPair<>(state, input));
             if (exitCallbacks[state - lowerStateBound] != null) {
-                exitCallbacks[state - lowerStateBound].transition(state, input, transitionMap[idx]);
+                exitCallbacks[state - lowerStateBound].transition(state, input, nextState);
             }
-            if (entryCallbacks[transitionMap[idx] - lowerStateBound] != null) {
-                entryCallbacks[transitionMap[idx] - lowerStateBound].transition(state, input, transitionMap[idx]);
+            if (entryCallbacks[next] != null) {
+                entryCallbacks[next].transition(state, input, nextState);
             }
-            state = transitionMap[idx];
-        } else if (errorCallback != null) {
-            errorCallback.error(state, input);
+            state = nextState;
+        } else {
+            if (errorCallback != null) {
+                errorCallback.error(state, input);
+            }
+            return Optional.empty();
         }
+
         return Optional.of(state);
     }
 
@@ -136,22 +142,29 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
                                                        @Nullable OnEnterStateCallback<Integer, Integer> onEnterStateCallback,
                                                        @Nullable OnExitStateCallback<Integer, Integer> onExitStateCallback,
                                                        @Nullable Rollback<Integer, Integer> rollbackCallback) {
-            Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound || nextState < lowerStateBound || nextState > upperStateBound),
-                    "State %s out of range [%s, %s].",
+            Preconditions.checkNotNull(state);
+            Preconditions.checkNotNull(input);
+            Preconditions.checkNotNull(nextState);
+            Preconditions.checkArgument(state >= lowerStateBound && state <= upperStateBound,
+                    "Source state %s is out of range [%s, %s].",
                     state, lowerStateBound, upperStateBound);
-            Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound),
+            Preconditions.checkArgument(nextState >= lowerStateBound && nextState <= upperStateBound,
+                    "Target state %s is out of range [%s, %s].",
+                    nextState, lowerStateBound, upperStateBound);
+            Preconditions.checkArgument(input >= lowerInputBound && input <= upperInputBound,
                     "Input %s is out of range [%s, %s].",
                     input, lowerInputBound, upperInputBound);
 
             int idx = index(input, state);
-            transitionMap[idx] = nextState;
+            transitionMap[idx] = nextState - lowerStateBound;
             if (onEnterStateCallback != null) {
-                entryCallbacks[nextState - 1] = onEnterStateCallback;
+                entryCallbacks[nextState - lowerStateBound] = onEnterStateCallback;
             }
             if (onExitStateCallback != null) {
-                exitCallbacks[state - 1] = onExitStateCallback;
+                exitCallbacks[state - lowerStateBound] = onExitStateCallback;
             }
             rollbacks[idx] = rollbackCallback;
+
             return this;
         }
 
@@ -201,18 +214,28 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
         @NonNull
         @Override
         public Builder<Integer, Integer> validate() {
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+            Preconditions.checkArgument(initialState >= lowerStateBound && initialState <= upperStateBound,
+                    "The initial state %s is out of range [%s, %s].",
+                    initialState, lowerStateBound, upperStateBound);
+
             final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();
             stack.push(initialState);
             while (!stack.isEmpty()) {
                 int state = stack.pop();
-                if (!reachable.get(state)) {
-                    reachable.set(state);
+                int stateIndex = state - lowerStateBound;
+                if (!reachable.get(stateIndex)) {
+                    reachable.set(stateIndex);
                     for (int input = lowerInputBound; input <= upperInputBound; input++) {
                         int next = transitionMap[index(input, state)];
-                        if (!(next == -1 || next == state)) {
-                            stack.push(next);
+                        if (next != -1) {
+                            int nextState = next + lowerStateBound;
+                            if (nextState != state) {
+                                stack.push(nextState);
+                            }
                         }
                     }
                 }
@@ -227,7 +250,11 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
         @NonNull
         @Override
         public FiniteStateMachine<Integer, Integer> build() {
-            Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+            Preconditions.checkArgument(initialState >= lowerStateBound && initialState <= upperStateBound,
+                    "The initial state %s is out of range [%s, %s].",
+                    initialState, lowerStateBound, upperStateBound);
 
             return new IntRangeStateMachine(lowerStateBound, upperStateBound,
                     lowerInputBound, upperInputBound,

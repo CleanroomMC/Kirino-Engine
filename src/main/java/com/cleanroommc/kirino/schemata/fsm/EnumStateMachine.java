@@ -58,10 +58,13 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
                 entryCallbacks[transitionMap[idx]].transition(states[state], input, states[transitionMap[idx]]);
             }
             state = transitionMap[idx];
-        } else if (error != null) {
-            error.error(states[state], input);
+        } else {
+            if (error != null) {
+                error.error(states[state], input);
+            }
             return Optional.empty();
         }
+
         return Optional.of(states[state]);
     }
 
@@ -138,6 +141,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
                 exitCallbacks[state.ordinal()] = onExitStateCallback;
             }
             rollbacks[idx] = rollbackCallback;
+
             return this;
         }
 
@@ -181,6 +185,9 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
         @NonNull
         @Override
         public Builder<S, I> validate() {
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+
             BitSet reachable = new BitSet(states.length);
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
