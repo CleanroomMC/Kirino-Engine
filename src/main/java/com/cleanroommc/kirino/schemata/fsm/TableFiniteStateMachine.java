@@ -56,8 +56,10 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
                 entryCallbacks.get(newState).transition(state, input, newState);
             }
             state = newState;
-        } else if (errorCallback != null) {
-            errorCallback.error(state, input);
+        } else {
+            if (errorCallback != null){
+                errorCallback.error(state, input);
+            }
             return Optional.empty();
         }
 
@@ -117,14 +119,16 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkNotNull(input, "Parameter \"input\" can't be null.");
             Preconditions.checkNotNull(nextState,  "Parameter \"nextState\" can't be null.");
 
-            builder.put(input, currentState,nextState);
+            builder.put(input, currentState, nextState);
             if (onEnterStateCallback != null) {
                 entryCallbackMapBuilder.put(nextState, onEnterStateCallback);
             }
             if (onExitStateCallback != null) {
-                exitCallbackMapBuilder.put(nextState, onExitStateCallback);
+                exitCallbackMapBuilder.put(currentState, onExitStateCallback);
             }
-            if (rollback != null) {
+            if (rollback == null) {
+                // todo: remove the cell to keep the semantics consistency
+            } else {
                 rollbackTable.put(input, currentState, rollback);
             }
 
@@ -147,10 +151,10 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
             if (callback == null) {
+                ImmutableMap<S, OnEnterStateCallback<S, I>> map = entryCallbackMapBuilder.buildKeepingLast();
                 ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                ImmutableMap<S, OnEnterStateCallback<S, I>> map = entryCallbackMapBuilder.build();
                 for (Map.Entry<S, OnEnterStateCallback<S, I>> entry : map.entrySet()) {
-                    if (entry.getKey() != state) {
+                    if (!Objects.equals(entry.getKey(), state)) {
                         newBuilder.put(entry);
                     }
                 }
@@ -158,6 +162,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             } else {
                 entryCallbackMapBuilder.put(state, callback);
             }
+
             return this;
         }
 
@@ -177,10 +182,10 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
 
             if (callback == null) {
+                ImmutableMap<S, OnExitStateCallback<S, I>> map = exitCallbackMapBuilder.buildKeepingLast();
                 ImmutableMap.Builder<S, OnExitStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                ImmutableMap<S, OnExitStateCallback<S, I>> map = exitCallbackMapBuilder.build();
                 for (Map.Entry<S, OnExitStateCallback<S, I>> entry : map.entrySet()) {
-                    if (entry.getKey() != state) {
+                    if (!Objects.equals(entry.getKey(), state)) {
                         newBuilder.put(entry);
                     }
                 }
@@ -188,9 +193,11 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             } else {
                 exitCallbackMapBuilder.put(state, callback);
             }
+
             return this;
         }
 
+        @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
             Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
@@ -212,7 +219,16 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         @NonNull
         @Override
         public Builder<S, I> validate() {
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+
             Table<I, S, S> table = builder.build();
+
+            Set<S> allStates = new HashSet<>();
+            allStates.add(initialState);
+            allStates.addAll(table.columnKeySet());
+            allStates.addAll(table.values());
+
             Set<S> reachable = new HashSet<>();
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
@@ -228,7 +244,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
                 }
             }
 
-            Preconditions.checkState(reachable.size() == table.columnKeySet().size(),
+            Preconditions.checkState(reachable.containsAll(allStates),
                     "Some state not reachable.");
 
             return this;
