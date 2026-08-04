@@ -26,7 +26,8 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - If the submodule HEAD is detached
   ```bash
   cd projects/kirino
-  git switch main
+  git fetch origin
+  git switch -C main --track origin/main
   ```
 
 **Extra Steps For Now**
