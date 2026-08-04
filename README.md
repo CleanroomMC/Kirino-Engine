@@ -107,33 +107,8 @@ rather than features, compatibility with legacy solutions, or similar concerns.
 - Not a high-fidelity path tracing solution
 
 ## Dev Env / Build
-- Fork this repo (branch: `main`) / OR skip this step
-- Clone [Cleanroom](https://github.com/CleanroomMC/Cleanroom) (branch: `fix/lwjgl`) locally
-- _Everything below will be happened under your Cleanroom dev env_
-- Go to `.gitmodules`
-  ```
-  [submodule "projects/kirino"]
-    path = projects/kirino
-    url = https://github.com/CleanroomMC/Kirino-Engine.git
-  ```
-- Set the `url` to your fork (if you forked Kirino-Engine)
-- ```bash
-  git submodule init
-  git submodule update
-  ```
-- Import `build.gradle` and then `./gradlew setup`
 
-**Dev Tips**
-- `./gradlew cleanroomClient` to run the project
-- `./gradlew build` to build the project
-- `./gradlew genPatches` to generate patches if you modified Minecraft source code
-  (btw you'll have to push to Cleanroom repo if you intended modifying Minecraft source;
-  it'd be the best you contact us first before doing so)
-- `Cleanroom/projects/cleanroom/src/main/java/` is where you modify Minecraft source code
-- `Cleanroom/projects/kirino/src/main/java/` is where you modify your Kirino-Engine fork
-
-> Note:
-> Especially if you're using IDEA, you can literally develop Kirino-Engine _inside_ Cleanroom
+Goto contributing page for details.
 
 ## Contributing
 If you would like to contribute, please take a look at our [Contributing Page](CONTRIBUTING.md)
