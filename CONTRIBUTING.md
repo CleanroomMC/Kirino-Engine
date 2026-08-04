@@ -19,8 +19,8 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   ```
 - Set the `url` to your fork
 - ```bash
-  git submodule init
-  git submodule update
+  git submodule sync -- projects/kirino
+  git submodule update --init --recursive projects/kirino
   ```
 - Import `build.gradle` and then `./gradlew setup`
 - If the submodule HEAD is detached
@@ -36,7 +36,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - Add `implementation("com.cleanroommc.ksmlc:ksml-compiler:1.0-SNAPSHOT")` to `dependencies` of `projects/cleanroom/build.gradle`
 
 **Submodule Tips**
-- If your submodule setup is somehow broken OR you have already initialized a submodule but want to switch to another fork<br>
+- If your submodule setup is somehow broken OR you have already initialized a submodule but want to switch to another fork
 - _Complete the following steps under your Cleanroom directory_
 - ```bash
   git submodule deinit -f -- projects/kirino
@@ -46,10 +46,10 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   git submodule sync -- projects/kirino
   git submodule update --init --recursive projects/kirino
   git -C projects/kirino fetch origin --prune
-  git -C projects/kirino switch -C main origin/main
+  git -C projects/kirino switch -C main --track origin/main
   ```
 - ```bash
-  cd projects/Kirino
+  cd projects/kirino
   ```
 - Check
   ```bash
@@ -57,7 +57,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   ```
   Expected to see
   ```
-  * main XXXXXX [origin/main] Commit message
+  * main XXXXXX [origin/main] Commit message (latest commit)
   ```
 - Set upstream (this repo)
   ```bash
