@@ -53,6 +53,9 @@ public class FreeTypeFontHandle implements ST_FontHandle {
             if (bitmap == null) {
                 return null;
             }
+            if (bitmap.width() == 0 || bitmap.rows() == 0 || bitmap.buffer(1) == null) {
+                return ST_Bitmap.EMPTY;
+            }
             try {
                 return FreeTypeBitmapDecoder.decode(bitmap);
             } catch (Throwable t) {
@@ -64,7 +67,7 @@ public class FreeTypeFontHandle implements ST_FontHandle {
             if (bitmap == null) {
                 return null;
             }
-            if (bitmap.buffer(1) == null) {
+            if (bitmap.width() == 0 || bitmap.rows() == 0 || bitmap.buffer(1) == null) {
                 outMetrics.set(
                         out.getAdvanceX(),
                         out.getBearingX(),

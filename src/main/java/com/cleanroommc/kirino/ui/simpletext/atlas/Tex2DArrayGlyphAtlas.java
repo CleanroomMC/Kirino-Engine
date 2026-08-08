@@ -29,6 +29,9 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
             this.layer = layer;
         }
 
+        /**
+         * <p>Note: Must not cache it as it might be replaced when the atlas grows.</p>
+         */
         @NonNull
         public Texture2DArrayAccessor getTexture() {
             return storage.texture;
@@ -152,8 +155,15 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
         }
     }
 
-    @SuppressWarnings("FieldCanBeLocal")
     private final SharedStorage storage;
+
+    /**
+     * <p>Note: Must not cache it as it might be replaced when the atlas grows.</p>
+     */
+    @NonNull
+    public Texture2DArrayAccessor getTexture() {
+        return storage.texture;
+    }
 
     public Tex2DArrayGlyphAtlas(int pageWidth, int pageHeight) {
         this(pageWidth, pageHeight, DEFAULT_INITIAL_LAYER_CAPACITY);

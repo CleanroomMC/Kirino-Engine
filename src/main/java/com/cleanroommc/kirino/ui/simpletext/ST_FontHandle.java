@@ -34,6 +34,7 @@ public interface ST_FontHandle {
      *               <li>A <code>null</code> return value marks the failure of this call. You should
      *               then keep <code>outMetrics</code> unmodified if it was non-null.</li>
      *               <li>Must not put SDF parameters to <code>outMetrics</code>.</li>
+     *               <li>Must return {@link ST_Bitmap#EMPTY} when the glyph exists but is empty.</li>
      *           </ul>
      *
      * @param outMetrics It will receive glyph metrics if and only if it's non-null

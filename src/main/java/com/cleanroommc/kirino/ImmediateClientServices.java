@@ -10,8 +10,10 @@ import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontBackendType;
 import com.cleanroommc.kirino.ui.simpletext.SimpleTextRuntime;
+import com.cleanroommc.kirino.ui.simpletext.atlas.Tex2DArrayGlyphAtlas;
 import com.cleanroommc.kirino.ui.simpletext.atlas.Tex2DGlyphAtlas;
 import com.cleanroommc.kirino.ui.simpletext.backend.DebugTextRenderer;
+import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextRenderer;
 import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
@@ -49,20 +51,21 @@ public final class ImmediateClientServices {
                     return new FreeTypeFontHandle(face);
                 },
                 (context) -> {
-                    return new DebugTextRenderer(
+                    final DefaultTextRenderer renderer = new DefaultTextRenderer(
                             context,
-                            new SDFGeneratorBruteForceImpl(context.getConfig().sdfPadding(), context.getConfig().sdfSpread()),
-                            new Tex2DGlyphAtlas(1024, 1024),
+                            new Tex2DArrayGlyphAtlas(1024, 1024),
                             context.getShaderAccess(),
-                            context.getConfig().sdfSpread());
+                            1024);
+                    ShutdownManager.registerAsync(renderer::close);
+                    return renderer;
                 },
                 (context) -> {
                     return new DefaultTextProducer(context, context.getConfig().pixelSize());
                 },
                 shaderAccess,
                 config,
-//                new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
-                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+                new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
+//                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
 
         AttributeLayout dummyLayout = new AttributeLayout();
         dummyLayout.push(new Stride(0));

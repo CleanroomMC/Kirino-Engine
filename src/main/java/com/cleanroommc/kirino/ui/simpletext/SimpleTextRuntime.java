@@ -82,12 +82,6 @@ public class SimpleTextRuntime {
         BreakIterator lineBreakIterator = BreakIterator.getLineInstance(Locale.ROOT);
         BreakIterator characterBreakIterator = BreakIterator.getCharacterInstance(Locale.ROOT);
         paragraphLineBreaker = new ParagraphLineBreaker(lineBreakIterator, characterBreakIterator);
-
-//        int[] outParallelism = new int[1];
-//        ForkJoinPool workerPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoSimpleTextSDF", outParallelism);
-//        ShutdownManager.registerAsync(() -> ForkJoinPoolUtils.shutdownPool(workerPool, 5));
-//        SDFGeneratorPool generatorPool = new SDFGeneratorPool(outParallelism[0], () ->
-//                new SDFGenerator(SimpleTextConstants.SDF_PADDING, SimpleTextConstants.SDF_SPREAD));
     }
     //</editor-fold>
 

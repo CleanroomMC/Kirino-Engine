@@ -61,23 +61,13 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                 .appendBelow("CJK Test 么麽さかㄱㄴㄷ", 7, Color.WHITE.getRGB())
                 .endDraw();
 
-//        ICS.instance().text()
-//                .begin()
-//                .appendParagraph(
-//                        "Hello world, this is a paragraph wrapping test. " +
-//                                "这是一个用于测试自动换行的中文段落，包含逗号、句号，以及一些比较长的内容。" +
-//                                "日本語のテストです。これは自動改行、句読点、そして英単語との混在を確認するための文章です。" +
-//                                "한국어 테스트입니다. 한글과 English words, 中文字符, 日本語を一緒に表示して、줄바꿈이 자연스럽게 되는지 확인합니다. " +
-//                                "Finally, here is aVeryVeryVeryVeryVeryLongEnglishWordThatShouldForceEmergencyWrapping.",
-//                        150,
-//                        30,
-//                        80)
-//                .endDraw();
-
         ICS.instance().text()
                 .begin()
                 .appendParagraph(
-                        "Test:\nHello world, this is a paragraph wrapping test. " +
+                        "Hello world, this is a paragraph wrapping test. " +
+                                "这是一个用于测试自动换行的中文段落，包含逗号、句号，以及一些比较长的内容。" +
+                                "日本語のテストです。これは自動改行、句読点、そして英単語との混在を確認するための文章です。" +
+                                "한국어 테스트입니다. 한글과 English words, 中文字符, 日本語を一緒に表示して、줄바꿈이 자연스럽게 되는지 확인합니다. " +
                                 "Finally, here is aVeryVeryVeryVeryVeryLongEnglishWordThatShouldForceEmergencyWrapping.",
                         150,
                         30,

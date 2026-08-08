@@ -159,8 +159,7 @@ public final class ForkJoinPoolUtils {
 
             @Override
             public boolean isReleasable() {
-                value = queue.poll();
-                return value != null;
+                return value != null || (value = queue.poll()) != null;
             }
 
             @Override
