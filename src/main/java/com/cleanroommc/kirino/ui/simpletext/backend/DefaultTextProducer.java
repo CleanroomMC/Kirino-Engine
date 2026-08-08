@@ -220,7 +220,16 @@ public class DefaultTextProducer implements SimpleTextProducer {
             float baselineY = topY + lineHeight;
 
             if (glyph == 0) {
-                cmdList.push(penX, baselineY - missingGlyphSize, missingGlyphSize, missingGlyphSize);
+                cmdList.push(
+                        0,
+                        penX,
+                        baselineY - missingGlyphSize,
+                        missingGlyphSize,
+                        missingGlyphSize,
+                        paramOverride ? size[index] : 1f,
+                        paramOverride ? color[index] : Color.WHITE.getRGB(),
+                        paramOverride ? hint[index] : 0);
+
                 penX += missingGlyphSize;
             } else {
                 if (context.getFont().hasKerning()) {
