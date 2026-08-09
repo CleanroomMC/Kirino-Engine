@@ -6,6 +6,15 @@ flat in uint Color;
 flat in uint Page;
 flat in uint Hint;
 
+flat in uvec4 ObfParam0;
+flat in uvec4 ObfParam1;
+flat in uvec4 ObfParam2;
+flat in uvec4 ObfParam3;
+flat in uvec4 ObfParam4;
+flat in uvec4 ObfParam5;
+flat in uvec4 ObfParam6;
+flat in uvec4 ObfParam7;
+
 uniform sampler2DArray atlas;
 uniform uint tick;
 uniform uint sdfSpread;
@@ -95,37 +104,6 @@ vec4 unpackARGB(uint c)
         ((c >> 24u) & 255u) / 255.0);
 }
 
-uint hashUint(uint x)
-{
-    x ^= x >> 16u;
-    x *= 0x7feb352du;
-    x ^= x >> 15u;
-    x *= 0x846ca68bu;
-    x ^= x >> 16u;
-    return x;
-}
-
-float hash01(uint x)
-{
-    return float(hashUint(x)) * (1.0 / 4294967295.0);
-}
-
-uint glyphSeed()
-{
-    vec2 atlasSize = vec2(textureSize(atlas, 0).xy);
-
-    uvec2 p = uvec2(floor(UVRect.xy * atlasSize + 0.5));
-    uvec2 q = uvec2(floor(UVRect.zw * atlasSize + 0.5));
-
-    uint seed = hashUint(Page);
-    seed = hashUint(seed ^ hashUint(p.x));
-    seed = hashUint(seed ^ hashUint(p.y));
-    seed = hashUint(seed ^ hashUint(q.x));
-    seed = hashUint(seed ^ hashUint(q.y));
-
-    return seed;
-}
-
 float sampleGlyphLocal(vec2 localUV)
 {
     if (any(lessThan(localUV, vec2(0.0))) || any(greaterThan(localUV, vec2(1.0))))
@@ -147,19 +125,13 @@ vec2 mirrorGlyphAcrossAxis(vec2 localUV, vec2 axis)
     return mirrored / sizePx;
 }
 
-const uint SALT_TICK = 0x9e3779b9u;
-const uint SALT_BAND_A = 0x85ebca6bu;
-const uint SALT_BAND_B = 0x27d4eb2du;
-const uint SALT_MIRROR_AXIS = 0x6d2b79f5u;
-const uint SALT_MIRROR = 0xa511e9b3u;
-const uint SALT_VERTICAL = 0x165667b1u;
-const uint SALT_MODE = 0xd3a2646cu;
-const uint SALT_CELL = 0xc2b2ae35u;
-const uint SALT_STROKE_ENABLE = 0xb5297a4du;
-const uint SALT_STROKE_X = 0x1b56c4e9u;
-const uint SALT_STROKE_TILT = 0x94d049bbu;
-const uint SALT_BAR_ENABLE = 0x3c6ef372u;
-const uint SALT_BAR_Y = 0xda3e39cbu;
+const float BAND_COUNT = 5.0;
+const float PRIMARY_SHIFT = 0.34;
+const float SECONDARY_SHIFT = 0.14;
+const float VERTICAL_SHIFT = 0.12;
+const uint CELL_COUNT_X = 3u;
+const uint CELL_COUNT_Y = 4u;
+const float THRESHOLD_VARIATION = 0.09;
 
 float obfuscatedGlyphRaw(vec2 atlasUV)
 {
@@ -183,41 +155,79 @@ float obfuscatedGlyphRaw(vec2 atlasUV)
         return 0.0;
     }
 
-    uint baseSeed = hashUint(glyphSeed() ^ hashUint(tick * SALT_TICK));
+    uint baseSeed = ObfParam0.x;
 
-    const float BAND_COUNT = 5.0;
-    const float PRIMARY_SHIFT = 0.34;
-    const float SECONDARY_SHIFT = 0.14;
-    const float VERTICAL_SHIFT = 0.12;
-
+    // 0 .. 4
     uint band = min(uint(floor(localUV.y * BAND_COUNT)), uint(BAND_COUNT) - 1u);
-    float bandRand = hash01(baseSeed ^ hashUint(band * SALT_BAND_A));
+
+    float bandRand = 0.0;
+    if (band == 0u)
+    {
+        bandRand = uintBitsToFloat(ObfParam0.y);
+    }
+    else if (band == 1u)
+    {
+        bandRand = uintBitsToFloat(ObfParam0.z);
+    }
+    else if (band == 2u)
+    {
+        bandRand = uintBitsToFloat(ObfParam0.w);
+    }
+    else if (band == 3u)
+    {
+        bandRand = uintBitsToFloat(ObfParam1.x);
+    }
+    else if (band == 4u)
+    {
+        bandRand = uintBitsToFloat(ObfParam1.y);
+    }
 
     vec2 p0 = localUV;
     vec2 p1 = localUV;
 
     p0.x += (bandRand - 0.5) * PRIMARY_SHIFT;
-    float mirrorRand = hash01(baseSeed ^ SALT_MIRROR);
+    float mirrorRand = uintBitsToFloat(ObfParam2.w);
     if (mirrorRand > 0.5)
     {
         p1.x = 1.0 - p1.x;
     }
 
-    float axisRand = hash01(baseSeed ^ SALT_MIRROR_AXIS);
+    float axisRand = uintBitsToFloat(ObfParam3.x);
     float angle = axisRand * 3.14159265359;
     vec2 axis = vec2(cos(angle), sin(angle));
     p0 = mirrorGlyphAcrossAxis(p0, axis);
 
-    float secondBandRand = hash01(baseSeed ^ hashUint(band * SALT_BAND_B));
+    float secondBandRand = 0.0;
+    if (band == 0u)
+    {
+        secondBandRand = uintBitsToFloat(ObfParam1.z);
+    }
+    else if (band == 1u)
+    {
+        secondBandRand = uintBitsToFloat(ObfParam1.w);
+    }
+    else if (band == 2u)
+    {
+        secondBandRand = uintBitsToFloat(ObfParam2.x);
+    }
+    else if (band == 3u)
+    {
+        secondBandRand = uintBitsToFloat(ObfParam2.y);
+    }
+    else if (band == 4u)
+    {
+        secondBandRand = uintBitsToFloat(ObfParam2.z);
+    }
+
     p1.x += (secondBandRand - 0.5) * SECONDARY_SHIFT;
 
-    float verticalRand = hash01(baseSeed ^ SALT_VERTICAL) - 0.5;
+    float verticalRand = uintBitsToFloat(ObfParam3.y);
     p1.y += verticalRand * VERTICAL_SHIFT;
 
     float a = sampleGlyphLocal(p0);
     float b = sampleGlyphLocal(p1);
 
-    float mode = hash01(baseSeed ^ SALT_MODE);
+    float mode = uintBitsToFloat(ObfParam3.z);
 
     float sdf;
 
@@ -234,36 +244,81 @@ float obfuscatedGlyphRaw(vec2 atlasUV)
         sdf = min(a, b);
     }
 
-    const uint CELL_COUNT_X = 3u;
-    const uint CELL_COUNT_Y = 4u;
-
     uint cellX = min(uint(floor(localUV.x * float(CELL_COUNT_X))), CELL_COUNT_X - 1u);
     uint cellY = min(uint(floor(localUV.y * float(CELL_COUNT_Y))), CELL_COUNT_Y - 1u);
 
+    // 0 .. 11
     uint cellIndex = cellX + cellY * CELL_COUNT_X;
-    float cellRand = hash01(baseSeed ^ hashUint(cellIndex * SALT_CELL));
 
-    const float THRESHOLD_VARIATION = 0.09;
+    float cellRand = 0.0;
+    if (cellIndex == 0u)
+    {
+        cellRand = uintBitsToFloat(ObfParam3.w);
+    }
+    else if (cellIndex == 1u)
+    {
+        cellRand = uintBitsToFloat(ObfParam4.x);
+    }
+    else if (cellIndex == 2u)
+    {
+        cellRand = uintBitsToFloat(ObfParam4.y);
+    }
+    else if (cellIndex == 3u)
+    {
+        cellRand = uintBitsToFloat(ObfParam4.z);
+    }
+    else if (cellIndex == 4u)
+    {
+        cellRand = uintBitsToFloat(ObfParam4.w);
+    }
+    else if (cellIndex == 5u)
+    {
+        cellRand = uintBitsToFloat(ObfParam5.x);
+    }
+    else if (cellIndex == 6u)
+    {
+        cellRand = uintBitsToFloat(ObfParam5.y);
+    }
+    else if (cellIndex == 7u)
+    {
+        cellRand = uintBitsToFloat(ObfParam5.z);
+    }
+    else if (cellIndex == 8u)
+    {
+        cellRand = uintBitsToFloat(ObfParam5.w);
+    }
+    else if (cellIndex == 9u)
+    {
+        cellRand = uintBitsToFloat(ObfParam6.x);
+    }
+    else if (cellIndex == 10u)
+    {
+        cellRand = uintBitsToFloat(ObfParam6.y);
+    }
+    else if (cellIndex == 11u)
+    {
+        cellRand = uintBitsToFloat(ObfParam6.z);
+    }
 
     float thresholdOffset = (cellRand - 0.5) * THRESHOLD_VARIATION;
 
     sdf -= thresholdOffset;
 
-    float addStroke = hash01(baseSeed ^ SALT_STROKE_ENABLE);
+    float addStroke = uintBitsToFloat(ObfParam6.w);
     if (addStroke > 0.84)
     {
-        float x0 = 0.18 + hash01(baseSeed ^ SALT_STROKE_X) * 0.64;
-        float tilt = (hash01(baseSeed ^ SALT_STROKE_TILT) - 0.5) * 0.40;
+        float x0 = uintBitsToFloat(ObfParam7.x);
+        float tilt = uintBitsToFloat(ObfParam7.y);
         vec2 start = vec2(x0 - tilt, 0.18);
         vec2 end = vec2(x0 + tilt, 0.82);
         float stroke = lineSegmentSDF(localUV, start, end, 1.25);
         sdf = max(sdf, stroke);
     }
 
-    float addBar = hash01(baseSeed ^ SALT_BAR_ENABLE);
+    float addBar = uintBitsToFloat(ObfParam7.z);
     if (addBar > 0.74)
     {
-        float y = 0.25 + hash01(baseSeed ^ SALT_BAR_Y) * 0.50;
+        float y = uintBitsToFloat(ObfParam7.w);
         float bar = lineSegmentSDF(localUV, vec2(0.22, y), vec2(0.78, y), 1.25);
         sdf = max(sdf, bar);
     }
@@ -383,7 +438,7 @@ void main()
     float boldness = 0.0;
     bool enableOutline = true;
     bool enableShadow = true;
-    bool enableObfuscated = false;
+    bool enableObfuscated = true;
 
     vec2 texel = 1.0 / vec2(textureSize(atlas, 0).xy);
     float dist = enableObfuscated ? obfuscatedGlyph(UV) : sampleAtlas(UV);
