@@ -51,7 +51,7 @@ float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, float halfThickness
     return lineSegmentSDF(localUV, localA, localB, glyphTexelSize(), halfThicknessPx);
 }
 
-float sampleAtlas(vec2 uv)
+float sampleAtlas(vec2 atlasUV)
 {
     bool zeroGlyph = (Hint & (1u << 31)) != 0u;
     bool emptyGlyph = (Hint & (1u << 30)) != 0u;
@@ -61,7 +61,7 @@ float sampleAtlas(vec2 uv)
 
     if (zeroGlyph || failedGlyph)
     {
-        vec2 localUV = atlasToGlyphLocal(uv);
+        vec2 localUV = atlasToGlyphLocal(atlasUV);
 
         if (any(lessThan(localUV, vec2(0.0))) || any(greaterThan(localUV, vec2(1.0))))
         {
@@ -80,7 +80,7 @@ float sampleAtlas(vec2 uv)
     }
     else if (!emptyGlyph)
     {
-        dist = texture(atlas, vec3(uv, float(Page))).r;
+        dist = texture(atlas, vec3(atlasUV, float(Page))).r;
     }
 
     return dist;
@@ -163,6 +163,19 @@ const uint SALT_BAR_Y = 0xda3e39cbu;
 
 float obfuscatedGlyph(vec2 atlasUV)
 {
+    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
+    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
+    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+
+    if (zeroGlyph || failedGlyph)
+    {
+        return sampleAtlas(atlasUV);
+    }
+    else if (emptyGlyph)
+    {
+        return 0.0;
+    }
+
     vec2 localUV = atlasToGlyphLocal(atlasUV);
 
     if (any(lessThan(localUV, vec2(0.0))) || any(greaterThan(localUV, vec2(1.0))))
