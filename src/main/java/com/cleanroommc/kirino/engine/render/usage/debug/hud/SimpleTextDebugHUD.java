@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.ICS;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.HUDContext;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.ui.simpletext.SimpleTextProducer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import org.jspecify.annotations.NonNull;
 
@@ -59,6 +60,8 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                 .appendBelow("——————————————————", 7, Color.WHITE.getRGB())
                 .appendEmptyLineBelow()
                 .appendBelow("CJK Test 么麽さかㄱㄴㄷ", 7, Color.WHITE.getRGB())
+                .appendEmptyLineBelow()
+                .appendBelow("FPS: " + Minecraft.getDebugFPS(), 7, Color.WHITE.getRGB())
                 .endDraw();
 
         ICS.instance().text()

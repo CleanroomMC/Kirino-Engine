@@ -161,7 +161,7 @@ const uint SALT_STROKE_TILT = 0x94d049bbu;
 const uint SALT_BAR_ENABLE = 0x3c6ef372u;
 const uint SALT_BAR_Y = 0xda3e39cbu;
 
-float obfuscatedGlyph(vec2 atlasUV)
+float obfuscatedGlyphRaw(vec2 atlasUV)
 {
     bool zeroGlyph = (Hint & (1u << 31)) != 0u;
     bool emptyGlyph = (Hint & (1u << 30)) != 0u;
@@ -271,19 +271,108 @@ float obfuscatedGlyph(vec2 atlasUV)
     return clamp(sdf, 0.0, 1.0);
 }
 
-float directionalShadow(bool enableObfuscated, vec2 uv, vec2 texel, float outerEdge, float w)
+void sort2(inout float a, inout float b)
+{
+    if (a > b)
+    {
+        float t = a;
+        a = b;
+        b = t;
+    }
+}
+
+float median5(float a, float b, float c, float d, float e)
+{
+    sort2(a, b);
+    sort2(d, e);
+    sort2(c, e);
+    sort2(c, d);
+    sort2(a, d);
+    sort2(a, c);
+    sort2(b, e);
+    sort2(b, d);
+    sort2(b, c);
+
+    return c;
+}
+
+float obfuscatedGlyph(vec2 atlasUV)
+{
+    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
+    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
+    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+
+    if (zeroGlyph || emptyGlyph || failedGlyph)
+    {
+        return obfuscatedGlyphRaw(atlasUV);
+    }
+
+    vec2 texel = 1.0 / vec2(textureSize(atlas, 0).xy);
+
+    vec2 dx = vec2(texel.x, 0.0);
+    vec2 dy = vec2(0.0, texel.y);
+
+    float c = obfuscatedGlyphRaw(atlasUV);
+    float l = obfuscatedGlyphRaw(atlasUV - dx);
+    float r = obfuscatedGlyphRaw(atlasUV + dx);
+    float u = obfuscatedGlyphRaw(atlasUV - dy);
+    float d = obfuscatedGlyphRaw(atlasUV + dy);
+
+    float m = median5(c, l, r, u, d);
+    float cleaned = min(c, m);
+
+    return mix(cleaned, max(cleaned, m), 0.2);
+}
+
+float obfuscatedMask(vec2 atlasUV, float edge, float w)
+{
+    float dist = obfuscatedGlyphRaw(atlasUV);
+    return smoothstep(edge - w, edge + w, dist);
+}
+
+float obfuscatedShadowMask(vec2 atlasUV, float edge, float w)
+{
+    vec2 texel = 1.0 / vec2(textureSize(atlas, 0).xy);
+
+    vec2 dx = vec2(texel.x, 0.0);
+    vec2 dy = vec2(0.0, texel.y);
+
+    float c = obfuscatedMask(atlasUV, edge, w);
+    float l = obfuscatedMask(atlasUV - dx, edge, w);
+    float r = obfuscatedMask(atlasUV + dx, edge, w);
+    float u = obfuscatedMask(atlasUV - dy, edge, w);
+    float d = obfuscatedMask(atlasUV + dy, edge, w);
+
+    float support = (c + l + r + u + d) * 0.2;
+
+    return c * smoothstep(0.35, 0.65, support);
+}
+
+float directionalShadow(bool enableObfuscated, vec2 atlasUV, vec2 texel, float fillEdge, float w)
 {
     const vec2 SHADOW_DIR = normalize(vec2(1.0, 1.0));
     const int SHADOW_STEPS = 6;
 
     float shadow = 0.0;
 
-    for (int i = 0; i <= SHADOW_STEPS; i++)
+    for (int i = 1; i <= SHADOW_STEPS; i++)
     {
-        vec2 shadowUV = uv - SHADOW_DIR * texel * float(i);
-        float dist = enableObfuscated ? obfuscatedGlyph(shadowUV) : sampleAtlas(shadowUV);
-        float mask = smoothstep(outerEdge - w, outerEdge + w, dist);
-        shadow = max(shadow, mask);
+        vec2 shadowUV = atlasUV - SHADOW_DIR * texel * float(i);
+
+        float mask;
+        if (enableObfuscated)
+        {
+            mask = obfuscatedShadowMask(shadowUV, fillEdge, w);
+        }
+        else
+        {
+            float dist = sampleAtlas(shadowUV);
+            mask = smoothstep(fillEdge - w, fillEdge + w, dist);
+        }
+
+        float t = float(i - 1) / float(max(SHADOW_STEPS - 1, 1));
+        float weight = mix(1.0, 0.55, pow(t, 1.5));
+        shadow = max(shadow, mask * weight);
     }
 
     return shadow;
@@ -314,7 +403,7 @@ void main()
     float outer = enableOutline ? smoothstep(outerEdge - w, outerEdge + w, dist) : fill;
     float stroke = enableOutline ? max(outer - fill, 0.0) : 0.0;
 
-    float shadow = enableShadow ? directionalShadow(enableObfuscated, UV, texel, outerEdge, w) : 0.0;
+    float shadow = enableShadow ? directionalShadow(enableObfuscated, UV, texel, fillEdge, w) : 0.0;
 
     float fillAlpha = fill * color.a;
     float outlineAlpha = stroke * outlineColor.a;
