@@ -38,7 +38,7 @@ final class TextHintLayout {
                     name,
                     width);
             Preconditions.checkArgument(offset + width <= BIT_COUNT,
-                    "Field exceeds TextHint ABI. (\"field\"=%s, \"offset\"=%s, \"width\"=%s)",
+                    "Field exceeds TextHintLayout. (\"field\"=%s, \"offset\"=%s, \"width\"=%s)",
                     name,
                     offset,
                     width);
@@ -76,7 +76,7 @@ final class TextHintLayout {
         Bit {
             Preconditions.checkNotNull(name);
             Preconditions.checkArgument(offset >= 0 && offset < BIT_COUNT,
-                    "Bit offset exceeds TextHint ABI. (\"bit\"=%s, \"offset\"=%s)",
+                    "Bit offset exceeds TextHintLayout. (\"bit\"=%s, \"offset\"=%s)",
                     name,
                     offset);
         }

@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 
 public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
 
-    private record SlotRegion(int x, int y, int width, int height) {
+    private record SlotRegion(int x, int y, int reservedWidth, int reservedHeight) {
     }
 
     private static final class PageMeta {
@@ -182,6 +182,8 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
     private final int pageWidth;
     private final int pageHeight;
 
+    private final boolean powerOfTwoSlots;
+
     // these two share indices
     private final List<TPage> pages = new ArrayList<>();
     private final List<PageMeta> metas = new ArrayList<>();
@@ -197,16 +199,43 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
     private long nextSlotId = 1L;
     private int pageCount = 0;
 
-    public AbstractPagedAtlas(@NonNull Supplier<TPage> pageFactory, int pageWidth, int pageHeight) {
+    public AbstractPagedAtlas(
+            @NonNull Supplier<TPage> pageFactory,
+            int pageWidth,
+            int pageHeight,
+            boolean powerOfTwoSlots) {
+
         Preconditions.checkNotNull(pageFactory);
         Preconditions.checkArgument(pageWidth > 0,
                 "Argument \"pageWidth\" must be positive.");
         Preconditions.checkArgument(pageHeight > 0,
                 "Argument \"pageHeight\" must be positive.");
 
+        if (powerOfTwoSlots) {
+            Preconditions.checkArgument(Integer.bitCount(pageWidth) == 1,
+                    "Argument \"pageWidth\" must be power-of-two when \"powerOfTwoSlots\" is enabled.");
+            Preconditions.checkArgument(Integer.bitCount(pageHeight) == 1,
+                    "Argument \"pageHeight\" must be power-of-two when \"powerOfTwoSlots\" is enabled.");
+        }
+
         this.pageFactory = pageFactory;
         this.pageWidth = pageWidth;
         this.pageHeight = pageHeight;
+        this.powerOfTwoSlots = powerOfTwoSlots;
+    }
+
+    private static int roundUpToPowerOfTwo(int value) {
+        Preconditions.checkArgument(value > 0,
+                "Argument \"value\" must be positive.");
+        Preconditions.checkArgument(value <= (1 << 30),
+                "Argument \"value\"=%s is too large to round up to a positive power of two.",
+                value);
+
+        if (Integer.bitCount(value) == 1) {
+            return value;
+        }
+
+        return Integer.highestOneBit(value) << 1;
     }
 
     public SlotHandle<TPage> allocate(@NonNull TBitmap bitmap) {
@@ -220,7 +249,24 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
         Preconditions.checkArgument(bitmap.height() <= pageHeight,
                 "Bitmap height=%s exceeds atlas page height=%s.", bitmap.height(), pageHeight);
 
-        Integer pageIndex = findPageWithSpace(bitmap.width(), bitmap.height());
+        int width = bitmap.width();
+        int height = bitmap.height();
+        int potWidth = powerOfTwoSlots ? roundUpToPowerOfTwo(width) : -1;
+        int potHeight = powerOfTwoSlots ? roundUpToPowerOfTwo(height) : -1;
+
+        if (powerOfTwoSlots) {
+            Preconditions.checkArgument(potWidth <= pageWidth,
+                    "Bitmap power-of-two reserved width=%s exceeds atlas page width=%s.", potWidth, pageWidth);
+            Preconditions.checkArgument(potHeight <= pageHeight,
+                    "Bitmap power-of-two reserved height=%s exceeds atlas page height=%s.", potHeight, pageHeight);
+        }
+
+        Integer pageIndex;
+        if (powerOfTwoSlots) {
+            pageIndex = findPageWithSpace(potWidth, potHeight);
+        } else {
+            pageIndex = findPageWithSpace(width, height);
+        }
 
         if (pageIndex == null) {
             allocPage();
@@ -228,7 +274,12 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
         }
 
         PageMeta meta = metas.get(pageIndex);
-        SlotRegion region = meta.allocate(bitmap.width(), bitmap.height());
+        SlotRegion region;
+        if (powerOfTwoSlots) {
+            region = meta.allocate(potWidth, potHeight);
+        } else {
+            region = meta.allocate(width, height);
+        }
 
         if (!meta.hasFreeSpace()) {
             pagesWithSpace.remove(pageIndex);
@@ -241,8 +292,10 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
                 pageIndex,
                 region.x,
                 region.y,
-                region.width,
-                region.height,
+                width,
+                height,
+                region.reservedWidth,
+                region.reservedHeight,
                 pages.get(pageIndex),
                 this);
 
@@ -294,7 +347,7 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
         PageMeta meta = metas.get(pageIndex);
         boolean hadFreeSpace = meta.hasFreeSpace();
 
-        meta.free(slot.x, slot.y, slot.width, slot.height);
+        meta.free(slot.x, slot.y, slot.reservedWidth, slot.reservedHeight);
 
         if (!hadFreeSpace && meta.hasFreeSpace()) {
             pagesWithSpace.addLast(pageIndex);
@@ -339,6 +392,9 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
         private final int width;
         private final int height;
 
+        private final int reservedWidth;
+        private final int reservedHeight;
+
         private final T page;
         private final AbstractPagedAtlas<T, ?> owner;
 
@@ -351,6 +407,8 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
                 int y,
                 int width,
                 int height,
+                int reservedWidth,
+                int reservedHeight,
                 T page,
                 AbstractPagedAtlas<T, ?> owner) {
 
@@ -360,6 +418,8 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
             this.y = y;
             this.width = width;
             this.height = height;
+            this.reservedWidth = reservedWidth;
+            this.reservedHeight = reservedHeight;
             this.page = page;
             this.owner = owner;
         }
@@ -386,6 +446,14 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
 
         public int getHeight() {
             return height;
+        }
+
+        public int getReservedWidth() {
+            return reservedWidth;
+        }
+
+        public int getReservedHeight() {
+            return reservedHeight;
         }
 
         public T getPage() {

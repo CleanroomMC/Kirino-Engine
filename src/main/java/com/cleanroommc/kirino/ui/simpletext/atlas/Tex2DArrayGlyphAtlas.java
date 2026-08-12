@@ -174,7 +174,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
     }
 
     private Tex2DArrayGlyphAtlas(@NonNull SharedStorage storage, int pageWidth, int pageHeight) {
-        super(storage::allocatePage, pageWidth, pageHeight);
+        super(storage::allocatePage, pageWidth, pageHeight, true);
 
         this.storage = storage;
     }

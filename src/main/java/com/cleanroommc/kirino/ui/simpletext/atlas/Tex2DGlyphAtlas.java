@@ -14,7 +14,7 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
 
     public Tex2DGlyphAtlas(int pageWidth, int pageHeight) {
         super(() -> new Texture2DAccessor(true, GLTexture.newDsaTex2D(pageWidth, pageHeight)),
-                pageWidth, pageHeight);
+                pageWidth, pageHeight, true);
     }
 
     @Override
