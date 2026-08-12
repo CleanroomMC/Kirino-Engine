@@ -195,9 +195,9 @@ void main()
     float italicScope = 0.22;
     pos.x += (1.0 - corner.y) * rect.w * italicScope;
 
-    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
-    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
-    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+    bool zeroGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) == 0u); // 10...
+    bool emptyGlyph = ((Hint & (1u << 31)) == 0u) && ((Hint & (1u << 30)) != 0u); // 01...
+    bool failedGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) != 0u); // 11...
 
     if (zeroGlyph || emptyGlyph || failedGlyph)
     {

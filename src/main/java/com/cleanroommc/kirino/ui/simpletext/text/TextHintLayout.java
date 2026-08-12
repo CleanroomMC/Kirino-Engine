@@ -18,11 +18,12 @@ import org.jspecify.annotations.NonNull;
  * 26      italic
  * 27      strikethrough
  * 28      underline
+ * 29      shadow
  * </pre>
  *
  * @see TextColorPalette32
  */
-final class TextHintABI {
+final class TextHintLayout {
 
     record Field(@NonNull String name, int offset, int width) {
 
@@ -97,10 +98,10 @@ final class TextHintABI {
         }
     }
 
-    private TextHintABI() {
+    private TextHintLayout() {
     }
 
-    static final int BIT_COUNT = 29;
+    static final int BIT_COUNT = 30;
     static final int USED_MASK = (1 << BIT_COUNT) - 1;
 
     static final Field OUTLINE_COLOR = new Field("outline_color", 0, 5);
@@ -116,6 +117,7 @@ final class TextHintABI {
     static final Bit ITALIC = new Bit("italic", 26);
     static final Bit STRIKETHROUGH = new Bit("strikethrough", 27);
     static final Bit UNDERLINE = new Bit("underline", 28);
+    static final Bit SHADOW = new Bit("shadow", 29);
 
     static int reservedBits(int hint) {
         return hint & ~USED_MASK;

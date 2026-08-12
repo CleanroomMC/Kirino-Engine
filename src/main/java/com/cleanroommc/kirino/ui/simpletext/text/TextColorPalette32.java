@@ -42,7 +42,7 @@ import com.google.common.base.Preconditions;
  *
  * <p>Note: Everything is based on ARGB format.</p>
  *
- * @see TextHintABI
+ * @see TextHintLayout
  */
 final class TextColorPalette32 {
 

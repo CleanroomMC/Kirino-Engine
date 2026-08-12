@@ -62,9 +62,9 @@ float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, float halfThickness
 
 float sampleAtlas(vec2 atlasUV)
 {
-    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
-    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
-    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+    bool zeroGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) == 0u); // 10...
+    bool emptyGlyph = ((Hint & (1u << 31)) == 0u) && ((Hint & (1u << 30)) != 0u); // 01...
+    bool failedGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) != 0u); // 11...
 
     float dist = 0.0;
 
@@ -135,9 +135,9 @@ const float THRESHOLD_VARIATION = 0.09;
 
 float obfuscatedGlyphRaw(vec2 atlasUV)
 {
-    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
-    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
-    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+    bool zeroGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) == 0u); // 10...
+    bool emptyGlyph = ((Hint & (1u << 31)) == 0u) && ((Hint & (1u << 30)) != 0u); // 01...
+    bool failedGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) != 0u); // 11...
 
     if (zeroGlyph || failedGlyph)
     {
@@ -353,9 +353,9 @@ float median5(float a, float b, float c, float d, float e)
 
 float obfuscatedGlyph(vec2 atlasUV)
 {
-    bool zeroGlyph = (Hint & (1u << 31)) != 0u;
-    bool emptyGlyph = (Hint & (1u << 30)) != 0u;
-    bool failedGlyph = (Hint & (1u << 29)) != 0u;
+    bool zeroGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) == 0u); // 10...
+    bool emptyGlyph = ((Hint & (1u << 31)) == 0u) && ((Hint & (1u << 30)) != 0u); // 01...
+    bool failedGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) != 0u); // 11...
 
     if (zeroGlyph || emptyGlyph || failedGlyph)
     {

@@ -381,8 +381,10 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                 }
 
                 if (glyph == 0 || entry == null) {
+                    int hint = commandList.hint(i) & ~((1 << 30) | (1 << 31));
                     if (glyph == 0) {
-                        // hint: 32nd bit
+                        // zero glyph
+                        // hint: 31st bit ~ 32nd bit (10)
                         buffer
                                 .putFloat(0)
                                 .putFloat(0)
@@ -395,10 +397,11 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                                 .putFloat(commandList.size(i))
                                 .putInt(commandList.color(i))
                                 .putInt(0)
-                                .putInt(commandList.hint(i) | (1 << 31));
+                                .putInt(hint | (1 << 31));
                         instanceCount++;
                     } else if (emptyGlyphHistory.contains(glyph)) {
-                        // hint: 31st bit
+                        // empty glyph
+                        // hint: 31st bit ~ 32nd bit (01)
                         buffer
                                 .putFloat(0)
                                 .putFloat(0)
@@ -411,10 +414,11 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                                 .putFloat(commandList.size(i))
                                 .putInt(commandList.color(i))
                                 .putInt(0)
-                                .putInt(commandList.hint(i) | (1 << 30));
+                                .putInt(hint | (1 << 30));
                         instanceCount++;
                     } else if (failedGlyphHistory.contains(glyph)) {
-                        // hint: 30th bit
+                        // failed glyph
+                        // hint: 31st bit ~ 32nd bit (11)
                         buffer
                                 .putFloat(0)
                                 .putFloat(0)
@@ -427,7 +431,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                                 .putFloat(commandList.size(i))
                                 .putInt(commandList.color(i))
                                 .putInt(0)
-                                .putInt(commandList.hint(i) | (1 << 29));
+                                .putInt(hint | (1 << 30) | (1 << 31));
                         instanceCount++;
                     }
                 } else {

@@ -14,26 +14,26 @@ final class MinecraftStyledTextParser implements StyledTextParser {
     /**
      * Helper for the Minecraft FontRenderer specs.
      * <p>
-     * Clears {@link TextHintABI#OBFUSCATED}, {@link TextHintABI#BOLD}, {@link TextHintABI#ITALIC},
-     * {@link TextHintABI#STRIKETHROUGH}, {@link TextHintABI#UNDERLINE} altogether
+     * Clears {@link TextHintLayout#OBFUSCATED}, {@link TextHintLayout#BOLD}, {@link TextHintLayout#ITALIC},
+     * {@link TextHintLayout#STRIKETHROUGH}, {@link TextHintLayout#UNDERLINE} altogether
      */
     private static int clearMinecraftFormatting(int hint) {
-        hint = TextHintABI.OBFUSCATED.set(hint, false);
-        hint = TextHintABI.BOLD.set(hint, false);
-        hint = TextHintABI.ITALIC.set(hint, false);
-        hint = TextHintABI.STRIKETHROUGH.set(hint, false);
-        hint = TextHintABI.UNDERLINE.set(hint, false);
+        hint = TextHintLayout.OBFUSCATED.set(hint, false);
+        hint = TextHintLayout.BOLD.set(hint, false);
+        hint = TextHintLayout.ITALIC.set(hint, false);
+        hint = TextHintLayout.STRIKETHROUGH.set(hint, false);
+        hint = TextHintLayout.UNDERLINE.set(hint, false);
         return hint;
     }
 
     /**
      * Helper for the Minecraft FontRenderer specs.
      * <p>
-     * Sets {@link TextHintABI#STRIKETHROUGH_COLOR}, {@link TextHintABI#UNDERLINE_COLOR} altogether
+     * Sets {@link TextHintLayout#STRIKETHROUGH_COLOR}, {@link TextHintLayout#UNDERLINE_COLOR} altogether
      */
     private static int setMinecraftDecoColor(int hint, int paletteIndex) {
-        hint = TextHintABI.STRIKETHROUGH_COLOR.set(hint, paletteIndex);
-        hint = TextHintABI.UNDERLINE_COLOR.set(hint, paletteIndex);
+        hint = TextHintLayout.STRIKETHROUGH_COLOR.set(hint, paletteIndex);
+        hint = TextHintLayout.UNDERLINE_COLOR.set(hint, paletteIndex);
         return hint;
     }
 
@@ -102,11 +102,11 @@ final class MinecraftStyledTextParser implements StyledTextParser {
         }
 
         switch (code) {
-            case 'k' -> enable(TextHintABI.OBFUSCATED, builder);
-            case 'l' -> enable(TextHintABI.BOLD, builder);
-            case 'm' -> enable(TextHintABI.STRIKETHROUGH, builder);
-            case 'n' -> enable(TextHintABI.UNDERLINE, builder);
-            case 'o' -> enable(TextHintABI.ITALIC, builder);
+            case 'k' -> enable(TextHintLayout.OBFUSCATED, builder);
+            case 'l' -> enable(TextHintLayout.BOLD, builder);
+            case 'm' -> enable(TextHintLayout.STRIKETHROUGH, builder);
+            case 'n' -> enable(TextHintLayout.UNDERLINE, builder);
+            case 'o' -> enable(TextHintLayout.ITALIC, builder);
             case 'r' -> builder.style(baseStyle);
             default -> applyColor(15, baseStyle, builder);
         }
@@ -121,7 +121,7 @@ final class MinecraftStyledTextParser implements StyledTextParser {
         builder.style(new TextStyle(1f, color, hint));
     }
 
-    private static void enable(TextHintABI.Bit bit, StyledTextBuilder builder) {
+    private static void enable(TextHintLayout.Bit bit, StyledTextBuilder builder) {
         TextStyle current = builder.currentStyle();
         int hint = bit.set(current.hint(), true);
         builder.style(new TextStyle(1f, current.color(), hint));
