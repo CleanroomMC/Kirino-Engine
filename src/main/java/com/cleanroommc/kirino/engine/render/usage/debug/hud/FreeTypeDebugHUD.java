@@ -29,7 +29,7 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.util.freetype.FT_Bitmap;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
-import org.lwjglx.input.Keyboard;
+import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
