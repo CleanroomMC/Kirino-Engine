@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ui.simpletext;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
+import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.ui.simpletext.text.CodepointIterator;
@@ -24,6 +25,7 @@ public class SimpleTextRuntime {
     private final ST_FontHandle font;
     private final ST_Config config;
     private final ImmediateShaderAccess shaderAccess;
+    private final SimpleGuiRuntime guiRuntime;
 
     public ResourceLocation getFontRl() {
         return fontRl;
@@ -53,6 +55,7 @@ public class SimpleTextRuntime {
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
             @NonNull ImmediateShaderAccess shaderAccess,
+            @NonNull SimpleGuiRuntime guiRuntime,
             @NonNull ST_Config config,
             @NonNull ResourceLocation fontRl) {
 
@@ -72,6 +75,7 @@ public class SimpleTextRuntime {
                 font.type().toString(), config.target().toString());
 
         this.shaderAccess = shaderAccess;
+        this.guiRuntime = guiRuntime;
 
         metricsStore = new GlyphMetricsStore(config);
 
@@ -142,11 +146,10 @@ public class SimpleTextRuntime {
      * <p>Unit: Minecraft scaled resolution</p>
      */
     private static final float LINE_GAP = 1f;
-
-    //<editor-fold desc="append lines">
     private float penX = 0;
     private float penY = 0;
 
+    //<editor-fold desc="append lines">
     @NonNull
     public SimpleTextRuntime append(@NonNull String text, float x, float y) {
         Preconditions.checkNotNull(text);
@@ -418,4 +421,6 @@ public class SimpleTextRuntime {
         penY = y + outLineInfo.getLineTopToBaseline() + LINE_GAP;
     }
     //</editor-fold>
+
+    // todo: append lines + append paragraph styled text version
 }

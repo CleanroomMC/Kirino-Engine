@@ -186,14 +186,17 @@ void main()
     Page = page;
     Hint = uint(hint);
 
-    bool enableObfuscated = true;
+    bool enableObfuscated = (Hint & (1u << 24)) != 0u;
+    bool enableitalic = (Hint & (1u << 26)) != 0u;
 
     vec2 corner = corners[gl_VertexID];
     vec2 pos = rect.xy + corner * rect.zw;
 
-    // italic
-    float italicScope = 0.22;
-    pos.x += (1.0 - corner.y) * rect.w * italicScope;
+    if (enableitalic)
+    {
+        float italicScope = 0.22;
+        pos.x += (1.0 - corner.y) * rect.w * italicScope;
+    }
 
     bool zeroGlyph = ((Hint & (1u << 31)) != 0u) && ((Hint & (1u << 30)) == 0u); // 10...
     bool emptyGlyph = ((Hint & (1u << 31)) == 0u) && ((Hint & (1u << 30)) != 0u); // 01...

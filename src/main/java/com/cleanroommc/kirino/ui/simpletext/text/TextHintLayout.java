@@ -9,7 +9,7 @@ import org.jspecify.annotations.NonNull;
  *  5..9   strikethrough color
  * 10..14  strikethrough outline color
  * 15      strikethrough outline enabled
- * 16      strikethrough shadow enabled
+ * 16      outline
  * 17      strikethrough rounded corners
  * 18..22  underline color
  * 23      underline shadow enabled
@@ -108,7 +108,7 @@ final class TextHintLayout {
     static final Field STRIKETHROUGH_COLOR = new Field("strikethrough_color", 5, 5);
     static final Field STRIKETHROUGH_OUTLINE_COLOR = new Field("strikethrough_outline_color", 10, 5);
     static final Bit STRIKETHROUGH_OUTLINE_ENABLED = new Bit("strikethrough_outline_enabled", 15);
-    static final Bit STRIKETHROUGH_SHADOW_ENABLED = new Bit("strikethrough_shadow_enabled", 16);
+    static final Bit OUTLINE = new Bit("outline", 16);
     static final Bit STRIKETHROUGH_ROUNDED = new Bit("strikethrough_rounded", 17);
     static final Field UNDERLINE_COLOR = new Field("underline_color", 18, 5);
     static final Bit UNDERLINE_SHADOW_ENABLED = new Bit("underline_shadow_enabled", 23);

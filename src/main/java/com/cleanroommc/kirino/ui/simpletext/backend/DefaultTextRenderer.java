@@ -380,8 +380,9 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                     entry = glyphCache.get(glyph);
                 }
 
+                int hint = commandList.hint(i) & ~((1 << 30) | (1 << 31));
+
                 if (glyph == 0 || entry == null) {
-                    int hint = commandList.hint(i) & ~((1 << 30) | (1 << 31));
                     if (glyph == 0) {
                         // zero glyph
                         // hint: 31st bit ~ 32nd bit (10)
@@ -453,7 +454,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
                             .putFloat(commandList.size(i))
                             .putInt(commandList.color(i))
                             .putInt(layer)
-                            .putInt(commandList.hint(i));
+                            .putInt(hint);
 
                     instanceCount++;
                 }

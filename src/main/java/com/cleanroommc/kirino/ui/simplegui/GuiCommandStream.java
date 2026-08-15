@@ -100,18 +100,19 @@ public class GuiCommandStream {
         return new CmdRectBuilder(this, x, y, width, height, color);
     }
 
-    void writeRectEx(float x, float y,
-                     float width, float height,
-                     int color,
-                     int flags,
-                     float radius,
-                     int cornerType,
-                     float borderWidth,
-                     int borderColor,
-                     float shadowBlur,
-                     float shadowX,
-                     float shadowY,
-                     int shadowColor) {
+    void writeRectEx(
+            float x, float y,
+            float width, float height,
+            int color,
+            int flags,
+            float radius,
+            int cornerType,
+            float borderWidth,
+            int borderColor,
+            float shadowBlur,
+            float shadowX,
+            float shadowY,
+            int shadowColor) {
 
         int payload = 20;
 

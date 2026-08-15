@@ -16,10 +16,48 @@ flat in uvec4 ObfParam6;
 flat in uvec4 ObfParam7;
 
 uniform sampler2DArray atlas;
-uniform uint tick;
 uniform uint sdfSpread;
 
 out vec4 FragColor;
+
+const uint TEXT_COLOR_PALETTE_32[32] = uint[32](
+    0x000000u, //  0 black
+    0x0000AAu, //  1 dark blue
+    0x00AA00u, //  2 dark green
+    0x00AAAAu, //  3 dark aqua
+    0xAA0000u, //  4 dark red
+    0xAA00AAu, //  5 dark purple
+    0xFFAA00u, //  6 gold
+    0xAAAAAAu, //  7 gray
+    0x555555u, //  8 dark gray
+    0x5555FFu, //  9 blue
+    0x55FF55u, // 10 green
+    0x55FFFFu, // 11 aqua
+    0xFF5555u, // 12 red
+    0xFF55FFu, // 13 light purple
+    0xFFFF55u, // 14 yellow
+    0xFFFFFFu, // 15 white
+    0x2B2B2Bu, // 16 charcoal
+    0x808080u, // 17 neutral gray
+    0xC0C0C0u, // 18 silver
+    0xE6E6E6u, // 19 soft white
+    0x800000u, // 20 maroon
+    0xFF8000u, // 21 orange
+    0x808000u, // 22 olive
+    0x80FF00u, // 23 lime
+    0x008000u, // 24 forest green
+    0x008080u, // 25 teal
+    0x0080FFu, // 26 sky blue
+    0x000080u, // 27 navy
+    0x8000FFu, // 28 violet
+    0x800080u, // 29 purple
+    0xFF0080u, // 30 rose
+    0xFF80B5u);// 31 pink
+
+uint decodeTextColor(uint hint) {
+    uint index = hint & 0x1Fu;
+    return 0xFF000000u | TEXT_COLOR_PALETTE_32[index];
+}
 
 vec2 atlasToGlyphLocal(vec2 atlasUV)
 {
@@ -435,10 +473,15 @@ float directionalShadow(bool enableObfuscated, vec2 atlasUV, vec2 texel, float f
 
 void main()
 {
-    float boldness = 0.0;
-    bool enableOutline = true;
-    bool enableShadow = true;
-    bool enableObfuscated = true;
+    bool enableBold = (Hint & (1u << 25)) != 0u;
+    bool enableOutline = (Hint & (1u << 16)) != 0u;
+    bool enableShadow = (Hint & (1u << 29)) != 0u;
+    bool enableObfuscated = (Hint & (1u << 24)) != 0u;
+
+    vec4 color = unpackARGB(Color);
+    vec4 outlineColor = enableOutline ? vec4(unpackARGB(decodeTextColor(Hint)).xyz, color.a) : vec4(0.0, 0.0, 0.0, color.a);
+    vec4 shadowColor = vec4(0.0, 0.0, 0.0, color.a * 0.75);
+    float boldness = enableBold ? 0.1 : 0.0;
 
     vec2 texel = 1.0 / vec2(textureSize(atlas, 0).xy);
     float dist = enableObfuscated ? obfuscatedGlyph(UV) : sampleAtlas(UV);
@@ -446,10 +489,6 @@ void main()
 
     float edge = 0.5;
     float outlineThickness = enableOutline ? 0.05 : 0.0;
-
-    vec4 color = unpackARGB(Color);
-    vec4 outlineColor = vec4(0.0, 0.0, 0.0, color.a);
-    vec4 shadowColor = vec4(0.0, 0.0, 0.0, color.a * 0.75);
 
     float fillEdge = edge - boldness;
     float outerEdge = fillEdge - outlineThickness;
