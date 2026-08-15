@@ -45,25 +45,13 @@ public final class MinecraftResourceUtils {
         Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"),
                 "Provided ResourceLocation \"%s\" must either be \"forge\" or \"kirino\" namespace.", rl.toString());
 
-        File repo;
-        try {
-            String path = System.getProperty("user.dir");
-            File current = new File(path);
-            while (current != null && !current.getName().equals("projects")) {
-                current = current.getParentFile();
-            }
-            Preconditions.checkNotNull(current);
-
-            repo = current.getParentFile();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        File repo = findCleanroomRoot();
         Preconditions.checkNotNull(repo);
 
-        File resources1 = new File(repo, "src/main/resources/assets/forge");
-        File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/kirino");
-        File resources3 = new File(repo, "src/test/resources/assets/forge");
-        File resources4 = new File(repo, "projects/kirino/src/test/resources/assets/kirino");
+        File resources1 = new File(repo, "module/forge/src/main/resources/assets/forge");
+        File resources2 = new File(repo, "module/kirino/src/main/resources/assets/kirino");
+        File resources3 = new File(repo, "module/forge/src/test/resources/assets/forge");
+        File resources4 = new File(repo, "module/kirino/src/test/resources/assets/kirino");
         Preconditions.checkState(resources1.exists() &&
                         resources1.isDirectory() &&
                         resources2.exists() &&
@@ -113,6 +101,19 @@ public final class MinecraftResourceUtils {
 
     private static Boolean devEnv = null;
 
+    @Nullable
+    private static File findCleanroomRoot() {
+        File current = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        while (current != null) {
+            if (new File(current, "module/forge/src/main/resources").isDirectory()
+                    && new File(current, "module/kirino/src/main/resources").isDirectory()) {
+                return current;
+            }
+            current = current.getParentFile();
+        }
+        return null;
+    }
+
     /**
      * @return Whether it is the Cleanroom dev env (not Cleanroom mod template but Cleanroom itself)
      */
@@ -122,20 +123,15 @@ public final class MinecraftResourceUtils {
         }
 
         try {
-            String path = System.getProperty("user.dir");
-            File current = new File(path);
-            while (current != null && !current.getName().equals("projects")) {
-                current = current.getParentFile();
-            }
-            if (current == null) {
+            File repo = findCleanroomRoot();
+            if (repo == null) {
                 devEnv = false;
                 return false;
             }
-            File repo = current.getParentFile();
-            File resources1 = new File(repo, "src/main/resources");
-            File resources2 = new File(repo, "projects/kirino/src/main/resources");
-            File resources3 = new File(repo, "src/test/resources");
-            File resources4 = new File(repo, "projects/kirino/src/test/resources");
+            File resources1 = new File(repo, "module/forge/src/main/resources");
+            File resources2 = new File(repo, "module/kirino/src/main/resources");
+            File resources3 = new File(repo, "module/forge/src/test/resources");
+            File resources4 = new File(repo, "module/kirino/src/test/resources");
             devEnv = resources1.exists() &&
                     resources1.isDirectory() &&
                     resources2.exists() &&
