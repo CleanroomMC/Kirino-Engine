@@ -16,6 +16,10 @@ public final class KirinoECSModContainer extends DummyModContainer {
         meta.modId = "kirino_ecs";
         meta.name = "Kirino ECS";
         meta.version = "epoch-1.a4";
+
+        meta.parent = "kirino_engine";
+
+        meta.modProperties.put("backgroundFile", "/assets/cleanroom/background.png");
     }
 
     @Override

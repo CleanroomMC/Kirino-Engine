@@ -2,17 +2,12 @@
   ```java
   try
   {
-      LOGGER.info("Stopping!");
-      try
-      {
-          this.loadWorld(null);
-      }
-      catch (Throwable throwable)
-      {
-      }
+      ...
   
       this.soundHandler.unloadSounds();
+  } finally {
   +   com.cleanroommc.kirino.engine.ShutdownManager.runMainHooks();
+      ...
   }
   ```
 
@@ -80,21 +75,6 @@
   +   }
       return chunk;
   }
-  ```
-
-- `ChunkPos`
-  ```java
-  ...
-  +   public static int getX(long key)
-  +   {
-  +       return (int) (key & 0xFFFFFFFFL);
-  +   }
-  
-  +   public static int getZ(long key)
-  +   {
-  +       return (int) ((key >>> 32) & 0xFFFFFFFFL);
-  +   }
-  ...
   ```
 
 - `EntityRenderer#updateCameraAndRender`
@@ -174,5 +154,3 @@
   +   }
   }
   ```
-
-

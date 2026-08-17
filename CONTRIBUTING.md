@@ -13,19 +13,19 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - _Complete the following steps under your Cleanroom directory_
 - Go to `.gitmodules`
   ```
-  [submodule "projects/kirino"]
-    path = projects/kirino
+  [submodule "kirino"]
+    path = module/kirino
     url = https://github.com/CleanroomMC/Kirino-Engine.git
   ```
 - Set the `url` to your fork
 - ```bash
-  git submodule sync -- projects/kirino
-  git submodule update --init --recursive projects/kirino
+  git submodule sync -- module/kirino
+  git submodule update --init --recursive module/kirino
   ```
 - Import `build.gradle` and then `./gradlew setup`
 - If the submodule HEAD is detached
   ```bash
-  cd projects/kirino
+  cd module/kirino
   git fetch origin
   git switch -C main --track origin/main
   ```
@@ -40,17 +40,17 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - If your submodule setup is somehow broken OR you have already initialized a submodule but want to switch to another fork
 - _Complete the following steps under your Cleanroom directory_
 - ```bash
-  git submodule deinit -f -- projects/kirino
-  rm -rf projects/kirino
-  rm -rf .git/modules/projects/kirino
-  git submodule set-url projects/kirino "$NEW_URL"
-  git submodule sync -- projects/kirino
-  git submodule update --init --recursive projects/kirino
-  git -C projects/kirino fetch origin --prune
-  git -C projects/kirino switch -C main --track origin/main
+  git submodule deinit -f -- module/kirino
+  rm -rf module/kirino
+  rm -rf .git/modules/module/kirino
+  git submodule set-url module/kirino "$NEW_URL"
+  git submodule sync -- module/kirino
+  git submodule update --init --recursive module/kirino
+  git -C module/kirino fetch origin --prune
+  git -C module/kirino switch -C main --track origin/main
   ```
 - ```bash
-  cd projects/kirino
+  cd module/kirino
   ```
 - Check
   ```bash
@@ -77,19 +77,15 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   ```
 
 **Dev Tips**
-- `./gradlew cleanroomClient` to run the project
-- `./gradlew build` to build the project
-- `./gradlew genPatches` to generate patches if you modified Minecraft source code
-  (btw you'll have to push to Cleanroom repo if you intended modifying Minecraft source;
-  it'd be the best that you contact us first before doing so)
-- `Cleanroom/projects/cleanroom/src/main/java/` is where you modify Minecraft source code
-- `Cleanroom/projects/kirino/src/main/java/` is where you modify your Kirino-Engine fork
+- `./gradlew runCleanroomClient` to run the project
+- `Cleanroom/module/minecraft/src/main/java/` is where you modify Minecraft source code
+- `Cleanroom/module/kirino/src/main/java/` is where you modify your Kirino-Engine fork
 
 ## Ways to Contribute
 
 - Fix bugs / report bugs via [Issues](https://github.com/CleanroomMC/Kirino-Engine/issues)
 - Improve / add more Javadocs (typos, explanations, tutorials)
-- Add unit tests (`Cleanroom/projects/kirino/src/test/java/`)
+- Add unit tests (`Cleanroom/module/kirino/src/test/java/`)
 - Implement features. (Check [Project Board](https://github.com/orgs/CleanroomMC/projects/13) / Propose your own)
   Contact me, tttsaurus, (via Discord or GitHub issues) if you want to implement anything
 - Propose specific features you want to have via Discord or GitHub issues
