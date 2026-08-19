@@ -143,7 +143,7 @@ public final class ParagraphLineBreaker {
 
     /**
      * It detects <code>\n</code> and <code>\r\n</code>.
-     * It returns the index of the formatting control code OR <code>-1</code> if no control code detected.
+     * It returns the index of the first formatting control code OR <code>-1</code> if no control code detected.
      */
     public static int findHardBreak(@NonNull String text, int fromIndex) {
         for (int i = fromIndex; i < text.length(); i++) {

@@ -41,7 +41,8 @@ public final class ImmediateClientServices {
         dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
 
         guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
-        SimpleGuiRuntime guiRuntimeInternal = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        SimpleGuiRuntime underlineGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        SimpleGuiRuntime strikethroughGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
 
         ST_Config config = new ST_Config(
                 ST_FontBackendType.FREE_TYPE,
@@ -68,9 +69,11 @@ public final class ImmediateClientServices {
                     return new DefaultTextProducer(context, context.getConfig().pixelSize());
                 },
                 shaderAccess,
-                guiRuntimeInternal,
+                underlineGui,
+                strikethroughGui,
                 config,
                 new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+//                new ResourceLocation("kirino:fonts/departure_mono/departure_mono_regular.otf"));
 
         ShutdownManager.register(freeTypeManager::destroy);
     }

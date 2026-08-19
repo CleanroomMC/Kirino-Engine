@@ -262,7 +262,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
             }
 
             if (outLineInfo != null) {
-                progressiveLength[index] = penX;
+                progressiveLength[index] = penX - initPenX;
             }
 
             prevGlyph = glyph;

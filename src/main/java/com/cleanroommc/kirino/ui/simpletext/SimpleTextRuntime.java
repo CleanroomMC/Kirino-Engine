@@ -1,12 +1,11 @@
 package com.cleanroommc.kirino.ui.simpletext;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
+import com.cleanroommc.kirino.ui.simplegui.CmdRectBuilder;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
-import com.cleanroommc.kirino.ui.simpletext.text.CodepointIterator;
-import com.cleanroommc.kirino.ui.simpletext.text.ParagraphLineBreaker;
-import com.cleanroommc.kirino.ui.simpletext.text.WrapBreak;
+import com.cleanroommc.kirino.ui.simpletext.text.*;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.text.BreakIterator;
 import net.minecraft.util.ResourceLocation;
@@ -25,7 +24,8 @@ public class SimpleTextRuntime {
     private final ST_FontHandle font;
     private final ST_Config config;
     private final ImmediateShaderAccess shaderAccess;
-    private final SimpleGuiRuntime guiRuntime;
+    private final SimpleGuiRuntime underlineGui;
+    private final SimpleGuiRuntime strikethroughGui;
 
     public ResourceLocation getFontRl() {
         return fontRl;
@@ -55,7 +55,8 @@ public class SimpleTextRuntime {
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
             @NonNull ImmediateShaderAccess shaderAccess,
-            @NonNull SimpleGuiRuntime guiRuntime,
+            @NonNull SimpleGuiRuntime underlineGui,
+            @NonNull SimpleGuiRuntime strikethroughGui,
             @NonNull ST_Config config,
             @NonNull ResourceLocation fontRl) {
 
@@ -63,6 +64,8 @@ public class SimpleTextRuntime {
         Preconditions.checkNotNull(consumerFactory);
         Preconditions.checkNotNull(producerFactory);
         Preconditions.checkNotNull(shaderAccess);
+        Preconditions.checkNotNull(underlineGui);
+        Preconditions.checkNotNull(strikethroughGui);
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(fontRl);
 
@@ -75,7 +78,8 @@ public class SimpleTextRuntime {
                 font.type().toString(), config.target().toString());
 
         this.shaderAccess = shaderAccess;
-        this.guiRuntime = guiRuntime;
+        this.underlineGui = underlineGui;
+        this.strikethroughGui = strikethroughGui;
 
         metricsStore = new GlyphMetricsStore(config);
 
@@ -114,13 +118,17 @@ public class SimpleTextRuntime {
     @NonNull
     public SimpleTextRuntime begin() {
         textProducer.beginBatch();
+        underlineGui.begin();
+        strikethroughGui.begin();
         return this;
     }
 
     @NonNull
     public SimpleTextRuntime endDraw() {
         textProducer.endBatch();
+        underlineGui.endDraw();
         textConsumer.consume(textProducer.submit());
+        strikethroughGui.endDraw();
         return this;
     }
 
@@ -148,6 +156,14 @@ public class SimpleTextRuntime {
     private static final float LINE_GAP = 1f;
     private float penX = 0;
     private float penY = 0;
+
+    public float getPenX() {
+        return penX;
+    }
+
+    public float getPenY() {
+        return penY;
+    }
 
     //<editor-fold desc="append lines">
     @NonNull
@@ -198,6 +214,9 @@ public class SimpleTextRuntime {
         return this;
     }
 
+    /**
+     * @param text If the input is empty, it appends an empty line instead of doing nothing
+     */
     @NonNull
     public SimpleTextRuntime appendBelow(@NonNull String text) {
         Preconditions.checkNotNull(text);
@@ -209,6 +228,9 @@ public class SimpleTextRuntime {
         }
     }
 
+    /**
+     * @param text If the input is empty, it appends an empty line instead of doing nothing
+     */
     @NonNull
     public SimpleTextRuntime appendBelow(@NonNull String text, float fontSize, int color) {
         Preconditions.checkNotNull(text);
@@ -258,6 +280,9 @@ public class SimpleTextRuntime {
                 color);
     }
 
+    /**
+     * @param text Even if the input is empty, it does nothing instead of appending an empty line
+     */
     @NonNull
     public SimpleTextRuntime appendParagraphBelow(
             @NonNull String text,
@@ -270,6 +295,9 @@ public class SimpleTextRuntime {
                 maxWidth);
     }
 
+    /**
+     * @param text Even if the input is empty, it does nothing instead of appending an empty line
+     */
     @NonNull
     public SimpleTextRuntime appendParagraphBelow(
             @NonNull String text,
@@ -422,5 +450,504 @@ public class SimpleTextRuntime {
     }
     //</editor-fold>
 
-    // todo: append lines + append paragraph styled text version
+    //<editor-fold desc="underline/strikethrough utils">
+
+    /**
+     * For both underline and strikethrough.
+     */
+    private static float decorationThickness(float fontSize) {
+        return fontSize * 0.1f;
+    }
+
+    /**
+     * For underline shadow.
+     */
+    private static int decorationShadowColor(int color) {
+        return color & 0xFF000000 | (color & 0x00FCFCFC) >>> 2;
+    }
+
+    private static float boundaryX(
+            float x,
+            SimpleTextProducer.LineInfo lineInfo,
+            int boundary) {
+
+        Preconditions.checkPositionIndex(boundary, lineInfo.getCodepointCount());
+
+        if (boundary == 0) {
+            return x;
+        }
+
+        return x + lineInfo.getProgressiveLengthAt(boundary - 1);
+    }
+
+    private void appendUnderline(
+            StyledText text,
+            float x,
+            float y,
+            float fontSize,
+            SimpleTextProducer.LineInfo lineInfo) {
+
+        appendUnderline(
+                text,
+                0,
+                text.getCodepointCount(),
+                x,
+                y,
+                fontSize,
+                lineInfo);
+    }
+
+    private void appendUnderline(
+            StyledText source,
+            int sourceCodepointStart,
+            int codepointCount,
+            float x,
+            float y,
+            float fontSize,
+            SimpleTextProducer.LineInfo lineInfo) {
+
+        Preconditions.checkPositionIndexes(sourceCodepointStart, sourceCodepointStart + codepointCount, source.getCodepointCount());
+        Preconditions.checkArgument(codepointCount == lineInfo.getCodepointCount(),
+                "Styled text range codepoint count (%s) must match line info codepoint count (%s).",
+                codepointCount,
+                lineInfo.getCodepointCount());
+
+        float thickness = decorationThickness(fontSize);
+        float baselineY = y + lineInfo.getLineTopToBaseline();
+
+        int start = 0;
+
+        while (start < codepointCount) {
+            TextStyle style = source.get(sourceCodepointStart + start);
+
+            if (!style.underlineEnabled()) {
+                start++;
+                continue;
+            }
+
+            int color = style.underlineColor();
+            boolean shadow = style.underlineShadowEnabled();
+
+            int end = start + 1;
+            while (end < codepointCount) {
+                TextStyle next = source.get(sourceCodepointStart + end);
+                if (!next.underlineEnabled() || next.underlineColor() != color || next.underlineShadowEnabled() != shadow) {
+                    break;
+                }
+
+                end++;
+            }
+
+            float left = boundaryX(x, lineInfo, start);
+            float right = boundaryX(x, lineInfo, end);
+
+            float width = right - left;
+
+            if (width > 0f) {
+                underlineGui.append(stream -> {
+                    CmdRectBuilder builder = stream.rectEx(left, baselineY, width, thickness, color);
+
+                    if (shadow) {
+                        builder.shadow(0f, thickness / 2f, thickness / 2f, decorationShadowColor(color));
+                    }
+
+                    builder.emit();
+                });
+            }
+
+            start = end;
+        }
+    }
+
+    private void appendStrikethrough(
+            StyledText text,
+            float x,
+            float y,
+            float fontSize,
+            SimpleTextProducer.LineInfo lineInfo) {
+
+        appendStrikethrough(
+                text,
+                0,
+                text.getCodepointCount(),
+                x,
+                y,
+                fontSize,
+                lineInfo);
+    }
+
+    private void appendStrikethrough(
+            StyledText source,
+            int sourceCodepointStart,
+            int codepointCount,
+            float x,
+            float y,
+            float fontSize,
+            SimpleTextProducer.LineInfo lineInfo) {
+
+        Preconditions.checkPositionIndexes(sourceCodepointStart, sourceCodepointStart + codepointCount, source.getCodepointCount());
+        Preconditions.checkArgument(codepointCount == lineInfo.getCodepointCount(),
+                "Styled text range codepoint count (%s) must match line info codepoint count (%s).",
+                codepointCount,
+                lineInfo.getCodepointCount());
+
+        float thickness = decorationThickness(fontSize);
+        float baselineY = y + lineInfo.getLineTopToBaseline();
+        float strikeY = baselineY - (lineInfo.getMaxY() - lineInfo.getMinY()) * 0.35f - thickness * 0.5f;
+
+        int start = 0;
+
+        while (start < codepointCount) {
+            TextStyle style = source.get(sourceCodepointStart + start);
+
+            if (!style.strikethroughEnabled()) {
+                start++;
+                continue;
+            }
+
+            int color = style.strikethroughColor();
+            boolean rounded = style.strikethroughRounded();
+            boolean outline = style.strikethroughOutlineEnabled();
+
+            int outlineColor = outline ? style.strikethroughOutlineColor() : 0;
+
+            int end = start + 1;
+            while (end < codepointCount) {
+                TextStyle next = source.get(sourceCodepointStart + end);
+
+                boolean same = next.strikethroughEnabled();
+                if (same) {
+                    if (next.strikethroughColor() != color || next.strikethroughRounded() != rounded || next.strikethroughOutlineEnabled() != outline) {
+                        same = false;
+                    }
+                }
+                if (same) {
+                    same = !outline || next.strikethroughOutlineColor() == outlineColor;
+                }
+                if (!same) {
+                    break;
+                }
+
+                end++;
+            }
+
+            float left = boundaryX(x, lineInfo, start);
+            float right = boundaryX(x, lineInfo, end);
+
+            float width = right - left;
+
+            if (width > 0f) {
+                strikethroughGui.append(stream -> {
+                    CmdRectBuilder builder = stream.rectEx(left, strikeY, width, thickness, color);
+
+                    if (rounded) {
+                        builder.radius(Math.min(width, thickness) * 0.5f, 0);
+                    }
+                    if (outline) {
+                        builder.border(thickness * 0.3f, outlineColor);
+                    }
+
+                    builder.emit();
+                });
+            }
+
+            start = end;
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="append lines (styled text)">
+    @NonNull
+    public SimpleTextRuntime appendStyled(@NonNull StyledText text, float x, float y) {
+        return appendStyled(text, x, y, textProducer.standardFontSize());
+    }
+
+    @NonNull
+    public SimpleTextRuntime appendStyled(@NonNull StyledText text, float x, float y, float fontSize) {
+        Preconditions.checkNotNull(text);
+
+        if (text.getPureText().isEmpty()) {
+            return this;
+        }
+
+        int cpCount = text.getCodepointCount();
+        float[] sizeArr = new float[cpCount];
+        int[] colorArr = new int[cpCount];
+        int[] hintArr = new int[cpCount];
+        for (int i = 0; i < cpCount; i++) {
+            TextStyle style = text.get(i);
+            sizeArr[i] = style.size();
+            colorArr[i] = style.color();
+            hintArr[i] = style.hint();
+        }
+
+        SimpleTextProducer.LineInfo outLineInfo = new SimpleTextProducer.LineInfo();
+        textProducer.append(text.getPureText(), x, y, fontSize, sizeArr, colorArr, hintArr, outLineInfo);
+        penX = x;
+        penY = y + outLineInfo.getLineTopToBaseline() + LINE_GAP;
+
+        appendUnderline(text, x, y, fontSize, outLineInfo);
+        appendStrikethrough(text, x, y, fontSize, outLineInfo);
+
+        return this;
+    }
+
+    /**
+     * @param text If the input is empty, it appends an empty line instead of doing nothing
+     */
+    @NonNull
+    public SimpleTextRuntime appendBelowStyled(@NonNull StyledText text) {
+        Preconditions.checkNotNull(text);
+
+        if (text.getPureText().isEmpty()) {
+            return appendEmptyLineBelow();
+        } else {
+            return appendStyled(text, penX, penY);
+        }
+    }
+
+    /**
+     * @param text If the input is empty, it appends an empty line instead of doing nothing
+     */
+    @NonNull
+    public SimpleTextRuntime appendBelowStyled(@NonNull StyledText text, float fontSize) {
+        Preconditions.checkNotNull(text);
+
+        if (text.getPureText().isEmpty()) {
+            return appendEmptyLineBelow(fontSize);
+        } else {
+            return appendStyled(text, penX, penY, fontSize);
+        }
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="append paragraphs (styled text)">
+    @NonNull
+    public SimpleTextRuntime appendParagraphStyled(
+            @NonNull StyledText text,
+            float x,
+            float y,
+            float maxWidth) {
+
+        return appendParagraphStyled0(
+                text,
+                x,
+                y,
+                maxWidth,
+                textProducer.standardFontSize());
+    }
+
+    @NonNull
+    public SimpleTextRuntime appendParagraphStyled(
+            @NonNull StyledText text,
+            float x,
+            float y,
+            float maxWidth,
+            float fontSize) {
+
+        return appendParagraphStyled0(
+                text,
+                x,
+                y,
+                maxWidth,
+                fontSize);
+    }
+
+    /**
+     * @param text Even if the input is empty, it does nothing instead of appending an empty line
+     */
+    @NonNull
+    public SimpleTextRuntime appendParagraphBelowStyled(
+            @NonNull StyledText text,
+            float maxWidth) {
+
+        return appendParagraphStyled(
+                text,
+                penX,
+                penY,
+                maxWidth);
+    }
+
+    /**
+     * @param text Even if the input is empty, it does nothing instead of appending an empty line
+     */
+    @NonNull
+    public SimpleTextRuntime appendParagraphBelowStyled(
+            @NonNull StyledText text,
+            float maxWidth,
+            float fontSize) {
+
+        return appendParagraphStyled(
+                text,
+                penX,
+                penY,
+                maxWidth,
+                fontSize);
+    }
+
+    @NonNull
+    private SimpleTextRuntime appendParagraphStyled0(
+            @NonNull StyledText text,
+            float x,
+            float y,
+            float maxWidth,
+            float fontSize) {
+
+        Preconditions.checkNotNull(text);
+        Preconditions.checkArgument(Float.isFinite(maxWidth) && maxWidth > 0f,
+                "Argument \"maxWidth\"=%s must be finite and > 0.",
+                maxWidth);
+
+        String pureText = text.getPureText();
+
+        if (pureText.isEmpty()) {
+            return this;
+        }
+
+        float currentY = y;
+
+        int start = 0; // UTF-16 index for pureText
+        int codepointStart = 0; // codepoint index for StyledText
+
+        while (start < pureText.length()) {
+            int hardBreak = ParagraphLineBreaker.findHardBreak(pureText, start);
+            int end = hardBreak < 0 ? pureText.length() : hardBreak;
+
+            if (start == end) {
+                penX = x;
+                penY = currentY + textProducer.calcLineHeight("A", fontSize) + LINE_GAP;
+            } else {
+                appendWrappedSegmentStyled(
+                        text,
+                        pureText.substring(start, end),
+                        codepointStart,
+                        x,
+                        currentY,
+                        maxWidth,
+                        fontSize);
+            }
+
+            currentY = penY;
+
+            if (hardBreak < 0) {
+                break;
+            }
+
+            int hardBreakLength = ParagraphLineBreaker.hardBreakLength(pureText, hardBreak);
+            int nextStart = hardBreak + hardBreakLength;
+
+            codepointStart += pureText.codePointCount(start, nextStart);
+            start = nextStart;
+        }
+
+        return this;
+    }
+
+    private void appendWrappedSegmentStyled(
+            @NonNull StyledText source,
+            @NonNull String text,
+            int sourceCodepointStart,
+            float x,
+            float y,
+            float maxWidth,
+            float fontSize) {
+
+        int lineStart = 0;
+        int codepointStart = sourceCodepointStart;
+
+        float lineY = y;
+
+        while (lineStart < text.length()) {
+            String remaining = text.substring(lineStart);
+            SimpleTextProducer.LineInfo lineInfo = simulate(remaining, 0f, 0f, fontSize);
+
+            if (lineInfo.getCodepointCount() == 0) {
+                return;
+            }
+
+            WrapBreak wrapBreak = paragraphLineBreaker.findWrapBreak(
+                    remaining,
+                    lineInfo,
+                    maxWidth);
+
+            Preconditions.checkState(wrapBreak.consumeEnd() > 0,
+                    "Wrapping must always make progress.");
+
+            if (wrapBreak.renderEnd() > 0) {
+                String renderedText = remaining.substring(0, wrapBreak.renderEnd());
+                appendParagraphLineStyled(
+                        source,
+                        codepointStart,
+                        renderedText,
+                        x,
+                        lineY,
+                        fontSize);
+
+                lineY = penY;
+            }
+
+            int consumedCodepoints = remaining.codePointCount(0, wrapBreak.consumeEnd());
+
+            lineStart += wrapBreak.consumeEnd();
+            codepointStart += consumedCodepoints;
+        }
+    }
+
+    private void appendParagraphLineStyled(
+            @NonNull StyledText source,
+            int sourceCodepointStart,
+            @NonNull String text,
+            float x,
+            float y,
+            float fontSize) {
+
+        int cpCount = CodepointIterator.count(text);
+
+        Preconditions.checkPositionIndexes(sourceCodepointStart, sourceCodepointStart + cpCount, source.getCodepointCount());
+
+        float[] sizeArr = new float[cpCount];
+        int[] colorArr = new int[cpCount];
+        int[] hintArr = new int[cpCount];
+
+        for (int i = 0; i < cpCount; i++) {
+            TextStyle style = source.get(sourceCodepointStart + i);
+            sizeArr[i] = style.size();
+            colorArr[i] = style.color();
+            hintArr[i] = style.hint();
+        }
+
+        SimpleTextProducer.LineInfo outLineInfo = new SimpleTextProducer.LineInfo();
+
+        textProducer.append(
+                text,
+                x,
+                y,
+                fontSize,
+                sizeArr,
+                colorArr,
+                hintArr,
+                outLineInfo);
+
+        penX = x;
+        penY = y + outLineInfo.getLineTopToBaseline() + LINE_GAP;
+
+        appendUnderline(
+                source,
+                sourceCodepointStart,
+                cpCount,
+                x,
+                y,
+                fontSize,
+                outLineInfo);
+
+        appendStrikethrough(
+                source,
+                sourceCodepointStart,
+                cpCount,
+                x,
+                y,
+                fontSize,
+                outLineInfo);
+    }
+    //</editor-fold>
 }
