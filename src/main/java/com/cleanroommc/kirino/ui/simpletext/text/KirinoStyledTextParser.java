@@ -64,6 +64,8 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     } else if (start + 1 < rawText.length()
                             && rawText.charAt(start) == CONTROL_END && rawText.charAt(start + 1) == CONTROL_PREFIX) {
                         styleStack.pop();
+                        if (styleStack.isEmpty())
+                            styleStack.push(builder.defaultStyle());
                         curr = styleStack.top();
                         builder.style(curr);
                         start++;
