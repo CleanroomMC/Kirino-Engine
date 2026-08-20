@@ -41,15 +41,19 @@ final class KirinoStyledTextParser implements StyledTextParser{
         // 10 - Reading color argb
         // 11 - Reading color rgba
         // 12 - Reading color name
+        // 13 - Reading color hsl
         int state = 0;
 
         int end = 0;
         String tmp;
         int hintIndex;
         short[] color = new short[]{255,255,255,255};
+        float[] hsl = new float[]{0,0,0};
         final int[] argbPerm = new int[]{0,1,2,3};
         final int[] rgbPerm = new int[]{3,0,1,2};
         int colorIdx = 0;
+
+        float q, p; // For HSL
 
         for (int start = 0; start < rawText.length(); start++) {
             switch (state) {
@@ -176,6 +180,10 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 9;
                         start += 4;
                         continue;
+                    } else if (start + 4 <= rawText.length() && rawText.substring(start, start + 4).equals("hsl(")) {
+                        state = 13;
+                        start += 4;
+                        continue;
                     }
                     state = 12;
                     continue;
@@ -199,6 +207,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
                         styleStack.push(curr);
+                        state = 1;
                     }
                     continue;
                 case 9:
@@ -209,7 +218,6 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     if (colorIdx == 3) {
                         colorIdx = 0;
                         curr = curr.withColor(0xFF << 24 | color[rgbPerm[1]] << 16 | color[rgbPerm[2]] << 8 | color[rgbPerm[3]]);
-                        start++;
                         state = 1;
                     }
                     continue;
@@ -221,7 +229,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     if (colorIdx == 4) {
                         colorIdx = 0;
                         curr = curr.withColor(color[argbPerm[0]] << 24 | color[argbPerm[1]] << 16 | color[argbPerm[2]] << 8 | color[argbPerm[3]]);
-                        start++;
+                        state = 1;
                     }
                     continue;
                 case 11:
@@ -232,7 +240,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     if (colorIdx == 4) {
                         colorIdx = 0;
                         curr = curr.withColor(color[rgbPerm[0]] << 24 | color[rgbPerm[1]] << 16 | color[rgbPerm[2]] << 8 | color[rgbPerm[3]]);
-                        start++;
+                        state = 1;
                     }
                     continue;
                 case 12:
@@ -243,6 +251,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     colorIdx = COLOR_HEX_MAP.getOrDefault(tmp, -1);
                     if (colorIdx == -1) {
                         colorIdx = 0;
+                        state = 1;
                         continue;
                     }
                     curr = curr.withColor(colorIdx);
@@ -250,8 +259,29 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
                         styleStack.push(curr);
+                        state = 1;
                     }
                     start++;
+                    continue;
+                case 13:
+                    end = readFloatColor(rawText, start);
+                    hsl[colorIdx] = Float.parseFloat(rawText.substring(start, end));
+                    start = end+1;
+                    colorIdx++;
+                    if (colorIdx == 3) {
+                        colorIdx = 0;
+                        if (hsl[1] == 0) {
+                            colorIdx = Math.round(hsl[2] * 255) & 0xFF;
+                            curr = curr.withColor(0xFF << 24 | colorIdx << 16 | colorIdx << 8 | colorIdx);
+                            colorIdx = 0;
+                            state = 1;
+                            continue;
+                        }
+                        q = hsl[2] < .5 ? hsl[2] * (1 + hsl[1]) : hsl[2] + hsl[1] - hsl[1] * hsl[2];
+                        p = 2 * hsl[2] - q;
+                        curr = curr.withColor(0xFF << 24 | Math.round(hueToRgb(p, q, hsl[0] + 0.333333333f) * 255) << 16 | Math.round(hueToRgb(p, q, hsl[0]) * 255) << 8 | Math.round(hueToRgb(p, q, hsl[0] - 0.333333333f) * 255));
+                        state = 1;
+                    }
             }
         }
     }
@@ -352,12 +382,40 @@ final class KirinoStyledTextParser implements StyledTextParser{
             if (gibberish)
                 continue;
 
+            gibberish = !Character.isDigit(rawText.charAt(end));
+
+            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')')
+                return end - 1;
+        }
+        return rawText.length() - 1;
+    }
+
+    private int readFloatColor(@NonNull String rawText, int start) {
+        boolean gibberish = false;
+        for (int end = start; end < rawText.length(); end++) {
+            if (gibberish)
+                continue;
+
             gibberish = !(Character.isDigit(rawText.charAt(end)) | rawText.charAt(end) == '.');
 
             if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')')
                 return end - 1;
         }
         return rawText.length() - 1;
+    }
+
+    private float hueToRgb(float p, float q, float t) {
+        if (t < 0)
+            t += 1;
+        if (t > 1)
+            t -= 1;
+        if (t < .166666666f)
+            return p + (q - p) * 6 * t;
+        if (t < .5f)
+            return q;
+        if (t < .666666666f)
+            return p + (q - p) * (.666666666f - t) * 6;
+        return p;
     }
 
     private static final ImmutableMap<String, Integer> HINT_NAME_MAP = ImmutableMap.<String, Integer>builder()
