@@ -27,6 +27,7 @@ A semicolon separates each style hint.
 | `strikethrough outline color` | `ssoc` | Strikethrough outline color | Named color. |
 | `underline color`          | `uc` | Underline color | Named color. |
 | `size`                     | `s` | Font size | Floating point value. |
+
 The word `color` can be replaced with `colour` in any style hint.
 
 ### Flags
