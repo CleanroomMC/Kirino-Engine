@@ -286,6 +286,8 @@ final class KirinoStyledTextParser implements StyledTextParser{
 
     private @NonNull TextStyle newStyleFromFlags(final @NonNull TextStyle prev, final int hintIndex) {
         int hint = prev.hint();
+        if (hintIndex-8 == 10)
+            return TextStyle.DEFAULT;
         hint = switch (hintIndex - 8) {
             case 0 -> {
                 hint = TextHintLayout.STRIKETHROUGH_OUTLINE_ENABLED.set(hint, true);
@@ -392,6 +394,8 @@ final class KirinoStyledTextParser implements StyledTextParser{
             .put("u", 16)
             .put("shadow", 17)
             .put("sh", 17)
+            .put("default", 18)
+            .put("def", 18)
             .build();
 
     private static final ImmutableMap<String, Integer> COLOR_MAP = ImmutableMap.<String, Integer>builder()
