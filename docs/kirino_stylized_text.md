@@ -19,32 +19,32 @@ A semicolon separates each style hint.
 
 ### Fields
 
-| Field name                 | Field abbreviation | What is it? | Value format                                                                                                                                    |
-|----------------------------|--------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `color` or `colour`       |`c`                | Text color  | Hexadecimal color code in the `#AARRGGBB` format, 8-bit color specified as `rgb(r,g,b)`, `argb(a,r,g,b)`, or `rgba(r,g,b,a)`, or a named color. |
-| `outline color`            | `oc` | Outline color | Named color. |
-| `strikethrough color`      | `ssc` | Strikethrough color | Named color. |
-| `strikethrough outline color` | `ssoc` | Strikethrough outline color | Named color. |
-| `underline color`          | `uc` | Underline color | Named color. |
-| `size`                     | `s` | Font size | Floating point value. |
+| Field name                    | Field abbreviation   | What is it?                 | Value format                                                                                                                                    |
+|-------------------------------|----------------------|-----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| `color` or `colour`           | `c`                  | Text color                  | Hexadecimal color code in the `#AARRGGBB` format, 8-bit color specified as `rgb(r,g,b)`, `argb(a,r,g,b)`, or `rgba(r,g,b,a)`, or a named color. |
+| `outline color`               | `oc`                 | Outline color               | Named color.                                                                                                                                    |
+| `strikethrough color`         | `ssc`                | Strikethrough color         | Named color.                                                                                                                                    |
+| `strikethrough outline color` | `ssoc`               | Strikethrough outline color | Named color.                                                                                                                                    |
+| `underline color`             | `uc`                 | Underline color             | Named color.                                                                                                                                    |
+| `size`                        | `s`                  | Font size                   | Floating point value.                                                                                                                           |
 
 The word `color` can be replaced with `colour` in any style hint.
 
 ### Flags
 
-| Flag name                 | Flag abbreviation | What is it? |
-|----------------------------|-------------------|-------------|
-| `outline` | `o` | Text outline |
-| `bold`                    | `b`               | Bold text.|
-| `italic`                  | `i`               | Italic text. |
-| `underline`              | `u`               | Underlined text. |
-| `underline shadow` | `ush` | Underline shadow. |
-| `obfuscated`              | `x`               | Obfuscated text. |
-| `strikethrough`           | `ss`              | Strikethrough text. |
-| `strikethrough outline` | `sso` | Strikethrough outline |
-| `strikethrough rounded` | `ssr` | Rounded corners of strikethrough line. |
-| `shadow` | `sh` | Text with shadow |
-| `default` | `def` | Reset text style to default (1.0 size, white, no flags) |
+| Flag name               | Flag abbreviation | What is it?                                             |
+|-------------------------|-------------------|---------------------------------------------------------|
+| `outline`               | `o`               | Text outline                                            |
+| `bold`                  | `b`               | Bold text.                                              |
+| `italic`                | `i`               | Italic text.                                            |
+| `underline`             | `u`               | Underlined text.                                        |
+| `underline shadow`      | `ush`             | Underline shadow.                                       |
+| `obfuscated`            | `x`               | Obfuscated text.                                        |
+| `strikethrough`         | `ss`              | Strikethrough text.                                     |
+| `strikethrough outline` | `sso`             | Strikethrough outline                                   |
+| `strikethrough rounded` | `ssr`             | Rounded corners of strikethrough line.                  |
+| `shadow`                | `sh`              | Text with shadow                                        |
+| `default`               | `def`             | Reset text style to default (1.0 size, white, no flags) |
 
 ## How does Kirino deal with improperly written text?
 
