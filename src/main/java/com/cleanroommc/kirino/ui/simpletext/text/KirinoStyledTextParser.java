@@ -159,6 +159,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                 case 6:
                     if (rawText.charAt(start) == '#') {
                         state = 8;
+                        continue;
                     } else if (rawText.charAt(start) == 'a') {
                         if (start + 5 > rawText.length())
                             continue;
