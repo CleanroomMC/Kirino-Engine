@@ -14,9 +14,9 @@ public class GuiCommandStream {
     private int capacity;
     private ByteBuffer buffer;
 
-    GuiCommandStream(int capacity) {
-        this.capacity = capacity;
-        buffer = MemoryUtil.memAlloc(capacity);
+    GuiCommandStream(int initCapacity) {
+        capacity = initCapacity;
+        buffer = MemoryUtil.memAlloc(initCapacity);
 
         ShutdownManager.registerAsync(() -> {
             MemoryUtil.memFree(buffer);
@@ -100,18 +100,19 @@ public class GuiCommandStream {
         return new CmdRectBuilder(this, x, y, width, height, color);
     }
 
-    void writeRectEx(float x, float y,
-                     float width, float height,
-                     int color,
-                     int flags,
-                     float radius,
-                     int cornerType,
-                     float borderWidth,
-                     int borderColor,
-                     float shadowBlur,
-                     float shadowX,
-                     float shadowY,
-                     int shadowColor) {
+    void writeRectEx(
+            float x, float y,
+            float width, float height,
+            int color,
+            int flags,
+            float radius,
+            int cornerType,
+            float borderWidth,
+            int borderColor,
+            float shadowBlur,
+            float shadowX,
+            float shadowY,
+            int shadowColor) {
 
         int payload = 20;
 

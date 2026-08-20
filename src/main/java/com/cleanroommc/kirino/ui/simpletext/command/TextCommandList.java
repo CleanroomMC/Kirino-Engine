@@ -3,6 +3,8 @@ package com.cleanroommc.kirino.ui.simpletext.command;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontHandle;
 import org.jspecify.annotations.NonNull;
 
+import java.awt.*;
+
 /**
  * <p>Note: {@link TextCommandList} must be owned by a {@link ST_FontHandle} owner,
  * so <code>glyphIndex</code> therefore makes sense with a given font face.</p>
@@ -21,20 +23,6 @@ public final class TextCommandList {
 
     public int size() {
         return arena.size();
-    }
-
-    /**
-     * Push a missing glyph draw command (<code>glyphIndex</code> == 0 to be exact).
-     */
-    public void push(float x, float y, float width, float height) {
-        int i = arena.alloc();
-
-        arena.glyphIndex.set(i, 0);
-
-        arena.x.set(i, x);
-        arena.y.set(i, y);
-        arena.width.set(i, width);
-        arena.height.set(i, height);
     }
 
     /**

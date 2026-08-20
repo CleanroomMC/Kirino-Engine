@@ -7,11 +7,10 @@ import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.lwjgl.glfw.GLFWErrorCallback;
-import org.lwjgl.glfw.GLFW;
+import com.cleanroommc.client.sdl.SDL;
+import com.cleanroommc.client.sdl.Window;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryUtil;
 import org.opentest4j.TestAbortedException;
 
 import java.util.concurrent.*;
@@ -22,7 +21,7 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
     private static final Logger LOGGER = LogManager.getLogger("JUnit GL Test");
     private static final ReentrantLock GLOBAL_GL_LOCK = new ReentrantLock(true);
 
-    private static long window;
+    private static Window window;
     private static ExecutorService glThread = null;
 
     public static Logger logger() {
@@ -65,29 +64,13 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
         });
 
         submit(() -> {
-            GLFWErrorCallback.createPrint(System.err).set();
-
-            if (!GLFW.glfwInit()) {
-                throw new IllegalStateException("\"GLFW.glfwInit\" failed.");
-            }
-
-            GLFW.glfwDefaultWindowHints();
-            GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE);
-
-            window = GLFW.glfwCreateWindow(
-                    1, 1,
-                    "gl-tests",
-                    MemoryUtil.NULL,
-                    MemoryUtil.NULL);
-
-            if (window == MemoryUtil.NULL) {
-                throw new IllegalStateException("\"GLFW.glfwCreateWindow\" failed.");
-            }
-
-            GLFW.glfwMakeContextCurrent(window);
-            GL.createCapabilities();
-
-            GLFW.glfwSwapInterval(0);
+            window = Window.builder()
+                    .title("gl-tests")
+                    .size(1, 1)
+                    .hidden()
+                    .vsync(false)
+                    .openGL()
+                    .build();
 
             LOGGER.info("GL context initialized.");
 
@@ -122,13 +105,13 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
         }
 
         submit(() -> {
-            if (window != MemoryUtil.NULL) {
-                GLFW.glfwMakeContextCurrent(MemoryUtil.NULL);
+            if (window != null) {
+                window.releaseContext();
                 GL.setCapabilities(null);
-                GLFW.glfwDestroyWindow(window);
-                window = MemoryUtil.NULL;
+                window.close();
+                window = null;
             }
-            GLFW.glfwTerminate();
+            SDL.shutdown();
             LOGGER.info("GL context destroyed.");
         }).join();
 

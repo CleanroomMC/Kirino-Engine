@@ -23,6 +23,8 @@ public class FieldRegistry {
     private final BiMap<String, Class<?>> fieldTypeNameClassMapping = HashBiMap.create();
     private final Map<String, FieldDef> fieldDefMap = new HashMap<>();
 
+    private boolean lockRegistry = false;
+
     /**
      * This method is the entry point to register field types.
      *
@@ -30,15 +32,39 @@ public class FieldRegistry {
      * @param clazz The corresponding class of the field
      * @param fieldDef The actual field type layout
      */
-    public void registerFieldType(String name, Class<?> clazz, FieldDef fieldDef) {
+    public void registerFieldType(
+            @NonNull String name,
+            @NonNull Class<?> clazz,
+            @NonNull FieldDef fieldDef) {
+
+        Preconditions.checkState(!lockRegistry, "The registry is already locked!");
+        Preconditions.checkNotNull(name);
+        Preconditions.checkState(!fieldTypeNameClassMapping.containsKey(name),
+                "Field \"%s\" is already registered.", name);
+        Preconditions.checkNotNull(clazz);
+        Preconditions.checkNotNull(fieldDef);
+
         fieldTypeNameClassMapping.put(name, clazz);
         fieldDefMap.put(name, fieldDef);
     }
 
     /**
+     * Register calls are no longer allowed after the lock call.
+     */
+    public void lock() {
+        Preconditions.checkState(!lockRegistry, "The registry is already locked!");
+
+        lockRegistry = true;
+    }
+
+    //<editor-fold desc="getters & queries">
+    /**
      * Similar to {@link #fieldTypeExists(Class)} but accepts a class string instead to avoid class loading.
      */
-    public boolean fieldTypeExists_ClassName(String className) {
+    public boolean fieldTypeExists_ClassName(@NonNull String className) {
+        Preconditions.checkNotNull(className);
+
+        // BiMap itself has an inverse cache
         return fieldTypeNameClassMapping
                 .inverse()
                 .keySet()
@@ -46,11 +72,16 @@ public class FieldRegistry {
                 .anyMatch(c -> c.getName().equals(className));
     }
 
-    public boolean fieldTypeExists(Class<?> clazz) {
+    public boolean fieldTypeExists(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        // BiMap itself has an inverse cache
         return fieldTypeNameClassMapping.inverse().containsKey(clazz);
     }
 
-    public boolean fieldTypeExists(String name) {
+    public boolean fieldTypeExists(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return fieldTypeNameClassMapping.containsKey(name);
     }
 
@@ -58,7 +89,10 @@ public class FieldRegistry {
      * Similar to {@link #getFieldTypeName(Class)} but accepts a class string instead to avoid class loading.
      */
     @Nullable
-    public String getFieldTypeName_ClassName(String className) {
+    public String getFieldTypeName_ClassName(@NonNull String className) {
+        Preconditions.checkNotNull(className);
+
+        // BiMap itself has an inverse cache
         return fieldTypeNameClassMapping
                 .inverse()
                 .entrySet()
@@ -70,29 +104,50 @@ public class FieldRegistry {
     }
 
     @Nullable
-    public String getFieldTypeName(Class<?> clazz) {
+    public String getFieldTypeName(@NonNull Class<?> clazz) {
+        Preconditions.checkNotNull(clazz);
+
+        // BiMap itself has an inverse cache
         return fieldTypeNameClassMapping.inverse().get(clazz);
     }
 
     @Nullable
-    public Class<?> getFieldClass(String name) {
+    public Class<?> getFieldClass(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return fieldTypeNameClassMapping.get(name);
     }
 
     @Nullable
-    public FieldDef getFieldDef(String name) {
+    public FieldDef getFieldDef(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         return fieldDefMap.get(name);
     }
+    //</editor-fold>
 
-    public FlattenedField flatten(FieldDef fieldDef) {
+    @NonNull
+    public FlattenedField flatten(@NonNull FieldDef fieldDef) {
+        Preconditions.checkNotNull(fieldDef);
+
         return new FlattenedField(fieldDef, structRegistry);
     }
 
     // -----Field Construction-----
 
+    /**
+     * @param name Field name is not necessarily valid
+     * @param args Arguments must match the flattened field one-by-one
+     */
     @Nullable
     @SuppressWarnings("DataFlowIssue")
-    public Object newField(String name, Object... args) {
+    public Object newField(@NonNull String name, @NonNull Object @NonNull ... args) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(args);
+        for (Object arg : args) {
+            Preconditions.checkNotNull(arg);
+        }
+
         if (!fieldTypeExists(name)) {
             return null;
         }
@@ -110,7 +165,7 @@ public class FieldRegistry {
     // -----Field Deconstruction-----
 
     @SuppressWarnings("DataFlowIssue")
-    public @NonNull Object[] flattenField(@NonNull Object fieldInstance) {
+    public @NonNull Object @NonNull[] flattenField(@NonNull Object fieldInstance) {
         Preconditions.checkNotNull(fieldInstance);
 
         Class<?> fieldClass = fieldInstance.getClass();

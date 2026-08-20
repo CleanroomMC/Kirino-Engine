@@ -10,12 +10,11 @@ import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontBackendType;
 import com.cleanroommc.kirino.ui.simpletext.SimpleTextRuntime;
-import com.cleanroommc.kirino.ui.simpletext.atlas.Tex2DGlyphAtlas;
-import com.cleanroommc.kirino.ui.simpletext.backend.DebugTextRenderer;
+import com.cleanroommc.kirino.ui.simpletext.atlas.Tex2DArrayGlyphAtlas;
+import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextRenderer;
 import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
-import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
@@ -37,36 +36,44 @@ public final class ImmediateClientServices {
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
 
+        AttributeLayout dummyLayout = new AttributeLayout();
+        dummyLayout.push(new Stride(0));
+        dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
+
+        guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        SimpleGuiRuntime underlineGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        SimpleGuiRuntime strikethroughGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
+
         ST_Config config = new ST_Config(
                 ST_FontBackendType.FREE_TYPE,
                 48,
                 16,
                 12,
                 FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+
         textRuntime = new SimpleTextRuntime(
                 (rl, cfg) -> {
                     FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
                     return new FreeTypeFontHandle(face);
                 },
                 (context) -> {
-                    return new DebugTextRenderer(
+                    final DefaultTextRenderer renderer = new DefaultTextRenderer(
                             context,
-                            new SDFGeneratorBruteForceImpl(context.getConfig().sdfPadding(), context.getConfig().sdfSpread()),
-                            new Tex2DGlyphAtlas(1024, 1024),
-                            context.getShaderAccess());
+                            new Tex2DArrayGlyphAtlas(1024, 1024),
+                            context.getShaderAccess(),
+                            1024);
+                    ShutdownManager.registerAsync(renderer::close);
+                    return renderer;
                 },
                 (context) -> {
                     return new DefaultTextProducer(context, context.getConfig().pixelSize());
                 },
                 shaderAccess,
+                underlineGui,
+                strikethroughGui,
                 config,
-                new ResourceLocation("forge:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"));
-
-        AttributeLayout dummyLayout = new AttributeLayout();
-        dummyLayout.push(new Stride(0));
-        dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
-
-        guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
+                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+//                new ResourceLocation("kirino:fonts/departure_mono/departure_mono_regular.otf"));
 
         ShutdownManager.register(freeTypeManager::destroy);
     }

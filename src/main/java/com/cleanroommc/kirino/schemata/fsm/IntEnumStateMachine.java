@@ -53,19 +53,24 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         Preconditions.checkNotNull(input, "Parameter \"input\" must not be null.");
 
         int idx = index(input, state);
-        if (transitionMap[idx] != -1) {
+        int next = transitionMap[idx];
+        if (next != -1) {
+            int nextState = next + lowerStateBound;
             backlog.push(new FSMBacklogPair<>(state, input));
             if (exitCallbacks[state - lowerStateBound] != null) {
-                exitCallbacks[state - lowerStateBound].transition(state, input, transitionMap[idx]);
+                exitCallbacks[state - lowerStateBound].transition(state, input, nextState);
             }
-            if (entryCallbacks[transitionMap[idx] - lowerStateBound] != null) {
-                entryCallbacks[transitionMap[idx] - lowerStateBound].transition(state, input, transitionMap[idx]);
+            if (entryCallbacks[next] != null) {
+                entryCallbacks[next].transition(state, input, nextState);
             }
-            state = transitionMap[idx];
-        } else if (error != null) {
-            error.error(state, input);
+            state = nextState;
+        } else {
+            if (error != null) {
+                error.error(state, input);
+            }
             return Optional.empty();
         }
+
         return Optional.of(state);
     }
 
@@ -130,13 +135,18 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                                                  @Nullable OnEnterStateCallback<Integer, I> onEnterStateCallback,
                                                  @Nullable OnExitStateCallback<Integer, I> onExitStateCallback,
                                                  @Nullable Rollback<Integer, I> rollbackCallback) {
-            Preconditions.checkNotNull(input, "Parameter \"input\" must not be null.");
-            Preconditions.checkArgument(!(state < lowerStateBound || state > upperStateBound || nextState < lowerStateBound || nextState > upperStateBound),
-                    "State %s out of range [%s, %s].",
-                    initialState, lowerStateBound, upperStateBound);
+            Preconditions.checkNotNull(state);
+            Preconditions.checkNotNull(input);
+            Preconditions.checkNotNull(nextState);
+            Preconditions.checkArgument(state >= lowerStateBound && state <= upperStateBound,
+                    "Source state %s is out of range [%s, %s].",
+                    state, lowerStateBound, upperStateBound);
+            Preconditions.checkArgument(nextState >= lowerStateBound && nextState <= upperStateBound,
+                    "Target state %s is out of range [%s, %s].",
+                    nextState, lowerStateBound, upperStateBound);
 
             int index = index(input, state);
-            transitionMap[index] = nextState;
+            transitionMap[index] = nextState - lowerStateBound;
             if (onExitStateCallback != null) {
                 exitCallbacks[state - lowerStateBound] = onExitStateCallback;
             }
@@ -144,6 +154,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
                 entryCallbacks[nextState - lowerStateBound] = onEnterStateCallback;
             }
             rollbacks[index] = rollbackCallback;
+
             return this;
         }
 
@@ -191,18 +202,28 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         @NonNull
         @Override
         public Builder<Integer, I> validate() {
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+            Preconditions.checkArgument(initialState >= lowerStateBound && initialState <= upperStateBound,
+                    "The initial state %s is out of range [%s, %s].",
+                    initialState, lowerStateBound, upperStateBound);
+
             final int size = upperStateBound - lowerStateBound + 1;
             BitSet reachable = new BitSet(size);
             Deque<Integer> stack = new ArrayDeque<>();
             stack.push(initialState);
             while (!stack.isEmpty()) {
                 int state = stack.pop();
-                if (!reachable.get(state)) {
-                    reachable.set(state);
+                int stateIndex = state - lowerStateBound;
+                if (!reachable.get(stateIndex)) {
+                    reachable.set(stateIndex);
                     for (I input : inputs) {
                         int next = transitionMap[index(input, state)];
-                        if (!(next == -1 || next == state)) {
-                            stack.push(next);
+                        if (next != -1) {
+                            int nextState = next + lowerStateBound;
+                            if (nextState != state) {
+                                stack.push(nextState);
+                            }
                         }
                     }
                 }
@@ -217,7 +238,11 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
         @NonNull
         @Override
         public FiniteStateMachine<Integer, I> build() {
-            Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
+            Preconditions.checkState(initialState != null,
+                    "The initial state must be set before the FSM is validated.");
+            Preconditions.checkArgument(initialState >= lowerStateBound && initialState <= upperStateBound,
+                    "The initial state %s is out of range [%s, %s].",
+                    initialState, lowerStateBound, upperStateBound);
 
             return new IntEnumStateMachine<>(lowerStateBound, upperStateBound,
                     transitionMap, entryCallbacks, exitCallbacks,

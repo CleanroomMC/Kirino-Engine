@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderRemapHelper;
@@ -29,7 +28,12 @@ public class ShaderRegistry {
      * This step is purely string manipulation and parsing. No GL submissions involved.
      */
     @NonNull
-    public Shader register(@NonNull Logger logger, @NonNull ResourceLocation rl, @Nullable ShaderCompileOptions options) {
+    public Shader register(
+            @NonNull Logger logger,
+            @NonNull ResourceLocation rl,
+            @Nullable ShaderCompileOptions options,
+            boolean enableShaderDebug) {
+
         Preconditions.checkNotNull(logger);
         Preconditions.checkNotNull(rl);
 
@@ -47,7 +51,7 @@ public class ShaderRegistry {
         String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
 
         List<ShaderDebugInjection.Type> debugTypes = null;
-        if (KirinoCommonCore.KIRINO_CONFIG_HUB.isEnableShaderDebug() && options != null) {
+        if (enableShaderDebug && options != null) {
             debugTypes = ShaderDebugInjection.parse(options.debugFlags);
         }
 
@@ -56,7 +60,7 @@ public class ShaderRegistry {
         // todo: temp; to be refactored
         if (debugTypes != null && debugTypes.contains(ShaderDebugInjection.Type.VEC3F_DEBUG)) {
             shaderSource = ShaderDebugInjection.inject(shaderSource, MinecraftResourceUtils.readText(
-                    new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
+                    new ResourceLocation("kirino:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"),
                     MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
         }
 
@@ -117,7 +121,7 @@ public class ShaderRegistry {
             Preconditions.checkNotNull(rl);
 
             if (!shaders.containsKey(rl)) {
-                throw new IllegalStateException("Shader " +  rl + " isn't registered.");
+                throw new IllegalStateException("Shader \"" +  rl + "\" isn't registered.");
             }
         }
 

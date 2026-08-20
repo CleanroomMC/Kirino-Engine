@@ -34,4 +34,20 @@ public enum TextureType {
             case TEX_BUFFER -> GL31.GL_TEXTURE_BINDING_BUFFER;
         };
     }
+
+    public boolean supportsMipmaps() {
+        return switch (this) {
+            case TEX_1D,
+                 TEX_2D,
+                 TEX_3D,
+                 TEX_1D_ARRAY,
+                 TEX_2D_ARRAY,
+                 CUBEMAP,
+                 CUBEMAP_ARRAY -> true;
+
+            case TEX_2D_MS,
+                 TEX_2D_MS_ARRAY,
+                 TEX_BUFFER -> false;
+        };
+    }
 }

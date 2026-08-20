@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.shader.compile;
 import com.google.common.collect.ImmutableList;
 
 public final class ShaderDebugSnippet {
+
     private ShaderDebugSnippet() {
     }
 

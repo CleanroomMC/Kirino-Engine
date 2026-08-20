@@ -36,7 +36,7 @@ public class IndirectDrawBufferGenerator {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>units</code> are all <code>MULTI_ELEMENTS_INDIRECT_UNIT</code> typed commands</li>
      *     <li><code>units</code> all share the same <code>vao</code>, <code>mode</code> and <code>elementType</code>, which are the parameters of this method call</li>

@@ -47,12 +47,12 @@ public interface FiniteStateMachine<S, I> {
     /**
      * Sets the state to the initial state and clears the backlog
      *
-     * @implNote <pre><code>
+     * @implNote <pre>{@code
      * if (!stack.isEmpty()) {
      *     state = stack.pollLast().state();
      *     stack.clear();
      * }
-     * </code></pre>
+     * }</pre>
      */
     void reset();
 
@@ -115,19 +115,21 @@ public interface FiniteStateMachine<S, I> {
     interface Builder<S, I> {
         /**
          * Adds a possible transition to the FSM
+         * <p>Note: Must not add duplicate transition!</p>
          *
          * @param state                From
          * @param input                The input causing the transition
          * @param nextState            To
          * @param onEnterStateCallback Executed during transition to nextState.
-         *                             If null is passed to this parameter. Nothing will change.
-         *                             If a value is passed to this parameter. The {@link OnEnterStateCallback}
-         *                             for this state will be changed. <b>This callback is stored per state</b>
+         *                             If <code>null</code> is passed to this parameter, nothing will change.
+         *                             If a value is passed to this parameter, it overrides the {@link OnEnterStateCallback}
+         *                             for this state. <b>This callback is stored per state</b>
          * @param onExitStateCallback  Executed during transition from state.
-         *                             If null is passed to this parameter. Nothing will change.
-         *                             If a value is passed to this parameter. The {@link OnExitStateCallback}
-         *                             for this state will be changed. <b>This callback is stored per state</b>
-         * @param rollbackCallback     Executed during {@link FiniteStateMachine#backtrack()} to reverse changes caused by the other callbacks.
+         *                             If <code>null</code> is passed to this parameter, nothing will change.
+         *                             If a value is passed to this parameter, it overrides the {@link OnExitStateCallback}
+         *                             for this state. <b>This callback is stored per state</b>
+         * @param rollbackCallback     Executed during {@link FiniteStateMachine#backtrack()}.
+         *                             It overrides the {@link Rollback} regardless of nullability.
          *                             <b>This callback is stored per transition,
          *                             it is different for each state and input combination.</b>
          * @return the builder

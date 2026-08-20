@@ -51,6 +51,8 @@ public class ShutdownManager {
         List<Runnable> reversed = new ArrayList<>(mainThreadHooks);
         Collections.reverse(reversed);
 
+        LOGGER.info("Started running main shutdown hooks.");
+
         for (Runnable hook : reversed) {
             try {
                 hook.run();
@@ -65,6 +67,8 @@ public class ShutdownManager {
     private static void runWorkerHooks() {
         List<Runnable> reversed = new ArrayList<>(workerThreadHooks);
         Collections.reverse(reversed);
+
+        LOGGER.info("Started running worker shutdown hooks.");
 
         for (Runnable hook : reversed) {
             try {

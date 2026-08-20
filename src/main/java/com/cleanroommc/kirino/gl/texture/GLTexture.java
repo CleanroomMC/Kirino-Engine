@@ -3,13 +3,14 @@ package com.cleanroommc.kirino.gl.texture;
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
 public class GLTexture extends GLDisposable {
 
     /**
-     * So called "texture name" under OpenGL context.
+     * So-called "texture name" under OpenGL DSA context.
      */
     public final int textureID;
     public final TextureType type;
@@ -430,6 +431,53 @@ public class GLTexture extends GLDisposable {
     @NonNull
     public static GLTexture newDsaTexBuffer() {
         return newTexBuffer(true, false);
+    }
+
+    /**
+     * It calculates the maximum mipmap level index of a full mipmap chain based on
+     * the current base-level extents.
+     *
+     * <p>Note: This is GL agnostic.</p>
+     */
+    public int maxMipmapLevel() {
+        Preconditions.checkState(type.supportsMipmaps(),
+                "This texture type \"%s\" doesn't support mipmaps.", type);
+
+        int maxExtent = switch (type) {
+            case TEX_1D,
+                 TEX_1D_ARRAY -> extentX;
+
+            case TEX_2D,
+                 TEX_2D_ARRAY,
+                 CUBEMAP,
+                 CUBEMAP_ARRAY -> Math.max(extentX, extentY);
+
+            case TEX_3D -> Math.max(extentX, Math.max(extentY, extentZ));
+
+            case TEX_2D_MS,
+                 TEX_2D_MS_ARRAY,
+                 TEX_BUFFER -> 0;
+        };
+
+        Preconditions.checkState(maxExtent > 0,
+                "Cannot calculate mipmap levels for \"%s\" with non-greater-than-zero base extent \"%s\".",
+                type,
+                maxExtent);
+
+        return Integer.SIZE - 1 - Integer.numberOfLeadingZeros(maxExtent);
+    }
+
+    /**
+     * It calculates the number of levels in a complete mipmap chain based on
+     * the current base-level extents.
+     *
+     * <p>Note: This is GL agnostic.</p>
+     */
+    public int maxMipmapLevelCount() {
+        Preconditions.checkState(type.supportsMipmaps(),
+                "This texture type \"%s\" doesn't support mipmaps.", type);
+
+        return maxMipmapLevel() + 1;
     }
 
     public void dispose() {

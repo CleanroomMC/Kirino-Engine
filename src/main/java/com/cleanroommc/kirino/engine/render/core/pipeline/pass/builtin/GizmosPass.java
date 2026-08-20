@@ -6,11 +6,12 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.Renderer;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueue;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
-import com.cleanroommc.kirino.engine.render.core.pipeline.pass.PassHint;
+import com.cleanroommc.kirino.engine.render.core.pipeline.draw.DrawQueuePolicy;
 import com.cleanroommc.kirino.engine.render.core.pipeline.pass.Subpass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObject;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
+import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.google.common.base.Preconditions;
 import org.joml.Vector3f;
@@ -22,20 +23,49 @@ import org.lwjgl.opengl.GL20C;
 import java.util.List;
 
 public class GizmosPass extends Subpass {
+
     private final ResourceSlot<GizmosManager> gizmosManager;
 
     /**
-     * @param renderer      A global renderer
-     * @param pso           A pipeline state object (pipeline parameters)
+     * @param renderer A global renderer
+     * @param pso A pipeline state object (pipeline parameters)
      * @param gizmosManager The gizmos manager
      */
-    public GizmosPass(@NonNull ResourceSlot<Renderer> renderer, @NonNull PipelineStateObject pso, @NonNull ResourceSlot<GizmosManager> gizmosManager) {
+    public GizmosPass(
+            @NonNull ResourceSlot<Renderer> renderer,
+            @NonNull PipelineStateObject pso,
+            @NonNull ResourceSlot<GizmosManager> gizmosManager) {
+
         super(renderer, pso);
+        Preconditions.checkNotNull(gizmosManager);
+
         this.gizmosManager = gizmosManager;
     }
 
+    @Nullable
     @Override
-    protected void updateShaderProgram(@NonNull ShaderProgram shaderProgram, @Nullable Camera camera, @Nullable Object payload) {
+    public DrawQueuePolicy hintDrawQueuePolicy() {
+        return null;
+    }
+
+    @Override
+    protected boolean hintCompileDrawQueue() {
+        return true;
+    }
+
+    @Override
+    protected boolean hintSimplifyDrawQueue() {
+        return true;
+    }
+
+    @Override
+    protected void updateShaderProgram(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @Nullable Camera camera,
+            @Nullable Object payload,
+            @NonNull ShaderProgram shaderProgram) {
+
         int worldOffset = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "worldOffset");
         int viewRot = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "viewRot");
         int projection = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "projection");
@@ -49,25 +79,15 @@ public class GizmosPass extends Subpass {
     }
 
     @Override
-    protected boolean hintCompileDrawQueue() {
-        return true;
-    }
+    protected void execute(
+            @NonNull ResourceStorage storage,
+            @NonNull KnowledgeRuntime glKnowledge,
+            @NonNull DrawQueue drawQueue,
+            @Nullable Object payload) {
 
-    @Override
-    protected boolean hintSimplifyDrawQueue() {
-        return true;
-    }
-
-    @NonNull
-    @Override
-    public PassHint passHint() {
-        return PassHint.OTHER;
-    }
-
-    @Override
-    protected void execute(@NonNull ResourceStorage storage, @NonNull DrawQueue drawQueue, @Nullable Object payload) {
+        Renderer renderer_ = storage.get(renderer);
         while (drawQueue.dequeue() instanceof LowLevelDC command) {
-            storage.get(renderer).draw(command);
+            renderer_.draw(command);
         }
     }
 

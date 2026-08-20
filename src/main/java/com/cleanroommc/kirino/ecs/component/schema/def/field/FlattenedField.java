@@ -32,7 +32,7 @@ public final class FlattenedField {
         return scalarTypes.size();
     }
 
-    protected FlattenedField(FieldDef fieldDef, StructRegistry structRegistry) {
+    FlattenedField(FieldDef fieldDef, StructRegistry structRegistry) {
         scalarTypes = ImmutableList.copyOf(makeFlattenedField(fieldDef, structRegistry));
     }
 

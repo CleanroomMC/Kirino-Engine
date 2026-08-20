@@ -92,7 +92,7 @@ public class AttributeLayout {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Number of VBOs must match the number of strides</li>
      *     <li>Every {@link VBOView} must be unique (have an unique {@link VBOView#bufferID})</li>

@@ -424,3 +424,40 @@ ready for the further Editor GUI development.
   - Go to declaration
   - Find usages (usage UI inlay support)
   - Rename function declaration and all occurrences
+
+**Want To Implement:**
+- The first step is to get `FrameFinalizer` and `GraphicsWorldViewImpl` refactored,
+  so the pipeline will therefore be stable enough to integrate SimpleGUI framebuffer stuff
+- SimpleGUI and SimpleText can be moved to `GraphicsWorldViewImpl` to remain the dependency injection access pattern,
+  but ICS singleton access isn't planned to be removed anyway.
+- SimpleText and SimpleGUI should be aware of their draw call context. i.e. when states and fbos are predictable
+- When the infra that helps to integrate SimpleText and SimpleGUI is done
+  - Implement SimpleGUI Depth/No Depth rendering path, PushClip/PopClip
+  - Implement a more feature rich version of the SimpleText text consumer
+  - Start working on the engine editor
+
+The plan is that:
+- When inside a world, `GraphicsWorldViewImpl` takes over editor rendering
+- For main menu, another more rudimentary path is needed
+
+**Done:**
+- Refactor ECS component part + add more primitive types to the registry
+- Implement GL knowledge system (`commit`/`claim`/`release`)
+- Refactor `FrameFinalizer` and `GraphicsWorldViewImpl` & integrate the GL knowledge system
+- Refactor `RenderPass`, `Subpass`, post-processing
+- Upgrade `MinecraftResourceUtils` to get access to most of the dev env files
+- Move resources from `forge` namespace to `kirino`
+- Implement SimpleText paragraph line breaker
+- Implement SimpleText italic/shadow/outline/obfuscated shader effect
+- Implement SimpleText `StyledText` system
+- Refactor GL texture abstraction + add & implement new specs (mostly mipmap related stuff)
+- Fix ECS primitive array reads, archetype pool scaling
+- Fix ECS system flow async execution
+- Fix most of FSM issues
+- Update project setup instructions: more precise submodule instructions
+- Partially implement a full-fledged SimpleText text renderer
+  - Texture 2D array powered atlas: `Tex2DArrayGlyphAtlas`
+  - LRU cache mechanism
+
+**Want To Implement:**
+- A brand new GL binding planner that works with the GL knowledge system

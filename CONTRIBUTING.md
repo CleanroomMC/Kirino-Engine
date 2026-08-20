@@ -9,24 +9,25 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 ## Getting Started
 
 - Fork this repo (branch: `main`)
-- Clone [Cleanroom](https://github.com/CleanroomMC/Cleanroom) (branch: `fix/lwjgl`) locally
-- _Everything below will be happened under your Cleanroom dev env_
+- Clone [Cleanroom](https://github.com/CleanroomMC/Cleanroom) locally (branch: `fix/lwjgl`) _presumably via IDEA_
+- _Complete the following steps under your Cleanroom directory_
 - Go to `.gitmodules`
   ```
-  [submodule "projects/kirino"]
-    path = projects/kirino
+  [submodule "kirino"]
+    path = module/kirino
     url = https://github.com/CleanroomMC/Kirino-Engine.git
   ```
 - Set the `url` to your fork
 - ```bash
-  git submodule init
-  git submodule update
+  git submodule sync -- module/kirino
+  git submodule update --init --recursive module/kirino
   ```
 - Import `build.gradle` and then `./gradlew setup`
-- If kirino submodule's HEAD is detached, and you want the latest commit from `main`
+- If the submodule HEAD is detached
   ```bash
-  cd projects/kirino
-  git switch main  
+  cd module/kirino
+  git fetch origin
+  git switch -C main --track origin/main
   ```
 
 **Extra Steps For Now**
@@ -35,20 +36,56 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - Build locally and `publishToMavenLocal`
 - Add `implementation("com.cleanroommc.ksmlc:ksml-compiler:1.0-SNAPSHOT")` to `dependencies` of `projects/cleanroom/build.gradle`
 
+**Submodule Tips**
+- If your submodule setup is somehow broken OR you have already initialized a submodule but want to switch to another fork
+- _Complete the following steps under your Cleanroom directory_
+- ```bash
+  git submodule deinit -f -- module/kirino
+  rm -rf module/kirino
+  rm -rf .git/modules/module/kirino
+  git submodule set-url module/kirino "$NEW_URL"
+  git submodule sync -- module/kirino
+  git submodule update --init --recursive module/kirino
+  git -C module/kirino fetch origin --prune
+  git -C module/kirino switch -C main --track origin/main
+  ```
+- ```bash
+  cd module/kirino
+  ```
+- Check
+  ```bash
+  git branch -vv
+  ```
+  Expected to see
+  ```
+  * main XXXXXX [origin/main] Commit message (latest commit)
+  ```
+- Set upstream (this repo)
+  ```bash
+  git remote add upstream https://github.com/CleanroomMC/Kirino-Engine.git
+  ```
+- Check
+  ```bash
+  git remote -v
+  ```
+  Expected to see
+  ```
+  origin  https://github.com/XXXXXX/Kirino-Engine.git (fetch)
+  origin  https://github.com/XXXXXX/Kirino-Engine.git (push)
+  upstream        https://github.com/CleanroomMC/Kirino-Engine.git (fetch)
+  upstream        https://github.com/CleanroomMC/Kirino-Engine.git (push)
+  ```
+
 **Dev Tips**
-- `./gradlew cleanroomClient` to run the project
-- `./gradlew build` to build the project
-- `./gradlew genPatches` to generate patches if you modified Minecraft source code
-  (btw you'll have to push to Cleanroom repo if you intended modifying Minecraft source;
-  it'd be the best you contact us first before doing so)
-- `Cleanroom/projects/cleanroom/src/main/java/` is where you modify Minecraft source code
-- `Cleanroom/projects/kirino/src/main/java/` is where you modify your Kirino-Engine fork
+- `./gradlew runCleanroomClient` to run the project
+- `Cleanroom/module/minecraft/src/main/java/` is where you modify Minecraft source code
+- `Cleanroom/module/kirino/src/main/java/` is where you modify your Kirino-Engine fork
 
 ## Ways to Contribute
 
-- Report bugs via [Issues](https://github.com/CleanroomMC/Kirino-Engine/issues)
+- Fix bugs / report bugs via [Issues](https://github.com/CleanroomMC/Kirino-Engine/issues)
 - Improve / add more Javadocs (typos, explanations, tutorials)
-- Add unit tests / coverage tests (`Cleanroom/projects/kirino/src/test/java/`)
+- Add unit tests (`Cleanroom/module/kirino/src/test/java/`)
 - Implement features. (Check [Project Board](https://github.com/orgs/CleanroomMC/projects/13) / Propose your own)
   Contact me, tttsaurus, (via Discord or GitHub issues) if you want to implement anything
 - Propose specific features you want to have via Discord or GitHub issues
@@ -92,7 +129,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   }
   ```
 - Keep lines reasonably short to maintain readability, but there is no explicit char count limit.
-- Don't use `this.` if not necessary.
+- Don't use `this.` when there's no naming conflict. It doesn't mean you have to avoid using `this`.
 
   **Bad:**
   ```java
@@ -145,7 +182,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
   Ctor(int a) {
   }
   ```
-- Line-comments begin with a lowercase letter.
+- Line-comments begin with a lowercase letter unless it begins with an acronym, code identifier, etc.
 
   **Bad:**
   ```java
@@ -211,7 +248,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
       func2(1, 2, 3, 4 + 5, new float[]{1f, 2f}); // { 1f, 2f } is also fine
   }
   ```
-- Add a single space everywhere if possible.
+- Use conventional Java spacing everywhere.
 
   **Bad:**
   ```java
@@ -225,7 +262,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
       return;
   }
   ```
-- Line wrap rules
+- Line wrap rules (apply this to either `{}`, `[]`, `()`)
 
   **Bad:**
   ```java

@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.core.framebuffer;
 import com.google.common.base.Preconditions;
 
 public final class PingPongFramebuffer {
+
     public static class Framebuffer extends com.cleanroommc.kirino.gl.framebuffer.Framebuffer {
         public Framebuffer(int width, int height) {
             super(width, height);

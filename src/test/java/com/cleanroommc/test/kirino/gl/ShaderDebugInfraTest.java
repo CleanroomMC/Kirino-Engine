@@ -54,7 +54,7 @@ public class ShaderDebugInfraTest {
 
             String source = ShaderDebugInjection.inject(
                     SHADER_SRC,
-                    MinecraftResourceUtils.readText(new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"), MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+                    MinecraftResourceUtils.readText(new ResourceLocation("kirino:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"), MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
 
             Set<String> remapFields = new HashSet<>();
             source = ShaderDebugInjection.injectDebugInfra(
@@ -178,7 +178,7 @@ public class ShaderDebugInfraTest {
 
             String source = ShaderDebugInjection.inject(
                     SHADER_SRC2,
-                    MinecraftResourceUtils.readText(new ResourceLocation("forge:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"), MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+                    MinecraftResourceUtils.readText(new ResourceLocation("kirino:shaders/debug/highlevel/temp_kirino_debug_vec3f.glsl"), MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
 
             Set<String> remapFields = new HashSet<>();
             source = ShaderDebugInjection.injectDebugInfra(

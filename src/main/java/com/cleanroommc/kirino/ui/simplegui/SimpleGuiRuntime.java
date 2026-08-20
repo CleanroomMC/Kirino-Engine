@@ -18,8 +18,8 @@ public class SimpleGuiRuntime {
         Preconditions.checkNotNull(shaderAccess);
         Preconditions.checkNotNull(dummyVao);
 
-        arena = new TransientArena(1024);
-        stream = new GuiCommandStream(1024);
+        arena = new TransientArena(128);
+        stream = new GuiCommandStream(128);
         compiler = new GuiCompiler(arena);
         renderer = new GuiRenderer(shaderAccess, dummyVao, arena);
     }

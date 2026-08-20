@@ -22,6 +22,10 @@ public interface WorldContext<W extends WorldKind> {
     /**
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
-    void run(@NonNull FramePhase phase);
+    void run(@NonNull FramePhase phase, boolean firstPrepare);
+
+    /**
+     * Call it to register callbacks to frame phases.
+     */
     void on(@NonNull FramePhase phase, @NonNull FramePhaseTiming timing, @NonNull Consumer<WorldContext<W>> consumer);
 }

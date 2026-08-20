@@ -300,7 +300,7 @@ public class GizmosManager {
                     graphicResourceManager.submitMeshTicket(builder);
                 });
 
-                list.add(HighLevelDC.acquire().fillPassInternal(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_SHORT));
+                list.add(HighLevelDC.acquire().fillHighLevelDC(id, GL11.GL_TRIANGLES, GL11.GL_UNSIGNED_SHORT));
             }
         }
 

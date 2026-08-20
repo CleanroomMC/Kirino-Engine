@@ -10,6 +10,7 @@ import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.FieldInfo;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.*;
@@ -40,7 +41,7 @@ public final class StructScanningHelper {
         return fields;
     }
 
-    // todo: more strict algorithm - not allowing one's subclasses to be included in the fields
+    // todo: stricter algorithm - not allowing one's subclasses to be included in the fields
     private static void removeSelfReference(Set<String> dirtyStructs, Map<String, List<FieldInfo>> structs, String structClass, List<String> prevStructClasses, List<FieldInfo> fields) {
         if (dirtyStructs.contains(structClass)) {
             return;
@@ -114,8 +115,15 @@ public final class StructScanningHelper {
      * @param fieldRegistry The field registry
      * @return A list of struct register plans
      */
-    public static List<StructRegisterPlan> scanStructClasses(StructScanningEvent event, FieldRegistry fieldRegistry) {
-        List<String> scanPackageNames = getScanPackageNames(event);
+    @NonNull
+    public static List<@NonNull StructRegisterPlan> scanStructClasses(
+            @NonNull StructScanningEvent event,
+            @NonNull FieldRegistry fieldRegistry) {
+
+        Preconditions.checkNotNull(event);
+        Preconditions.checkNotNull(fieldRegistry);
+
+        List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
                 scanPackageNames,
                 "com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature");
@@ -133,17 +141,25 @@ public final class StructScanningHelper {
         return generatePlans(structs, fieldRegistry);
     }
 
-    @SuppressWarnings("unchecked")
-    private static List<String> getScanPackageNames(StructScanningEvent event) {
-        MethodHandle scanPackageNamesGetter = ReflectionUtils.getFieldGetter(StructScanningEvent.class, "scanPackageNames", List.class);
-        Preconditions.checkNotNull(scanPackageNamesGetter);
+    private static final class MethodHolder {
+        private static final Delegate DELEGATE;
 
-        List<String> scanPackageNames;
-        try {
-            scanPackageNames = (List<String>) scanPackageNamesGetter.invokeExact(event);
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
+        static {
+            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(StructScanningEvent.class, "scanPackageNames", List.class));
+
+            Preconditions.checkNotNull(DELEGATE.scanPackageNamesGetter);
         }
-        return scanPackageNames;
+
+        @SuppressWarnings("unchecked")
+        static List<String> getScanPackageNames(StructScanningEvent event) {
+            try {
+                return  (List<String>) DELEGATE.scanPackageNamesGetter.invokeExact(event);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(MethodHandle scanPackageNamesGetter) {
+        }
     }
 }

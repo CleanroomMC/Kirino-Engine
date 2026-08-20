@@ -44,9 +44,9 @@ final class TransientArena {
         capacity = newSize;
     }
 
-    TransientArena(int capacity) {
-        this.capacity = capacity;
-        buffer = MemoryUtil.memAlloc(capacity);
+    TransientArena(int initCapacity) {
+        capacity = initCapacity;
+        buffer = MemoryUtil.memAlloc(initCapacity);
 
         ShutdownManager.registerAsync(() -> {
             MemoryUtil.memFree(buffer);

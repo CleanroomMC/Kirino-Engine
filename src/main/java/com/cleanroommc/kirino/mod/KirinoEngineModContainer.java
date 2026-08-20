@@ -15,12 +15,13 @@ public final class KirinoEngineModContainer extends DummyModContainer {
 
         meta.modId = "kirino_engine";
         meta.name = "Kirino Engine";
+        meta.url = "https://github.com/CleanroomMC/Kirino-Engine";
 
         meta.description = """
-                (WIP: no actual changes will be applied) Kirino-Engine combines an ECS-based data-oriented architecture,\s
-                explicit modern OpenGL abstractions,\s
-                and a hybrid CPU-GPU rendering pipeline to reimagine Minecraft's traditional,\s
-                tightly coupled, and CPU-bound rendering.
+                (WIP) Minecraft rendering becomes difficult as implicit state and mixins couple rendering behavior. Our primary goal is
+                to provide an explicit structure,
+                overhaul most of Minecraft’s rendering in a future-proof manner,
+                and provide a set of advanced rendering APIs to mod developers.
                 """;
 
         meta.credits = """
@@ -36,6 +37,8 @@ public final class KirinoEngineModContainer extends DummyModContainer {
         meta.authorList.add("tttsaurus");
         meta.authorList.add("Eerie");
         meta.authorList.add("ChaosStrikez");
+
+        meta.modProperties.put("backgroundFile", "/assets/cleanroom/background.png");
     }
 
     @Override

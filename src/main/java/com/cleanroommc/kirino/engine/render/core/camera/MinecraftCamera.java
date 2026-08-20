@@ -8,36 +8,43 @@ import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.entity.Entity;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.nio.FloatBuffer;
 
 public class MinecraftCamera implements Camera {
+
     public double getPartialTicks() {
         Minecraft minecraft = Minecraft.getMinecraft();
         return minecraft.isGamePaused() ? MethodHolder.getPartialTicksPaused(minecraft) : minecraft.getRenderPartialTicks();
     }
 
+    @NonNull
     @Override
     public Matrix4f getProjectionMatrix() {
         return new Matrix4f(MethodHolder.getProjectionBuffer());
     }
 
+    @NonNull
     @Override
     public FloatBuffer getProjectionBuffer() {
         return MethodHolder.getProjectionBuffer();
     }
 
+    @NonNull
     @Override
     public Matrix4f getViewRotationMatrix() {
         return new Matrix4f(MethodHolder.getViewRotationBuffer());
     }
 
+    @NonNull
     @Override
     public FloatBuffer getViewRotationBuffer() {
         return MethodHolder.getViewRotationBuffer();
     }
 
+    @NonNull
     @Override
     public Vector3f getWorldOffset() {
         Entity camera = Minecraft.getMinecraft().getRenderViewEntity();

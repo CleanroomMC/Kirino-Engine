@@ -2,7 +2,9 @@ package com.cleanroommc.kirino.ecs.component;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
@@ -23,7 +25,9 @@ public final class ComponentDesc {
         this.fieldTypeNames = ImmutableList.copyOf(fieldTypeNames);
     }
 
-    public String toString(StructRegistry structRegistry) {
+    public String toString(@NonNull StructRegistry structRegistry) {
+        Preconditions.checkNotNull(structRegistry);
+
         StringBuilder builder = new StringBuilder();
         builder.append("ComponentDesc{ name=").append(name).append(", fields=");
         for (int i = 0; i < fields.size(); i++) {

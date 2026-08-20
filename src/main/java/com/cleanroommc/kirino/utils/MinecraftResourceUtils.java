@@ -15,7 +15,7 @@ public final class MinecraftResourceUtils {
     }
 
     /**
-     * It returns the input stream for a file with the absolute path.
+     * It returns the input stream for a file with the valid absolute path.
      */
     @NonNull
     private static InputStream getInputStream(@NonNull String absolutePath) {
@@ -35,31 +35,31 @@ public final class MinecraftResourceUtils {
 
     /**
      * It finds the absolute path for resources inside the dev env.
+     *
+     * <p>Note: It's only able to find a subset of dev env resources:
+     * <code>forge</code> and <code>kirino</code> resources including test data to be exact.</p>
      */
     @Nullable
     private static String findResource(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
-        Preconditions.checkState(rl.getNamespace().equals("forge"),
-                "Provided ResourceLocation \"%s\" must have a forge namespace.", rl.toString());
+        Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"),
+                "Provided ResourceLocation \"%s\" must either be \"forge\" or \"kirino\" namespace.", rl.toString());
 
-        File repo;
-        try {
-            String path = System.getProperty("user.dir");
-            File current = new File(path);
-            while (current != null && !current.getName().equals("projects")) {
-                current = current.getParentFile();
-            }
-            Preconditions.checkNotNull(current);
-
-            repo = current.getParentFile();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        File repo = findCleanroomRoot();
         Preconditions.checkNotNull(repo);
 
-        File resources1 = new File(repo, "src/main/resources/assets/forge");
-        File resources2 = new File(repo, "projects/kirino/src/main/resources/assets/forge");
-        Preconditions.checkState(resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory(),
+        File resources1 = new File(repo, "module/forge/src/main/resources/assets/forge");
+        File resources2 = new File(repo, "module/kirino/src/main/resources/assets/kirino");
+        File resources3 = new File(repo, "module/forge/src/test/resources/assets/forge");
+        File resources4 = new File(repo, "module/kirino/src/test/resources/assets/kirino");
+        Preconditions.checkState(resources1.exists() &&
+                        resources1.isDirectory() &&
+                        resources2.exists() &&
+                        resources2.isDirectory() &&
+                        resources3.exists() &&
+                        resources3.isDirectory() &&
+                        resources4.exists() &&
+                        resources4.isDirectory(),
                 "This is not the dev env.");
 
         String target = rl.getPath();
@@ -68,20 +68,51 @@ public final class MinecraftResourceUtils {
             target = target.substring(1);
         }
 
-        File candidate1 = new File(resources1, target);
-        if (candidate1.isFile()) {
-            return candidate1.getAbsolutePath();
+        if (rl.getNamespace().equals("forge")) {
+            File candidate1 = new File(resources1, target);
+            if (candidate1.isFile()) {
+                return candidate1.getAbsolutePath();
+            }
         }
 
-        File candidate2 = new File(resources2, target);
-        if (candidate2.isFile()) {
-            return candidate2.getAbsolutePath();
+        if (rl.getNamespace().equals("kirino")) {
+            File candidate2 = new File(resources2, target);
+            if (candidate2.isFile()) {
+                return candidate2.getAbsolutePath();
+            }
+        }
+
+        if (rl.getNamespace().equals("forge")) {
+            File candidate3 = new File(resources3, target);
+            if (candidate3.isFile()) {
+                return candidate3.getAbsolutePath();
+            }
+        }
+
+        if (rl.getNamespace().equals("kirino")) {
+            File candidate4 = new File(resources4, target);
+            if (candidate4.isFile()) {
+                return candidate4.getAbsolutePath();
+            }
         }
 
         return null;
     }
 
     private static Boolean devEnv = null;
+
+    @Nullable
+    private static File findCleanroomRoot() {
+        File current = new File(System.getProperty("user.dir")).getAbsoluteFile();
+        while (current != null) {
+            if (new File(current, "module/forge/src/main/resources").isDirectory()
+                    && new File(current, "module/kirino/src/main/resources").isDirectory()) {
+                return current;
+            }
+            current = current.getParentFile();
+        }
+        return null;
+    }
 
     /**
      * @return Whether it is the Cleanroom dev env (not Cleanroom mod template but Cleanroom itself)
@@ -92,19 +123,23 @@ public final class MinecraftResourceUtils {
         }
 
         try {
-            String path = System.getProperty("user.dir");
-            File current = new File(path);
-            while (current != null && !current.getName().equals("projects")) {
-                current = current.getParentFile();
-            }
-            if (current == null) {
+            File repo = findCleanroomRoot();
+            if (repo == null) {
                 devEnv = false;
                 return false;
             }
-            File repo = current.getParentFile();
-            File resources1 = new File(repo, "src/main/resources");
-            File resources2 = new File(repo, "projects/kirino/src/main/resources");
-            devEnv = resources1.exists() && resources1.isDirectory() && resources2.exists() && resources2.isDirectory();
+            File resources1 = new File(repo, "module/forge/src/main/resources");
+            File resources2 = new File(repo, "module/kirino/src/main/resources");
+            File resources3 = new File(repo, "module/forge/src/test/resources");
+            File resources4 = new File(repo, "module/kirino/src/test/resources");
+            devEnv = resources1.exists() &&
+                    resources1.isDirectory() &&
+                    resources2.exists() &&
+                    resources2.isDirectory() &&
+                    resources3.exists() &&
+                    resources3.isDirectory() &&
+                    resources4.exists() &&
+                    resources4.isDirectory();
             return devEnv;
         } catch (Exception e) {
             devEnv = false;
@@ -125,7 +160,7 @@ public final class MinecraftResourceUtils {
         InputStream stream;
 
         // dev env runtime path
-        if (isDevEnv() && rl.getNamespace().equals("forge")) {
+        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"))) {
             String path = findResource(rl);
             Preconditions.checkNotNull(path,
                     "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.", rl.toString());

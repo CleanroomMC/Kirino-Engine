@@ -48,7 +48,7 @@ public class CleanEntityHandle {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The component type is valid and registered in the component registry from its {@link EntityManager}</li>
      *     <li>Stop modifying <code>component</code> from now on as the action is deferred</li>
@@ -84,7 +84,7 @@ public class CleanEntityHandle {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The component type is valid and registered in the component registry from its {@link EntityManager}</li>
      *     <li>Stop modifying <code>component</code> from now on as the action is deferred</li>

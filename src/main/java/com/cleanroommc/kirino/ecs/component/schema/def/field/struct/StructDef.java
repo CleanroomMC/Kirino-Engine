@@ -2,7 +2,9 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.struct;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.jspecify.annotations.NonNull;
 
 import java.util.List;
 
@@ -12,15 +14,27 @@ import java.util.List;
 public final class StructDef {
     public final ImmutableList<FieldDef> fields;
 
-    public StructDef(List<FieldDef> fields) {
+    public StructDef(@NonNull List<@NonNull FieldDef> fields) {
+        Preconditions.checkNotNull(fields);
+        for (FieldDef field : fields) {
+            Preconditions.checkNotNull(field);
+        }
+
         this.fields = ImmutableList.copyOf(fields);
     }
 
-    public StructDef(FieldDef... fields) {
+    public StructDef(@NonNull FieldDef @NonNull ... fields) {
+        Preconditions.checkNotNull(fields);
+        for (FieldDef field : fields) {
+            Preconditions.checkNotNull(field);
+        }
+
         this.fields = ImmutableList.copyOf(fields);
     }
 
-    public String toString(StructRegistry structRegistry) {
+    public String toString(@NonNull StructRegistry structRegistry) {
+        Preconditions.checkNotNull(structRegistry);
+
         StringBuilder builder = new StringBuilder();
         builder.append("StructDef{ ");
         for (int i = 0; i < fields.size(); i++) {

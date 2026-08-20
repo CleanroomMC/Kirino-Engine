@@ -8,6 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import java.util.*;
 
 public final class ShaderDebugInjection {
+
     private ShaderDebugInjection() {
     }
 
@@ -119,7 +120,7 @@ public final class ShaderDebugInjection {
 
         for (String glsl : new ArrayList<>(glslSet).stream().sorted().toArray(String[]::new)) {
             infra.append("\n").append(MinecraftResourceUtils.readText(
-                    new ResourceLocation("forge:shaders/debug/lowlevel/" + glsl),
+                    new ResourceLocation("kirino:shaders/debug/lowlevel/" + glsl),
                     MinecraftResourceUtils.NewLineType.BACK_SLASH_N)).append("\n");
         }
 

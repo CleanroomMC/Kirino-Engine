@@ -47,7 +47,7 @@ public class MeshletGpuRegistry {
 
     //<editor-fold desc="id allocation & disposal">
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The allocated id must be disposed later rather than leaked</li>
      * </ul>
@@ -75,7 +75,7 @@ public class MeshletGpuRegistry {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>The id to be disposed must be valid (i.e. is allocated from this registry)</li>
      *     <li>Must not dispose twice</li>

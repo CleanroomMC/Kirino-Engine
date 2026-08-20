@@ -6,6 +6,13 @@ import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
+/**
+ * <p>Available raw GL operations:</p>
+ * <ul>
+ *     <li><code>texBuffer</code></li>
+ *     <li><code>texBufferRange</code></li>
+ * </ul>
+ */
 public class TextureBufferAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
 
     public final GLTexture texture;

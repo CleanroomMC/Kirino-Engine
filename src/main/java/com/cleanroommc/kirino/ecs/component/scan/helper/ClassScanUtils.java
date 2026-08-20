@@ -14,7 +14,7 @@ import java.util.TreeMap;
  * @see ComponentScanningHelper
  * @see StructScanningHelper
  */
-public final class ClassScanUtils {
+final class ClassScanUtils {
     private ClassScanUtils() {
     }
 

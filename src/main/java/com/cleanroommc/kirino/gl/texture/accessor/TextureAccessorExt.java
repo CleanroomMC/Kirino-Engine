@@ -104,13 +104,10 @@ public abstract class TextureAccessorExt implements TextureAccessor {
         }
     }
 
-    @Override
-    public void unit(int unit) {
-        if (dsa) {
-            GL45C.glBindTextureUnit(unit, textureID());
-        } else {
-            TextureAccessor.super.unit(unit);
-        }
+    public void bindUnit(int unit) {
+        Preconditions.checkState(dsa, "Non-DSA \"bindUnit\" is not implemented.");
+
+        GL45C.glBindTextureUnit(unit, textureID());
     }
 
     @Override

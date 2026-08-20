@@ -1,18 +1,32 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public enum FlattenedScalarType {
+    BYTE,
+    SHORT,
     INT,
+    LONG,
     FLOAT,
+    DOUBLE,
     BOOL;
 
-    public static List<FlattenedScalarType> flatten(ScalarType scalarType) {
+    @NonNull
+    public static List<@NonNull FlattenedScalarType> flatten(@NonNull ScalarType scalarType) {
+        Preconditions.checkNotNull(scalarType);
+
         return switch (scalarType) {
+            case BYTE -> Collections.singletonList(BYTE);
+            case SHORT -> Collections.singletonList(SHORT);
             case INT -> Collections.singletonList(INT);
+            case LONG -> Collections.singletonList(LONG);
             case FLOAT -> Collections.singletonList(FLOAT);
+            case DOUBLE -> Collections.singletonList(DOUBLE);
             case BOOL -> Collections.singletonList(BOOL);
             case VEC2 -> Arrays.asList(FLOAT, FLOAT);
             case VEC3 -> Arrays.asList(FLOAT, FLOAT, FLOAT);
@@ -22,10 +36,16 @@ public enum FlattenedScalarType {
         };
     }
 
-    public static int flattenedUnitCount(ScalarType scalarType) {
+    public static int flattenedUnitCount(@NonNull ScalarType scalarType) {
+        Preconditions.checkNotNull(scalarType);
+
         return switch (scalarType) {
+            case BYTE -> 1;
+            case SHORT -> 1;
             case INT -> 1;
+            case LONG -> 1;
             case FLOAT -> 1;
+            case DOUBLE -> 1;
             case BOOL -> 1;
             case VEC2 -> 2;
             case VEC3 -> 3;

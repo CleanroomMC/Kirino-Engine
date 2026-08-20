@@ -1,6 +1,10 @@
 package com.cleanroommc.kirino.config;
 
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
+import org.jspecify.annotations.NonNull;
+
 public final class KirinoConfigHub {
+
     KirinoConfigHub() {
     }
 
@@ -12,8 +16,11 @@ public final class KirinoConfigHub {
         public boolean enableRenderDelegate = true;
         public boolean enableHDR = true;
         public boolean enablePostProcessing = false;
-
+        public boolean enableKhrDebug = false;
         public boolean enableShaderDebug = false;
+
+        @NonNull
+        public PostProcessingSchedule postProcessingSchedule = PostProcessingSchedule.EMPTY;
 
         public int targetWorkloadPerThread = 5000;
 
@@ -54,8 +61,17 @@ public final class KirinoConfigHub {
         return requiresRestart.enablePostProcessing;
     }
 
+    public boolean isEnableKhrDebug() {
+        return requiresRestart.enableKhrDebug;
+    }
+
     public boolean isEnableShaderDebug() {
         return requiresRestart.enableShaderDebug;
+    }
+
+    @NonNull
+    public PostProcessingSchedule getPostProcessingSchedule() {
+        return requiresRestart.postProcessingSchedule;
     }
 
     public int getTargetWorkloadPerThread() {

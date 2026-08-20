@@ -16,7 +16,6 @@ import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
 
 import java.lang.invoke.MethodHandle;
@@ -136,9 +135,9 @@ public class WorldControl {
         for (Long chunkKey : cachedEarlyChunks.keySet()) {
             for (int i = 0; i < 16; i++) {
                 ChunkComponent chunkComponent = new ChunkComponent();
-                chunkComponent.chunkPosX = ChunkPos.getX(chunkKey);
+                chunkComponent.chunkPosX = getX(chunkKey);
                 chunkComponent.chunkPosY = i;
-                chunkComponent.chunkPosZ = ChunkPos.getZ(chunkKey);
+                chunkComponent.chunkPosZ = getZ(chunkKey);
                 chunkHandles.put(
                         new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ),
                         entityManager.createEntity(chunkDestroyCallback, chunkCreateCallback, chunkComponent));
@@ -148,6 +147,14 @@ public class WorldControl {
         worldFsm.next(); // NEW_WORLD_INITIAL_WAIT
         terrainFsm.reset();
         meshletFsm.reset();
+    }
+
+    private static int getX(long key) {
+        return (int) (key & 0xFFFFFFFFL);
+    }
+
+    private static int getZ(long key) {
+        return (int) ((key >>> 32) & 0xFFFFFFFFL);
     }
 
     private static final class MethodHolder {

@@ -16,6 +16,10 @@ public final class KirinoGLModContainer extends DummyModContainer {
         meta.modId = "kirino_gl";
         meta.name = "Kirino GL";
         meta.version = "epoch-1.a3";
+
+        meta.parent = "kirino_engine";
+
+        meta.modProperties.put("backgroundFile", "/assets/cleanroom/background.png");
     }
 
     @Override

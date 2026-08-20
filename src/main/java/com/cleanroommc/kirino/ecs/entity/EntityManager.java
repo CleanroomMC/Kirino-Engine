@@ -166,6 +166,7 @@ public class EntityManager {
                             destroyCallback.beforeDestroy(destroyContext);
                         }
                         pool.removeEntity(command.index);
+                        freeIndexes.add(command.index);
                     }
                     case SET_COM -> {
                         ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
@@ -221,7 +222,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
@@ -243,7 +244,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li>All component types are valid and registered in the component registry</li>
      *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
@@ -323,7 +324,7 @@ public class EntityManager {
     }
 
     /**
-     * <p>Prerequisite include:</p>
+     * <p>Prerequisites include:</p>
      * <ul>
      *     <li><code>entityID</code> must be valid</li>
      * </ul>
@@ -341,7 +342,6 @@ public class EntityManager {
 
         // update generation
         entityGenerations.set(entityID, entityGenerations.get(entityID) + 1);
-        freeIndexes.add(entityID);
 
         synchronized (commandBuffer) {
             EntityCommand command = new EntityCommand(entityID, EntityCommand.Type.DESTROY);

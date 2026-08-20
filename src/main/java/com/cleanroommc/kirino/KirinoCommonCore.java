@@ -3,14 +3,16 @@ package com.cleanroommc.kirino;
 import com.cleanroommc.kirino.config.KirinoConfigHub;
 import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.engine.EngineInitParams;
 import com.cleanroommc.kirino.engine.KirinoEngine;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
+import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.mod.KirinoECSModContainer;
 import com.cleanroommc.kirino.mod.KirinoEngineModContainer;
 import com.cleanroommc.kirino.mod.KirinoGLModContainer;
-import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.InjectedModContainer;
@@ -23,7 +25,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -111,10 +112,12 @@ public final class KirinoCommonCore {
         StopWatch stopWatch = StopWatch.createStarted();
 
         try {
-            MethodHandle ctor = ReflectionUtils.getConstructor(CleanECSRuntime.class, EventBus.class, Logger.class);
+            Constructor<CleanECSRuntime> ctor = CleanECSRuntime.class.getDeclaredConstructor(EventBus.class, Logger.class);
             Preconditions.checkNotNull(ctor);
 
-            ECS_RUNTIME = (CleanECSRuntime) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER);
+            ctor.setAccessible(true);
+
+            ECS_RUNTIME = ctor.newInstance(KIRINO_EVENT_BUS, LOGGER);
         } catch (Throwable throwable) {
             throw new RuntimeException("ECS Runtime failed to initialize.", throwable);
         }
@@ -128,15 +131,23 @@ public final class KirinoCommonCore {
         stopWatch = StopWatch.createStarted();
 
         try {
-            MethodHandle ctor = ReflectionUtils.getConstructor(KirinoEngine.class,
+            Constructor<KirinoEngine> ctor = KirinoEngine.class.getDeclaredConstructor(
                     EventBus.class,
                     Logger.class,
                     CleanECSRuntime.class,
-                    boolean.class,
-                    boolean.class);
+                    EngineInitParams.class);
             Preconditions.checkNotNull(ctor);
 
-            KIRINO_ENGINE = (KirinoEngine) ctor.invokeExact(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, KIRINO_CONFIG_HUB.isEnableHDR(), KIRINO_CONFIG_HUB.isEnablePostProcessing());
+            ctor.setAccessible(true);
+
+            EngineInitParams params = new EngineInitParams(
+                    KIRINO_CONFIG_HUB.isEnableHDR(),
+                    KIRINO_CONFIG_HUB.isEnablePostProcessing(),
+                    KIRINO_CONFIG_HUB.isEnableKhrDebug(),
+                    KIRINO_CONFIG_HUB.isEnableShaderDebug(),
+                    KIRINO_CONFIG_HUB.getPostProcessingSchedule());
+
+            KIRINO_ENGINE = ctor.newInstance(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, params);
         } catch (Throwable throwable) {
             throw new RuntimeException("Kirino Engine failed to initialize.", throwable);
         }
@@ -156,30 +167,34 @@ public final class KirinoCommonCore {
 
     @SubscribeEvent
     public static void onShaderRegister(ShaderRegistrationEvent event) {
-        event.register(new ResourceLocation("forge:shaders/test.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.vert"));
-        event.register(new ResourceLocation("forge:shaders/gizmos.frag"));
-        event.register(new ResourceLocation("forge:shaders/post_processing.vert"));
-        event.register(new ResourceLocation("forge:shaders/pp_default.frag"));
-        event.register(new ResourceLocation("forge:shaders/pp_tone_mapping.frag"));
-        event.register(new ResourceLocation("forge:shaders/meshlets2vertices.comp"), ShaderDebugInjection.VEC3F_DEBUG);
-        event.register(new ResourceLocation("forge:shaders/meshlet_draw_index_gen.comp"));
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.vert"), ShaderDebugInjection.VEC3F_DEBUG);
-        event.register(new ResourceLocation("forge:shaders/opaque_terrain.frag"));
+        event.register(new ResourceLocation("kirino:shaders/test.vert"));
+        event.register(new ResourceLocation("kirino:shaders/gizmos.vert"));
+        event.register(new ResourceLocation("kirino:shaders/gizmos.frag"));
+        event.register(new ResourceLocation("kirino:shaders/post_processing.vert"));
+        event.register(new ResourceLocation("kirino:shaders/pp_default.frag"));
+        event.register(new ResourceLocation("kirino:shaders/pp_tone_mapping.frag"));
+        event.register(new ResourceLocation("kirino:shaders/meshlets2vertices.comp"), ShaderDebugInjection.VEC3F_DEBUG);
+        event.register(new ResourceLocation("kirino:shaders/meshlet_draw_index_gen.comp"));
+        event.register(new ResourceLocation("kirino:shaders/opaque_terrain.vert"), ShaderDebugInjection.VEC3F_DEBUG);
+        event.register(new ResourceLocation("kirino:shaders/opaque_terrain.frag"));
     }
 
-    // todo: abstraction
     @SubscribeEvent
     public static void onPostProcessingRegister(PostProcessingRegistrationEvent event) {
-//        event.register(
-//                "Tone Mapping Pass",
-//                event.newShaderProgram("forge:shaders/post_processing.vert", "forge:shaders/pp_tone_mapping.frag"),
-//                DefaultPostProcessingPass::new);
+        event.register(
+                "Blit Pass",
+                new String[]{"kirino:shaders/post_processing.vert", "kirino:shaders/pp_default.frag"},
+                DefaultPostProcessingPass::new);
+        event.register(
+                "Tone Mapping",
+                new String[]{"kirino:shaders/post_processing.vert", "kirino:shaders/pp_tone_mapping.frag"},
+                DefaultPostProcessingPass::new);
     }
 
     @SubscribeEvent
     public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
         event.getOneTimeConfig().enableRenderDelegate = true;
         event.getOneTimeConfig().enableShaderDebug = true;
+        event.getOneTimeConfig().enableKhrDebug = true;
     }
 }

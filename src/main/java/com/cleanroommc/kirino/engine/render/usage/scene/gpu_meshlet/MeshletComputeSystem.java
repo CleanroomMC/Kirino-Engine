@@ -178,7 +178,7 @@ public class MeshletComputeSystem {
         vertexGenProgram.use();
 
         GL20.glUniform1i(GL20.glGetUniformLocation(vertexGenProgram.getProgramID(), "dirtyList"), 4);
-        buffers.dirtyListTbo.unit(4); // no one is using 4 atm; todo: refactor
+        buffers.dirtyListTbo.bindUnit(4); // no one is using 4 atm; todo: refactor
 
         ShaderDebugResource.RESOURCE.setDispatchCount(dispatchCount);
         KirinoCommonCore.LOGGER.info("dispatch " + dispatchCount);

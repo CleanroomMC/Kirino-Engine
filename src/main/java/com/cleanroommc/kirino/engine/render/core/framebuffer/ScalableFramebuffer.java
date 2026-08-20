@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.google.common.base.Preconditions;
 
 public final class ScalableFramebuffer {
+
     public final Framebuffer framebuffer;
     // between (0.0, 2.0] for upscaling & downscaling purposes
     public final float defaultRatio;
