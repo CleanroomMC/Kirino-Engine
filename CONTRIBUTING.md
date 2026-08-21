@@ -42,7 +42,7 @@ Kirino Engine is a domain specific engine designed for Minecraft.
 - ```bash
   git submodule deinit -f -- module/kirino
   rm -rf module/kirino
-  rm -rf .git/modules/module/kirino
+  rm -rf .git/modules/kirino
   git submodule set-url module/kirino "$NEW_URL"
   git submodule sync -- module/kirino
   git submodule update --init --recursive module/kirino
