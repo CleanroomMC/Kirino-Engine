@@ -8,6 +8,7 @@ public record TextStyle(float size, int color, int hint) {
 
     public static final TextStyle DEFAULT = new TextStyle(1f, Color.WHITE.getRGB(), 0);
 
+    // <editor-fold desc="hint helpers">
     public boolean underlineEnabled() {
         return TextHintLayout.UNDERLINE.get(hint);
     }
@@ -43,6 +44,7 @@ public record TextStyle(float size, int color, int hint) {
     private int paletteColor(int paletteIndex) {
         return TextColorPalette32.replaceRgb(0xFF000000, TextColorPalette32.rgb(paletteIndex));
     }
+    // </editor-fold>
 
     @NonNull
     public TextStyle withSize(float size) {
