@@ -1,11 +1,12 @@
 package com.cleanroommc.kirino.ui.simpletext.text;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
-final class KirinoStyledTextParser implements StyledTextParser{
+final class KirinoStyledTextParser implements StyledTextParser {
 
     static final KirinoStyledTextParser INSTANCE = new KirinoStyledTextParser();
 
@@ -22,39 +23,42 @@ final class KirinoStyledTextParser implements StyledTextParser{
     @Override
     @SuppressWarnings("null")
     public void parse(@NonNull String rawText, @NonNull StyledTextBuilder builder) {
+        Preconditions.checkNotNull(rawText);
+        Preconditions.checkNotNull(builder);
+
         Stack<TextStyle> styleStack = new ObjectArrayList<>();
         StringBuilder internalBuilder = new StringBuilder();
         TextStyle curr = builder.defaultStyle();
 
         styleStack.push(builder.defaultStyle());
 
-        // State:
-        // 0 - Add text
-        // 1 - Hint detected, reading hint field name
-        // 2 - Reading outline color
-        // 3 - Reading strikethrough color
-        // 4 - Reading strikethrough outline color
-        // 5 - Reading underline color
-        // 6 - Reading color type
-        // 7 - Reading size
-        // 8 - Reading color hex
-        // 9 - Reading color rgb
-        // 10 - Reading color argb
-        // 11 - Reading color rgba
-        // 12 - Reading color name
-        // 13 - Reading color hsl
+        // state:
+        // 0 - add text
+        // 1 - hint detected, reading hint field name
+        // 2 - reading outline color
+        // 3 - reading strikethrough color
+        // 4 - reading strikethrough outline color
+        // 5 - reading underline color
+        // 6 - reading color type
+        // 7 - reading size
+        // 8 - reading color hex
+        // 9 - reading color rgb
+        // 10 - reading color argb
+        // 11 - reading color rgba
+        // 12 - reading color name
+        // 13 - reading color hsl
         int state = 0;
 
         int end = 0;
         String tmp;
         int hintIndex;
-        short[] color = new short[]{255,255,255,255};
-        float[] hsl = new float[]{0,0,0};
-        final int[] argbPerm = new int[]{0,1,2,3};
-        final int[] rgbPerm = new int[]{3,0,1,2};
+        short[] color = new short[]{255, 255, 255, 255};
+        float[] hsl = new float[]{0, 0, 0};
+        final int[] argbPerm = new int[]{0, 1, 2, 3};
+        final int[] rgbPerm = new int[]{3, 0, 1, 2};
         int colorIdx = 0;
 
-        float q, p; // For HSL
+        float q, p; // for HSL
 
         for (int start = 0; start < rawText.length(); start++) {
             switch (state) {
@@ -70,8 +74,10 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     } else if (start + 1 < rawText.length()
                             && rawText.charAt(start) == CONTROL_END && rawText.charAt(start + 1) == CONTROL_PREFIX) {
                         styleStack.pop();
-                        if (styleStack.isEmpty())
+                        if (styleStack.isEmpty()) {
                             styleStack.push(builder.defaultStyle());
+                        }
+
                         curr = styleStack.top();
                         builder.style(curr);
                         start++;
@@ -79,7 +85,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     end = readText(rawText, start);
                     builder.appendLiteral(rawText, start, end);
-                    start = end-1;
+                    start = end - 1;
                     continue;
                     // </editor-fold>
                 case 1:
@@ -94,12 +100,15 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     tmp = internalBuilder.toString().trim();
                     internalBuilder.setLength(0);
                     hintIndex = HINT_NAME_MAP.getOrDefault(tmp, -1);
-                    if (hintIndex == -1)
+                    if (hintIndex == -1) {
                         continue;
+                    }
+
                     if (hintIndex >= 2 && hintIndex <= 7) {
                         state = hintIndex;
                         continue;
                     }
+
                     curr = newStyleFromFlags(curr, hintIndex);
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
@@ -116,8 +125,10 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     tmp = internalBuilder.toString().trim();
                     internalBuilder.setLength(0);
                     hintIndex = COLOR_MAP.getOrDefault(tmp, -1);
-                    if (hintIndex == -1)
+                    if (hintIndex == -1) {
                         continue;
+                    }
+
                     curr = curr.withHint(TextHintLayout.OUTLINE_COLOR.set(curr.hint(), hintIndex));
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
@@ -125,18 +136,21 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
                 case 3:
-                    // <editor-fold desc="Reading strikethrough color">
+                    // <editor-fold desc="reading strikethrough color">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
                     internalBuilder.setLength(0);
                     hintIndex = COLOR_MAP.getOrDefault(tmp, -1);
-                    if (hintIndex == -1)
+                    if (hintIndex == -1) {
                         continue;
+                    }
+
                     curr = curr.withHint(TextHintLayout.STRIKETHROUGH_COLOR.set(curr.hint(), hintIndex));
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
@@ -144,6 +158,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
@@ -154,8 +169,10 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     tmp = internalBuilder.toString().trim();
                     internalBuilder.setLength(0);
                     hintIndex = COLOR_MAP.getOrDefault(tmp, -1);
-                    if (hintIndex == -1)
+                    if (hintIndex == -1) {
                         continue;
+                    }
+
                     curr = curr.withHint(TextHintLayout.STRIKETHROUGH_OUTLINE_COLOR.set(curr.hint(), hintIndex));
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
@@ -163,6 +180,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
@@ -177,13 +195,15 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 1;
                         continue;
                     }
+
                     curr = curr.withHint(TextHintLayout.UNDERLINE_COLOR.set(curr.hint(), hintIndex));
-                    if (rawText.charAt(start+1) == CONTROL_SUFFIX) {
+                    if (rawText.charAt(start + 1) == CONTROL_SUFFIX) {
                         builder.style(curr);
                         styleStack.push(curr);
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
@@ -193,8 +213,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 8;
                         continue;
                     } else if (rawText.charAt(start) == 'a') {
-                        if (start + 5 > rawText.length())
+                        if (start + 5 > rawText.length()) {
                             continue;
+                        }
                         if (rawText.substring(start + 1, start + 5).equals("rgb(")) {
                             state = 10;
                             start += 4;
@@ -225,12 +246,15 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     internalBuilder.setLength(0);
                     try {
                         curr = curr.withSize(Float.parseFloat(tmp));
-                    } catch (NumberFormatException _) {} finally {
+                    } catch (NumberFormatException _) {
+                    } finally {
                         if (rawText.charAt(start) == CONTROL_SUFFIX) {
                             builder.style(curr);
                             styleStack.push(curr);
                             state = 0;
-                        } else state = 1;
+                        } else {
+                            state = 1;
+                        }
                     }
                     continue;
                     // </editor-fold>
@@ -251,13 +275,14 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
                 case 9:
                     // <editor-fold desc="Reading color rgb">
-                    end = readIntColor(rawText, start);
-                    color[rgbPerm[colorIdx+1]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
+                    end = readNumber(rawText, start);
+                    color[rgbPerm[colorIdx + 1]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
                     colorIdx++;
                     if (colorIdx == 3) {
@@ -265,11 +290,12 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         curr = curr.withColor(0xFF << 24 | color[rgbPerm[1]] << 16 | color[rgbPerm[2]] << 8 | color[rgbPerm[3]]);
                         state = 1;
                     }
+
                     continue;
                     // </editor-fold>
                 case 10:
                     // <editor-fold desc="Reading color argb">
-                    end = readIntColor(rawText, start);
+                    end = readNumber(rawText, start);
                     color[argbPerm[colorIdx]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
                     colorIdx++;
@@ -278,11 +304,12 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         curr = curr.withColor(color[argbPerm[0]] << 24 | color[argbPerm[1]] << 16 | color[argbPerm[2]] << 8 | color[argbPerm[3]]);
                         state = 1;
                     }
+
                     continue;
                     // </editor-fold>
                 case 11:
                     // <editor-fold desc="Reading color rgba">
-                    end = readIntColor(rawText, start);
+                    end = readNumber(rawText, start);
                     color[argbPerm[colorIdx]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
                     colorIdx++;
@@ -291,6 +318,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         curr = curr.withColor(color[rgbPerm[0]] << 24 | color[rgbPerm[1]] << 16 | color[rgbPerm[2]] << 8 | color[rgbPerm[3]]);
                         state = 1;
                     }
+
                     continue;
                     // </editor-fold>
                 case 12:
@@ -305,6 +333,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 1;
                         continue;
                     }
+
                     curr = curr.withColor(colorIdx);
                     colorIdx = 0;
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
@@ -313,12 +342,13 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 0;
                         continue;
                     }
+
                     state = 1;
                     continue;
                     // </editor-fold>
                 case 13:
                     // <editor-fold desc="Reading color hsl">
-                    end = readFloatColor(rawText, start);
+                    end = readNumber(rawText, start);
                     hsl[colorIdx] = Float.parseFloat(rawText.substring(start, end));
                     start = end;
                     colorIdx++;
@@ -329,11 +359,17 @@ final class KirinoStyledTextParser implements StyledTextParser{
                             curr = curr.withColor(0xFF << 24 | colorIdx << 16 | colorIdx << 8 | colorIdx);
                             colorIdx = 0;
                             state = 1;
+
                             continue;
                         }
-                        q = hsl[2] < .5 ? hsl[2] * (1 + hsl[1]) : hsl[2] + hsl[1] - hsl[1] * hsl[2];
+
+                        q = hsl[2] < 0.5f ? hsl[2] * (1 + hsl[1]) : hsl[2] + hsl[1] - hsl[1] * hsl[2];
                         p = 2 * hsl[2] - q;
-                        curr = curr.withColor(0xFF << 24 | Math.round(hueToRgb(p, q, hsl[0] + 0.333333333f) * 255) << 16 | Math.round(hueToRgb(p, q, hsl[0]) * 255) << 8 | Math.round(hueToRgb(p, q, hsl[0] - 0.333333333f) * 255));
+
+                        curr = curr.withColor(0xFF << 24
+                                | Math.round(hueToRgb(p, q, hsl[0] + 0.333333333f) * 255) << 16
+                                | Math.round(hueToRgb(p, q, hsl[0]) * 255) << 8
+                                | Math.round(hueToRgb(p, q, hsl[0] - 0.333333333f) * 255));
                         state = 1;
                     }
                     // </editor-fold>
@@ -342,16 +378,23 @@ final class KirinoStyledTextParser implements StyledTextParser{
     }
 
     private int readText(@NonNull String rawText, int start) {
+        Preconditions.checkNotNull(rawText);
+
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_PREFIX
                     || rawText.charAt(end) == CONTROL_ESCAPE
-                    || rawText.charAt(end) == CONTROL_END)
+                    || rawText.charAt(end) == CONTROL_END) {
                 return end;
+            }
         }
+
         return rawText.length();
     }
 
     private int readHintName(@NonNull String rawText, int start, StringBuilder hintBuilder) {
+        Preconditions.checkNotNull(rawText);
+        Preconditions.checkNotNull(hintBuilder);
+
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR
                     || rawText.charAt(end) == CONTROL_ASSIGNMENT
@@ -360,13 +403,18 @@ final class KirinoStyledTextParser implements StyledTextParser{
                 return end;
             }
         }
+
         return rawText.length();
     }
 
     private @NonNull TextStyle newStyleFromFlags(final @NonNull TextStyle prev, final int hintIndex) {
+        Preconditions.checkNotNull(prev);
+
         int hint = prev.hint();
-        if (hintIndex-8 == 10)
+        if (hintIndex - 8 == 10) {
             return TextStyle.DEFAULT;
+        }
+
         hint = switch (hintIndex - 8) {
             case 0 -> {
                 hint = TextHintLayout.STRIKETHROUGH_OUTLINE_ENABLED.set(hint, true);
@@ -393,6 +441,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
     }
 
     private int readHint(@NonNull String rawText, int start, StringBuilder hintBuilder) {
+        Preconditions.checkNotNull(rawText);
+        Preconditions.checkNotNull(hintBuilder);
+
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR
                     || rawText.charAt(end) == CONTROL_SUFFIX) {
@@ -400,44 +451,55 @@ final class KirinoStyledTextParser implements StyledTextParser{
                 return end;
             }
         }
+
         return rawText.length();
     }
 
     private int readHexColor(@NonNull String rawText, int start) {
+        Preconditions.checkNotNull(rawText);
+
         for (int end = start; end < rawText.length(); end++) {
-            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == CONTROL_SUFFIX | end - start == 8)
+            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == CONTROL_SUFFIX || end - start == 8) {
                 return end;
+            }
         }
+
         return rawText.length();
     }
 
-    private int readIntColor(@NonNull String rawText, int start) {
-        for (int end = start; end < rawText.length(); end++) {
-            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')')
-                return end;
-        }
-        return rawText.length();
-    }
+    private int readNumber(@NonNull String rawText, int start) {
+        Preconditions.checkNotNull(rawText);
 
-    private int readFloatColor(@NonNull String rawText, int start) {
         for (int end = start; end < rawText.length(); end++) {
-            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')')
+            if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')') {
                 return end;
+            }
         }
+
         return rawText.length();
     }
 
     private float hueToRgb(float p, float q, float t) {
-        if (t < 0)
+        if (t < 0) {
             t += 1;
-        if (t > 1)
+        }
+
+        if (t > 1) {
             t -= 1;
-        if (t < .166666666f)
+        }
+
+        if (t < .166666666f) { // t < 1/6
             return p + (q - p) * 6 * t;
-        if (t < .5f)
+        }
+
+        if (t < .5f) {
             return q;
-        if (t < .666666666f)
+        }
+
+        if (t < .666666666f) { // t < 2/3
             return p + (q - p) * (.666666666f - t) * 6;
+        }
+
         return p;
     }
 
