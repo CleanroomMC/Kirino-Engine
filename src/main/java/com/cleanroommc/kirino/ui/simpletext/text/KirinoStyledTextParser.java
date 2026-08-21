@@ -20,6 +20,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
     }
 
     @Override
+    @SuppressWarnings("null")
     public void parse(@NonNull String rawText, @NonNull StyledTextBuilder builder) {
         Stack<TextStyle> styleStack = new ObjectArrayList<>();
         StringBuilder internalBuilder = new StringBuilder();
@@ -58,6 +59,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
         for (int start = 0; start < rawText.length(); start++) {
             switch (state) {
                 case 0:
+                    // <editor-fold desc="Add text">
                     if (rawText.charAt(start) == CONTROL_PREFIX) {
                         state = 1;
                         continue;
@@ -79,7 +81,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     builder.appendLiteral(rawText, start, end);
                     start = end-1;
                     continue;
+                    // </editor-fold>
                 case 1:
+                    // <editor-fold desc="Hint detected, reading hint field name">
                     if (rawText.charAt(start) == CONTROL_SUFFIX) {
                         builder.style(curr);
                         styleStack.push(curr);
@@ -104,7 +108,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         continue;
                     }
                     continue;
+                    // </editor-fold>
                 case 2:
+                    // <editor-fold desc="Reading outline color">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -121,7 +127,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 3:
+                    // <editor-fold desc="Reading strikethrough color">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -138,7 +146,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 4:
+                    // <editor-fold desc="Reading strikethrough outline color">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -155,7 +165,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 5:
+                    // <editor-fold desc="Reading underline color">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -174,7 +186,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 6:
+                    // <editor-fold desc="Reading color type">
                     if (rawText.charAt(start) == '#') {
                         state = 8;
                         continue;
@@ -202,7 +216,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     state = 12;
                     start--;
                     continue;
+                    // </editor-fold>
                 case 7:
+                    // <editor-fold desc="Reading size">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -217,7 +233,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         } else state = 1;
                     }
                     continue;
+                    // </editor-fold>
                 case 8:
+                    // <editor-fold desc="Reading color hex">
                     end = readHexColor(rawText, start);
                     try {
                         colorIdx = Integer.parseUnsignedInt(rawText.substring(start, end), 16);
@@ -235,7 +253,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 9:
+                    // <editor-fold desc="Reading color rgb">
                     end = readIntColor(rawText, start);
                     color[rgbPerm[colorIdx+1]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
@@ -246,7 +266,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 1;
                     }
                     continue;
+                    // </editor-fold>
                 case 10:
+                    // <editor-fold desc="Reading color argb">
                     end = readIntColor(rawText, start);
                     color[argbPerm[colorIdx]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
@@ -257,7 +279,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 1;
                     }
                     continue;
+                    // </editor-fold>
                 case 11:
+                    // <editor-fold desc="Reading color rgba">
                     end = readIntColor(rawText, start);
                     color[argbPerm[colorIdx]] = (short) (Short.parseShort(rawText.substring(start, end)) & 0xFF);
                     start = end;
@@ -268,7 +292,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         state = 1;
                     }
                     continue;
+                    // </editor-fold>
                 case 12:
+                    // <editor-fold desc="Reading color name">
                     end = readHint(rawText, start, internalBuilder);
                     start = end;
                     tmp = internalBuilder.toString().trim();
@@ -289,7 +315,9 @@ final class KirinoStyledTextParser implements StyledTextParser{
                     }
                     state = 1;
                     continue;
+                    // </editor-fold>
                 case 13:
+                    // <editor-fold desc="Reading color hsl">
                     end = readFloatColor(rawText, start);
                     hsl[colorIdx] = Float.parseFloat(rawText.substring(start, end));
                     start = end;
@@ -308,6 +336,7 @@ final class KirinoStyledTextParser implements StyledTextParser{
                         curr = curr.withColor(0xFF << 24 | Math.round(hueToRgb(p, q, hsl[0] + 0.333333333f) * 255) << 16 | Math.round(hueToRgb(p, q, hsl[0]) * 255) << 8 | Math.round(hueToRgb(p, q, hsl[0] - 0.333333333f) * 255));
                         state = 1;
                     }
+                    // </editor-fold>
             }
         }
     }
