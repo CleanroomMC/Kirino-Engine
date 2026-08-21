@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.process.graphics.install;
 
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
+import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.RenderStructure;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.world.ModuleInstaller;
@@ -10,7 +11,11 @@ import com.cleanroommc.kirino.engine.world.context.WorldContext;
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.gl.debug.*;
 import com.google.common.base.Preconditions;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
+
+import java.util.List;
 
 public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
 
@@ -24,6 +29,19 @@ public class GraphicsWorldInstaller implements ModuleInstaller<Graphics> {
         GraphicsWorldView view = castGraphics(context);
 
         checkRuntimeConfig(view.rs());
+
+        // must be enabled at the first
+        if (context.rs().enableKhrDebug) {
+            final Logger debugLogger = LogManager.getLogger("Kirino KHRDebug");
+            debugLogger.info("Kirino KHRDebug service started.");
+            KHRDebug.enable(debugLogger, List.of(
+                    new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
+                    new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
+            ShutdownManager.register(() -> {
+                KHRDebug.disable();
+                debugLogger.info("Kirino KHRDebug service ended. Debug message callback released.");
+            });
+        }
 
         GraphicsRuntimeBundleInit.init(view);
         BuiltinShaderBundleInit.init(view);

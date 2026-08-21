@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.debug;
 
+import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
@@ -11,7 +12,9 @@ import java.nio.IntBuffer;
 import java.util.List;
 
 public final class KHRDebug {
-    private static Logger LOGGER;
+
+    private static Logger logger;
+    private static GLDebugMessageCallback callback;
 
     private static boolean enable = false;
 
@@ -20,21 +23,24 @@ public final class KHRDebug {
     }
 
     /**
-     * <p>Note: <b>it must never be called by clients!</b></p>
+     * <p>Note: <b>It must never be called by clients!</b></p>
      */
     public static void enable(@NonNull Logger logger, @NonNull List<@NonNull DebugMessageFilter> messageFilters) {
+        Preconditions.checkNotNull(logger);
+        Preconditions.checkNotNull(messageFilters);
+        for (DebugMessageFilter filter : messageFilters) {
+            Preconditions.checkNotNull(filter);
+        }
+
         if (enable) {
             return;
         }
 
-        LOGGER = logger;
+        KHRDebug.logger = logger;
 
-        GL11.glEnable(GL43.GL_DEBUG_OUTPUT);
-        GL11.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
-        GLDebugMessageCallback callback = GLDebugMessageCallback.create((source, type, id, severity, length, message, userParam) -> {
+        callback = GLDebugMessageCallback.create((source, type, id, severity, length, message, userParam) -> {
             String msg = GLDebugMessageCallback.getMessage(length, message);
-            log(source, type, id, severity, msg);
+            logMessage(source, type, id, severity, userParam, msg);
         });
 
         GL43C.glDebugMessageCallback(callback, 0);
@@ -43,14 +49,22 @@ public final class KHRDebug {
         GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, (IntBuffer) null, false);
 
         for (DebugMessageFilter filter : messageFilters) {
-            GL43.glDebugMessageControl(filter.getSource().glValue, filter.getType().glValue, filter.getSeverity().glValue, (IntBuffer) null, true);
+            GL43.glDebugMessageControl(
+                    filter.getSource().glValue,
+                    filter.getType().glValue,
+                    filter.getSeverity().glValue,
+                    (IntBuffer) null,
+                    true);
         }
+
+        GL11.glEnable(GL43.GL_DEBUG_OUTPUT);
+        GL11.glEnable(GL43.GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
         enable = true;
     }
 
     /**
-     * <p>Note: <b>it must never be called by clients!</b></p>
+     * <p>Note: <b>It must never be called by clients!</b></p>
      */
     public static void disable() {
         if (!enable) {
@@ -62,43 +76,63 @@ public final class KHRDebug {
 
         GL43C.glDebugMessageCallback(null, 0);
 
-        GL43.glDebugMessageControl(GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, GL11.GL_DONT_CARE, (IntBuffer) null, false);
+        if (callback != null) {
+            callback.free();
+            callback = null;
+        }
 
         enable = false;
     }
 
-    private static void log(int source, int type, int id, int severity, String message) {
-        StringBuilder builder = new StringBuilder();
+    private static void logMessage(int source, int type, int id, int severity, long userParam, String message) {
+        DebugMsgSource msgSource = DebugMsgSource.parse(source);
+        DebugMsgType msgType = DebugMsgType.parse(type);
+        DebugMsgSeverity msgSeverity = DebugMsgSeverity.parse(severity);
 
-        DebugMsgSource source1 = DebugMsgSource.parse(source);
-        DebugMsgType type1 = DebugMsgType.parse(type);
-        DebugMsgSeverity severity1 = DebugMsgSeverity.parse(severity);
+        StringBuilder builder = new StringBuilder(256);
 
         builder.append("OpenGL Debug: ")
-                .append(String.format("(Source=%s, ", source1.toString()))
-                .append(String.format("Type=%s, ", type1.toString()))
-                .append(String.format("Severity=%s, ", severity1.toString()))
-                .append(String.format("ID=%d) ", id))
-                .append(message).append(" Stack Trace:\n");
+                .append("(Source=").append(msgSource)
+                .append(", Type=").append(msgType)
+                .append(", Severity=").append(msgSeverity)
+                .append(", ID=").append(id)
+                .append(") ")
+                .append(message);
 
-        for (StackTraceElement stackTraceElement : new Exception().getStackTrace()) {
-            builder.append('\t').append("at")
-                    .append(' ')
-                    .append(stackTraceElement.getClassName())
-                    .append('.')
-                    .append(stackTraceElement.getMethodName())
-                    .append('(')
-                    .append(stackTraceElement.getFileName())
-                    .append(':')
-                    .append(stackTraceElement.getLineNumber())
-                    .append(')')
-                    .append('\n');
-        }
+        appendCallStack(builder);
 
-        LOGGER.warn(builder.toString());
+        logger.warn(builder.toString());
     }
 
-    public static void pushGroup(String name) {
+    private static void appendCallStack(StringBuilder builder) {
+        builder.append("\nCall stack:");
+
+        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+
+        for (StackTraceElement frame : stack) {
+            String className = frame.getClassName();
+            if (className.equals(Thread.class.getName()) || className.equals(KHRDebug.class.getName())) {
+                continue;
+            }
+
+            builder.append("\n  ")
+                    .append(className)
+                    .append('#')
+                    .append(frame.getMethodName());
+
+            if (frame.getFileName() != null) {
+                builder.append(" [").append(frame.getFileName());
+                if (frame.getLineNumber() >= 0) {
+                    builder.append(':').append(frame.getLineNumber());
+                }
+                builder.append(']');
+            }
+        }
+    }
+
+    public static void pushGroup(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
         GL43.glPushDebugGroup(GL43.GL_DEBUG_SOURCE_APPLICATION, 1, name);
     }
 
@@ -106,7 +140,9 @@ public final class KHRDebug {
         GL43.glPopDebugGroup();
     }
 
-    public static void notify(String arg) {
+    public static void notify(@NonNull String arg) {
+        Preconditions.checkNotNull(arg);
+
         GL43.glDebugMessageInsert(GL43.GL_DEBUG_SOURCE_APPLICATION, GL43.GL_DEBUG_TYPE_MARKER, 1, GL43.GL_DEBUG_SEVERITY_NOTIFICATION, arg);
     }
 }

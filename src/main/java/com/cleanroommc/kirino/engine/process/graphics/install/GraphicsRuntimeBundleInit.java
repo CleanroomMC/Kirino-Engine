@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.process.graphics.install;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.debug.hud.InGameDebugHUDManager;
@@ -35,7 +34,6 @@ import org.lwjgl.opengl.GL11C;
 import org.lwjgl.opengl.GL30;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -188,11 +186,5 @@ public final class GraphicsRuntimeBundleInit {
         storage.sealResource(context.graphicsb().debugHudManager);
         storage.sealResource(context.graphicsb().shaderRegistry);
         storage.sealResource(context.graphicsb().glKnowledge);
-
-        if (context.rs().enableKhrDebug) {
-            KHRDebug.enable(KirinoCommonCore.LOGGER, List.of(
-                    new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.ERROR, DebugMsgSeverity.ANY),
-                    new DebugMessageFilter(DebugMsgSource.ANY, DebugMsgType.MARKER, DebugMsgSeverity.ANY)));
-        }
     }
 }
