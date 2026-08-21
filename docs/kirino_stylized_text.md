@@ -19,14 +19,14 @@ A semicolon separates each style hint.
 
 ### Fields
 
-|          Field name           |  Field abbreviation  |         What is it?         |                                                                                                                                    Value format |
-|:-----------------------------:|:--------------------:|:---------------------------:|------------------------------------------------------------------------------------------------------------------------------------------------:|
-|      `color` or `colour`      |         `c`          |         Text color          | Hexadecimal color code in the `#AARRGGBB` format, 8-bit color specified as `rgb(r,g,b)`, `argb(a,r,g,b)`, or `rgba(r,g,b,a)`, or a named color. |
-|        `outline color`        |         `oc`         |        Outline color        |                                                                                                                                    Named color. |
-|     `strikethrough color`     |        `ssc`         |     Strikethrough color     |                                                                                                                                    Named color. |
-| `strikethrough outline color` |        `ssoc`        | Strikethrough outline color |                                                                                                                                    Named color. |
-|       `underline color`       |         `uc`         |       Underline color       |                                                                                                                                    Named color. |
-|            `size`             |         `s`          |          Font size          |                                                                                                                           Floating point value. |
+|          Field name           |  Field abbreviation  |         What is it?         |                                                                                                                                                                                   Value format |
+|:-----------------------------:|:--------------------:|:---------------------------:|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+|      `color` or `colour`      |         `c`          |         Text color          | Hexadecimal color code in the `#AARRGGBB` format, 8-bit color specified as `rgb(r;g;b)`, `argb(a;r,g;b)`, `rgba(r;g,b;a)` or floating point color `hsl(0⩽h⩽360;0⩽s⩽1;0⩽l⩽1)` or a named color. |
+|        `outline color`        |         `oc`         |        Outline color        |                                                                                                                                                                                   Named color. |
+|     `strikethrough color`     |        `ssc`         |     Strikethrough color     |                                                                                                                                                                                   Named color. |
+| `strikethrough outline color` |        `ssoc`        | Strikethrough outline color |                                                                                                                                                                                   Named color. |
+|       `underline color`       |         `uc`         |       Underline color       |                                                                                                                                                                                   Named color. |
+|            `size`             |         `s`          |          Font size          |                                                                                                                                                                          Floating point value. |
 
 The word `color` can be replaced with `colour` in any style hint.
 
