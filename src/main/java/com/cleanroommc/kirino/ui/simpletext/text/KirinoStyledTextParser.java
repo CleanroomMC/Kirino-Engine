@@ -23,9 +23,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     @Override
     @SuppressWarnings("null")
     public void parse(@NonNull String rawText, @NonNull StyledTextBuilder builder) {
-        Preconditions.checkNotNull(rawText);
-        Preconditions.checkNotNull(builder);
-
         Stack<TextStyle> styleStack = new ObjectArrayList<>();
         StringBuilder internalBuilder = new StringBuilder();
         TextStyle curr = builder.defaultStyle();
@@ -378,8 +375,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private int readText(@NonNull String rawText, int start) {
-        Preconditions.checkNotNull(rawText);
-
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_PREFIX
                     || rawText.charAt(end) == CONTROL_ESCAPE
@@ -392,9 +387,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private int readHintName(@NonNull String rawText, int start, StringBuilder hintBuilder) {
-        Preconditions.checkNotNull(rawText);
-        Preconditions.checkNotNull(hintBuilder);
-
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR
                     || rawText.charAt(end) == CONTROL_ASSIGNMENT
@@ -408,8 +400,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private @NonNull TextStyle newStyleFromFlags(final @NonNull TextStyle prev, final int hintIndex) {
-        Preconditions.checkNotNull(prev);
-
         int hint = prev.hint();
         if (hintIndex - 8 == 10) {
             return TextStyle.DEFAULT;
@@ -441,9 +431,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private int readHint(@NonNull String rawText, int start, StringBuilder hintBuilder) {
-        Preconditions.checkNotNull(rawText);
-        Preconditions.checkNotNull(hintBuilder);
-
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR
                     || rawText.charAt(end) == CONTROL_SUFFIX) {
@@ -456,8 +443,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private int readHexColor(@NonNull String rawText, int start) {
-        Preconditions.checkNotNull(rawText);
-
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == CONTROL_SUFFIX || end - start == 8) {
                 return end;
@@ -468,8 +453,6 @@ final class KirinoStyledTextParser implements StyledTextParser {
     }
 
     private int readNumber(@NonNull String rawText, int start) {
-        Preconditions.checkNotNull(rawText);
-
         for (int end = start; end < rawText.length(); end++) {
             if (rawText.charAt(end) == CONTROL_SEPARATOR || rawText.charAt(end) == ')') {
                 return end;
