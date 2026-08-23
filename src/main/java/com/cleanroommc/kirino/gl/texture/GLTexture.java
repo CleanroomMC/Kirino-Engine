@@ -480,7 +480,7 @@ public class GLTexture extends GLDisposable {
         return maxMipmapLevel() + 1;
     }
 
-    public void dispose() {
+    protected void dispose() {
         GL11.glDeleteTextures(textureID);
     }
 }

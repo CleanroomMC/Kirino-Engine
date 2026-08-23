@@ -82,7 +82,7 @@ public class Shader extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         GL20.glDeleteShader(shaderID);
     }
 }

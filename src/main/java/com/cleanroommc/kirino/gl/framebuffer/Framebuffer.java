@@ -108,7 +108,7 @@ public class Framebuffer extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         GL30.glDeleteFramebuffers(fboID);
     }
 

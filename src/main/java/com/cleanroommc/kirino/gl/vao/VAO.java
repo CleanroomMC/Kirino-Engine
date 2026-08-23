@@ -80,7 +80,7 @@ public class VAO extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         GL30.glDeleteVertexArrays(vaoID);
     }
 }

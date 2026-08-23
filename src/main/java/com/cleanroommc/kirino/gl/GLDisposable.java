@@ -15,7 +15,7 @@ public abstract class GLDisposable implements Comparable<GLDisposable> {
         return 0;
     }
 
-    public abstract void dispose();
+    protected abstract void dispose();
 
     @Override
     public final int compareTo(GLDisposable other) {

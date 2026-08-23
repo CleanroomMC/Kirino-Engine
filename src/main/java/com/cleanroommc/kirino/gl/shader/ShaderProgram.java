@@ -65,7 +65,7 @@ public class ShaderProgram extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         for (Shader shader : shaders) {
             GL20.glDetachShader(programID, shader.getShaderID());
         }

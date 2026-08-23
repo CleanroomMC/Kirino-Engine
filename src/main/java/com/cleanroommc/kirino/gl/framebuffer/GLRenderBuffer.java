@@ -66,7 +66,7 @@ public class GLRenderBuffer extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         GL30.glDeleteRenderbuffers(rboID);
     }
 }

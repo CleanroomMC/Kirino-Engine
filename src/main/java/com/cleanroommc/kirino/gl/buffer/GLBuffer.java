@@ -20,7 +20,7 @@ public class GLBuffer extends GLDisposable {
     }
 
     @Override
-    public void dispose() {
+    protected void dispose() {
         GL15.glDeleteBuffers(bufferID);
     }
 }
