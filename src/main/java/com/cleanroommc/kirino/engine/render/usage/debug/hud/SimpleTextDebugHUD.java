@@ -115,6 +115,8 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                 .appendBelowStyled(new StyledText("abc§c=#FF0000"))
                 .appendBelowStyled(new StyledText("abc§c=rgb(255;0;0"))
                 .appendBelowStyled(new StyledText("abc§uc=red]123"))
+                .appendBelowStyled(new StyledText("]\\§abc [\\§abc"))
+                .appendBelowStyled(new StyledText("]\\§abc [\\\\§abc"))
                 .endDraw();
     }
 }
