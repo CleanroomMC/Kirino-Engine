@@ -2,20 +2,29 @@ package com.cleanroommc.kirino.ui.simpletext.text;
 
 import org.jspecify.annotations.NonNull;
 
-final class MinecraftStyledTextParser implements StyledTextParser {
+class MinecraftStyledTextParser implements StyledTextParser {
 
     static final MinecraftStyledTextParser INSTANCE = new MinecraftStyledTextParser();
 
     private static final char CONTROL_PREFIX = '§';
 
-    private MinecraftStyledTextParser() {
+    protected MinecraftStyledTextParser() {
+    }
+
+    protected @NonNull TextStyle transformStyle(@NonNull TextStyle style) {
+        return style;
+    }
+
+    private void setStyle(@NonNull StyledTextBuilder builder, @NonNull TextStyle style) {
+        builder.style(transformStyle(style));
     }
 
     /**
      * Helper for the Minecraft FontRenderer specs.
      * <p>
-     * Clears {@link TextHintLayout#OBFUSCATED}, {@link TextHintLayout#BOLD}, {@link TextHintLayout#ITALIC},
-     * {@link TextHintLayout#STRIKETHROUGH}, {@link TextHintLayout#UNDERLINE} altogether
+     * Clears {@link TextHintLayout#OBFUSCATED}, {@link TextHintLayout#BOLD},
+     * {@link TextHintLayout#ITALIC}, {@link TextHintLayout#STRIKETHROUGH},
+     * {@link TextHintLayout#UNDERLINE} altogether.
      */
     private static int clearMinecraftFormatting(int hint) {
         hint = TextHintLayout.OBFUSCATED.set(hint, false);
@@ -29,7 +38,8 @@ final class MinecraftStyledTextParser implements StyledTextParser {
     /**
      * Helper for the Minecraft FontRenderer specs.
      * <p>
-     * Sets {@link TextHintLayout#STRIKETHROUGH_COLOR}, {@link TextHintLayout#UNDERLINE_COLOR} altogether
+     * Sets {@link TextHintLayout#STRIKETHROUGH_COLOR},
+     * {@link TextHintLayout#UNDERLINE_COLOR} altogether.
      */
     private static int setMinecraftDecoColor(int hint, int paletteIndex) {
         hint = TextHintLayout.STRIKETHROUGH_COLOR.set(hint, paletteIndex);
@@ -67,7 +77,7 @@ final class MinecraftStyledTextParser implements StyledTextParser {
     @Override
     public void parse(@NonNull String rawText, @NonNull StyledTextBuilder builder) {
         TextStyle baseStyle = createBaseStyle(builder.defaultStyle());
-        builder.style(baseStyle);
+        setStyle(builder, baseStyle);
 
         int start = 0;
         int index = 0;
@@ -94,7 +104,7 @@ final class MinecraftStyledTextParser implements StyledTextParser {
         builder.appendLiteral(rawText, start, rawText.length());
     }
 
-    private static void applyFormattingCode(char code, TextStyle baseStyle, StyledTextBuilder builder) {
+    private void applyFormattingCode(char code, @NonNull TextStyle baseStyle, @NonNull StyledTextBuilder builder) {
         int colorIndex = vanillaColorIndex(code);
         if (colorIndex >= 0) {
             applyColor(colorIndex, baseStyle, builder);
@@ -107,23 +117,23 @@ final class MinecraftStyledTextParser implements StyledTextParser {
             case 'm' -> enable(TextHintLayout.STRIKETHROUGH, builder);
             case 'n' -> enable(TextHintLayout.UNDERLINE, builder);
             case 'o' -> enable(TextHintLayout.ITALIC, builder);
-            case 'r' -> builder.style(baseStyle);
+            case 'r' -> setStyle(builder, baseStyle);
             default -> applyColor(15, baseStyle, builder);
         }
     }
 
-    private static void applyColor(int paletteIndex, TextStyle baseStyle, StyledTextBuilder builder) {
+    private void applyColor(int paletteIndex, @NonNull TextStyle baseStyle, @NonNull StyledTextBuilder builder) {
         TextStyle current = builder.currentStyle();
         int hint = current.hint();
         hint = clearMinecraftFormatting(hint);
         hint = setMinecraftDecoColor(hint, paletteIndex);
         int color = TextColorPalette32.replaceRgb(baseStyle.color(), TextColorPalette32.rgb(paletteIndex));
-        builder.style(new TextStyle(1f, color, hint));
+        setStyle(builder, new TextStyle(1f, color, hint));
     }
 
-    private static void enable(TextHintLayout.Bit bit, StyledTextBuilder builder) {
+    private void enable(TextHintLayout.@NonNull Bit bit, @NonNull StyledTextBuilder builder) {
         TextStyle current = builder.currentStyle();
         int hint = bit.set(current.hint(), true);
-        builder.style(new TextStyle(1f, current.color(), hint));
+        setStyle(builder, new TextStyle(1f, current.color(), hint));
     }
 }

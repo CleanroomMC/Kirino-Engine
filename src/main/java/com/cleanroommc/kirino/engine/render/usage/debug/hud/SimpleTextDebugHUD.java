@@ -85,11 +85,24 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                                 "这是一个用于测试自动换行的中文段落，包含逗号、句号，以及一些比较长的内容。" +
                                 "日本語のテストです。これは自動改行、句読点、そして英単語との混在を確認するための文章です。" +
                                 "한국어 테스트입니다. 한글과 English words, 中文字符, 日本語を一緒に表示して、줄바꿈이 자연스럽게 되는지 확인합니다. " +
-                                "Finally, here is aVeryVeryVeryVeryVeryLongEnglishWord§6asd§bqwe§klolasfdsg§r§6§l123§r§b§m456§r§6§nasd§r§b§oitalic§rThatShouldForceEmergencyWrapping.", StyledText.Syntax.MINECRAFT),
+                                "Finally, here is aVeryVeryVeryVeryVeryLongEnglishWord§6asd§bqwe§klolasfdsg§r§6§l123§r§b§m456§r§6§nasd§r§b§oitalic§rThatShouldForceEmergencyWrapping.", StyledText.Syntax.MINECRAFT_SHADOW_ON),
                         220,
                         30,
                         80)
                 .endDraw();
+
+//        ICS.instance().text().begin();
+//        ICS.instance().text().fontRenderer().drawSplitString(
+//                "Hello world,\nthis is a styled paragraph wrapping test. " +
+//                "这是一个用于测试自动换行的中文段落，包含逗号、句号，以及一些比较长的内容。" +
+//                "日本語のテストです。これは自動改行、句読点、そして英単語との混在を確認するための文章です。" +
+//                "한국어 테스트입니다. 한글과 English words, 中文字符, 日本語を一緒に表示して、줄바꿈이 자연스럽게 되는지 확인합니다. " +
+//                "Finally, here is aVeryVeryVeryVeryVeryLongEnglishWord§6asd§bqwe§klolasfdsg§r§6§l123§r§b§m456§r§6§nasd§r§b§oitalic§rThatShouldForceEmergencyWrapping.",
+//                220,
+//                30,
+//                80,
+//                -1);
+//        ICS.instance().text().endDraw();
 
         ICS.instance().text()
                 .begin()

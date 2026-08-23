@@ -3,6 +3,8 @@ package com.cleanroommc.kirino.ui.simpletext;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.ui.simplegui.CmdRectBuilder;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
+import com.cleanroommc.kirino.ui.simpletext.facade.FontRendererFacade;
+import com.cleanroommc.kirino.ui.simpletext.facade.SimpleTextFontRendererFacade;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.ui.simpletext.text.*;
@@ -50,6 +52,15 @@ public class SimpleTextRuntime {
 
     private final ParagraphLineBreaker paragraphLineBreaker;
 
+    @SuppressWarnings("deprecation")
+    private final FontRendererFacade fontRendererFacade;
+
+    @Deprecated
+    public FontRendererFacade fontRenderer() {
+        return fontRendererFacade;
+    }
+
+    @SuppressWarnings("deprecation")
     public SimpleTextRuntime(
             @NonNull BiFunction<ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
@@ -90,6 +101,8 @@ public class SimpleTextRuntime {
         BreakIterator lineBreakIterator = BreakIterator.getLineInstance(Locale.ROOT);
         BreakIterator characterBreakIterator = BreakIterator.getCharacterInstance(Locale.ROOT);
         paragraphLineBreaker = new ParagraphLineBreaker(lineBreakIterator, characterBreakIterator);
+
+        fontRendererFacade = new SimpleTextFontRendererFacade(this, paragraphLineBreaker);
     }
     //</editor-fold>
 
@@ -134,6 +147,9 @@ public class SimpleTextRuntime {
 
     //<editor-fold desc="simulate">
     public SimpleTextProducer.@NonNull LineInfo simulate(@NonNull String text, float x, float y) {
+        Preconditions.checkNotNull(text);
+        Preconditions.checkArgument(!text.isEmpty(), "Text must not be empty.");
+
         SimpleTextProducer.LineInfo outLineInfo = new SimpleTextProducer.LineInfo();
         dummyTextProducer.beginBatch();
         dummyTextProducer.append(text, x, y, dummyTextProducer.standardFontSize(), outLineInfo);
@@ -142,6 +158,9 @@ public class SimpleTextRuntime {
     }
 
     public SimpleTextProducer.@NonNull LineInfo simulate(@NonNull String text, float x, float y, float fontSize) {
+        Preconditions.checkNotNull(text);
+        Preconditions.checkArgument(!text.isEmpty(), "Text must not be empty.");
+
         SimpleTextProducer.LineInfo outLineInfo = new SimpleTextProducer.LineInfo();
         dummyTextProducer.beginBatch();
         dummyTextProducer.append(text, x, y, fontSize, outLineInfo);

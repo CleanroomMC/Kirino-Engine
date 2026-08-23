@@ -9,7 +9,8 @@ public final class StyledText {
 
     public enum Syntax {
         KIRINO(KirinoStyledTextParser.INSTANCE),
-        MINECRAFT(MinecraftStyledTextParser.INSTANCE);
+        MINECRAFT(MinecraftStyledTextParser.INSTANCE),
+        MINECRAFT_SHADOW_ON(MinecraftShadowStyledTextParser.INSTANCE);
 
         private final StyledTextParser parser;
 
@@ -27,10 +28,15 @@ public final class StyledText {
     }
 
     public StyledText(@NonNull String rawText, @NonNull Syntax syntax) {
+        this(rawText, syntax, TextStyle.DEFAULT);
+    }
+
+    public StyledText(@NonNull String rawText, @NonNull Syntax syntax, @NonNull TextStyle defaultStyle) {
         Preconditions.checkNotNull(rawText);
         Preconditions.checkNotNull(syntax);
+        Preconditions.checkNotNull(defaultStyle);
 
-        StyledTextBuilder builder = new StyledTextBuilder(TextStyle.DEFAULT);
+        StyledTextBuilder builder = new StyledTextBuilder(defaultStyle);
         syntax.parser.parse(rawText, builder);
         StyledTextBuilder.Result result = builder.finish();
 
