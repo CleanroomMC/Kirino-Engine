@@ -28,7 +28,7 @@ final class KirinoStyledTextParser implements StyledTextParser {
 
         styleStack.push(builder.defaultStyle());
 
-        // state:
+        // states:
         // 0 - add text
         // 1 - hint detected, reading hint field name
         // 2 - reading outline color
