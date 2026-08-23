@@ -7,7 +7,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.PriorityQueue;
 
 /**
- * It actives itself (<code>active = true</code>) and registers the shutdown hook when the class is loaded.
+ * It activates itself (<code>active = true</code>) and registers the shutdown hook when the class is loaded.
  */
 public final class GLResourceManager {
 
