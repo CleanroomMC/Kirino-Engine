@@ -612,7 +612,7 @@ public class SimpleTextRuntime {
 
         float thickness = decorationThickness(fontSize);
         float baselineY = y + lineInfo.getLineTopToBaseline();
-        float strikeY = baselineY - (lineInfo.getMaxY() - lineInfo.getMinY()) * 0.35f - thickness * 0.5f;
+        float strikeY = baselineY - lineInfo.getLineTopToBaseline() * 0.35f - thickness * 0.5f;
 
         int start = 0;
 

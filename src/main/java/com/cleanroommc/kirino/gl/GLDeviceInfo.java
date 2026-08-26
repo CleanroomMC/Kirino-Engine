@@ -8,6 +8,10 @@ public final class GLDeviceInfo {
     private int versionMajor;
     private int versionMinor;
 
+    public boolean isVersionAtLeast(int major, int minor) {
+        return versionMajor > major || (versionMajor == major && versionMinor >= minor);
+    }
+
     private String vendor;
     private String renderer;
     private String version;

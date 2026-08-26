@@ -18,6 +18,9 @@ import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
@@ -31,78 +34,145 @@ public final class ImmediateClientServices {
         return instance;
     }
 
+    private final ImmediateShaderAccess shaderAccess;
+    private final FreeTypeManager freeTypeManager;
+    private final @Nullable SimpleTextRuntime textRuntime;
+    private final @Nullable SimpleGuiRuntime guiRuntime;
+    private final @Nullable VAO dummyVao;
+
     private ImmediateClientServices() {
+        Preconditions.checkState(FMLCommonHandler.instance().getSide().isClient(),
+                "ImmediateClientServices is for client side only.");
+
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
-
-        AttributeLayout dummyLayout = new AttributeLayout();
-        dummyLayout.push(new Stride(0));
-        dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
-
-        guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
-        SimpleGuiRuntime underlineGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
-        SimpleGuiRuntime strikethroughGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
-
-        ST_Config config = new ST_Config(
-                ST_FontBackendType.FREE_TYPE,
-                48,
-                16,
-                12,
-                FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
-
-        textRuntime = new SimpleTextRuntime(
-                (rl, cfg) -> {
-                    FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
-                    return new FreeTypeFontHandle(face);
-                },
-                (context) -> {
-                    final DefaultTextRenderer renderer = new DefaultTextRenderer(
-                            context,
-                            new Tex2DArrayGlyphAtlas(1024, 1024),
-                            context.getShaderAccess(),
-                            1024);
-                    ShutdownManager.registerAsync(renderer::close);
-                    return renderer;
-                },
-                (context) -> {
-                    return new DefaultTextProducer(context, context.getConfig().pixelSize());
-                },
-                shaderAccess,
-                underlineGui,
-                strikethroughGui,
-                config,
-                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
-//                new ResourceLocation("kirino:fonts/departure_mono/departure_mono_regular.otf"));
-
         ShutdownManager.register(freeTypeManager::destroy);
+
+        if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 3)) {
+            AttributeLayout dummyLayout = new AttributeLayout();
+            dummyLayout.push(new Stride(0));
+            dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
+        } else {
+            dummyVao = null;
+        }
+
+        if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)) {
+            Preconditions.checkNotNull(dummyVao);
+
+            guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
+
+            SimpleGuiRuntime underlineGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
+            SimpleGuiRuntime strikethroughGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
+
+            ST_Config config = new ST_Config(
+                    ST_FontBackendType.FREE_TYPE,
+                    48,
+                    16,
+                    12,
+                    FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+
+            textRuntime = new SimpleTextRuntime(
+                    (rl, cfg) -> {
+                        FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                        return new FreeTypeFontHandle(face);
+                    },
+                    (context) -> {
+                        final DefaultTextRenderer renderer = new DefaultTextRenderer(
+                                context,
+                                new Tex2DArrayGlyphAtlas(1024, 1024),
+                                context.getShaderAccess(),
+                                1024);
+                        ShutdownManager.registerAsync(renderer::close);
+                        return renderer;
+                    },
+                    (context) -> {
+                        return new DefaultTextProducer(context, context.getConfig().pixelSize());
+                    },
+                    shaderAccess,
+                    underlineGui,
+                    strikethroughGui,
+                    config,
+                    new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+        } else {
+            guiRuntime = null;
+            textRuntime = null;
+        }
     }
 
-    private final ImmediateShaderAccess shaderAccess;
-    private final FreeTypeManager freeTypeManager;
-    private final SimpleTextRuntime textRuntime;
-    private final SimpleGuiRuntime guiRuntime;
-    private final VAO dummyVao;
+    /**
+     * It checks if everything here is available, which requires at least GL46.
+     * Feel free to access services without concerns about availability after this call.
+     */
+    public void assertFullAvailability() {
+        Preconditions.checkState(KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)
+                && textRuntime != null
+                && guiRuntime != null
+                && dummyVao != null);
+    }
 
+    //<editor-fold desc="accessors">
+    @NonNull
     public ImmediateShaderAccess shader() {
         return shaderAccess;
     }
 
+    @NonNull
     public FreeTypeManager freetype() {
         return freeTypeManager;
     }
 
+    public boolean textAvailable() {
+        return textRuntime != null;
+    }
+
+    /**
+     * It requires at least GL46. Check {@link #textAvailable()} before accessing
+     * OR simply {@link #assertFullAvailability()} once.
+     */
+    @NonNull
     public SimpleTextRuntime text() {
+        Preconditions.checkState(textRuntime != null,
+                "SimpleTextRuntime requires at least GL46 to initialize. Current context: GL%s",
+                KirinoClientCore.GL_DEVICE_INFO.getVersionMajor() + "" + KirinoClientCore.GL_DEVICE_INFO.getVersionMinor());
+
         return textRuntime;
     }
 
+    public boolean guiAvailable() {
+        return guiRuntime != null;
+    }
+
+    /**
+     * It requires at least GL46. Check {@link #guiAvailable()} before accessing
+     * OR simply {@link #assertFullAvailability()} once.
+     */
+    @NonNull
     public SimpleGuiRuntime gui() {
+        Preconditions.checkState(guiRuntime != null,
+                "SimpleGuiRuntime requires at least GL46 to initialize. Current context: GL%s",
+                KirinoClientCore.GL_DEVICE_INFO.getVersionMajor() + "" + KirinoClientCore.GL_DEVICE_INFO.getVersionMinor());
+
         return guiRuntime;
     }
 
+    public boolean dummyVaoAvailable() {
+        return dummyVao != null;
+    }
+
+    /**
+     * It requires at least GL33. Check {@link #dummyVaoAvailable()} before accessing
+     * OR simply {@link #assertFullAvailability()} once.
+     */
+    @NonNull
     public VAO dummyVao() {
+        Preconditions.checkState(dummyVao != null,
+                "VAO requires at least GL33 to initialize. Current context: GL%s",
+                KirinoClientCore.GL_DEVICE_INFO.getVersionMajor() + "" + KirinoClientCore.GL_DEVICE_INFO.getVersionMinor());
+
         return dummyVao;
     }
+    //</editor-fold>
 
     private static final class MethodHolder {
         static final Delegate DELEGATE;
