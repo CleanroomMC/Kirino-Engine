@@ -40,16 +40,33 @@ public final class ImmediateClientServices {
     private final @Nullable SimpleGuiRuntime guiRuntime;
     private final @Nullable VAO dummyVao;
 
+    private void dispose() {
+        freeTypeManager.destroy();
+        if (textRuntime != null) {
+            try {
+                textRuntime.close();
+            } catch (Exception ignored) {
+            }
+        }
+        if (guiRuntime != null) {
+            try {
+                guiRuntime.close();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     private ImmediateClientServices() {
         Preconditions.checkState(FMLCommonHandler.instance().getSide().isClient(),
                 "ImmediateClientServices is for client side only.");
 
+        ShutdownManager.register(this::dispose);
+
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
-        ShutdownManager.register(freeTypeManager::destroy);
 
-        if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 3)) {
+        if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 0)) {
             AttributeLayout dummyLayout = new AttributeLayout();
             dummyLayout.push(new Stride(0));
             dummyVao = new VAO(dummyLayout, null, (VBOView[]) null);
@@ -77,18 +94,12 @@ public final class ImmediateClientServices {
                         FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
-                    (context) -> {
-                        final DefaultTextRenderer renderer = new DefaultTextRenderer(
-                                context,
-                                new Tex2DArrayGlyphAtlas(1024, 1024),
-                                context.getShaderAccess(),
-                                1024);
-                        ShutdownManager.registerAsync(renderer::close);
-                        return renderer;
-                    },
-                    (context) -> {
-                        return new DefaultTextProducer(context, context.getConfig().pixelSize());
-                    },
+                    (context) -> new DefaultTextRenderer(
+                            context,
+                            new Tex2DArrayGlyphAtlas(1024, 1024),
+                            context.getShaderAccess(),
+                            1024),
+                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
                     shaderAccess,
                     underlineGui,
                     strikethroughGui,
@@ -161,13 +172,13 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * It requires at least GL33. Check {@link #dummyVaoAvailable()} before accessing
+     * It requires at least GL30. Check {@link #dummyVaoAvailable()} before accessing
      * OR simply {@link #assertFullAvailability()} once.
      */
     @NonNull
     public VAO dummyVao() {
         Preconditions.checkState(dummyVao != null,
-                "VAO requires at least GL33 to initialize. Current context: GL%s",
+                "VAO requires at least GL30 to initialize. Current context: GL%s",
                 KirinoClientCore.GL_DEVICE_INFO.getVersionMajor() + "" + KirinoClientCore.GL_DEVICE_INFO.getVersionMinor());
 
         return dummyVao;

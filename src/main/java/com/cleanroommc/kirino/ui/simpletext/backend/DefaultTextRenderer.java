@@ -43,7 +43,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ForkJoinPool;
 
-public class DefaultTextRenderer implements SimpleTextConsumer, AutoCloseable {
+public class DefaultTextRenderer implements SimpleTextConsumer {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino SimpleText DefaultTextRenderer");
 

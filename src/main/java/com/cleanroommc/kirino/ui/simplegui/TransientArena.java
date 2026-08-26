@@ -1,13 +1,12 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
-import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-final class TransientArena {
+final class TransientArena implements AutoCloseable {
 
     private static final float MEM_GROW_FACTOR = 2f;
     private static final int MAX_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -47,10 +46,6 @@ final class TransientArena {
     TransientArena(int initCapacity) {
         capacity = initCapacity;
         buffer = MemoryUtil.memAlloc(initCapacity);
-
-        ShutdownManager.registerAsync(() -> {
-            MemoryUtil.memFree(buffer);
-        });
     }
 
     /**
@@ -73,5 +68,10 @@ final class TransientArena {
 
         buffer.position(target);
         return aligned;
+    }
+
+    @Override
+    public void close() {
+        MemoryUtil.memFree(buffer);
     }
 }

@@ -7,7 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.function.Consumer;
 
-public class SimpleGuiRuntime {
+public class SimpleGuiRuntime implements AutoCloseable {
 
     private final TransientArena arena;
     private final GuiCommandStream stream;
@@ -55,5 +55,12 @@ public class SimpleGuiRuntime {
 
         action.accept(stream);
         return this;
+    }
+
+    @Override
+    public void close() {
+        arena.close();
+        stream.close();
+        renderer.close();
     }
 }

@@ -189,4 +189,9 @@ public class DebugTextRenderer implements SimpleTextConsumer {
 
         program.use0();
     }
+
+    @Override
+    public void close() {
+        // NO OP
+    }
 }

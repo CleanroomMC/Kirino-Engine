@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-public interface SimpleTextProducer {
+public interface SimpleTextProducer extends AutoCloseable {
 
     /**
      * It resembles a builder pattern. Call {@link #set(float, float, float, float, float, float, int, float[])}

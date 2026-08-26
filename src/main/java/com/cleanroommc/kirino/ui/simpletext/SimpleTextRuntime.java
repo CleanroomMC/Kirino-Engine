@@ -19,7 +19,7 @@ import java.util.Locale;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class SimpleTextRuntime {
+public class SimpleTextRuntime implements AutoCloseable {
 
     //<editor-fold desc="boilerplate">
     private final ResourceLocation fontRl;
@@ -60,6 +60,10 @@ public class SimpleTextRuntime {
         return fontRendererFacade;
     }
 
+    /**
+     * <p>Note: It handles <code>underlineGui</code> and <code>strikethroughGui</code> disposal in {@link #close()},
+     * as well as the instances produced by <code>consumerFactory</code> and <code>producerFactory</code>.</p>
+     */
     @SuppressWarnings("deprecation")
     public SimpleTextRuntime(
             @NonNull BiFunction<ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
@@ -969,4 +973,13 @@ public class SimpleTextRuntime {
                 outLineInfo);
     }
     //</editor-fold>
+
+    @Override
+    public void close() throws Exception {
+        textConsumer.close();
+        textProducer.close();
+        dummyTextProducer.close();
+        underlineGui.close();
+        strikethroughGui.close();
+    }
 }

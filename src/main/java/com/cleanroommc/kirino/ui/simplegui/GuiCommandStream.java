@@ -1,12 +1,11 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
-import com.cleanroommc.kirino.engine.ShutdownManager;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-public class GuiCommandStream {
+public class GuiCommandStream implements AutoCloseable {
 
     private static final float MEM_GROW_FACTOR = 2f;
     private static final int MAX_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -17,10 +16,6 @@ public class GuiCommandStream {
     GuiCommandStream(int initCapacity) {
         capacity = initCapacity;
         buffer = MemoryUtil.memAlloc(initCapacity);
-
-        ShutdownManager.registerAsync(() -> {
-            MemoryUtil.memFree(buffer);
-        });
     }
 
     @NonNull
@@ -203,5 +198,10 @@ public class GuiCommandStream {
         buffer.put((byte) (formsLoop ? 1 : 0));
 
         end(start);
+    }
+
+    @Override
+    public void close() {
+        MemoryUtil.memFree(buffer);
     }
 }

@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
-import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
@@ -19,7 +18,7 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-public class GuiRenderer {
+public class GuiRenderer implements AutoCloseable {
 
     private static final float MEM_ALLOC_FACTOR = 1.5f;
 
@@ -87,13 +86,6 @@ public class GuiRenderer {
         rectPayload = new SSBOView(new GLBuffer());
         linesPayload = new SSBOView(new GLBuffer());
         idb = new IDBView(new GLBuffer());
-
-        ShutdownManager.registerAsync(() -> {
-            MemoryUtil.memFree(drawInfoWorkspace);
-            MemoryUtil.memFree(rectPayloadWorkspace);
-            MemoryUtil.memFree(linesPayloadWorkspace);
-            MemoryUtil.memFree(idbWorkspace);
-        });
 
         Shader vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.vert"));
         Shader frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
@@ -620,5 +612,13 @@ public class GuiRenderer {
         IDBView.bindRaw(0);
 
         program.use0();
+    }
+
+    @Override
+    public void close() {
+        MemoryUtil.memFree(drawInfoWorkspace);
+        MemoryUtil.memFree(rectPayloadWorkspace);
+        MemoryUtil.memFree(linesPayloadWorkspace);
+        MemoryUtil.memFree(idbWorkspace);
     }
 }

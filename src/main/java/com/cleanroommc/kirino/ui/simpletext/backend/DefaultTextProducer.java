@@ -345,4 +345,9 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
         return cmdList;
     }
+
+    @Override
+    public void close() {
+        // NO OP
+    }
 }
