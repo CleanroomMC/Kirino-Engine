@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.utils;
 
 import com.google.common.base.Preconditions;
-import net.lenni0451.reflect.JavaBypass;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
