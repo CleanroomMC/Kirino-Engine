@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simpletext.atlas;
 
+import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -15,6 +16,13 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
     public Tex2DGlyphAtlas(int pageWidth, int pageHeight) {
         super(() -> new Texture2DAccessor(true, GLTexture.newDsaTex2D(pageWidth, pageHeight)),
                 pageWidth, pageHeight, true);
+    }
+
+    @Override
+    public void close() {
+        for (int i = 0; i < getPageCount(); i++) {
+            GLResourceManager.disposeEarly(getPage(i).texture);
+        }
     }
 
     @Override

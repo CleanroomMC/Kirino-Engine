@@ -122,6 +122,8 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
     /**
      * It allocates worker pool for itself. Must call {@link #close()} in the end.
+     *
+     * <p>Note: <code>glyphAtlas</code> will also be closed in {@link #close()}.</p>
      */
     public DefaultTextRenderer(
             @NonNull SimpleTextRuntime context,
@@ -525,9 +527,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     }
 
     /**
-     * <p>Note: No need to run <code>close</code> on the GL thread, but must not
-     * run it concurrently with {@link #consume(TextCommandList)}.</p>
-     * <p>Note: The atlas itself is externally owned and is not disposed here.</p>
+     * <p>Note: Must run <code>close</code> on the GL thread.</p>
      */
     @Override
     public void close() {
@@ -546,5 +546,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         glyphCache.clear();
         failedGlyphHistory.clear();
         emptyGlyphHistory.clear();
+
+        glyphAtlas.close();
     }
 }

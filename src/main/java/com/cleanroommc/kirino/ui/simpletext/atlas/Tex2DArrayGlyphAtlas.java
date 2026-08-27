@@ -17,6 +17,11 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
 
     private static final int DEFAULT_INITIAL_LAYER_CAPACITY = 4;
 
+    @Override
+    public void close() {
+        GLResourceManager.disposeEarly(storage.texture.texture);
+    }
+
     public static final class LayerPage {
 
         private final SharedStorage storage;

@@ -192,6 +192,6 @@ public class DebugTextRenderer implements SimpleTextConsumer {
 
     @Override
     public void close() {
-        // NO OP
+        glyphAtlas.close();
     }
 }

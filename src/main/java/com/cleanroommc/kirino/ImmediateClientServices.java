@@ -79,9 +79,6 @@ public final class ImmediateClientServices {
 
             guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
 
-            SimpleGuiRuntime underlineGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
-            SimpleGuiRuntime strikethroughGui = new SimpleGuiRuntime(shaderAccess, dummyVao);
-
             ST_Config config = new ST_Config(
                     ST_FontBackendType.FREE_TYPE,
                     48,
@@ -101,8 +98,8 @@ public final class ImmediateClientServices {
                             1024),
                     (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
                     shaderAccess,
-                    underlineGui,
-                    strikethroughGui,
+                    new SimpleGuiRuntime(shaderAccess, dummyVao),
+                    new SimpleGuiRuntime(shaderAccess, dummyVao),
                     config,
                     new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
         } else {

@@ -9,7 +9,12 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> {
+/**
+ * The atlas should be closed explicitly when not used, but GL resources will be disposed automatically
+ * as long as the GL resource initialization goes through <code>com.cleanroommc.kirino.gl</code>.
+ * As a result, not closing an atlas will not result in a leakage.
+ */
+public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> implements AutoCloseable {
 
     private record SlotRegion(int x, int y, int reservedWidth, int reservedHeight) {
     }
