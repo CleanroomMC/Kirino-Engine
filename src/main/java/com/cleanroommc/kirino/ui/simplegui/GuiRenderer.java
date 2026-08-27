@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
+import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.IDBView;
@@ -27,6 +28,8 @@ public class GuiRenderer implements AutoCloseable {
     private static final int RECT_PAYLOAD_STRIDE = 64;
     private static final int LINES_PAYLOAD_STRIDE = 28;
 
+    private final Shader vert;
+    private final Shader frag;
     private final ShaderProgram program;
     private final VAO dummyVao;
 
@@ -87,8 +90,8 @@ public class GuiRenderer implements AutoCloseable {
         linesPayload = new SSBOView(new GLBuffer());
         idb = new IDBView(new GLBuffer());
 
-        Shader vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.vert"));
-        Shader frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
+        vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.vert"));
+        frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
     }
@@ -620,5 +623,15 @@ public class GuiRenderer implements AutoCloseable {
         MemoryUtil.memFree(rectPayloadWorkspace);
         MemoryUtil.memFree(linesPayloadWorkspace);
         MemoryUtil.memFree(idbWorkspace);
+
+        GLResourceManager.disposeEarly(arenaSsbo.buffer);
+        GLResourceManager.disposeEarly(drawInfo.buffer);
+        GLResourceManager.disposeEarly(rectPayload.buffer);
+        GLResourceManager.disposeEarly(linesPayload.buffer);
+        GLResourceManager.disposeEarly(idb.buffer);
+
+        GLResourceManager.disposeEarly(program);
+        GLResourceManager.disposeEarly(vert);
+        GLResourceManager.disposeEarly(frag);
     }
 }

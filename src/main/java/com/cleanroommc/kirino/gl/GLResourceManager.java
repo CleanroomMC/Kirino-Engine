@@ -20,6 +20,10 @@ public final class GLResourceManager {
         ShutdownManager.register(GLResourceManager::disposeAll);
     }
 
+    /**
+     * It's always active before the program ends.
+     * It's simply a safety guard. No need to check it before operations.
+     */
     public static boolean isActive() {
         return active;
     }

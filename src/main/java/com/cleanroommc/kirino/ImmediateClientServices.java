@@ -30,6 +30,10 @@ public final class ImmediateClientServices {
 
     private static final ImmediateClientServices instance = new ImmediateClientServices();
 
+    /**
+     * <p>Note: Must only use it on the GL thread.</p>
+     */
+    @NonNull
     public static ImmediateClientServices instance() {
         return instance;
     }
@@ -39,6 +43,8 @@ public final class ImmediateClientServices {
     private final @Nullable SimpleTextRuntime textRuntime;
     private final @Nullable SimpleGuiRuntime guiRuntime;
     private final @Nullable VAO dummyVao;
+
+    private @Nullable SimpleTextRuntime textRuntimeVanilla = null;
 
     private void dispose() {
         freeTypeManager.destroy();
@@ -51,6 +57,12 @@ public final class ImmediateClientServices {
         if (guiRuntime != null) {
             try {
                 guiRuntime.close();
+            } catch (Exception ignored) {
+            }
+        }
+        if (textRuntimeVanilla != null) {
+            try {
+                textRuntimeVanilla.close();
             } catch (Exception ignored) {
             }
         }
@@ -109,8 +121,80 @@ public final class ImmediateClientServices {
     }
 
     /**
+     * <p>Note: Never cache the result since <code>reload</code> will replace the backend instance,
+     * and the access is relatively cheap for hot paths.</p>
+     */
+    public boolean tryLoadTextRuntimeVanilla(
+            boolean reload,
+            @Nullable SimpleTextRuntime @NonNull [] outTextRuntime) {
+
+        Preconditions.checkNotNull(outTextRuntime);
+        Preconditions.checkArgument(outTextRuntime.length == 1,
+                "Argument \"outTextRuntime\"'s length must be one.");
+
+        if (!reload && textRuntimeVanilla != null) {
+            outTextRuntime[0] = textRuntimeVanilla;
+            return true;
+        }
+
+        if (!KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)) {
+            outTextRuntime[0] = null;
+            return false;
+        }
+
+        Preconditions.checkNotNull(dummyVao);
+
+        if (reload) {
+            if (textRuntimeVanilla != null) {
+                try {
+                    textRuntimeVanilla.close();
+                } catch (Exception ignored) {
+                } finally {
+                    textRuntimeVanilla = null;
+                }
+            }
+        }
+
+        ST_Config config = new ST_Config(
+                ST_FontBackendType.FREE_TYPE,
+                48,
+                16,
+                12,
+                FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+
+        // todo: integrate McTTF here
+
+        textRuntimeVanilla = new SimpleTextRuntime(
+                (rl, cfg) -> {
+                    FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                    return new FreeTypeFontHandle(face);
+                },
+                (context) -> new DefaultTextRenderer(
+                        context,
+                        new Tex2DArrayGlyphAtlas(1024, 1024),
+                        context.getShaderAccess(),
+                        1024),
+                (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
+                shaderAccess,
+                new SimpleGuiRuntime(shaderAccess, dummyVao),
+                new SimpleGuiRuntime(shaderAccess, dummyVao),
+                config,
+                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+
+        outTextRuntime[0] = textRuntimeVanilla;
+        return true;
+    }
+
+    /**
      * It checks if everything here is available, which requires at least GL46.
      * Feel free to access services without concerns about availability after this call.
+     *
+     * <p>Specifically, it checks availability for:</p>
+     * <ul>
+     *     <li>{@link #text()}</li>
+     *     <li>{@link #gui()}</li>
+     *     <li>{@link #dummyVao()}</li>
+     * </ul>
      */
     public void assertFullAvailability() {
         Preconditions.checkState(KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)

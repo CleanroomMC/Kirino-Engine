@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ui.simpletext.backend;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
+import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
@@ -113,6 +114,8 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
     private final VBOView instanceVbo;
     private final VAO vao;
+    private final Shader vert;
+    private final Shader frag;
     private final ShaderProgram program;
 
     private final int scaledResLoc;
@@ -156,9 +159,8 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         instanceVbo = new VBOView(new GLBuffer());
         vao = new VAO(ATTRIBUTE_LAYOUT, null, instanceVbo);
 
-        Shader vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.vert"));
-        Shader frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.frag"));
-
+        vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.vert"));
+        frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
 
@@ -548,5 +550,11 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         emptyGlyphHistory.clear();
 
         glyphAtlas.close();
+
+        GLResourceManager.disposeEarly(instanceVbo.buffer);
+        GLResourceManager.disposeEarly(vao);
+        GLResourceManager.disposeEarly(program);
+        GLResourceManager.disposeEarly(vert);
+        GLResourceManager.disposeEarly(frag);
     }
 }
