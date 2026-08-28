@@ -219,6 +219,8 @@ public final class FreeTypeManager {
 
     /**
      * No more access is allowed after this call.
+     *
+     * <p>Note: Must not be called by clients!</p>
      */
     public void destroy() {
         Preconditions.checkState(initialized, "Must be initialized.");

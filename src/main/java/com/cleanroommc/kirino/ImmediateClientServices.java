@@ -34,6 +34,7 @@ public final class ImmediateClientServices {
 
     /**
      * <p>Note: Must only use it on the GL thread.</p>
+     * <p>Note: Initialize it no earlier than Minecraft IResourceManager initialization.</p>
      */
     @NonNull
     public static ImmediateClientServices instance() {
@@ -106,6 +107,8 @@ public final class ImmediateClientServices {
 
             textRuntime = new SimpleTextRuntime(
                     (rl, cfg) -> {
+                        Preconditions.checkNotNull(rl);
+
                         FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
@@ -130,6 +133,8 @@ public final class ImmediateClientServices {
      * Call {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} first.
      * Once it returns <code>true</code>, this function is safe to access directly
      * for the rest of the program lifetime.
+     *
+     * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
     @NonNull
     public SimpleTextRuntime textVanilla() {
@@ -141,7 +146,10 @@ public final class ImmediateClientServices {
 
     /**
      * <p>Note: Never cache the result since <code>reload</code> replaces the backend instance.
-     * Accessing this function directly is relatively cheap even for hot paths.</p>
+     * Accessing this function directly is relatively cheap even for hot paths.
+     * However, the call that actually triggers loading takes very long.</p>
+     *
+     * <p>Note: <i><b>The out parameter is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      *
      * @return <code>false</code> means the text runtime is unavailable for the entire program lifetime,
      *         and <code>reload</code> cannot make it available.<br>
@@ -248,6 +256,8 @@ public final class ImmediateClientServices {
     /**
      * It requires at least GL46. Check {@link #textAvailable()} before accessing
      * OR simply {@link #assertFullAvailability()} once.
+     *
+     * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
     @NonNull
     public SimpleTextRuntime text() {
@@ -265,6 +275,8 @@ public final class ImmediateClientServices {
     /**
      * It requires at least GL46. Check {@link #guiAvailable()} before accessing
      * OR simply {@link #assertFullAvailability()} once.
+     *
+     * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
     @NonNull
     public SimpleGuiRuntime gui() {
