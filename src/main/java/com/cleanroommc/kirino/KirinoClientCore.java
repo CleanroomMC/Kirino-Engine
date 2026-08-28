@@ -523,10 +523,6 @@ public final class KirinoClientCore {
 
         LOGGER.info("---------- Kirino Client-Side Post-Initialization ----------");
 
-        // guarantees ImmediateClientServices initialization if it was not initialized,
-        // and it can be initialized at any time
-        ImmediateClientServices ignore = ImmediateClientServices.instance();
-
         //<editor-fold desc="kirino engine">
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();

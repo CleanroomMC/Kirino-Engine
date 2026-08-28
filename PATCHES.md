@@ -1,3 +1,14 @@
+- `Minecraft#init`
+  ```java
+  private void init()
+  {
+      ...
+      this.resourceManager = new SimpleReloadableResourceManager(this.metadataSerializer);
+  +   com.cleanroommc.kirino.ImmediateClientServices.initAndWarmUp();
+      ...
+  }
+  ```
+  
 - `Minecraft#shutdownMinecraftApplet`
   ```java
   try

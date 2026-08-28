@@ -6,6 +6,7 @@ import com.cleanroommc.mcttf.extract.AssetSource;
 import com.cleanroommc.mcttf.font.FontStyle;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourcePack;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.system.MemoryUtil;
 import org.lwjgl.util.freetype.FT_Face;
@@ -21,7 +22,9 @@ public final class McTtfFontManager {
     }
 
     private final FreeTypeManager freeTypeManager;
-    private final AssetSource assetSource;
+    private final AssetSource resourceManagerAssetSource;
+    private final AssetSource resourcePackAssetSource;
+    private AssetSource assetSource;
 
     /**
      * The buffers must remain alive as long as any FT_Face created from them is alive.
@@ -32,13 +35,32 @@ public final class McTtfFontManager {
 
     public McTtfFontManager(
             @NonNull IResourceManager resourceManager,
+            @NonNull IResourcePack resourcePack,
             @NonNull FreeTypeManager freeTypeManager) {
 
         Preconditions.checkNotNull(resourceManager);
+        Preconditions.checkNotNull(resourcePack);
         Preconditions.checkNotNull(freeTypeManager);
 
         this.freeTypeManager = freeTypeManager;
-        this.assetSource = new McAssetSource(resourceManager);
+        resourceManagerAssetSource = new McResourceManagerAssetSource(resourceManager);
+        resourcePackAssetSource = new McResourcePackAssetSource(resourcePack);
+
+        assetSource = resourceManagerAssetSource;
+    }
+
+    /**
+     * <p>Note: {@link #resourceManagerAssetSource} is the default asset source.</p>
+     */
+    public void enableResourceManagerAssetSource() {
+        assetSource = resourceManagerAssetSource;
+    }
+
+    /**
+     * <p>Note: {@link #resourceManagerAssetSource} is the default asset source.</p>
+     */
+    public void enableResourcePackAssetSource() {
+        assetSource = resourcePackAssetSource;
     }
 
     /**

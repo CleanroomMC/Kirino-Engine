@@ -20,21 +20,56 @@ import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import org.apache.commons.lang3.time.StopWatch;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
 import java.lang.invoke.MethodHandle;
+import java.util.concurrent.TimeUnit;
 
+/**
+ * <p>Note: Must not be accessed earlier than the Minecraft IResourceManager initialization.</p>
+ *
+ * @see #initAndWarmUp()
+ */
 public final class ImmediateClientServices {
+
+    private static final Logger LOGGER = LogManager.getLogger("Kirino ICS");
 
     private static final ImmediateClientServices instance = new ImmediateClientServices();
 
     /**
+     * It initializes and warms up the ICS instance.
+     *
+     * <p>Note: Must only call it on the GL thread.</p>
+     * <p>Note: This is accessed by hooks. Must not be called by clients!</p>
+     * <p>Note: It'll be called right after the Minecraft IResourceManager initialization.</p>
+     */
+    public static void initAndWarmUp() {
+        StopWatch stopWatch = StopWatch.createStarted();
+
+        instance.mcFontManager.enableResourcePackAssetSource();
+
+        SimpleTextRuntime[] out = new SimpleTextRuntime[1];
+        boolean textVanillaAvailable = instance.tryLoadTextRuntimeVanilla(false, out);
+
+        instance.mcFontManager.enableResourceManagerAssetSource();
+
+        LOGGER.info("\"text\" availability: {}", instance.textAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("\"gui\" availability: {}", instance.guiAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("\"dummyVao\" availability: {}", instance.dummyVaoAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("\"textVanilla\" availability: {}", textVanillaAvailable ? "TRUE" : "FALSE");
+
+        stopWatch.stop();
+        LOGGER.info("Finished initializing ICS. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+    }
+
+    /**
      * <p>Note: Must only use it on the GL thread.</p>
-     * <p>Note: Initialize it no earlier than Minecraft IResourceManager initialization.</p>
      */
     @NonNull
     public static ImmediateClientServices instance() {
@@ -74,8 +109,7 @@ public final class ImmediateClientServices {
     }
 
     private ImmediateClientServices() {
-        Preconditions.checkState(FMLCommonHandler.instance().getSide().isClient(),
-                "ImmediateClientServices is for client side only.");
+        LOGGER.info("Starts constructing ImmediateClientServices.");
 
         ShutdownManager.register(this::dispose);
 
@@ -83,7 +117,10 @@ public final class ImmediateClientServices {
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
 
-        mcFontManager = new McTtfFontManager(Minecraft.getMinecraft().getResourceManager(), freeTypeManager);
+        mcFontManager = new McTtfFontManager(
+                Minecraft.getMinecraft().getResourceManager(),
+                Minecraft.getMinecraft().defaultResourcePack,
+                freeTypeManager);
 
         if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 0)) {
             AttributeLayout dummyLayout = new AttributeLayout();
@@ -219,7 +256,7 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * It checks if all built-in modules here are available, which requires at least GL46.
+     * It checks if all conditioned modules here are available, which requires at least GL46.
      * Feel free to access services without concerns about availability after this call.
      *
      * <p>Specifically, it checks availability for:</p>

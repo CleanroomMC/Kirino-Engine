@@ -16,6 +16,7 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
 
     private static final SimpleTextRuntime[] out = new SimpleTextRuntime[1];
 
+    @SuppressWarnings("resource")
     @Override
     public void draw(@NonNull HUDContext hud) {
         GlStateManager.disableCull();

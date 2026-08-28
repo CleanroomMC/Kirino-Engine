@@ -18,6 +18,7 @@ public class SimpleGuiDebugHUD implements ImmediateHUD {
     private final StopWatch stopWatch = new StopWatch();
     private float theta = 0f;
 
+    @SuppressWarnings("resource")
     @Override
     public void draw(@NonNull HUDContext hud) {
         float deltaTime = 0f;
