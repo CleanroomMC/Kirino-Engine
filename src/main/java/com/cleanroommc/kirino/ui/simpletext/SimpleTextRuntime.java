@@ -29,18 +29,22 @@ public class SimpleTextRuntime implements AutoCloseable {
     private final SimpleGuiRuntime underlineGui;
     private final SimpleGuiRuntime strikethroughGui;
 
+    @Nullable
     public ResourceLocation getFontRl() {
         return fontRl;
     }
 
+    @NonNull
     public ST_FontHandle getFont() {
         return font;
     }
 
+    @NonNull
     public ST_Config getConfig() {
         return config;
     }
 
+    @NonNull
     public ImmediateShaderAccess getShaderAccess() {
         return shaderAccess;
     }
@@ -66,14 +70,14 @@ public class SimpleTextRuntime implements AutoCloseable {
      */
     @SuppressWarnings("deprecation")
     public SimpleTextRuntime(
-            @NonNull BiFunction<ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
+            @NonNull BiFunction<@Nullable ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
             @NonNull ImmediateShaderAccess shaderAccess,
             @NonNull SimpleGuiRuntime underlineGui,
             @NonNull SimpleGuiRuntime strikethroughGui,
             @NonNull ST_Config config,
-            @NonNull ResourceLocation fontRl) {
+            @Nullable ResourceLocation fontRl) {
 
         Preconditions.checkNotNull(fontFactory);
         Preconditions.checkNotNull(consumerFactory);
@@ -82,7 +86,6 @@ public class SimpleTextRuntime implements AutoCloseable {
         Preconditions.checkNotNull(underlineGui);
         Preconditions.checkNotNull(strikethroughGui);
         Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(fontRl);
 
         this.fontRl = fontRl;
         this.config = config;

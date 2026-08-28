@@ -10,9 +10,10 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * The atlas should be closed explicitly when not used, but GL resources will be disposed automatically
+ * The atlas should be closed explicitly when not used.
+ * Nevertheless, GL resources will be disposed automatically
  * as long as the GL resource initialization goes through <code>com.cleanroommc.kirino.gl</code>.
- * As a result, not closing an atlas will not result in a leakage.
+ * Never worry about GL resource lifetime.
  */
 public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> implements AutoCloseable {
 

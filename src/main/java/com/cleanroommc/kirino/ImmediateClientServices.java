@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
+import com.cleanroommc.kirino.ui.font.McTtfFontManager;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontBackendType;
@@ -17,6 +18,7 @@ import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import org.jspecify.annotations.NonNull;
@@ -45,8 +47,10 @@ public final class ImmediateClientServices {
     private final @Nullable VAO dummyVao;
 
     private @Nullable SimpleTextRuntime textRuntimeVanilla = null;
+    private final McTtfFontManager mcFontManager;
 
     private void dispose() {
+        mcFontManager.destroy();
         freeTypeManager.destroy();
         if (textRuntime != null) {
             try {
@@ -77,6 +81,8 @@ public final class ImmediateClientServices {
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
         freeTypeManager.init();
+
+        mcFontManager = new McTtfFontManager(Minecraft.getMinecraft().getResourceManager(), freeTypeManager);
 
         if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 0)) {
             AttributeLayout dummyLayout = new AttributeLayout();
@@ -121,8 +127,28 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * <p>Note: Never cache the result since <code>reload</code> will replace the backend instance,
-     * and the access is relatively cheap for hot paths.</p>
+     * Call {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} first.
+     * Once it returns <code>true</code>, this function is safe to access directly
+     * for the rest of the program lifetime.
+     */
+    @NonNull
+    public SimpleTextRuntime textVanilla() {
+        Preconditions.checkState(textRuntimeVanilla != null,
+                "Text runtime vanilla unavailable!");
+
+        return textRuntimeVanilla;
+    }
+
+    /**
+     * <p>Note: Never cache the result since <code>reload</code> replaces the backend instance.
+     * Accessing this function directly is relatively cheap even for hot paths.</p>
+     *
+     * @return <code>false</code> means the text runtime is unavailable for the entire program lifetime,
+     *         and <code>reload</code> cannot make it available.<br>
+     *         Once <code>true</code> is returned, all later calls will also return <code>true</code>,
+     *         including calls with <code>reload</code>.
+     *
+     * @see #textVanilla()
      */
     public boolean tryLoadTextRuntimeVanilla(
             boolean reload,
@@ -153,6 +179,7 @@ public final class ImmediateClientServices {
                     textRuntimeVanilla = null;
                 }
             }
+            mcFontManager.invalidate();
         }
 
         ST_Config config = new ST_Config(
@@ -162,11 +189,9 @@ public final class ImmediateClientServices {
                 12,
                 FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
 
-        // todo: integrate McTTF here
-
         textRuntimeVanilla = new SimpleTextRuntime(
                 (rl, cfg) -> {
-                    FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                    FT_Face face = mcFontManager.loadDefaultFace(cfg.pixelSize());
                     return new FreeTypeFontHandle(face);
                 },
                 (context) -> new DefaultTextRenderer(
@@ -179,14 +204,14 @@ public final class ImmediateClientServices {
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
                 config,
-                new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+                null);
 
         outTextRuntime[0] = textRuntimeVanilla;
         return true;
     }
 
     /**
-     * It checks if everything here is available, which requires at least GL46.
+     * It checks if all built-in modules here are available, which requires at least GL46.
      * Feel free to access services without concerns about availability after this call.
      *
      * <p>Specifically, it checks availability for:</p>
@@ -195,6 +220,8 @@ public final class ImmediateClientServices {
      *     <li>{@link #gui()}</li>
      *     <li>{@link #dummyVao()}</li>
      * </ul>
+     *
+     * <p>Note: It doesn't include {@link #textVanilla()}.</p>
      */
     public void assertFullAvailability() {
         Preconditions.checkState(KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)

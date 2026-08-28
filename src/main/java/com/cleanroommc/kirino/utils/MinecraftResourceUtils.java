@@ -185,9 +185,7 @@ public final class MinecraftResourceUtils {
         Preconditions.checkNotNull(rl);
         Preconditions.checkNotNull(newLine);
 
-        InputStream stream = getInputStream(rl);
-
-        try {
+        try (InputStream stream = getInputStream(rl)) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
             StringBuilder builder = new StringBuilder();
             String line;
