@@ -64,7 +64,7 @@ public class GLTestExtension implements BeforeAllCallback, AfterAllCallback {
         });
 
         submit(() -> {
-            window = Window.builder()
+            window = SDL.createWindow()
                     .title("gl-tests")
                     .size(1, 1)
                     .hidden()
