@@ -181,9 +181,8 @@ public final class KirinoClientCore {
      * public void updateCameraAndRender(float partialTicks, long nanoTime)
      * {
      *     ...
-     *     if (com.cleanroommc.kirino.config.KirinoConfig.requiresRestart.enable
-     *             && com.cleanroommc.kirino.config.KirinoConfig.requiresRestart.enableRenderDelegate
-     *             && !com.cleanroommc.kirino.KirinoCore.isRenderUnsupported())
+     *     if (com.cleanroommc.kirino.config.KirinoConfig.isEnabled()
+     *             && !com.cleanroommc.kirino.KirinoClientCore.isRenderUnsupported())
      *     {
      *         com.cleanroommc.kirino.KirinoCore.EntityRenderer$renderWorld(System.nanoTime() + l);
      *     }
