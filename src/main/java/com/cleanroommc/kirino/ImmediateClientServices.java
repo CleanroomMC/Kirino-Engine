@@ -59,10 +59,10 @@ public final class ImmediateClientServices {
 
         instance.mcFontManager.enableResourceManagerAssetSource();
 
-        LOGGER.info("\"text\" availability: {}", instance.textAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("\"gui\" availability: {}", instance.guiAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("\"dummyVao\" availability: {}", instance.dummyVaoAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("\"textVanilla\" availability: {}", textVanillaAvailable ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"text\" availability: {}", instance.textAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"gui\" availability: {}", instance.guiAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"dummyVao\" availability: {}", instance.dummyVaoAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"textVanilla\" availability: {}", textVanillaAvailable ? "TRUE" : "FALSE");
 
         stopWatch.stop();
         LOGGER.info("Finished initializing ICS. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
@@ -164,6 +164,8 @@ public final class ImmediateClientServices {
             guiRuntime = null;
             textRuntime = null;
         }
+
+        LOGGER.info("Finished constructing ImmediateClientServices.");
     }
 
     /**
