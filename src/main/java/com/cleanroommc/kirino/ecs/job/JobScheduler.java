@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.job;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
@@ -72,7 +72,7 @@ public class JobScheduler {
             }
 
             // future count
-            int targetWorkloadPerThread = KirinoCommonCore.KIRINO_CONFIG_HUB.getTargetWorkloadPerThread();
+            int targetWorkloadPerThread = KirinoConfig.NEEDS_RESTART.targetWorkloadPerThread;
             int futureCount = Math.ceilDivExact(workload, targetWorkloadPerThread);
             if (futureCount > Runtime.getRuntime().availableProcessors()) {
                 futureCount = Runtime.getRuntime().availableProcessors();

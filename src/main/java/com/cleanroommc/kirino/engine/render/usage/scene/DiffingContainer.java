@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage.scene;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
 import net.minecraft.client.Minecraft;
 import org.joml.Vector3f;
@@ -31,7 +31,7 @@ public class DiffingContainer {
             if (Math.sqrt(
                     (camPos.x - oldCamX) * (camPos.x - oldCamX) +
                             (camPos.y - oldCamY) * (camPos.y - oldCamY) +
-                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoCommonCore.KIRINO_CONFIG_HUB.getChunkUpdateDisplacement()) {
+                            (camPos.z - oldCamZ) * (camPos.z - oldCamZ)) >= KirinoConfig.NEEDS_RESTART.chunkUpdateDisplacement) {
                 oldCamX = camPos.x;
                 oldCamY = camPos.y;
                 oldCamZ = camPos.z;
@@ -43,7 +43,7 @@ public class DiffingContainer {
 
     public boolean updateForegroundRenderDis() {
         int renderDis = Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
-        renderDis = Math.max(renderDis, KirinoCommonCore.KIRINO_CONFIG_HUB.getForegroundRenderDistance());
+        renderDis = Math.max(renderDis, KirinoConfig.NEEDS_RESTART.foregroundRenderDistance);
         if (oldForegroundRenderDis != renderDis) {
             oldForegroundRenderDis = renderDis;
             return true;

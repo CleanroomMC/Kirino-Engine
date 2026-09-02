@@ -1,12 +1,12 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
 
 public final class HighLevelDC implements DrawCommand {
 
-    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoCommonCore.KIRINO_CONFIG_HUB.getHighLevelDrawCommandPoolSize()) {
+    private final static ThreadSafeGenPool<HighLevelDC> POOL = new ThreadSafeGenPool<>(KirinoConfig.NEEDS_RESTART.highLevelDrawCommandPoolSize) {
         @NonNull
         @Override
         public HighLevelDC newObject(@NonNull Handle<HighLevelDC> handle) {

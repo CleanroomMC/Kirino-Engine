@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
@@ -113,10 +114,7 @@ public final class KirinoClientCore {
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public static void RenderGlobal$notifyBlockUpdate(int x, int y, int z, IBlockState oldState, IBlockState newState) {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
-            return;
-        }
-        if (!KIRINO_CONFIG_HUB.isEnableRenderDelegate()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
         if (RENDER_UNSUPPORTED) {
@@ -144,10 +142,7 @@ public final class KirinoClientCore {
      * <p>Note: <b>must never be called manually by clients!</b></p>
      */
     public static void RenderGlobal$notifyLightUpdate(int x, int y, int z) {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
-            return;
-        }
-        if (!KIRINO_CONFIG_HUB.isEnableRenderDelegate()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
         if (RENDER_UNSUPPORTED) {
@@ -186,8 +181,8 @@ public final class KirinoClientCore {
      * public void updateCameraAndRender(float partialTicks, long nanoTime)
      * {
      *     ...
-     *     if (com.cleanroommc.kirino.KirinoCore.KIRINO_CONFIG_HUB.isEnable()
-     *             && com.cleanroommc.kirino.KirinoCore.KIRINO_CONFIG_HUB.isEnableRenderDelegate()
+     *     if (com.cleanroommc.kirino.config.KirinoConfig.requiresRestart.enable
+     *             && com.cleanroommc.kirino.config.KirinoConfig.requiresRestart.enableRenderDelegate
      *             && !com.cleanroommc.kirino.KirinoCore.isRenderUnsupported())
      *     {
      *         com.cleanroommc.kirino.KirinoCore.EntityRenderer$renderWorld(System.nanoTime() + l);
@@ -464,7 +459,7 @@ public final class KirinoClientCore {
     //</editor-fold>
 
     public static void init() {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -517,7 +512,7 @@ public final class KirinoClientCore {
     public static void postInit() {
         KirinoCommonCore.postInit();
 
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -527,7 +522,7 @@ public final class KirinoClientCore {
         LOGGER.info("Post-Initializing Kirino Engine.");
         StopWatch stopWatch = StopWatch.createStarted();
 
-        if (KIRINO_CONFIG_HUB.isEnableRenderDelegate() && !RENDER_UNSUPPORTED) {
+        if (KirinoConfig.NEEDS_RESTART.enableRenderDelegate && !RENDER_UNSUPPORTED) {
             KIRINO_ENGINE.run(FramePhase.PREPARE);
 
             // init. todo: temp; refactor

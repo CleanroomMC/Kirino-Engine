@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino;
 
-import static com.cleanroommc.kirino.KirinoCommonCore.KIRINO_CONFIG_HUB;
+import com.cleanroommc.kirino.config.KirinoConfig;
+
 import static com.cleanroommc.kirino.KirinoCommonCore.LOGGER;
 
 public final class KirinoServerCore {
@@ -11,7 +12,7 @@ public final class KirinoServerCore {
     public static void init() {
         KirinoCommonCore.init();
 
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -21,7 +22,7 @@ public final class KirinoServerCore {
     public static void postInit() {
         KirinoCommonCore.postInit();
 
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 

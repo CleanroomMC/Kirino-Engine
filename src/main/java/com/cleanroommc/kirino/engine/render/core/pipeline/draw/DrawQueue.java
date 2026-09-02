@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.DrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.LowLevelDC;
@@ -81,7 +81,7 @@ public class DrawQueue {
                     throw new RuntimeException("Invalid element type=" + highLevelDC.elementType + ".");
                 }
 
-                if (KirinoCommonCore.KIRINO_CONFIG_HUB.isCompileToMdiCommands()) {
+                if (KirinoConfig.NEEDS_RESTART.compileToMdiCommands) {
                     deque2.offerLast(LowLevelDC.acquire().fillMultiElementIndirectUnit(
                             meshReceipt.vao,
                             highLevelDC.mode,
@@ -179,7 +179,7 @@ public class DrawQueue {
             // combine units and upload to idb
             int start = 0;
             while (start < mdiUnits.size()) {
-                int end = Math.min(start + KirinoCommonCore.KIRINO_CONFIG_HUB.getMaxMultiDrawIndirectUnitCount(), mdiUnits.size());
+                int end = Math.min(start + KirinoConfig.NEEDS_RESTART.maxMultiDrawIndirectUnitCount, mdiUnits.size());
                 List<LowLevelDC> chunk = mdiUnits.subList(start, end);
                 deque2.offerLast(idbGenerator.generate(
                         chunk,

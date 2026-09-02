@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.fsm;
 
-import com.cleanroommc.kirino.KirinoCommonCore;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.schemata.fsm.FiniteStateMachine;
 
 public class MeshletGpuPipelineFSM {
@@ -40,7 +40,7 @@ public class MeshletGpuPipelineFSM {
 
     public void next() {
         if (fsm.state() == State.INITIAL_WAIT) {
-            if (initialWaitFrameCounter++ >= KirinoCommonCore.KIRINO_CONFIG_HUB.getMeshletInitFrames()) {
+            if (initialWaitFrameCounter++ >= KirinoConfig.NEEDS_RESTART.meshletInitFrames) {
                 initialWaitFrameCounter = 0; // pass
             } else {
                 return;

@@ -1,11 +1,9 @@
 package com.cleanroommc.kirino;
 
-import com.cleanroommc.kirino.config.KirinoConfigHub;
-import com.cleanroommc.kirino.config.event.KirinoOneTimeConfigEvent;
+import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.ecs.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.EngineInitParams;
 import com.cleanroommc.kirino.engine.KirinoEngine;
-import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.event.PostProcessingRegistrationEvent;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderDebugInjection;
@@ -37,7 +35,6 @@ public final class KirinoCommonCore {
 
     public static final Logger LOGGER;
     public static final EventBus KIRINO_EVENT_BUS;
-    public static final KirinoConfigHub KIRINO_CONFIG_HUB;
     private static CleanECSRuntime ECS_RUNTIME;
     public static KirinoEngine KIRINO_ENGINE;
 
@@ -45,35 +42,11 @@ public final class KirinoCommonCore {
     static {
         LOGGER = LogManager.getLogger("Kirino Core");
         KIRINO_EVENT_BUS = new EventBus();
-
-        Constructor<KirinoConfigHub> configHubCtor;
-        try {
-            configHubCtor = KirinoConfigHub.class.getDeclaredConstructor();
-            configHubCtor.setAccessible(true);
-            KIRINO_CONFIG_HUB = configHubCtor.newInstance();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
     }
     //</editor-fold>
 
-    // last chance to modify the config
-    public static void configEvent() {
-        try {
-            Method registerMethod = KIRINO_EVENT_BUS.getClass().getDeclaredMethod("register", Class.class, Object.class, Method.class, ModContainer.class);
-            registerMethod.setAccessible(true);
-
-            Method onKirinoOneTimeConfig = KirinoCommonCore.class.getDeclaredMethod("onKirinoOneTimeConfig", KirinoOneTimeConfigEvent.class);
-            registerMethod.invoke(KIRINO_EVENT_BUS, KirinoOneTimeConfigEvent.class, KirinoCommonCore.class, onKirinoOneTimeConfig, Loader.instance().getMinecraftModContainer());
-        } catch (Throwable throwable) {
-            throw new RuntimeException("Failed to register the Kirino one time config event listener.", throwable);
-        }
-
-        KIRINO_EVENT_BUS.post(new KirinoOneTimeConfigEvent());
-    }
-
     public static void identifyMods(List<ModContainer> mods) {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -83,7 +56,7 @@ public final class KirinoCommonCore {
     }
 
     public static void init() {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -141,11 +114,11 @@ public final class KirinoCommonCore {
             ctor.setAccessible(true);
 
             EngineInitParams params = new EngineInitParams(
-                    KIRINO_CONFIG_HUB.isEnableHDR(),
-                    KIRINO_CONFIG_HUB.isEnablePostProcessing(),
-                    KIRINO_CONFIG_HUB.isEnableKhrDebug(),
-                    KIRINO_CONFIG_HUB.isEnableShaderDebug(),
-                    KIRINO_CONFIG_HUB.getPostProcessingSchedule());
+                    KirinoConfig.NEEDS_RESTART.enableHDR,
+                    KirinoConfig.NEEDS_RESTART.enablePostProcessing,
+                    KirinoConfig.NEEDS_RESTART.enableKhrDebug,
+                    KirinoConfig.NEEDS_RESTART.enableShaderDebug,
+                    KirinoConfig.NEEDS_RESTART.postProcessingSchedule);
 
             KIRINO_ENGINE = ctor.newInstance(KIRINO_EVENT_BUS, LOGGER, ECS_RUNTIME, params);
         } catch (Throwable throwable) {
@@ -158,7 +131,7 @@ public final class KirinoCommonCore {
     }
 
     public static void postInit() {
-        if (!KIRINO_CONFIG_HUB.isEnable()) {
+        if (!KirinoConfig.isEnabled()) {
             return;
         }
 
@@ -191,10 +164,4 @@ public final class KirinoCommonCore {
                 DefaultPostProcessingPass::new);
     }
 
-    @SubscribeEvent
-    public static void onKirinoOneTimeConfig(KirinoOneTimeConfigEvent event) {
-        event.getOneTimeConfig().enableRenderDelegate = true;
-        event.getOneTimeConfig().enableShaderDebug = true;
-        event.getOneTimeConfig().enableKhrDebug = true;
-    }
 }
