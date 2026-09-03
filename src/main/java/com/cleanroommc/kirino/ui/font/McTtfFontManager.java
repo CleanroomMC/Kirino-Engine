@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.font;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.mcttf.api.McTTF;
 import com.cleanroommc.mcttf.extract.AssetSource;

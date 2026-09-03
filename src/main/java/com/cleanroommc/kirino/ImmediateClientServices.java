@@ -19,10 +19,7 @@ import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.IReloadableResourceManager;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
-import net.minecraft.client.resources.SimpleReloadableResourceManager;
+import net.minecraft.client.resources.*;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
@@ -45,13 +42,14 @@ public final class ImmediateClientServices {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino ICS");
 
-    private static final ImmediateClientServices instance = new ImmediateClientServices();
+    private static final ImmediateClientServices INSTANCE = new ImmediateClientServices();
 
     @SuppressWarnings("deprecation")
     private static final class McFontReloadListener implements IResourceManagerReloadListener {
 
         private final boolean isSimpleReloadableResourceManager;
-        private boolean firstCall = true;
+        private boolean firstCallFlag = true;
+        private boolean initializedCallFlag = true;
 
         private final ImmediateClientServices instance;
 
@@ -66,14 +64,30 @@ public final class ImmediateClientServices {
         @Override
         public void onResourceManagerReload(IResourceManager var1) {
             // SimpleReloadableResourceManager fires the reload listener immediately on register
-            if (isSimpleReloadableResourceManager && firstCall) {
-                firstCall = false;
+            if (isSimpleReloadableResourceManager && firstCallFlag) {
+                firstCallFlag = false;
                 return;
             }
 
-            // todo
+            // the listener will be trigger when the resource manager finished initializing
+            if (initializedCallFlag) {
+                initializedCallFlag = false;
+                return;
+            }
+
+            StopWatch stopWatch = StopWatch.createStarted();
+
+            // the asset source is now the resource manager
+            SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
+            instance.tryLoadTextRuntimeVanilla(true, outIgnored);
+
+            stopWatch.stop();
+
+            LOGGER.info("McTTF font regenerated. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         }
     }
+
+    private static boolean init;
 
     /**
      * It initializes and warms up the ICS instance.
@@ -87,34 +101,62 @@ public final class ImmediateClientServices {
     public static void initAndWarmUp(
             @NonNull IReloadableResourceManager resourceManager) {
 
+        Preconditions.checkState(!init,
+                "ImmediateClientServices has been initialized.");
         Preconditions.checkNotNull(resourceManager,
                 "Minecraft resource manager is supposed to be ready.");
         Preconditions.checkState(resourceManager == Minecraft.getMinecraft().getResourceManager());
 
+        LOGGER.info("Module \"text\" availability: {}", INSTANCE.textAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"gui\" availability: {}", INSTANCE.guiAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"dummyVao\" availability: {}", INSTANCE.dummyVaoAvailable() ? "TRUE" : "FALSE");
+
         StopWatch stopWatch = StopWatch.createStarted();
 
-        instance.mcFontManager.enableResourcePackAssetSource();
+        INSTANCE.mcFontManager.enableResourcePackAssetSource();
 
         // it'll be the call that triggers the actual font loading
-        SimpleTextRuntime[] out = new SimpleTextRuntime[1];
-        boolean textVanillaAvailable = instance.tryLoadTextRuntimeVanilla(false, out);
+        SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
+        boolean textVanillaAvailable = INSTANCE.tryLoadTextRuntimeVanilla(false, outIgnored);
 
-        instance.mcFontManager.enableResourceManagerAssetSource();
+        INSTANCE.mcFontManager.enableResourceManagerAssetSource();
 
         // register reload listener only if text vanilla is available
         if (textVanillaAvailable) {
             resourceManager.registerReloadListener(new McFontReloadListener(
-                    instance,
+                    INSTANCE,
                     resourceManager));
         }
 
-        LOGGER.info("Module \"text\" availability: {}", instance.textAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("Module \"gui\" availability: {}", instance.guiAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("Module \"dummyVao\" availability: {}", instance.dummyVaoAvailable() ? "TRUE" : "FALSE");
         LOGGER.info("Module \"textVanilla\" availability: {}", textVanillaAvailable ? "TRUE" : "FALSE");
 
         stopWatch.stop();
         LOGGER.info("Finished initializing ICS. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+
+        init = true;
+    }
+
+    /**
+     * <p>Note: Must only call it on the GL thread.</p>
+     * <p>Note: This is accessed by hooks. Must not be called by clients!</p>
+     * <p>Note: It'll be called right after the Splash process.</p>
+     */
+    public static void refreshMcFontIfNeeded() {
+        ResourcePackRepository repository = Minecraft.getMinecraft().getResourcePackRepository();
+        Preconditions.checkNotNull(repository);
+
+        boolean hasPacks = !repository.getRepositoryEntries().isEmpty() || repository.getServerResourcePack() != null;
+        if (hasPacks && INSTANCE.textRuntimeVanilla != null) {
+            StopWatch stopWatch = StopWatch.createStarted();
+
+            // the asset source is now the resource manager
+            SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
+            INSTANCE.tryLoadTextRuntimeVanilla(true, outIgnored);
+
+            stopWatch.stop();
+
+            LOGGER.info("Refreshed McTTF font. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+        }
     }
 
     /**
@@ -122,7 +164,7 @@ public final class ImmediateClientServices {
      */
     @NonNull
     public static ImmediateClientServices instance() {
-        return instance;
+        return INSTANCE;
     }
 
     private final ImmediateShaderAccess shaderAccess;
@@ -257,13 +299,14 @@ public final class ImmediateClientServices {
         Preconditions.checkArgument(outTextRuntime.length == 1,
                 "Argument \"outTextRuntime\"'s length must be one.");
 
+        outTextRuntime[0] = null;
+
         if (!reload && textRuntimeVanilla != null) {
             outTextRuntime[0] = textRuntimeVanilla;
             return true;
         }
 
         if (!KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(4, 6)) {
-            outTextRuntime[0] = null;
             return false;
         }
 
