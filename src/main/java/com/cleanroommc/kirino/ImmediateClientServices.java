@@ -19,6 +19,10 @@ import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
+import net.minecraft.client.resources.SimpleReloadableResourceManager;
 import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
@@ -32,9 +36,10 @@ import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
 /**
- * <p>Note: Must not be accessed earlier than the Minecraft IResourceManager initialization.</p>
- *
- * @see #initAndWarmUp()
+ * This class must be accessed on the GL thread, and {@link #initAndWarmUp(IReloadableResourceManager)}
+ * must be the first reference to it that triggers class loading.
+ * Specifically, never access it earlier than Minecraft IResourceManager constructor call which
+ * is right before the start of the Splash process.
  */
 public final class ImmediateClientServices {
 
@@ -42,22 +47,66 @@ public final class ImmediateClientServices {
 
     private static final ImmediateClientServices instance = new ImmediateClientServices();
 
+    @SuppressWarnings("deprecation")
+    private static final class McFontReloadListener implements IResourceManagerReloadListener {
+
+        private final boolean isSimpleReloadableResourceManager;
+        private boolean firstCall = true;
+
+        private final ImmediateClientServices instance;
+
+        private McFontReloadListener(
+                ImmediateClientServices instance,
+                IReloadableResourceManager resourceManager) {
+
+            this.instance = instance;
+            isSimpleReloadableResourceManager = resourceManager instanceof SimpleReloadableResourceManager;
+        }
+
+        @Override
+        public void onResourceManagerReload(IResourceManager var1) {
+            // SimpleReloadableResourceManager fires the reload listener immediately on register
+            if (isSimpleReloadableResourceManager && firstCall) {
+                firstCall = false;
+                return;
+            }
+
+            // todo
+        }
+    }
+
     /**
      * It initializes and warms up the ICS instance.
      *
      * <p>Note: Must only call it on the GL thread.</p>
      * <p>Note: This is accessed by hooks. Must not be called by clients!</p>
-     * <p>Note: It'll be called right after the Minecraft IResourceManager initialization.</p>
+     * <p>Note: It'll be called right after the Minecraft IResourceManager constructor call.</p>
+     * <p>Note: This is supposed to be and must be the first {@link ImmediateClientServices} call and
+     * must be the call that triggers class loading.</p>
      */
-    public static void initAndWarmUp() {
+    public static void initAndWarmUp(
+            @NonNull IReloadableResourceManager resourceManager) {
+
+        Preconditions.checkNotNull(resourceManager,
+                "Minecraft resource manager is supposed to be ready.");
+        Preconditions.checkState(resourceManager == Minecraft.getMinecraft().getResourceManager());
+
         StopWatch stopWatch = StopWatch.createStarted();
 
         instance.mcFontManager.enableResourcePackAssetSource();
 
+        // it'll be the call that triggers the actual font loading
         SimpleTextRuntime[] out = new SimpleTextRuntime[1];
         boolean textVanillaAvailable = instance.tryLoadTextRuntimeVanilla(false, out);
 
         instance.mcFontManager.enableResourceManagerAssetSource();
+
+        // register reload listener only if text vanilla is available
+        if (textVanillaAvailable) {
+            resourceManager.registerReloadListener(new McFontReloadListener(
+                    instance,
+                    resourceManager));
+        }
 
         LOGGER.info("Module \"text\" availability: {}", instance.textAvailable() ? "TRUE" : "FALSE");
         LOGGER.info("Module \"gui\" availability: {}", instance.guiAvailable() ? "TRUE" : "FALSE");
@@ -86,8 +135,6 @@ public final class ImmediateClientServices {
     private final McTtfFontManager mcFontManager;
 
     private void dispose() {
-        mcFontManager.destroy();
-        freeTypeManager.destroy();
         if (textRuntime != null) {
             try {
                 textRuntime.close();
@@ -106,12 +153,12 @@ public final class ImmediateClientServices {
             } catch (Exception ignored) {
             }
         }
+        mcFontManager.destroy();
+        freeTypeManager.destroy();
     }
 
     private ImmediateClientServices() {
         LOGGER.info("Starts constructing ImmediateClientServices.");
-
-        ShutdownManager.register(this::dispose);
 
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
@@ -165,6 +212,8 @@ public final class ImmediateClientServices {
             textRuntime = null;
         }
 
+        ShutdownManager.register(this::dispose);
+
         LOGGER.info("Finished constructing ImmediateClientServices.");
     }
 
@@ -172,6 +221,8 @@ public final class ImmediateClientServices {
      * Call {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} first.
      * Once it returns <code>true</code>, this function is safe to access directly
      * for the rest of the program lifetime.
+     *
+     * <p>Note: Never cache the result since backend instance might be replaced by reloading.</p>
      *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
@@ -189,11 +240,12 @@ public final class ImmediateClientServices {
      * However, the call that actually triggers loading takes very long.</p>
      *
      * <p>Note: <i><b>The out parameter is a borrowed runtime. Must not <code>close</code>!</b></i></p>
+     * <p>Note: {@link #mcFontManager} is an implicit dependency here.</p>
      *
      * @return <code>false</code> means the text runtime is unavailable for the entire program lifetime,
      *         and <code>reload</code> cannot make it available.<br>
-     *         Once <code>true</code> is returned, all later calls will also return <code>true</code>,
-     *         including calls with <code>reload</code>.
+     *         Once <code>true</code> is returned, all subsequent calls that complete normally
+     *         will also return <code>true</code>, including calls with <code>reload</code>.
      *
      * @see #textVanilla()
      */
@@ -278,11 +330,18 @@ public final class ImmediateClientServices {
     }
 
     //<editor-fold desc="accessors">
+
+    /**
+     * <p>Note: <i><b>This is a borrowed runtime.</b></i></p>
+     */
     @NonNull
     public ImmediateShaderAccess shader() {
         return shaderAccess;
     }
 
+    /**
+     * <p>Note: <i><b>This is a borrowed runtime.</b></i></p>
+     */
     @NonNull
     public FreeTypeManager freetype() {
         return freeTypeManager;
@@ -333,6 +392,8 @@ public final class ImmediateClientServices {
     /**
      * It requires at least GL30. Check {@link #dummyVaoAvailable()} before accessing
      * OR simply {@link #assertFullAvailability()} once.
+     *
+     * <p>Note: <i><b>This is a borrowed runtime.</b></i></p>
      */
     @NonNull
     public VAO dummyVao() {

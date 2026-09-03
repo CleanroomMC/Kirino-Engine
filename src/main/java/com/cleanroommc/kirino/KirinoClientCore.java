@@ -55,6 +55,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.cleanroommc.kirino.KirinoCommonCore.*;
 
+/**
+ * Be sure that you never trigger class loading before GL context creation.
+ */
 public final class KirinoClientCore {
 
     private KirinoClientCore() {
@@ -90,6 +93,8 @@ public final class KirinoClientCore {
         }
 
         GL_DEVICE_INFO = GLDeviceInfo.captureSnapshot();
+
+        LOGGER.info("\n{}", GL_DEVICE_INFO.toString());
 
         RENDER_UNSUPPORTED = false;
     }
@@ -493,8 +498,6 @@ public final class KirinoClientCore {
         KirinoCommonCore.init();
 
         LOGGER.info("---------- Kirino Client-Side Initialization ----------");
-
-        LOGGER.info("\n" + GL_DEVICE_INFO.toString());
 
         if (!(GL_DEVICE_INFO.getVersionMajor() == 4 && GL_DEVICE_INFO.getVersionMinor() == 6)) {
             RENDER_UNSUPPORTED = true;
