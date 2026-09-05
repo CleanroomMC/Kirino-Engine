@@ -174,7 +174,7 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
 
     private static FT_Face face() {
         if (freeTypeFace == null) {
-            freeTypeFace = ImmediateClientServices.instance().freetype().load(
+            freeTypeFace = ImmediateClientServices.instance().freeType().load(
                     new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"),
                     0,
                     48);

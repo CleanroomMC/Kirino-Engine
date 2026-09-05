@@ -95,8 +95,8 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                         80)
                 .endDraw();
 
-        if (ICS.instance().tryLoadTextRuntimeVanilla(false, out)) {
-            out[0]
+        if (ICS.instance().tryLoadTextRuntimeVanilla()) {
+            ICS.instance().textVanilla()
                     .begin()
                     .appendParagraphStyled(
                             new StyledText("Hello world,\nthis is a styled paragraph wrapping test. " +

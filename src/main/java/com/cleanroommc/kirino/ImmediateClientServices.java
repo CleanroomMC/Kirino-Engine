@@ -33,10 +33,12 @@ import java.lang.invoke.MethodHandle;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This class must be accessed on the GL thread, and {@link #initAndWarmUp(IReloadableResourceManager)}
+ * This class must be accessed from the GL thread, and {@link #initAndWarmUp(IReloadableResourceManager)}
  * must be the first reference to it that triggers class loading.
  * Specifically, never access it earlier than Minecraft IResourceManager constructor call which
  * is right before the start of the Splash process.
+ *
+ * <p>Note: FreeType is less restrictive. It can be accessed outside from the GL thread.</p>
  */
 public final class ImmediateClientServices {
 
@@ -69,7 +71,7 @@ public final class ImmediateClientServices {
                 return;
             }
 
-            // the listener will be trigger when the resource manager finished initializing
+            // the listener will be triggered when the resource manager finished initializing
             if (initializedCallFlag) {
                 initializedCallFlag = false;
                 return;
@@ -78,8 +80,7 @@ public final class ImmediateClientServices {
             StopWatch stopWatch = StopWatch.createStarted();
 
             // the asset source is now the resource manager
-            SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
-            instance.tryLoadTextRuntimeVanilla(true, outIgnored);
+            instance.tryLoadTextRuntimeVanilla(true);
 
             stopWatch.stop();
 
@@ -116,8 +117,7 @@ public final class ImmediateClientServices {
         INSTANCE.mcFontManager.enableResourcePackAssetSource();
 
         // it'll be the call that triggers the actual font loading
-        SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
-        boolean textVanillaAvailable = INSTANCE.tryLoadTextRuntimeVanilla(false, outIgnored);
+        boolean textVanillaAvailable = INSTANCE.tryLoadTextRuntimeVanilla(false);
 
         INSTANCE.mcFontManager.enableResourceManagerAssetSource();
 
@@ -150,8 +150,7 @@ public final class ImmediateClientServices {
             StopWatch stopWatch = StopWatch.createStarted();
 
             // the asset source is now the resource manager
-            SimpleTextRuntime[] outIgnored = new SimpleTextRuntime[1];
-            INSTANCE.tryLoadTextRuntimeVanilla(true, outIgnored);
+            INSTANCE.tryLoadTextRuntimeVanilla(true);
 
             stopWatch.stop();
 
@@ -260,7 +259,7 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * Call {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} first.
+     * Call <code>tryLoadTextRuntimeVanilla</code> first.
      * Once it returns <code>true</code>, this function is safe to access directly
      * for the rest of the program lifetime.
      *
@@ -276,11 +275,32 @@ public final class ImmediateClientServices {
         return textRuntimeVanilla;
     }
 
+    private static final SimpleTextRuntime[] IGNORED_OUT_TEXT_RUNTIME = new SimpleTextRuntime[1];
+
+    /**
+     * @see #tryLoadTextRuntimeVanilla(boolean)
+     * @see #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])
+     */
+    public boolean tryLoadTextRuntimeVanilla() {
+        return tryLoadTextRuntimeVanilla(false);
+    }
+
+    /**
+     * Convenient path of {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])}.
+     * See {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} for details.
+     *
+     * <p>Note: Must only call it on the GL thread.</p>
+     */
+    private boolean tryLoadTextRuntimeVanilla(boolean reload) {
+        return tryLoadTextRuntimeVanilla(reload, IGNORED_OUT_TEXT_RUNTIME);
+    }
+
     /**
      * <p>Note: Never cache the result since <code>reload</code> replaces the backend instance.
      * Accessing this function directly is relatively cheap even for hot paths.
      * However, the call that actually triggers loading takes very long.</p>
      *
+     * <p>Note: Must only call it on the GL thread.</p>
      * <p>Note: <i><b>The out parameter is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      * <p>Note: {@link #mcFontManager} is an implicit dependency here.</p>
      *
@@ -289,9 +309,10 @@ public final class ImmediateClientServices {
      *         Once <code>true</code> is returned, all subsequent calls that complete normally
      *         will also return <code>true</code>, including calls with <code>reload</code>.
      *
+     * @see #tryLoadTextRuntimeVanilla(boolean)
      * @see #textVanilla()
      */
-    public boolean tryLoadTextRuntimeVanilla(
+    private boolean tryLoadTextRuntimeVanilla(
             boolean reload,
             @Nullable SimpleTextRuntime @NonNull [] outTextRuntime) {
 
@@ -353,7 +374,7 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * It checks if all conditioned modules here are available, which requires at least GL46.
+     * It checks if all conditioned services here are available, which requires at least GL46.
      * Feel free to access services without concerns about availability after this call.
      *
      * <p>Specifically, it checks availability for:</p>
@@ -386,7 +407,7 @@ public final class ImmediateClientServices {
      * <p>Note: <i><b>This is a borrowed runtime.</b></i></p>
      */
     @NonNull
-    public FreeTypeManager freetype() {
+    public FreeTypeManager freeType() {
         return freeTypeManager;
     }
 
