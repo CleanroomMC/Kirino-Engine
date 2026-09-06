@@ -84,7 +84,7 @@ public final class ImmediateClientServices {
 
             stopWatch.stop();
 
-            LOGGER.info("McTTF font regenerated. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+            LOGGER.info("McTTF font runtime reloaded. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
         }
     }
 
@@ -108,9 +108,7 @@ public final class ImmediateClientServices {
                 "Minecraft resource manager is supposed to be ready.");
         Preconditions.checkState(resourceManager == Minecraft.getMinecraft().getResourceManager());
 
-        LOGGER.info("Module \"text\" availability: {}", INSTANCE.textAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("Module \"gui\" availability: {}", INSTANCE.guiAvailable() ? "TRUE" : "FALSE");
-        LOGGER.info("Module \"dummyVao\" availability: {}", INSTANCE.dummyVaoAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("The first launch typically takes longer...");
 
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -128,6 +126,9 @@ public final class ImmediateClientServices {
                     resourceManager));
         }
 
+        LOGGER.info("Module \"text\" availability: {}", INSTANCE.textAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"gui\" availability: {}", INSTANCE.guiAvailable() ? "TRUE" : "FALSE");
+        LOGGER.info("Module \"dummyVao\" availability: {}", INSTANCE.dummyVaoAvailable() ? "TRUE" : "FALSE");
         LOGGER.info("Module \"textVanilla\" availability: {}", textVanillaAvailable ? "TRUE" : "FALSE");
 
         stopWatch.stop();
