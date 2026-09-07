@@ -95,7 +95,7 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                         80)
                 .endDraw();
 
-        if (ICS.instance().tryLoadTextRuntimeVanilla()) {
+        if (ICS.instance().textVanillaAvailable()) {
             ICS.instance().textVanilla()
                     .begin()
                     .appendParagraphStyled(

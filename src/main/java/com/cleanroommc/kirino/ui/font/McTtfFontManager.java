@@ -93,7 +93,7 @@ public final class McTtfFontManager {
      * <p>Note: The returned buffer is owned by this manager and must not be
      * manually freed by the caller.</p>
      */
-    @NonNull
+    @Nullable
     public ByteBuffer load(@NonNull String fontName, @NonNull FontStyle style) {
         Preconditions.checkNotNull(fontName);
         Preconditions.checkNotNull(style);
@@ -111,7 +111,7 @@ public final class McTtfFontManager {
      * <p>Note: The returned buffer is owned by this manager and must not be
      * manually freed by the caller.</p>
      */
-    @NonNull
+    @Nullable
     public ByteBuffer load(
             @NonNull String fontName,
             @NonNull String familyName,
@@ -130,18 +130,25 @@ public final class McTtfFontManager {
             return cached;
         }
 
-        ByteBuffer generated = loadOrGenerate(key);
+        final ByteBuffer loaded;
 
-        fontCache.put(key, generated);
+        try {
+            loaded = loadOrGenerate(key);
+        } catch (Throwable e) {
+            String msg = "Failed to load Minecraft font: " + fontName +  " / " + familyName + " / " + style;
+            LOGGER.error(msg, e);
+            return null;
+        }
 
-        return generated;
+        fontCache.put(key, loaded);
+        return loaded;
     }
 
     /**
      * <p>Note: The returned buffer is owned by this manager and must not be
      * manually freed by the caller.</p>
      */
-    @NonNull
+    @Nullable
     public ByteBuffer loadDefault() {
         return load("default", FontStyle.REGULAR);
     }
@@ -150,12 +157,12 @@ public final class McTtfFontManager {
      * <p>Note: The returned buffer is owned by this manager and must not be
      * manually freed by the caller.</p>
      */
-    @NonNull
+    @Nullable
     public ByteBuffer loadDefault(@NonNull FontStyle style) {
         return load("default", style);
     }
 
-    @NonNull
+    @Nullable
     public FT_Face loadFace(
             @NonNull String fontName,
             @NonNull FontStyle style,
@@ -163,10 +170,14 @@ public final class McTtfFontManager {
             int pixelSize) {
 
         ByteBuffer buffer = load(fontName, style);
+        if (buffer == null) {
+            return null;
+        }
+
         return freeTypeManager.load(buffer, faceIndex, pixelSize);
     }
 
-    @NonNull
+    @Nullable
     public FT_Face loadDefaultFace(int pixelSize) {
         return loadFace("default", FontStyle.REGULAR, 0, pixelSize);
     }
@@ -250,48 +261,43 @@ public final class McTtfFontManager {
     }
 
     @NonNull
-    private ByteBuffer loadOrGenerate(@NonNull FontKey key) {
-        final String contentKey;
-
-        try {
-            contentKey = McTtfCacheKey.create(
-                    assetSource,
-                    key.fontName(),
-                    key.familyName(),
-                    key.style());
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Failed to fingerprint Minecraft TTF inputs: " + key.fontName() + " / " + key.style(), e);
-        }
+    private ByteBuffer loadOrGenerate(@NonNull FontKey key) throws IOException {
+        String contentKey = McTtfCacheKey.create(
+                assetSource,
+                key.fontName(),
+                key.familyName(),
+                key.style());
 
         byte[] bytes = readCachedFont(contentKey);
 
         if (bytes == null) {
-            try {
-                bytes = McTTF.convertToBytes(
-                        assetSource,
-                        key.fontName(),
-                        key.familyName(),
-                        key.style());
-            } catch (IOException e) {
-                throw new RuntimeException(
-                        "Failed to generate Minecraft TTF: " + key.fontName() + " / " + key.style(), e);
-            }
+            bytes = McTTF.convertToBytes(
+                    assetSource,
+                    key.fontName(),
+                    key.familyName(),
+                    key.style());
 
-            Preconditions.checkState(bytes.length > 0,
-                    "McTTF generated an empty font.");
+            if (bytes.length == 0) {
+                throw new IOException("McTTF generated an empty font: " + key.fontName + " / " + key.style);
+            }
 
             writeCachedFont(contentKey, bytes);
         }
 
-        Preconditions.checkState(bytes.length > 0,
-                "McTTF loaded an empty font.");
+        if (bytes.length == 0) {
+            throw new IOException("McTTF generated an empty font: " + key.fontName + " / " + key.style);
+        }
 
         ByteBuffer buffer = MemoryUtil.memAlloc(bytes.length);
-        buffer.put(bytes);
-        buffer.flip();
 
-        return buffer;
+        try {
+            buffer.put(bytes);
+            buffer.flip();
+            return buffer;
+        } catch (RuntimeException | Error e) {
+            MemoryUtil.memFree(buffer);
+            throw e;
+        }
     }
 
     private byte @Nullable [] readCachedFont(String contentKey) {

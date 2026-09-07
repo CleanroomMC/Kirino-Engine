@@ -7,6 +7,7 @@ import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeAlphaBitmap
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapDecoder;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapLoader;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Bitmap;
@@ -18,7 +19,9 @@ public class FreeTypeFontHandle implements ST_FontHandle {
     private final FT_Face face;
     private final boolean hasKerning;
 
-    public FreeTypeFontHandle(FT_Face face) {
+    public FreeTypeFontHandle(@NonNull FT_Face face) {
+        Preconditions.checkNotNull(face);
+
         this.face = face;
         hasKerning = FreeType.FT_HAS_KERNING(face);
     }

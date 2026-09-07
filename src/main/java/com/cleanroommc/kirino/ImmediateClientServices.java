@@ -77,14 +77,35 @@ public final class ImmediateClientServices {
                 return;
             }
 
+            if (instance.disableTextRuntimeVanilla) {
+                return;
+            }
+
+            LOGGER.info("Starts reloading McTTF font runtime.");
             StopWatch stopWatch = StopWatch.createStarted();
 
             // the asset source is now the resource manager
-            instance.tryLoadTextRuntimeVanilla(true);
+            boolean success = instance.tryLoadTextRuntimeVanilla(true);
 
             stopWatch.stop();
 
-            LOGGER.info("McTTF font runtime reloaded. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+            if (success) {
+                LOGGER.info("McTTF font runtime reloaded. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+            } else {
+                LOGGER.warn("Failed reloading McTTF font runtime. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+
+                LOGGER.info("Starts loading fallback McTTF font.");
+                StopWatch stopWatch2 = StopWatch.createStarted();
+                instance.mcFontManager.enableResourcePackAssetSource();
+                boolean success2 = instance.tryLoadTextRuntimeVanilla(true);
+                instance.mcFontManager.enableResourceManagerAssetSource();
+                stopWatch2.stop();
+                if (success2) {
+                    LOGGER.info("Fallback McTTF font loaded. Time taken: {}ms", stopWatch2.getTime(TimeUnit.MILLISECONDS));
+                } else {
+                    LOGGER.info("Failed loading fallback McTTF font. Time taken: {}ms", stopWatch2.getTime(TimeUnit.MILLISECONDS));
+                }
+            }
         }
     }
 
@@ -116,11 +137,13 @@ public final class ImmediateClientServices {
 
         // it'll be the call that triggers the actual font loading
         boolean textVanillaAvailable = INSTANCE.tryLoadTextRuntimeVanilla(false);
+        // the failure of the first load implies the program lifetime unavailability of the runtime
+        INSTANCE.disableTextRuntimeVanilla = !textVanillaAvailable;
 
         INSTANCE.mcFontManager.enableResourceManagerAssetSource();
 
-        // register reload listener only if text vanilla is available
-        if (textVanillaAvailable) {
+        // register reload listener only if text vanilla is enabled
+        if (!INSTANCE.disableTextRuntimeVanilla) {
             resourceManager.registerReloadListener(new McFontReloadListener(
                     INSTANCE,
                     resourceManager));
@@ -143,19 +166,40 @@ public final class ImmediateClientServices {
      * <p>Note: It'll be called right after the Splash process.</p>
      */
     public static void refreshMcFontIfNeeded() {
+        if (INSTANCE.disableTextRuntimeVanilla) {
+            return;
+        }
+
         ResourcePackRepository repository = Minecraft.getMinecraft().getResourcePackRepository();
         Preconditions.checkNotNull(repository);
 
         boolean hasPacks = !repository.getRepositoryEntries().isEmpty() || repository.getServerResourcePack() != null;
         if (hasPacks && INSTANCE.textRuntimeVanilla != null) {
+            LOGGER.info("Starts refreshing McTTF font.");
             StopWatch stopWatch = StopWatch.createStarted();
 
             // the asset source is now the resource manager
-            INSTANCE.tryLoadTextRuntimeVanilla(true);
+            boolean success = INSTANCE.tryLoadTextRuntimeVanilla(true);
 
             stopWatch.stop();
 
-            LOGGER.info("Refreshed McTTF font. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+            if (success) {
+                LOGGER.info("Refreshed McTTF font. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+            } else {
+                LOGGER.warn("Failed refreshing McTTF font. Time taken: {}ms", stopWatch.getTime(TimeUnit.MILLISECONDS));
+
+                LOGGER.info("Starts loading fallback McTTF font.");
+                StopWatch stopWatch2 = StopWatch.createStarted();
+                INSTANCE.mcFontManager.enableResourcePackAssetSource();
+                boolean success2 = INSTANCE.tryLoadTextRuntimeVanilla(true);
+                INSTANCE.mcFontManager.enableResourceManagerAssetSource();
+                stopWatch2.stop();
+                if (success2) {
+                    LOGGER.info("Fallback McTTF font loaded. Time taken: {}ms", stopWatch2.getTime(TimeUnit.MILLISECONDS));
+                } else {
+                    LOGGER.info("Failed loading fallback McTTF font. Time taken: {}ms", stopWatch2.getTime(TimeUnit.MILLISECONDS));
+                }
+            }
         }
     }
 
@@ -173,6 +217,7 @@ public final class ImmediateClientServices {
     private final @Nullable SimpleGuiRuntime guiRuntime;
     private final @Nullable VAO dummyVao;
 
+    private boolean disableTextRuntimeVanilla;
     private @Nullable SimpleTextRuntime textRuntimeVanilla = null;
     private final McTtfFontManager mcFontManager;
 
@@ -260,12 +305,10 @@ public final class ImmediateClientServices {
     }
 
     /**
-     * Call <code>tryLoadTextRuntimeVanilla</code> first.
-     * Once it returns <code>true</code>, this function is safe to access directly
-     * for the rest of the program lifetime.
+     * Call {@link #textVanillaAvailable()} first everytime you access the text vanilla runtime.
+     * Its availability can't be immutably determined due to the reloading mechanism.
      *
      * <p>Note: Never cache the result since backend instance might be replaced by reloading.</p>
-     *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
     @NonNull
@@ -276,55 +319,24 @@ public final class ImmediateClientServices {
         return textRuntimeVanilla;
     }
 
-    private static final SimpleTextRuntime[] IGNORED_OUT_TEXT_RUNTIME = new SimpleTextRuntime[1];
-
-    /**
-     * @see #tryLoadTextRuntimeVanilla(boolean)
-     * @see #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])
-     */
-    public boolean tryLoadTextRuntimeVanilla() {
-        return tryLoadTextRuntimeVanilla(false);
+    public boolean textVanillaAvailable() {
+        return !disableTextRuntimeVanilla && tryLoadTextRuntimeVanilla(false);
     }
 
     /**
-     * Convenient path of {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])}.
-     * See {@link #tryLoadTextRuntimeVanilla(boolean, SimpleTextRuntime[])} for details.
-     *
-     * <p>Note: Must only call it on the GL thread.</p>
-     */
-    private boolean tryLoadTextRuntimeVanilla(boolean reload) {
-        return tryLoadTextRuntimeVanilla(reload, IGNORED_OUT_TEXT_RUNTIME);
-    }
-
-    /**
-     * <p>Note: Never cache the result since <code>reload</code> replaces the backend instance.
-     * Accessing this function directly is relatively cheap even for hot paths.
+     * <p>Note: Accessing this function directly is cheap even for hot paths.
      * However, the call that actually triggers loading takes very long.</p>
      *
      * <p>Note: Must only call it on the GL thread.</p>
-     * <p>Note: <i><b>The out parameter is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      * <p>Note: {@link #mcFontManager} is an implicit dependency here.</p>
      *
-     * @return <code>false</code> means the text runtime is unavailable for the entire program lifetime,
-     *         and <code>reload</code> cannot make it available.<br>
-     *         Once <code>true</code> is returned, all subsequent calls that complete normally
-     *         will also return <code>true</code>, including calls with <code>reload</code>.
+     * @return The corresponding runtime will be non-null with a <code>true</code>,
+     *         but null with a <code>false</code>.
      *
-     * @see #tryLoadTextRuntimeVanilla(boolean)
      * @see #textVanilla()
      */
-    private boolean tryLoadTextRuntimeVanilla(
-            boolean reload,
-            @Nullable SimpleTextRuntime @NonNull [] outTextRuntime) {
-
-        Preconditions.checkNotNull(outTextRuntime);
-        Preconditions.checkArgument(outTextRuntime.length == 1,
-                "Argument \"outTextRuntime\"'s length must be one.");
-
-        outTextRuntime[0] = null;
-
+    private boolean tryLoadTextRuntimeVanilla(boolean reload) {
         if (!reload && textRuntimeVanilla != null) {
-            outTextRuntime[0] = textRuntimeVanilla;
             return true;
         }
 
@@ -333,6 +345,13 @@ public final class ImmediateClientServices {
         }
 
         Preconditions.checkNotNull(dummyVao);
+
+        ST_Config config = new ST_Config(
+                ST_FontBackendType.FREE_TYPE,
+                48,
+                16,
+                12,
+                FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
 
         if (reload) {
             if (textRuntimeVanilla != null) {
@@ -343,21 +362,17 @@ public final class ImmediateClientServices {
                     textRuntimeVanilla = null;
                 }
             }
+
             mcFontManager.invalidate();
         }
 
-        ST_Config config = new ST_Config(
-                ST_FontBackendType.FREE_TYPE,
-                48,
-                16,
-                12,
-                FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+        final FT_Face face = mcFontManager.loadDefaultFace(config.pixelSize());
+        if (face == null) {
+            return false;
+        }
 
         textRuntimeVanilla = new SimpleTextRuntime(
-                (rl, cfg) -> {
-                    FT_Face face = mcFontManager.loadDefaultFace(cfg.pixelSize());
-                    return new FreeTypeFontHandle(face);
-                },
+                (rl, cfg) -> new FreeTypeFontHandle(face),
                 (context) -> new DefaultTextRenderer(
                         context,
                         new Tex2DArrayGlyphAtlas(1024, 1024),
@@ -370,7 +385,6 @@ public final class ImmediateClientServices {
                 config,
                 null);
 
-        outTextRuntime[0] = textRuntimeVanilla;
         return true;
     }
 

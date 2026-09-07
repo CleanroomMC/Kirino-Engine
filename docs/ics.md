@@ -54,23 +54,14 @@ dummyVao();
 behind it is much more complicated.
 
 ```java
-if (tryLoadTextRuntimeVanilla()) {
+if (textVanillaAvailable()) {
     // never cache the result since backend instance might be replaced by reloading
     textVanilla();
 }
 ```
 
-Don't worry that the `tryLoadTextRuntimeVanilla` call could cause loading and 
-is slow. It's not and the system warms up `textVanilla` before the Splash process if possible.
-
-For the try load call return value
-- `false` means the text runtime is unavailable for the entire program lifetime,
-  and `reload` cannot make it available
-- Once `true` is returned, all subsequent calls that complete normally
-  will also return `true`, including calls with `reload`
-
 The availability of `textVanilla` is more than immutably determined due to
-the reloading mechanism, but you can treat it as immutably determined since it does follow the pattern.
+the reloading mechanism, and `assertFullAvailability` does not guarantee its availability.
 
 Every resource pack reload will trigger a `textVanilla` reload,
 but a `textVanilla` reload call not necessarily performs the heavy reload work.
