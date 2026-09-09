@@ -35,6 +35,12 @@ public final class CmdLinesBuilder {
         this.color0 = color0;
     }
 
+    /**
+     * Sets the vertex at the specified index.
+     *
+     * <p>Note: This doesn't affect the sequential write position used by
+     * {@link #put(float, float)}.</p>
+     */
     @NonNull
     public CmdLinesBuilder set(int vertIndex, float x, float y) {
         Preconditions.checkElementIndex(vertIndex, vertexNum);
@@ -44,6 +50,9 @@ public final class CmdLinesBuilder {
         return this;
     }
 
+    /**
+     * Writes a vertex at the current sequential write position and advances it by one.
+     */
     @NonNull
     public CmdLinesBuilder put(float x, float y) {
         Preconditions.checkElementIndex(index, vertexNum);
@@ -54,6 +63,12 @@ public final class CmdLinesBuilder {
         return this;
     }
 
+    /**
+     * Enables color gradient using <code>color0</code> and <code>color1</code>.
+     *
+     * <p>Note: If neither <code>color1</code> nor <code>color2</code> is enabled,
+     * the line is rendered with a solid <code>color0</code>.</p>
+     */
     @NonNull
     public CmdLinesBuilder color1(int color1) {
         flags |= SG_GuiOp.FLAG_COLOR1;
@@ -61,6 +76,12 @@ public final class CmdLinesBuilder {
         return this;
     }
 
+    /**
+     * Enables a second color gradient using <code>color0</code>,
+     * <code>color1</code>, and <code>color2</code>.
+     *
+     * <p>Note: {@link #color1(int)} must also be enabled before emitting.</p>
+     */
     @NonNull
     public CmdLinesBuilder color2(int color2) {
         flags |= SG_GuiOp.FLAG_COLOR2;

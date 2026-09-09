@@ -46,6 +46,8 @@ public final class ImmediateClientServices {
 
     private static final ImmediateClientServices INSTANCE = new ImmediateClientServices();
 
+    //<editor-fold desc="initialization">
+
     @SuppressWarnings("deprecation")
     private static final class McFontReloadListener implements IResourceManagerReloadListener {
 
@@ -202,6 +204,7 @@ public final class ImmediateClientServices {
             }
         }
     }
+    //</editor-fold>
 
     /**
      * <p>Note: Must only use it on the GL thread.</p>

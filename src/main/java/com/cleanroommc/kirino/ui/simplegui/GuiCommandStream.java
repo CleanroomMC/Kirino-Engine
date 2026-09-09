@@ -90,6 +90,9 @@ public class GuiCommandStream implements AutoCloseable {
         end(start);
     }
 
+    /**
+     * <p>Note: Must call <code>emit</code> from the builder.</p>
+     */
     @NonNull
     public CmdRectBuilder rectEx(float x, float y, float width, float height, int color) {
         return new CmdRectBuilder(this, x, y, width, height, color);
@@ -152,6 +155,9 @@ public class GuiCommandStream implements AutoCloseable {
         end(start);
     }
 
+    /**
+     * <p>Note: Must call <code>emit</code> from the builder.</p>
+     */
     @NonNull
     public CmdLinesBuilder lines(int vertexNum, float lineWidth, boolean formsLoop, int color) {
         return new CmdLinesBuilder(this, vertexNum, lineWidth, formsLoop, color);

@@ -543,11 +543,11 @@ public class GuiRenderer implements AutoCloseable {
     }
 
     private void pushClip() {
-
+        // todo
     }
 
     private void popClip() {
-
+        // todo
     }
 
     private void flush(int count) {
