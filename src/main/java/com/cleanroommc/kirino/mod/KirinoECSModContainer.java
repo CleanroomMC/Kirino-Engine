@@ -15,7 +15,12 @@ public final class KirinoECSModContainer extends DummyModContainer {
 
         meta.modId = "kirino_ecs";
         meta.name = "Kirino ECS";
-        meta.version = "epoch-1.a4";
+        meta.version = "epoch-1.a5";
+
+        meta.description = """
+                (WIP) This is a subsystem of Kirino-Engine, providing a general purpose
+                ECS framework integrated with Minecraft.
+                """;
 
         meta.parent = "kirino_engine";
 

@@ -461,3 +461,22 @@ The plan is that:
 
 **Want To Implement:**
 - A brand new GL binding planner that works with the GL knowledge system
+
+## August 2026
+**Done:**
+- Fix crashes in ECS primitive array reads, pool scaling, FSM and system flow execution
+- Refactor GL texture abstraction: address mipmap and more
+- Texture1DAccessor & Texture2DAccessor & Texture3DAccessor & Texture2DArrayAccessor
+- Implement Tex2DArrayGlyphAtlas
+- Implement a feature rich version of SimpleText renderer
+  - Texture2DArray atlas
+  - Glyph LRU
+  - Async SDF gen with a generator pool
+  - Power-of-two atlas alignment
+- Full-fledged font shader + optimize obfuscated effect with hash caching
+- Migrate to Cleanroom cleanroom-gradle branch
+- Text styling parser and paragraph line breaking
+- Almost fully backward compatible with vanilla FontRenderer + FontRendererFacade implemented
+- Add GL version and availability checks for ImmediateClientServices
+
+![](gallery/2026-08-23.png)

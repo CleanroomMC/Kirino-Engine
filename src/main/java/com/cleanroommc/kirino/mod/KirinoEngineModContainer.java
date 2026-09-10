@@ -31,7 +31,7 @@ public final class KirinoEngineModContainer extends DummyModContainer {
                 - [ChaosStrikez](https://github.com/jchung01 ) - Code refactoring, call-site improvements, and algorithm fixes
                 """;
 
-        meta.version = "epoch-1.a6";
+        meta.version = "epoch-1.a7";
         meta.logoFile = "/logo.png";
 
         meta.authorList.add("tttsaurus");
