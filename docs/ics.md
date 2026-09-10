@@ -7,6 +7,10 @@ as possible.
 
 With `ICS`, you'll be able to create GL shaders, draw texts and simple vector graphics, etc.
 
+> See:<br>
+> - [SimpleText Usage](simpletext/simpletext_usage.md)
+> - [SimpleGUI Usage](simplegui/simplegui_usage.md)
+
 ## Timeline
 
 ```
@@ -15,7 +19,16 @@ With `ICS`, you'll be able to create GL shaders, draw texts and simple vector gr
   Everything is supposed to be ready right before the Splash screen
 ```
 
-# Usage Patterns
+```
+--|---Splash Process---|--
+  ^                    ^
+  |                    |
+  Default vanilla font is loaded here
+                       |
+                       Resource pack font is loaded here
+```
+
+## Usage Patterns
 
 The availability of multiple services are conditioned, including
 - `text`
@@ -66,3 +79,12 @@ the reloading mechanism, and `assertFullAvailability` does not guarantee its ava
 Every resource pack reload will trigger a `textVanilla` reload,
 but a `textVanilla` reload call not necessarily performs the heavy reload work.
 The system tries to reduce the amount of actual reload aggressively.
+
+## Availability Summary
+
+- `text` requires GL46
+- `gui` requires GL46
+- `dummyVao` requires GL30
+- `textVanilla` requires GL46 AND other conditions including font loading working properly
+
+Other services have no requirement.

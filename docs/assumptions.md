@@ -57,36 +57,6 @@ else
 
 In contrast, an explicit architecture that represents features as data and structure is wanted.
 
-## CPU Orchestration & GPU Execution
-
-What do we avoid:
-- CPU control increasingly mirrors GPU logic
-- GPU computation is treated as an optimization patch
-
-**Bad example**:
-```java
-// # first version
-for (Object obj : objects)
-{
-    if (obj.visible(camera))
-    {
-        draw(obj);
-    }
-}
-
-// # updated version
-// - add frustum culling
-// - add LOD selection
-for (Object obj : objects)
-{
-    if (!obj.inFrustum(camera))
-        continue;
-
-    int lod = obj.selectLOD(camera);
-    draw(obj, lod);
-}
-```
-
 ## Architecture Matters More Than Micro-optimizations
 
 What do we avoid:

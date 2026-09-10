@@ -70,8 +70,8 @@ public final class McTtfFontManager {
     @NonNull
     private static Path defaultCacheDirectory() {
         return Paths.get("").toAbsolutePath()
-                .resolve("kirino")
                 .resolve("cache")
+                .resolve("kirino")
                 .resolve("font");
     }
 

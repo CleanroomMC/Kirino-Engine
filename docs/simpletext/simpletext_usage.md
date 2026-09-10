@@ -14,6 +14,12 @@ prepare GL states for the draw call. You'll have to take care of the GL state ch
 Notice that immediate services are intrinsically the antipattern of our immutable pipeline design,
 so GL state leaks are inevitable.
 
+## Assumptions
+
+- Features like MSDF, ligature, BiDi, shaping are out of scope
+- One Codepoint = One Glyph = One Quad (we deliberately keep it simple)
+- Producer-consumer pattern (every part is replaceable)
+
 ## Advanced Usage
 
 > Relevant classes:
@@ -22,10 +28,10 @@ so GL state leaks are inevitable.
 > <br>· `com.cleanroommc.kirino.ui.simpletext.SimpleTextProducer`
 > <br>· `com.cleanroommc.kirino.ui.simpletext.ST_FontHandle`
 
-First of all, let's have a look at our example `SimpleTextRuntime` setup.
+First of all, let's have a look at an example `SimpleTextRuntime` setup.
 ```java
 public SimpleTextRuntime(
-            @NonNull BiFunction<ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
+            @NonNull BiFunction<@Nullable ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
             @NonNull ImmediateShaderAccess shaderAccess,
@@ -39,6 +45,7 @@ ST_Config config = new ST_Config(
                 16,
                 12,
                 FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+
 textRuntime = new SimpleTextRuntime(
         (rl, cfg) -> {
             FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
