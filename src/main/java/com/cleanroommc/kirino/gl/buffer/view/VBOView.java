@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import org.lwjgl.opengl.GL15;
 
 public class VBOView extends BufferView {
+
     public VBOView(GLBuffer buffer) {
         super(buffer);
     }

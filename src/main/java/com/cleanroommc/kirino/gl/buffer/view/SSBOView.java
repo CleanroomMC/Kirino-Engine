@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import org.lwjgl.opengl.*;
 
 public class SSBOView extends BufferView {
+
     public SSBOView(GLBuffer buffer) {
         super(buffer);
     }

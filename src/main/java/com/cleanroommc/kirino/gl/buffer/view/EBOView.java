@@ -4,6 +4,7 @@ import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import org.lwjgl.opengl.GL15;
 
 public class EBOView extends BufferView {
+
     public EBOView(GLBuffer buffer) {
         super(buffer);
     }

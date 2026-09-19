@@ -5,6 +5,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL40;
 
 public class IDBView extends BufferView {
+
     public IDBView(GLBuffer buffer) {
         super(buffer);
     }
