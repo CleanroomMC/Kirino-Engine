@@ -522,7 +522,7 @@ public abstract class BufferView {
     /**
      * Flushes a range of a mapping created with <code>GL_MAP_FLUSH_EXPLICIT_BIT</code>.
      *
-     * <p>Note: Offset and length are relative to the original buffer and must lie inside the mapped range.</p>
+     * <p>Note: Offset and length are relative to the mapped buffer and must lie inside the mapped range.</p>
      * <p>Note: This makes CPU writes visible to OpenGL.</p>
      */
     public void flushMappedRange(long offset, long length) {
