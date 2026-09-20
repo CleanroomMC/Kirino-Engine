@@ -416,8 +416,11 @@ public abstract class BufferView {
     public void copyTo(@NonNull BufferView destination, long readOffset, long writeOffset, long size) {
         if (validation) {
             Preconditions.checkNotNull(destination);
-            validateRange(readOffset, size, fetchBufferSize64());
-            validateRange(writeOffset, size, destination.fetchBufferSize64());
+            Preconditions.checkArgument(size >= 0, "Buffer copy size must be no smaller than zero.");
+            if (bufferID == destination.bufferID) {
+                Preconditions.checkArgument(readOffset + size <= writeOffset || writeOffset + size <= readOffset,
+                        "Source and destination ranges must not overlap when copying within the same buffer.");
+            }
         }
 
         if (dsa) {
@@ -435,9 +438,20 @@ public abstract class BufferView {
     public void copyFrom(@NonNull BufferView source, long readOffset, long writeOffset, long size) {
         if (validation) {
             Preconditions.checkNotNull(source);
+            Preconditions.checkArgument(size >= 0, "Buffer copy size must be no smaller than zero.");
+            if (source.bufferID == bufferID) {
+                Preconditions.checkArgument(readOffset + size <= writeOffset || writeOffset + size <= readOffset,
+                        "Source and destination ranges must not overlap when copying within the same buffer.");
+            }
         }
 
-        source.copyTo(this, readOffset, writeOffset, size);
+        if (dsa) {
+            GL45C.glCopyNamedBufferSubData(source.bufferID, bufferID, readOffset, writeOffset, size);
+        } else {
+            GL15.glBindBuffer(GL31C.GL_COPY_READ_BUFFER, source.bufferID);
+            GL15.glBindBuffer(GL31C.GL_COPY_WRITE_BUFFER, bufferID);
+            GL31C.glCopyBufferSubData(GL31C.GL_COPY_READ_BUFFER, GL31C.GL_COPY_WRITE_BUFFER, readOffset, writeOffset, size);
+        }
     }
     //</editor-fold>
 
@@ -452,7 +466,7 @@ public abstract class BufferView {
     @NonNull
     public ByteBuffer mapRange(long offset, int length, int access) {
         if (validation) {
-            Preconditions.checkArgument(length >= 0, "Cannot have a negative buffer length.");
+            Preconditions.checkArgument(length > 0, "Buffer mapping length must be greater than zero.");
             validateRange(offset, length, fetchBufferSize64());
         }
 
@@ -529,6 +543,7 @@ public abstract class BufferView {
         if (validation) {
             Preconditions.checkArgument(offset >= 0, "Cannot have a negative buffer offset.");
             Preconditions.checkArgument(length >= 0, "Cannot have a negative buffer length.");
+            validateRange(offset, length, fetchMapBufferLength64());
         }
 
         if (dsa) {
