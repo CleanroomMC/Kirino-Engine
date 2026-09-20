@@ -1,7 +1,5 @@
 package com.cleanroommc.kirino.gl.shader;
 
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
-
 public interface ShaderAnalyzer {
-    ShaderMeta analyze(GLSLRegistry glslRegistry, String shaderSource);
+    ShaderMeta analyze(String shaderSource);
 }

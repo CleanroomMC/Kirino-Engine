@@ -2,7 +2,6 @@ package com.cleanroommc.kirino.gl.shader;
 
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
@@ -54,8 +53,8 @@ public class Shader extends GLDisposable {
         this.shaderType = shaderType;
     }
 
-    public void analyze(GLSLRegistry glslRegistry, ShaderAnalyzer analyzer) {
-        shaderMeta = analyzer.analyze(glslRegistry, shaderSource);
+    public void analyze(ShaderAnalyzer analyzer) {
+        shaderMeta = analyzer.analyze(shaderSource);
     }
 
     public void compile() {

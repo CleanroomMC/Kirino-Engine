@@ -164,9 +164,7 @@ public final class GraphicsRuntimeBundleInit {
         shaderRegistry.submitToGL();
         context.logger().info("Shader compilation passed.");
 
-        shaderRegistry.analyze(
-                context.shaderi().glslRegistry,
-                context.shaderi().defaultShaderAnalyzer);
+        shaderRegistry.analyze(context.shaderi().defaultShaderAnalyzer);
 
         KnowledgeSupervisor supervisor = new KnowledgeSupervisor(new GLViolationPolicy());
         KnowledgeRuntime glKnowledge = supervisor.access(KnowledgeOwner.of("kirino"));
