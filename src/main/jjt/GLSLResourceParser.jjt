@@ -1,0 +1,662 @@
+/*
+ * Resource-focused GLSL grammar for JJTree / JavaCC 7.
+ *
+ * This is a subset derived from the declaration, qualifier,
+ * type, array and struct rules in CleanroomMC/KSML-Compiler's GLSL grammar.
+ * It accepts a complete shader source and builds nodes only for
+ * resource declarations.
+ *
+ * The upstream GLSL grammar is distributed under the MIT License:
+ *
+ * Copyright (c) 2022 Mustafa Said Ağca
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+options {
+    STATIC = false;
+    UNICODE_INPUT = true;
+
+    MULTI = true;
+    VISITOR = true;
+    TRACK_TOKENS = true;
+    NODE_DEFAULT_VOID = true;
+    VISITOR_DATA_TYPE = "Void";
+    VISITOR_RETURN_TYPE = "Void";
+}
+
+PARSER_BEGIN(GLSLResourceParser)
+
+package com.cleanroommc.kirino.gl.shader.parser;
+
+public class GLSLResourceParser {
+
+    public record LayoutQualifierValue(String name, String expression) {
+    }
+
+    private record ResourcePrefix(int storageKind, int firstTokenAfterQualifiers) {
+    }
+
+    private boolean isInterfaceBlockAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        return getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE;
+    }
+
+    private boolean isUniformDeclarationAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null || prefix.storageKind != UNIFORM) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        if (getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE) {
+            return false;
+        }
+
+        return getToken(i).kind == IDENTIFIER || getToken(i).kind == STRUCT;
+    }
+
+    private boolean isStructDeclarationAhead() {
+        int i = 1;
+        if (getToken(i).kind != STRUCT) {
+            return false;
+        }
+
+        i++;
+        if (getToken(i).kind == IDENTIFIER) {
+            i++;
+        }
+        return getToken(i).kind == LEFT_BRACE;
+    }
+
+    private ResourcePrefix scanResourcePrefix() {
+        int i = 1;
+        int storageKind = -1;
+        boolean consumedQualifier = false;
+
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return null;
+                }
+                consumedQualifier = true;
+                continue;
+            }
+
+            if (!isSimpleQualifierKind(kind)) {
+                break;
+            }
+
+            if (kind == UNIFORM || kind == BUFFER) {
+                if (storageKind != -1) {
+                    return null;
+                }
+                storageKind = kind;
+            }
+            consumedQualifier = true;
+            i++;
+        }
+
+        if (!consumedQualifier || storageKind == -1) {
+            return null;
+        }
+        return new ResourcePrefix(storageKind, i);
+    }
+
+    private int tokenAfterLayoutQualifier(int layoutIndex) {
+        int i = layoutIndex + 1;
+        if (getToken(i).kind != LEFT_PAREN) {
+            return -1;
+        }
+
+        int depth = 1;
+        i++;
+        while (depth > 0) {
+            int kind = getToken(i).kind;
+            if (kind == EOF) {
+                return -1;
+            }
+            if (kind == LEFT_PAREN) {
+                depth++;
+            } else if (kind == RIGHT_PAREN) {
+                depth--;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    private static boolean isSimpleQualifierKind(int kind) {
+        switch (kind) {
+            case CONST:
+            case IN:
+            case OUT:
+            case INOUT:
+            case CENTROID:
+            case PATCH:
+            case SAMPLE:
+            case UNIFORM:
+            case BUFFER:
+            case SHARED:
+            case COHERENT:
+            case VOLATILE:
+            case RESTRICT:
+            case READONLY:
+            case WRITEONLY:
+            case ATTRIBUTE:
+            case VARYING:
+            case SMOOTH:
+            case FLAT:
+            case NOPERSPECTIVE:
+            case INVARIANT:
+            case PRECISE:
+            case HIGHP:
+            case MEDIUMP:
+            case LOWP:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private String consumeExpressionUntil(int firstStopKind, int secondStopKind) throws ParseException {
+        StringBuilder result = new StringBuilder();
+        int parenDepth = 0;
+        int bracketDepth = 0;
+        int braceDepth = 0;
+
+        while (true) {
+            Token next = getToken(1);
+            int kind = next.kind;
+
+            if (kind == EOF) {
+                throw new ParseException("Unexpected end of input inside expression.");
+            }
+            if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+                    && (kind == firstStopKind || kind == secondStopKind)) {
+                break;
+            }
+
+            Token consumed = getNextToken();
+            appendNormalizedToken(result, consumed.image);
+
+            if (kind == LEFT_PAREN) {
+                parenDepth++;
+            } else if (kind == RIGHT_PAREN) {
+                if (parenDepth == 0) {
+                    throw new ParseException("Unbalanced ')' inside expression.");
+                }
+                parenDepth--;
+            } else if (kind == LEFT_BRACKET) {
+                bracketDepth++;
+            } else if (kind == RIGHT_BRACKET) {
+                if (bracketDepth == 0) {
+                    throw new ParseException("Unbalanced ']' inside expression.");
+                }
+                bracketDepth--;
+            } else if (kind == LEFT_BRACE) {
+                braceDepth++;
+            } else if (kind == RIGHT_BRACE) {
+                if (braceDepth == 0) {
+                    throw new ParseException("Unbalanced '}' inside expression.");
+                }
+                braceDepth--;
+            }
+        }
+
+        if (result.isEmpty()) {
+            throw new ParseException("Expected an expression.");
+        }
+        return result.toString();
+    }
+
+    private static void appendNormalizedToken(StringBuilder result, String image) {
+        if (!result.isEmpty()
+                && isWordCharacter(result.charAt(result.length() - 1))
+                && !image.isEmpty()
+                && isWordCharacter(image.charAt(0))) {
+            result.append(' ');
+        }
+        result.append(image);
+    }
+
+    private static boolean isWordCharacter(char c) {
+        return Character.isLetterOrDigit(c) || c == '_';
+    }
+
+    private void skipExternalDeclaration(int firstKind) {
+        int parenDepth = 0;
+        int bracketDepth = 0;
+        int braceDepth = 0;
+        boolean sawTopLevelBrace = false;
+        int kind = firstKind;
+
+        while (true) {
+            if (kind == LEFT_PAREN) {
+                parenDepth++;
+            } else if (kind == RIGHT_PAREN) {
+                if (parenDepth > 0) {
+                    parenDepth--;
+                }
+            } else if (kind == LEFT_BRACKET) {
+                bracketDepth++;
+            } else if (kind == RIGHT_BRACKET) {
+                if (bracketDepth > 0) {
+                    bracketDepth--;
+                }
+            } else if (kind == LEFT_BRACE) {
+                if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                    sawTopLevelBrace = true;
+                }
+                braceDepth++;
+            } else if (kind == RIGHT_BRACE) {
+                if (braceDepth > 0) {
+                    braceDepth--;
+                }
+                if (sawTopLevelBrace && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                    if (getToken(1).kind == SEMICOLON) {
+                        getNextToken();
+                    }
+                    return;
+                }
+            } else if (kind == SEMICOLON && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                return;
+            }
+
+            kind = getToken(1).kind;
+            if (kind == EOF) {
+                return;
+            }
+            getNextToken();
+        }
+    }
+}
+
+PARSER_END(GLSLResourceParser)
+
+SKIP :
+{
+    < WHITE_SPACE: (" " | "\t" | "\r" | "\n")+ >
+|   < LINE_COMMENT:
+        "//" (~["\r", "\n"])* ("\r\n" | "\n" | "\r")?
+    >
+|   < BLOCK_COMMENT:
+        "/*" ( ~["*"] | "*" ~["/"] )* "*/"
+    >
+|   < PREPROCESSOR_DIRECTIVE:
+        "#"
+        ( "\\" ("\r\n" | "\n" | "\r") | ~["\r", "\n"] )*
+        ("\r\n" | "\n" | "\r")?
+    >
+}
+
+TOKEN :
+{
+    < LAYOUT: "layout" >
+|   < STRUCT: "struct" >
+|   < UNIFORM: "uniform" >
+|   < BUFFER: "buffer" >
+|   < CONST: "const" >
+|   < INOUT: "inout" >
+|   < IN: "in" >
+|   < OUT: "out" >
+|   < CENTROID: "centroid" >
+|   < PATCH: "patch" >
+|   < SAMPLE: "sample" >
+|   < SHARED: "shared" >
+|   < COHERENT: "coherent" >
+|   < VOLATILE: "volatile" >
+|   < RESTRICT: "restrict" >
+|   < READONLY: "readonly" >
+|   < WRITEONLY: "writeonly" >
+|   < ATTRIBUTE: "attribute" >
+|   < VARYING: "varying" >
+|   < SMOOTH: "smooth" >
+|   < FLAT: "flat" >
+|   < NOPERSPECTIVE: "noperspective" >
+|   < INVARIANT: "invariant" >
+|   < PRECISE: "precise" >
+|   < HIGHP: "highp" >
+|   < MEDIUMP: "mediump" >
+|   < LOWP: "lowp" >
+|   < TRUE: "true" >
+|   < FALSE: "false" >
+}
+
+TOKEN :
+{
+    < NUMBER:
+          "0" ["x", "X"] (["0"-"9", "a"-"f", "A"-"F"])+ (["u", "U"])?
+        | (
+              (["0"-"9"])+ ("." (["0"-"9"])*)?
+            | "." (["0"-"9"])+
+          )
+          (["e", "E"] (["+", "-"])? (["0"-"9"])+)?
+          ( ["f", "F", "u", "U"] | ["l", "L"] ["f", "F"] )?
+    >
+|   < IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "0"-"9", "_"])* >
+}
+
+TOKEN :
+{
+    < LEFT_PAREN: "(" >
+|   < RIGHT_PAREN: ")" >
+|   < LEFT_BRACKET: "[" >
+|   < RIGHT_BRACKET: "]" >
+|   < LEFT_BRACE: "{" >
+|   < RIGHT_BRACE: "}" >
+|   < COMMA: "," >
+|   < SEMICOLON: ";" >
+|   < EQUAL: "=" >
+|   < OTHER: ~[] >
+}
+
+ASTTranslationUnit TranslationUnit() #TranslationUnit :
+{}
+{
+    (
+        LOOKAHEAD({ isInterfaceBlockAhead() })
+        InterfaceBlockDeclaration()
+    |
+        LOOKAHEAD({ isUniformDeclarationAhead() })
+        UniformDeclaration()
+    |
+        LOOKAHEAD({ isStructDeclarationAhead() })
+        StructDeclaration()
+    |
+        SkipExternalDeclaration()
+    )*
+    <EOF>
+    { return jjtThis; }
+}
+
+void InterfaceBlockDeclaration() #InterfaceBlockDeclaration :
+{}
+{
+    ( Qualifier() )+
+    BlockName()
+    <LEFT_BRACE>
+    ( MemberDeclaration() )*
+    <RIGHT_BRACE>
+    [ InstanceDeclarator() ]
+    <SEMICOLON>
+}
+
+void UniformDeclaration() #UniformDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    DeclaratorList()
+    <SEMICOLON>
+}
+
+void StructDeclaration() #StructDeclaration :
+{}
+{
+    StructSpecifier()
+    [ DeclaratorList() ]
+    <SEMICOLON>
+}
+
+void StructSpecifier() #StructSpecifier :
+{}
+{
+    <STRUCT>
+    [ StructName() ]
+    <LEFT_BRACE>
+    ( MemberDeclaration() )+
+    <RIGHT_BRACE>
+}
+
+void MemberDeclaration() #MemberDeclaration :
+{}
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    MemberDeclaratorList()
+    <SEMICOLON>
+}
+
+void TypeSpecifier() #TypeSpecifier :
+{ Token type = null; }
+{
+    (
+        type = <IDENTIFIER>
+        { jjtThis.jjtSetValue(type.image); }
+    |
+        StructSpecifier()
+        { jjtThis.jjtSetValue("struct"); }
+    )
+    [ ArraySpecifier() ]
+}
+
+void Qualifier() #void :
+{}
+{
+    LayoutQualifier()
+|
+    StorageQualifier()
+|
+    SimpleQualifier()
+}
+
+void LayoutQualifier() #LayoutQualifier :
+{}
+{
+    <LAYOUT>
+    <LEFT_PAREN>
+    LayoutQualifierItem()
+    ( <COMMA> LayoutQualifierItem() )*
+    <RIGHT_PAREN>
+}
+
+void LayoutQualifierItem() #LayoutQualifierItem :
+{ Token name; String expression = null; }
+{
+    ( name = <IDENTIFIER> | name = <SHARED> )
+    [
+        <EQUAL>
+        { expression = consumeExpressionUntil(COMMA, RIGHT_PAREN); }
+    ]
+    {
+        jjtThis.jjtSetValue(new LayoutQualifierValue(name.image, expression));
+    }
+}
+
+void StorageQualifier() #StorageQualifier :
+{ Token qualifier; }
+{
+    ( qualifier = <UNIFORM> | qualifier = <BUFFER> )
+    { jjtThis.jjtSetValue(qualifier.image); }
+}
+
+void SimpleQualifier() #Qualifier :
+{ Token qualifier; }
+{
+    (
+        qualifier = <CONST>
+    |   qualifier = <IN>
+    |   qualifier = <OUT>
+    |   qualifier = <INOUT>
+    |   qualifier = <CENTROID>
+    |   qualifier = <PATCH>
+    |   qualifier = <SAMPLE>
+    |   qualifier = <SHARED>
+    |   qualifier = <COHERENT>
+    |   qualifier = <VOLATILE>
+    |   qualifier = <RESTRICT>
+    |   qualifier = <READONLY>
+    |   qualifier = <WRITEONLY>
+    |   qualifier = <ATTRIBUTE>
+    |   qualifier = <VARYING>
+    |   qualifier = <SMOOTH>
+    |   qualifier = <FLAT>
+    |   qualifier = <NOPERSPECTIVE>
+    |   qualifier = <INVARIANT>
+    |   qualifier = <PRECISE>
+    |   qualifier = <HIGHP>
+    |   qualifier = <MEDIUMP>
+    |   qualifier = <LOWP>
+    )
+    { jjtThis.jjtSetValue(qualifier.image); }
+}
+
+void DeclaratorList() #DeclaratorList :
+{}
+{
+    Declarator()
+    ( <COMMA> Declarator() )*
+}
+
+void Declarator() #Declarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+    [ Initializer() ]
+}
+
+void MemberDeclaratorList() #DeclaratorList :
+{}
+{
+    MemberDeclarator()
+    ( <COMMA> MemberDeclarator() )*
+}
+
+void MemberDeclarator() #Declarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+}
+
+void InstanceDeclarator() #InstanceDeclarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+}
+
+void ArraySpecifier() #ArraySpecifier :
+{}
+{
+    ( ArrayDimension() )+
+}
+
+void ArrayDimension() #ArrayDimension :
+{ String expression = null; }
+{
+    <LEFT_BRACKET>
+    {
+        if (getToken(1).kind != RIGHT_BRACKET) {
+            expression = consumeExpressionUntil(RIGHT_BRACKET, -1);
+        }
+    }
+    <RIGHT_BRACKET>
+    { jjtThis.jjtSetValue(expression); }
+}
+
+void Initializer() #Initializer :
+{ String expression; }
+{
+    <EQUAL>
+    { expression = consumeExpressionUntil(COMMA, SEMICOLON); }
+    { jjtThis.jjtSetValue(expression); }
+}
+
+void BlockName() #BlockName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void StructName() #StructName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void SkipExternalDeclaration() #void :
+{ Token first; }
+{
+    first = AnyToken()
+    { skipExternalDeclaration(first.kind); }
+}
+
+Token AnyToken() #void :
+{ Token token; }
+{
+    (
+        token = <LAYOUT>
+    |   token = <STRUCT>
+    |   token = <UNIFORM>
+    |   token = <BUFFER>
+    |   token = <CONST>
+    |   token = <INOUT>
+    |   token = <IN>
+    |   token = <OUT>
+    |   token = <CENTROID>
+    |   token = <PATCH>
+    |   token = <SAMPLE>
+    |   token = <SHARED>
+    |   token = <COHERENT>
+    |   token = <VOLATILE>
+    |   token = <RESTRICT>
+    |   token = <READONLY>
+    |   token = <WRITEONLY>
+    |   token = <ATTRIBUTE>
+    |   token = <VARYING>
+    |   token = <SMOOTH>
+    |   token = <FLAT>
+    |   token = <NOPERSPECTIVE>
+    |   token = <INVARIANT>
+    |   token = <PRECISE>
+    |   token = <HIGHP>
+    |   token = <MEDIUMP>
+    |   token = <LOWP>
+    |   token = <TRUE>
+    |   token = <FALSE>
+    |   token = <NUMBER>
+    |   token = <IDENTIFIER>
+    |   token = <LEFT_PAREN>
+    |   token = <RIGHT_PAREN>
+    |   token = <LEFT_BRACKET>
+    |   token = <RIGHT_BRACKET>
+    |   token = <LEFT_BRACE>
+    |   token = <RIGHT_BRACE>
+    |   token = <COMMA>
+    |   token = <SEMICOLON>
+    |   token = <EQUAL>
+    |   token = <OTHER>
+    )
+    { return token; }
+}
