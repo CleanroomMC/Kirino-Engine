@@ -2,10 +2,34 @@ package com.cleanroommc.kirino.gl.shader;
 
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
+import java.util.Optional;
+
+/**
+ * {@link #compile()} is the only GL dependent functionality in this class.
+ * Everything else is GL agnostic, and you're free to access them at any time and anywhere,
+ * especially {@link #analyze(ShaderAnalyzer)}.
+ */
 public class Shader extends GLDisposable {
+
+    private Shader(
+            @NonNull String shaderSource,
+            @NonNull String shaderName,
+            @NonNull ShaderType shaderType) {
+
+        Preconditions.checkNotNull(shaderSource);
+        Preconditions.checkNotNull(shaderName);
+        Preconditions.checkNotNull(shaderType);
+
+        this.shaderName = shaderName;
+        this.shaderSource = shaderSource;
+        this.shaderType = shaderType;
+    }
+
     private final String shaderName;
     private final String shaderSource;
     private final ShaderType shaderType;
@@ -13,50 +37,78 @@ public class Shader extends GLDisposable {
     private boolean valid = true;
     private String errorLog = "";
     private boolean setup;
-    private ShaderMeta shaderMeta;
+    private ShaderMeta shaderMeta = null;
 
+    @NonNull
     public String getShaderName() {
         return shaderName;
     }
 
+    @NonNull
     public String getShaderSource() {
         return shaderSource;
     }
 
+    @NonNull
     public ShaderType getShaderType() {
         return shaderType;
     }
 
+    /**
+     * Only available and makes sense after compilation.
+     */
     public int getShaderID() {
         return shaderID;
     }
 
+    /**
+     * Only available and makes sense after compilation.
+     */
     public boolean isValid() {
         return valid;
     }
 
+    /**
+     * Marks whether {@link #compile()} has been run.
+     */
     public boolean isSetup() {
         return setup;
     }
 
+    /**
+     * Only available and makes sense after compilation.
+     */
+    @NonNull
     public String getErrorLog() {
          return errorLog;
     }
 
-    public ShaderMeta getShaderMeta() {
-        return shaderMeta;
+    /**
+     * Call {@link #analyze(ShaderAnalyzer)} first and then try read the result.
+     *
+     * <p>Note: {@link #analyze(ShaderAnalyzer)} doesn't guarantee a successful analysis.</p>
+     * <p>Note: You can run {@link #analyze(ShaderAnalyzer)} without a GL context.</p>
+     * <p><b>Suggestion</b>: You should cache the result in hot paths.</p>
+     */
+    @NonNull
+    public Optional<ShaderMeta> getShaderMeta() {
+        return Optional.ofNullable(shaderMeta);
     }
 
-    private Shader(String shaderSource, String shaderName, ShaderType shaderType) {
-        this.shaderName = shaderName;
-        this.shaderSource = shaderSource;
-        this.shaderType = shaderType;
-    }
+    /**
+     * Read the result from {@link #getShaderMeta()}.
+     */
+    public void analyze(@NonNull ShaderAnalyzer analyzer) {
+        Preconditions.checkNotNull(analyzer);
 
-    public void analyze(ShaderAnalyzer analyzer) {
         shaderMeta = analyzer.analyze(shaderSource);
     }
 
+    /**
+     * <p>Note: Most likely shouldn't be called manually by clients.
+     * Other manager classes will wire the process.</p>
+     * <p>Note: Can be executed multiple times without crashing.</p>
+     */
     public void compile() {
         if (setup) {
             return;

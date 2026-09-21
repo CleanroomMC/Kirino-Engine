@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL20;
 import java.util.Arrays;
 
 public class ShaderProgram extends GLDisposable {
+
     private final ImmutableList<Shader> shaders;
     private final int programID;
 

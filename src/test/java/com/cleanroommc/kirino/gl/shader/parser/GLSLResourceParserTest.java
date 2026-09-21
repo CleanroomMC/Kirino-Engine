@@ -77,7 +77,7 @@ public class GLSLResourceParserTest {
     @Test
     public void test1() throws Exception {
         ASTTranslationUnit root = parse(
-                        """
+                """
                         layout(binding = 3) uniform sampler2D albedo;
                         uniform highp vec4 tint = vec4(1.0);
                         layout(binding = BASE_BINDING + 2) uniform image2D images[4];

@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino.gl.shader;
 
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL32;
@@ -23,7 +25,9 @@ public enum ShaderType {
     }
 
     @Nullable
-    public static ShaderType parse(String suffix) {
+    public static ShaderType parse(@NonNull String suffix) {
+        Preconditions.checkNotNull(suffix);
+
         return switch (suffix) {
             case "vert" -> VERTEX;
             case "frag" -> FRAGMENT;
