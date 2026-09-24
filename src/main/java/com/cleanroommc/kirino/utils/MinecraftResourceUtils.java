@@ -114,6 +114,8 @@ public final class MinecraftResourceUtils {
         File resources2 = new File(repo, "module/kirino/src/main/resources/assets/kirino");
         File resources3 = new File(repo, "module/forge/src/test/resources/assets/forge");
         File resources4 = new File(repo, "module/kirino/src/test/resources/assets/kirino");
+        File resources5 = new File(repo, "module/cleanroom/src/main/resources/assets/cleanroom");
+        File resources6 = new File(repo, "module/cleanroom/src/test/resources/assets/cleanroom");
         Preconditions.checkState(resources1.exists() &&
                         resources1.isDirectory() &&
                         resources2.exists() &&
@@ -121,7 +123,11 @@ public final class MinecraftResourceUtils {
                         resources3.exists() &&
                         resources3.isDirectory() &&
                         resources4.exists() &&
-                        resources4.isDirectory(),
+                        resources4.isDirectory() &&
+                        resources5.exists() &&
+                        resources5.isDirectory() &&
+                        resources6.exists() &&
+                        resources6.isDirectory(),
                 "This is not the dev env.");
 
         String target = rl.getPath();
@@ -144,6 +150,13 @@ public final class MinecraftResourceUtils {
             }
         }
 
+        if (rl.getNamespace().equals("cleanroom")) {
+            File candidate5 = new File(resources5, target);
+            if (candidate5.isFile()) {
+                return candidate5.getAbsolutePath();
+            }
+        }
+
         if (rl.getNamespace().equals("forge")) {
             File candidate3 = new File(resources3, target);
             if (candidate3.isFile()) {
@@ -155,6 +168,13 @@ public final class MinecraftResourceUtils {
             File candidate4 = new File(resources4, target);
             if (candidate4.isFile()) {
                 return candidate4.getAbsolutePath();
+            }
+        }
+
+        if (rl.getNamespace().equals("cleanroom")) {
+            File candidate6 = new File(resources6, target);
+            if (candidate6.isFile()) {
+                return candidate6.getAbsolutePath();
             }
         }
 
@@ -194,6 +214,8 @@ public final class MinecraftResourceUtils {
             File resources2 = new File(repo, "module/kirino/src/main/resources");
             File resources3 = new File(repo, "module/forge/src/test/resources");
             File resources4 = new File(repo, "module/kirino/src/test/resources");
+            File resources5 = new File(repo, "module/cleanroom/src/main/resources");
+            File resources6 = new File(repo, "module/cleanroom/src/test/resources");
             devEnv = resources1.exists() &&
                     resources1.isDirectory() &&
                     resources2.exists() &&
@@ -201,7 +223,11 @@ public final class MinecraftResourceUtils {
                     resources3.exists() &&
                     resources3.isDirectory() &&
                     resources4.exists() &&
-                    resources4.isDirectory();
+                    resources4.isDirectory() &&
+                    resources5.exists() &&
+                    resources5.isDirectory() &&
+                    resources6.exists() &&
+                    resources6.isDirectory();
             return devEnv;
         } catch (Exception e) {
             devEnv = false;
@@ -232,7 +258,7 @@ public final class MinecraftResourceUtils {
 
         // Cleanroom dev env forge/kirino path
         // it doesn't rely on vanilla resource manager initialization
-        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"))) {
+        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino") || rl.getNamespace().equals("cleanroom"))) {
             String path = findResourceDevEnv(rl);
             Preconditions.checkNotNull(path,
                     "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.",
