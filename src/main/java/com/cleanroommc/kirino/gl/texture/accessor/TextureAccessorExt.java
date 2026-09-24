@@ -112,8 +112,6 @@ public abstract class TextureAccessorExt implements TextureAccessor {
 
     @Override
     public void clearTexImage(int level, int format, int type, @Nullable ByteBuffer data) {
-        Preconditions.checkState(dsa, "Non-DSA \"clearTexImage\" is not implemented.");
-
         GL45C.glClearTexImage(textureID(), level, format, type, data);
     }
 
@@ -129,8 +127,6 @@ public abstract class TextureAccessorExt implements TextureAccessor {
             int format,
             int type,
             @Nullable ByteBuffer data) {
-
-        Preconditions.checkState(dsa, "Non-DSA \"clearTexSubImage\" is not implemented.");
 
         GL45C.glClearTexSubImage(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, type, data);
     }

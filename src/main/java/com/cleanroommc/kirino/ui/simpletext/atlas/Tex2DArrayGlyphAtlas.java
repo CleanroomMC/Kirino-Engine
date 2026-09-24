@@ -153,7 +153,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                     layers));
 
             result.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
-            result.clearTexImage(0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, null);
+            result.highlevel().clearLevel(0);
             result.setCommonParams(FilterMode.LINEAR, FilterMode.LINEAR, WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE);
 
             return result;
@@ -204,7 +204,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                 "Layer=%s must match page index=%s.", page.getLayer(), slot.getPageIndex());
 
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        page.getTexture().texSubImage3D(
+        page.getTexture().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
@@ -212,8 +212,6 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                 slot.getWidth(),
                 slot.getHeight(),
                 1,
-                TextureFormat.R8_UNORM.format,
-                TextureFormat.R8_UNORM.type,
                 bitmap.byteBuffer());
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
     }

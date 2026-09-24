@@ -30,7 +30,7 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
         Preconditions.checkNotNull(page);
 
         page.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
-        page.clearTexImage(0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, null);
+        page.highlevel().clearLevel(0);
         page.setCommonParams(FilterMode.LINEAR, FilterMode.LINEAR, WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE);
     }
 
@@ -44,14 +44,12 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
                 "Slot height=%s must match bitmap height=%s.", slot.getHeight(), bitmap.height());
 
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        slot.getPage().texSubImage2D(
+        slot.getPage().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
                 slot.getWidth(),
                 slot.getHeight(),
-                TextureFormat.R8_UNORM.format,
-                TextureFormat.R8_UNORM.type,
                 bitmap.byteBuffer());
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
     }

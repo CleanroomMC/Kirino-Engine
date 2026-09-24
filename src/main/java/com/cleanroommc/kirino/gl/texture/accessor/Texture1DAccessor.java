@@ -153,7 +153,7 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
         @Override
         public void resizeAndAllocEmpty(int width) {
             MethodHolder.setExtentX(accessor.texture, width);
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
+            TextureFormat format = accessor.texture.currentFormat();
             if (format == null) {
                 allocEmpty(true);
             } else {
@@ -175,7 +175,7 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkNotNull(byteBuffer);
 
             MethodHolder.setExtentX(accessor.texture, width);
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
+            TextureFormat format = accessor.texture.currentFormat();
             if (format == null) {
                 alloc(true, byteBuffer);
             } else {
@@ -328,7 +328,7 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkNotNull(data);
             Preconditions.checkArgument(level >= 0);
 
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
+            TextureFormat format = accessor.texture.currentFormat();
 
             Preconditions.checkState(format != null,
                     "Texture format has not been specified.");
@@ -343,6 +343,81 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkArgument(level >= 0);
 
             accessor.texSubImage1D(level, 0, mipExtent(accessor.texture.extentX(), level), format.format, format.type, data);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int width,
+                @NonNull ByteBuffer data) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            uploadSubImage(level, xOffset, width, data, format);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int width,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.texSubImage1D(level, xOffset, width, format.format, format.type, data);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data) {
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            clearLevel(level, data, format);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.clearTexImage(level, format.format, format.type, data);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            downloadLevel(level, data, format);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.getTexImage(level, format.format, format.type, data);
         }
 
         @Override

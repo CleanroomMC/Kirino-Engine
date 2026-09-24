@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.cleanroommc.kirino.gl.texture.accessor.TextureAccessorHighlevel;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
 
 /**
@@ -65,6 +66,15 @@ public class GLTexture extends GLDisposable {
 
     public int samples() {
         return samples;
+    }
+
+    /**
+     * @return The format specified by the latest high-level allocation, or <code>null</code>
+     * if no high-level allocation has specified it yet
+     */
+    @Nullable
+    public TextureFormat currentFormat() {
+        return currentFormat;
     }
 
     //<editor-fold desc="internal">

@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.gl.texture.accessor;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
@@ -379,6 +380,161 @@ public interface TextureAccessorHighlevel {
          */
         default void uploadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
             throw new UnsupportedOperationException("\"uploadLevel\" is not implemented.");
+        }
+
+        // implement two of them based on the texture type
+
+        /**
+         * Uploads a one-dimensional sub-image with the previously specified texture format
+         * which must be non-null.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int width,
+                @NonNull ByteBuffer data) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Uploads a one-dimensional sub-image with the given <code>format</code>.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int width,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Uploads a two-dimensional sub-image with the previously specified texture format
+         * which must be non-null.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int width,
+                int height,
+                @NonNull ByteBuffer data) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Uploads a two-dimensional sub-image with the given <code>format</code>.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int width,
+                int height,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Uploads a three-dimensional or array sub-image with the previously specified texture format
+         * which must be non-null.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Uploads a three-dimensional or array sub-image with the given <code>format</code>.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
+         */
+        default void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            throw new UnsupportedOperationException("\"uploadSubImage\" is not implemented.");
+        }
+
+        /**
+         * Clears the given mipmap level to zero with the previously specified texture format
+         * which must be non-null.
+         */
+        default void clearLevel(int level) {
+            clearLevel(level, null);
+        }
+
+        /**
+         * Clears the given mipmap level with the previously specified texture format
+         * which must be non-null.
+         *
+         * @param data A single texel used as the clear value, or <code>null</code> to clear to zero
+         */
+        default void clearLevel(int level, @Nullable ByteBuffer data) {
+            throw new UnsupportedOperationException("\"clearLevel\" is not implemented.");
+        }
+
+        /**
+         * Clears the given mipmap level with the given <code>format</code>.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
+         *
+         * @param data A single texel used as the clear value, or <code>null</code> to clear to zero
+         */
+        default void clearLevel(int level, @Nullable ByteBuffer data, @NonNull TextureFormat format) {
+            throw new UnsupportedOperationException("\"clearLevel\" is not implemented.");
+        }
+
+        /**
+         * Downloads the given mipmap level with the previously specified texture format
+         * which must be non-null.
+         */
+        default void downloadLevel(int level, @NonNull ByteBuffer data) {
+            throw new UnsupportedOperationException("\"downloadLevel\" is not implemented.");
+        }
+
+        /**
+         * Downloads the given mipmap level with the given <code>format</code>.
+         *
+         * <p>Note: It doesn't modify/specify texture format!</p>
+         * <p>Note: Must not mismatch the base level format!</p>
+         */
+        default void downloadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            throw new UnsupportedOperationException("\"downloadLevel\" is not implemented.");
         }
 
         /**

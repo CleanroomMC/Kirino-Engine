@@ -417,7 +417,6 @@ public interface TextureAccessor {
         static {
             DELEGATE = new Delegate(
                     ReflectionUtils.getFieldSetter(GLTexture.class, "currentFormat", TextureFormat.class),
-                    ReflectionUtils.getFieldGetter(GLTexture.class, "currentFormat", TextureFormat.class),
                     ReflectionUtils.getFieldSetter(GLTexture.class, "extentX", int.class),
                     ReflectionUtils.getFieldSetter(GLTexture.class, "extentY", int.class),
                     ReflectionUtils.getFieldSetter(GLTexture.class, "extentZ", int.class),
@@ -425,7 +424,6 @@ public interface TextureAccessor {
                     ReflectionUtils.getFieldSetter(GLTexture.class, "samples", int.class));
 
             Preconditions.checkNotNull(DELEGATE.currentFormatSetter);
-            Preconditions.checkNotNull(DELEGATE.currentFormatGetter);
             Preconditions.checkNotNull(DELEGATE.extentXSetter);
             Preconditions.checkNotNull(DELEGATE.extentYSetter);
             Preconditions.checkNotNull(DELEGATE.extentZSetter);
@@ -436,15 +434,6 @@ public interface TextureAccessor {
         static void setCurrentFormat(GLTexture texture, TextureFormat format) {
             try {
                 DELEGATE.currentFormatSetter.invokeExact(texture, format);
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        @Nullable
-        static TextureFormat getCurrentFormat(GLTexture texture) {
-            try {
-                return (TextureFormat) DELEGATE.currentFormatGetter.invokeExact(texture);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
@@ -492,7 +481,6 @@ public interface TextureAccessor {
 
         record Delegate(
                 MethodHandle currentFormatSetter,
-                MethodHandle currentFormatGetter,
                 MethodHandle extentXSetter,
                 MethodHandle extentYSetter,
                 MethodHandle extentZSetter,
