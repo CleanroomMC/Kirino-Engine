@@ -3,10 +3,26 @@ package com.cleanroommc.kirino.gl.texture;
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
+import com.cleanroommc.kirino.gl.texture.accessor.TextureAccessorHighlevel;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 
+/**
+ * <b>Raw OpenGL Interoperability:</b>
+ *
+ * <p>Texture metadata, <b><i>including {@link #extentX}, {@link #extentY},
+ * {@link #extentZ}, {@link #layers}, {@link #samples}, {@link #currentFormat}</i></b>,
+ * is shadowed by this object.</p>
+ *
+ * <p>The shadow state is updated only by operations performed through {@link TextureAccessorHighlevel.HighlevelOperator}.
+ * Direct OpenGL operations that allocate or redefine texture storage do not update
+ * it and may therefore leave the wrapper desynchronized from the underlying GL object.</p>
+ *
+ * <p>Note: Users must either keep allocation operations within {@link TextureAccessorHighlevel.HighlevelOperator}
+ * or manually restore the internal shadow state via <code>setXXXInternal</code>.
+ * This GL abstraction layer does not attempt to detect or recover from external mutations.</p>
+ */
 public class GLTexture extends GLDisposable {
 
     /**
@@ -51,6 +67,77 @@ public class GLTexture extends GLDisposable {
         return samples;
     }
 
+    //<editor-fold desc="internal">
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setExtentXInternal(int extentX) {
+        this.extentX = extentX;
+    }
+
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setExtentYInternal(int extentY) {
+        this.extentY = extentY;
+    }
+
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setExtentZInternal(int extentZ) {
+        this.extentZ = extentZ;
+    }
+
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setLayersInternal(int layers) {
+        this.layers = layers;
+    }
+
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setSamplesInternal(int samples) {
+        this.samples = samples;
+    }
+
+    /**
+     * <b>No need to use in most of the scenarios!</b>
+     * <p>Note: Only call it when you want to continue using {@link TextureAccessorHighlevel.HighlevelOperator}
+     * reliably and safely, <i>AND</i> you're sure that the internal shadow state is desynchronized!</p>
+     *
+     * @see TextureAccessorHighlevel.HighlevelOperator#highlevel()
+     */
+    public void setCurrentFormatInternal(@NonNull TextureFormat format) {
+        Preconditions.checkNotNull(format);
+
+        currentFormat = format;
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="constructors">
     private GLTexture(int textureID, TextureType type) {
         this.textureID = textureID;
         this.type = type;
@@ -432,12 +519,14 @@ public class GLTexture extends GLDisposable {
     public static GLTexture newDsaTexBuffer() {
         return newTexBuffer(true, false);
     }
+    //</editor-fold>
 
     /**
      * It calculates the maximum mipmap level index of a full mipmap chain based on
      * the current base-level extents.
      *
      * <p>Note: This is GL agnostic.</p>
+     * <p>Note: It relies on the shadow states maintained by this wrapper.</p>
      */
     public int maxMipmapLevel() {
         Preconditions.checkState(type.supportsMipmaps(),
@@ -472,6 +561,7 @@ public class GLTexture extends GLDisposable {
      * the current base-level extents.
      *
      * <p>Note: This is GL agnostic.</p>
+     * <p>Note: It relies on the shadow states maintained by this wrapper.</p>
      */
     public int maxMipmapLevelCount() {
         Preconditions.checkState(type.supportsMipmaps(),

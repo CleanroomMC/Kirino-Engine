@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl.texture.accessor;
 
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
+import com.cleanroommc.kirino.gl.texture.GLTexture;
 import org.jspecify.annotations.NonNull;
 
 import java.nio.ByteBuffer;
@@ -398,6 +399,22 @@ public interface TextureAccessorHighlevel {
         }
     }
 
+    /**
+     * <p>This is the only entrypoint that updates the shadow states of a {@link GLTexture}.</p>
+     * <p>High-level services are only reliable when shadow states are not <i><b>desynchronized</b></i>.</p>
+     *
+     * <p>Note: Users must either keep allocation operations within {@link TextureAccessorHighlevel.HighlevelOperator}
+     * or manually restore the internal shadow state via <code>setXXXInternal</code> from {@link GLTexture}.
+     * This GL abstraction layer does not attempt to detect or recover from external mutations.</p>
+     * 
+     * @see GLTexture
+     * @see GLTexture#setExtentXInternal(int) 
+     * @see GLTexture#setExtentYInternal(int) 
+     * @see GLTexture#setExtentZInternal(int) 
+     * @see GLTexture#setLayersInternal(int) 
+     * @see GLTexture#setSamplesInternal(int) 
+     * @see GLTexture#setCurrentFormatInternal(TextureFormat)
+     */
     @NonNull
     HighlevelOperator highlevel();
 }
