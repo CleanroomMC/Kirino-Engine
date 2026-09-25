@@ -109,11 +109,13 @@ public interface TextureAccessor {
     }
 
     default int fetchTexLevelParamI(int level, int pname) {
-        return GL11.glGetTexLevelParameteri(target(), level, pname);
+        int target = target() == GL13.GL_TEXTURE_CUBE_MAP ? GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X : target();
+        return GL11.glGetTexLevelParameteri(target, level, pname);
     }
 
     default float fetchTexLevelParamF(int level, int pname) {
-        return GL11.glGetTexLevelParameterf(target(), level, pname);
+        int target = target() == GL13.GL_TEXTURE_CUBE_MAP ? GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X : target();
+        return GL11.glGetTexLevelParameterf(target, level, pname);
     }
 
     default void genMipmap() {

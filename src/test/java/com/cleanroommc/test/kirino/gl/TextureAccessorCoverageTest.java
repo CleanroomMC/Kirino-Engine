@@ -85,8 +85,8 @@ public class TextureAccessorCoverageTest {
             TextureCubemapAccessor cubemap = new TextureCubemapAccessor(false, GLTexture.newCubemap(false, false, 4));
             cubemap.bind();
             cubemap.highlevel().allocEmpty(true, TextureFormat.R8_UNORM);
-            assertEquals(4, GL11.glGetTexLevelParameteri(TextureAccessor.CubeFace.POS_X.glValue, 0, GL11.GL_TEXTURE_WIDTH));
-            assertEquals(4, GL11.glGetTexLevelParameteri(TextureAccessor.CubeFace.POS_X.glValue, 0, GL11.GL_TEXTURE_HEIGHT));
+            assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_WIDTH));
+            assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_HEIGHT));
 
             ByteBuffer cubemapFace = BufferUtils.createByteBuffer(16);
             cubemapFace.put(0, (byte) 7);
