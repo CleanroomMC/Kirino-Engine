@@ -99,7 +99,7 @@ public final class MinecraftResourceUtils {
      * It finds the absolute path for resources inside the dev env.
      *
      * <p>Note: It's only able to find a subset of dev env resources:
-     * <code>forge</code> and <code>kirino</code> resources including test data to be exact.</p>
+     * <code>forge</code>, <code>kirino</code>, <code>cleanroom</code> resources including test data to be exact.</p>
      */
     @Nullable
     private static String findResourceDevEnv(@NonNull ResourceLocation rl) {
@@ -150,13 +150,6 @@ public final class MinecraftResourceUtils {
             }
         }
 
-        if (rl.getNamespace().equals("cleanroom")) {
-            File candidate5 = new File(resources5, target);
-            if (candidate5.isFile()) {
-                return candidate5.getAbsolutePath();
-            }
-        }
-
         if (rl.getNamespace().equals("forge")) {
             File candidate3 = new File(resources3, target);
             if (candidate3.isFile()) {
@@ -168,6 +161,13 @@ public final class MinecraftResourceUtils {
             File candidate4 = new File(resources4, target);
             if (candidate4.isFile()) {
                 return candidate4.getAbsolutePath();
+            }
+        }
+
+        if (rl.getNamespace().equals("cleanroom")) {
+            File candidate5 = new File(resources5, target);
+            if (candidate5.isFile()) {
+                return candidate5.getAbsolutePath();
             }
         }
 
@@ -256,9 +256,13 @@ public final class MinecraftResourceUtils {
 
         InputStream stream;
 
-        // Cleanroom dev env forge/kirino path
+        // Cleanroom dev env forge/kirino/cleanroom path
         // it doesn't rely on vanilla resource manager initialization
-        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino") || rl.getNamespace().equals("cleanroom"))) {
+        if (isDevEnv() && (
+                rl.getNamespace().equals("forge") ||
+                rl.getNamespace().equals("kirino") ||
+                rl.getNamespace().equals("cleanroom"))) {
+
             String path = findResourceDevEnv(rl);
             Preconditions.checkNotNull(path,
                     "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.",
