@@ -226,6 +226,9 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void cubeTexImage2D(
             @NonNull CubeFace face,
@@ -266,6 +269,9 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void compressedCubeTexImage2D(
             @NonNull CubeFace face,

@@ -104,17 +104,26 @@ public abstract class TextureAccessorExt implements TextureAccessor {
         }
     }
 
+    /**
+     * <p>Note: DSA only.</p>
+     */
     public void bindUnit(int unit) {
         Preconditions.checkState(dsa, "Non-DSA \"bindUnit\" is not implemented.");
 
         GL45C.glBindTextureUnit(unit, textureID());
     }
 
+    /**
+     * <p>Note: DSA only but doesn't crash for non-DSA paths.</p>
+     */
     @Override
     public void clearTexImage(int level, int format, int type, @Nullable ByteBuffer data) {
         GL45C.glClearTexImage(textureID(), level, format, type, data);
     }
 
+    /**
+     * <p>Note: DSA only but doesn't crash for non-DSA paths.</p>
+     */
     @Override
     public void clearTexSubImage(
             int level,

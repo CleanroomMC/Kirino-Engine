@@ -67,6 +67,9 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void texImage1D(
             int level,
@@ -98,6 +101,9 @@ public class Texture1DAccessor extends TextureAccessorExt implements TextureAcce
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void compressedTexImage1D(
             int level,
