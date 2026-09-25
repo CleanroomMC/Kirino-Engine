@@ -34,17 +34,41 @@ public class TextureAccessorCoverageTest {
             cubemap.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
             assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_WIDTH));
             assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_HEIGHT));
+            assertEquals(4, cubemap.fetchCubeTexLevelParamI(TextureAccessor.CubeFace.POS_X, 0, GL11.GL_TEXTURE_WIDTH));
             assertEquals(TextureFormat.R8_UNORM, cubemap.texture.currentFormat());
 
             ByteBuffer cubemapFace = BufferUtils.createByteBuffer(16);
             cubemapFace.put(0, (byte) 7);
             cubemap.highlevel().uploadSubImage(0, 0, 0, 4, 4, cubemapFace);
+            for (TextureAccessor.CubeFace face : TextureAccessor.CubeFace.values()) {
+                ByteBuffer faceData = BufferUtils.createByteBuffer(16);
+                faceData.put(0, (byte) (face.layer + 1));
+                cubemap.cubeTexSubImage2D(
+                        face,
+                        0,
+                        0,
+                        0,
+                        4,
+                        4,
+                        TextureFormat.R8_UNORM.format,
+                        TextureFormat.R8_UNORM.type,
+                        faceData);
+            }
 
             ByteBuffer cubemapData = BufferUtils.createByteBuffer(96);
             cubemap.highlevel().downloadLevel(0, cubemapData);
             for (int face = 0; face < 6; face++) {
-                assertEquals(7, cubemapData.get(face * 16));
+                assertEquals(face + 1, cubemapData.get(face * 16));
             }
+
+            ByteBuffer cubemapFaceResult = BufferUtils.createByteBuffer(16);
+            cubemap.getCubeTexImage(
+                    TextureAccessor.CubeFace.NEG_Z,
+                    0,
+                    TextureFormat.R8_UNORM.format,
+                    TextureFormat.R8_UNORM.type,
+                    cubemapFaceResult);
+            assertEquals(6, cubemapFaceResult.get(0));
 
             TextureCubemapArrayAccessor cubemapArray = new TextureCubemapArrayAccessor(true, GLTexture.newDsaCubemapArray(4, 2));
             cubemapArray.highlevel().allocEmpty(false, TextureFormat.RGBA8_UNORM);
@@ -87,14 +111,40 @@ public class TextureAccessorCoverageTest {
             cubemap.highlevel().allocEmpty(true, TextureFormat.R8_UNORM);
             assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_WIDTH));
             assertEquals(4, cubemap.fetchTexLevelParamI(0, GL11.GL_TEXTURE_HEIGHT));
+            assertEquals(4, cubemap.fetchCubeTexLevelParamI(TextureAccessor.CubeFace.NEG_Z, 0, GL11.GL_TEXTURE_WIDTH));
 
             ByteBuffer cubemapFace = BufferUtils.createByteBuffer(16);
             cubemapFace.put(0, (byte) 7);
             cubemap.highlevel().uploadSubImage(0, 0, 0, 4, 4, cubemapFace);
+            for (TextureAccessor.CubeFace face : TextureAccessor.CubeFace.values()) {
+                ByteBuffer faceData = BufferUtils.createByteBuffer(16);
+                faceData.put(0, (byte) (face.layer + 1));
+                cubemap.cubeTexSubImage2D(
+                        face,
+                        0,
+                        0,
+                        0,
+                        4,
+                        4,
+                        TextureFormat.R8_UNORM.format,
+                        TextureFormat.R8_UNORM.type,
+                        faceData);
+            }
+
+            ByteBuffer cubemapData = BufferUtils.createByteBuffer(96);
+            cubemap.highlevel().downloadLevel(0, cubemapData);
+            for (int face = 0; face < 6; face++) {
+                assertEquals(face + 1, cubemapData.get(face * 16));
+            }
 
             ByteBuffer cubemapFaceResult = BufferUtils.createByteBuffer(16);
-            GL11.glGetTexImage(TextureAccessor.CubeFace.NEG_Z.glValue, 0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, cubemapFaceResult);
-            assertEquals(7, cubemapFaceResult.get(0));
+            cubemap.getCubeTexImage(
+                    TextureAccessor.CubeFace.NEG_Z,
+                    0,
+                    TextureFormat.R8_UNORM.format,
+                    TextureFormat.R8_UNORM.type,
+                    cubemapFaceResult);
+            assertEquals(6, cubemapFaceResult.get(0));
 
             TextureCubemapArrayAccessor cubemapArray = new TextureCubemapArrayAccessor(false, GLTexture.newCubemapArray(false, false, 4, 2));
             cubemapArray.bind();

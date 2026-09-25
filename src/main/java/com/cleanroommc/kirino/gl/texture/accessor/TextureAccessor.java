@@ -20,7 +20,7 @@ import java.nio.ByteBuffer;
  * and it allows direct interaction with underlying GL states. You can expect nearly no defensive guards around
  * GL specifications.</p>
  *
- * <p>Highlevel abstractions are also provided, allowing users to finish common tasks in shorter
+ * <p>High-level abstractions are also provided, allowing users to finish common tasks in shorter
  * and simpler calls.</p>
  */
 public interface TextureAccessor {
@@ -109,13 +109,11 @@ public interface TextureAccessor {
     }
 
     default int fetchTexLevelParamI(int level, int pname) {
-        int target = target() == GL13.GL_TEXTURE_CUBE_MAP ? GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X : target();
-        return GL11.glGetTexLevelParameteri(target, level, pname);
+        return GL11.glGetTexLevelParameteri(target(), level, pname);
     }
 
     default float fetchTexLevelParamF(int level, int pname) {
-        int target = target() == GL13.GL_TEXTURE_CUBE_MAP ? GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X : target();
-        return GL11.glGetTexLevelParameterf(target, level, pname);
+        return GL11.glGetTexLevelParameterf(target(), level, pname);
     }
 
     default void genMipmap() {
@@ -317,18 +315,46 @@ public interface TextureAccessor {
     }
 
     enum CubeFace {
-        POS_X(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X),
-        NEG_X(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_X),
-        POS_Y(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Y),
-        NEG_Y(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y),
-        POS_Z(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Z),
-        NEG_Z(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z);
+        POS_X(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0),
+        NEG_X(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 1),
+        POS_Y(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 2),
+        NEG_Y(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 3),
+        POS_Z(GL13.GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 4),
+        NEG_Z(GL13.GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 5);
 
         public final int glValue;
+        public final int layer;
 
-        CubeFace(int glValue) {
+        CubeFace(int glValue, int layer) {
             this.glValue = glValue;
+            this.layer = layer;
         }
+    }
+
+    default int fetchCubeTexLevelParamI(@NonNull CubeFace face, int level, int pname) {
+        throw new UnsupportedOperationException("\"fetchCubeTexLevelParamI\" not supported by this texture type " + type().name() + ".");
+    }
+
+    default float fetchCubeTexLevelParamF(@NonNull CubeFace face, int level, int pname) {
+        throw new UnsupportedOperationException("\"fetchCubeTexLevelParamF\" not supported by this texture type " + type().name() + ".");
+    }
+
+    default void getCubeTexImage(
+            @NonNull CubeFace face,
+            int level,
+            int format,
+            int type,
+            @NonNull ByteBuffer data) {
+
+        throw new UnsupportedOperationException("\"getCubeTexImage\" not supported by this texture type " + type().name() + ".");
+    }
+
+    default void getCompressedCubeTexImage(
+            @NonNull CubeFace face,
+            int level,
+            @NonNull ByteBuffer data) {
+
+        throw new UnsupportedOperationException("\"getCompressedCubeTexImage\" not supported by this texture type " + type().name() + ".");
     }
 
     default void cubeTexImage2D(
@@ -354,7 +380,7 @@ public interface TextureAccessor {
             int height,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"cubeTexSubImage2D\" not supported by this texture type " + type().name() + ".");
     }
@@ -379,9 +405,22 @@ public interface TextureAccessor {
             int width,
             int height,
             int format,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         throw new UnsupportedOperationException("\"compressedCubeTexSubImage2D\" not supported by this texture type " + type().name() + ".");
+    }
+
+    default void copyCubeTexSubImage2D(
+            @NonNull CubeFace face,
+            int level,
+            int xOffset,
+            int yOffset,
+            int x,
+            int y,
+            int width,
+            int height) {
+
+        throw new UnsupportedOperationException("\"copyCubeTexSubImage2D\" not supported by this texture type " + type().name() + ".");
     }
 
     default void texImage2DMultisample(

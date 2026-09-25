@@ -14,10 +14,15 @@ import java.nio.ByteBuffer;
  * <p>Available raw GL operations:</p>
  * <ul>
  *     <li><code>texStorage2D</code></li>
+ *     <li><code>fetchCubeTexLevelParamI</code></li>
+ *     <li><code>fetchCubeTexLevelParamF</code></li>
+ *     <li><code>getCubeTexImage</code></li>
+ *     <li><code>getCompressedCubeTexImage</code></li>
  *     <li><code>cubeTexImage2D</code></li>
  *     <li><code>cubeTexSubImage2D</code></li>
  *     <li><code>compressedCubeTexImage2D</code></li>
  *     <li><code>compressedCubeTexSubImage2D</code></li>
+ *     <li><code>copyCubeTexSubImage2D</code></li>
  * </ul>
  */
 public class TextureCubemapAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
@@ -53,18 +58,158 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
         return TextureType.CUBEMAP;
     }
 
+    /**
+     * Downloads all six faces in {@link CubeFace#layer} order.
+     */
     @Override
     public void getTexImage(int level, int format, int type, @NonNull ByteBuffer data) {
-        Preconditions.checkState(dsa, "Non-DSA cubemap \"getTexImage\" is not implemented.");
+        Preconditions.checkNotNull(data);
 
-        super.getTexImage(level, format, type, data);
+        if (dsa) {
+            super.getTexImage(level, format, type, data);
+        } else {
+            for (CubeFace face : CubeFace.values()) {
+                getCubeTexImage(face, level, format, type, faceSlice(data, face));
+            }
+        }
     }
 
+    /**
+     * Downloads all six compressed faces in {@link CubeFace#layer} order.
+     */
     @Override
     public void getCompressedTexImage(int level, @NonNull ByteBuffer data) {
-        Preconditions.checkState(dsa, "Non-DSA cubemap \"getCompressedTexImage\" is not implemented.");
+        Preconditions.checkNotNull(data);
 
-        super.getCompressedTexImage(level, data);
+        if (dsa) {
+            super.getCompressedTexImage(level, data);
+        } else {
+            for (CubeFace face : CubeFace.values()) {
+                getCompressedCubeTexImage(face, level, faceSlice(data, face));
+            }
+        }
+    }
+
+    /**
+     * Queries the positive X face, matching the face implicitly selected by the
+     * DSA texture-level query.
+     *
+     * @see #fetchCubeTexLevelParamI(CubeFace, int, int)
+     */
+    @Override
+    public int fetchTexLevelParamI(int level, int pname) {
+        return fetchCubeTexLevelParamI(CubeFace.POS_X, level, pname);
+    }
+
+    /**
+     * Queries the positive X face, matching the face implicitly selected by the
+     * DSA texture-level query.
+     *
+     * @see #fetchCubeTexLevelParamF(CubeFace, int, int)
+     */
+    @Override
+    public float fetchTexLevelParamF(int level, int pname) {
+        return fetchCubeTexLevelParamF(CubeFace.POS_X, level, pname);
+    }
+
+    /**
+     * <p>Note: DSA texture-level queries cannot select a cubemap face and always
+     * query positive X. Querying another face is only supported by the legacy path.</p>
+     */
+    @Override
+    public int fetchCubeTexLevelParamI(@NonNull CubeFace face, int level, int pname) {
+        Preconditions.checkNotNull(face);
+
+        if (dsa) {
+            Preconditions.checkArgument(face == CubeFace.POS_X,
+                    "DSA texture-level queries only support the positive X cubemap face.");
+            return super.fetchTexLevelParamI(level, pname);
+        }
+        return GL11.glGetTexLevelParameteri(face.glValue, level, pname);
+    }
+
+    /**
+     * <p>Note: DSA texture-level queries cannot select a cubemap face and always
+     * query positive X. Querying another face is only supported by the legacy path.</p>
+     */
+    @Override
+    public float fetchCubeTexLevelParamF(@NonNull CubeFace face, int level, int pname) {
+        Preconditions.checkNotNull(face);
+
+        if (dsa) {
+            Preconditions.checkArgument(face == CubeFace.POS_X,
+                    "DSA texture-level queries only support the positive X cubemap face.");
+            return super.fetchTexLevelParamF(level, pname);
+        }
+        return GL11.glGetTexLevelParameterf(face.glValue, level, pname);
+    }
+
+    /**
+     * <p><i><b>Caution</b></i>: The DSA path uses the texture extent shadow state to
+     * avoid an implicit texture level query. This is one of the few places that relies
+     * on {@link GLTexture} shadow states to function reliably.</p>
+     */
+    @Override
+    public void getCubeTexImage(
+            @NonNull CubeFace face,
+            int level,
+            int format,
+            int type,
+            @NonNull ByteBuffer data) {
+
+        Preconditions.checkNotNull(face);
+        Preconditions.checkNotNull(data);
+
+        if (dsa) {
+            int width = mipExtent(texture.extentX(), level);
+            int height = mipExtent(texture.extentY(), level);
+            GL45.glGetTextureSubImage(
+                    textureID(),
+                    level,
+                    0,
+                    0,
+                    face.layer,
+                    width,
+                    height,
+                    1,
+                    format,
+                    type,
+                    data);
+        } else {
+            GL11.glGetTexImage(face.glValue, level, format, type, data);
+        }
+    }
+
+    /**
+     * <p><i><b>Caution</b></i>: The DSA path uses the texture extent shadow state to
+     * avoid an implicit texture level query. This is one of the few places that relies
+     * on {@link GLTexture} shadow states to function reliably.</p>
+     */
+    @Override
+    public void getCompressedCubeTexImage(
+            @NonNull CubeFace face,
+            int level,
+            @NonNull ByteBuffer data) {
+
+        Preconditions.checkNotNull(face);
+        Preconditions.checkNotNull(data);
+
+        if (dsa) {
+            int width = mipExtent(texture.extentX(), level);
+            int height = mipExtent(texture.extentY(), level);
+            GL45.glGetCompressedTextureSubImage(
+                    textureID(),
+                    level,
+                    0,
+                    0,
+                    face.layer,
+                    width,
+                    height,
+                    1,
+                    data);
+        } else {
+            GL13.glGetCompressedTexImage(face.glValue, level, data);
+        }
     }
 
     @Override
@@ -109,11 +254,13 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
             int height,
             int format,
             int type,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         Preconditions.checkNotNull(face);
+        Preconditions.checkNotNull(data);
+
         if (dsa) {
-            GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, face.ordinal(), width, height, 1, format, type, data);
+            GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, face.layer, width, height, 1, format, type, data);
         } else {
             GL11.glTexSubImage2D(face.glValue, level, xOffset, yOffset, width, height, format, type, data);
         }
@@ -144,14 +291,63 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
             int width,
             int height,
             int format,
-            @Nullable ByteBuffer data) {
+            @NonNull ByteBuffer data) {
 
         Preconditions.checkNotNull(face);
+        Preconditions.checkNotNull(data);
+
         if (dsa) {
-            GL45.glCompressedTextureSubImage3D(textureID(), level, xOffset, yOffset, face.ordinal(), width, height, 1, format, data);
+            GL45.glCompressedTextureSubImage3D(textureID(), level, xOffset, yOffset, face.layer, width, height, 1, format, data);
         } else {
             GL13.glCompressedTexSubImage2D(face.glValue, level, xOffset, yOffset, width, height, format, data);
         }
+    }
+
+    /**
+     * Copies a two-dimensional framebuffer region into one cubemap face.
+     *
+     * <p><b>Source</b>: <code>GL_READ_FRAMEBUFFER</code> + <code>GL_READ_BUFFER</code></p>
+     */
+    @Override
+    public void copyCubeTexSubImage2D(
+            @NonNull CubeFace face,
+            int level,
+            int xOffset,
+            int yOffset,
+            int x,
+            int y,
+            int width,
+            int height) {
+
+        Preconditions.checkNotNull(face);
+
+        if (dsa) {
+            GL45.glCopyTextureSubImage3D(textureID(), level, xOffset, yOffset, face.layer, x, y, width, height);
+        } else {
+            GL11.glCopyTexSubImage2D(face.glValue, level, xOffset, yOffset, x, y, width, height);
+        }
+    }
+
+    private static ByteBuffer faceSlice(@NonNull ByteBuffer data, @NonNull CubeFace face) {
+        Preconditions.checkNotNull(data);
+        Preconditions.checkNotNull(face);
+        Preconditions.checkArgument(data.remaining() % CubeFace.values().length == 0,
+                "Cubemap destination buffer size must be divisible by six.");
+
+        int faceSize = data.remaining() / CubeFace.values().length;
+        int faceStart = data.position() + Math.multiplyExact(face.layer, faceSize);
+        ByteBuffer faceData = data.duplicate();
+        faceData.position(faceStart);
+        faceData.limit(Math.addExact(faceStart, faceSize));
+        return faceData.slice().order(data.order());
+    }
+
+    private static int mipExtent(int baseExtent, int level) {
+        Preconditions.checkArgument(level >= 0);
+        Preconditions.checkState(baseExtent > 0,
+                "Texture extent must be greater than zero.");
+
+        return Math.max(1, baseExtent >> level);
     }
 
     private static class HighlevelOperatorImpl implements TextureAccessorHighlevel.HighlevelOperator {
@@ -498,10 +694,6 @@ public class TextureCubemapAccessor extends TextureAccessorExt implements Textur
             for (CubeFace face : CubeFace.values()) {
                 accessor.cubeTexSubImage2D(face, level, xOffset, yOffset, width, height, format, type, data);
             }
-        }
-
-        private static int mipExtent(int baseExtent, int level) {
-            return Math.max(1, baseExtent >> level);
         }
     }
 
