@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.config;
 
-import com.cleanroommc.common.CleanroomEnvironment;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingSchedule;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -18,9 +17,9 @@ public class KirinoConfig {
 
     public static class NeedsRestart {
 
-        public boolean enable = CleanroomEnvironment.isDev();
-        public boolean enableRenderDelegate = CleanroomEnvironment.isDev();
-        public boolean enableHDR = CleanroomEnvironment.isDev();
+        public boolean enable = isRunKirinoClient();
+        public boolean enableRenderDelegate = enable;
+        public boolean enableHDR = enable;
         public boolean enablePostProcessing = false;
         public boolean enableKhrDebug = false;
         public boolean enableShaderDebug = false;
@@ -42,6 +41,10 @@ public class KirinoConfig {
         public float chunkUpdateDisplacement = 8f;
 
         public int foregroundRenderDistance = 8;
+
+        private static boolean isRunKirinoClient() {
+            return Boolean.getBoolean("crl.dev.kirino");
+        }
 
     }
 
