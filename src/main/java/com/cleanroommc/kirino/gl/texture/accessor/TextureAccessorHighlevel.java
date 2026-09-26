@@ -570,6 +570,10 @@ public interface TextureAccessorHighlevel {
      * @see GLTexture#setLayersInternal(int) 
      * @see GLTexture#setSamplesInternal(int) 
      * @see GLTexture#setCurrentFormatInternal(TextureFormat)
+     *
+     * @return You may cache the returned operator
+     *
+     * @implSpec The returned operator must be valid to be cached
      */
     @NonNull
     HighlevelOperator highlevel();

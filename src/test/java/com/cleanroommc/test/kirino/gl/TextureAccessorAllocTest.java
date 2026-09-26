@@ -16,7 +16,7 @@ import java.nio.ByteBuffer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(GLTestExtension.class)
-public class TextureAccessorCoverageTest {
+public class TextureAccessorAllocTest {
 
     @Test
     public void testDsaAllocations() {
