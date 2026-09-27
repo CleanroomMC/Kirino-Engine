@@ -20,6 +20,8 @@ import java.util.function.Supplier;
 public class BufferStorage<T extends BufferView> {
 
     private final int pageSize;
+    private final boolean dsa;
+    private final boolean validatePageViewMode;
 
     private final List<T> pages = new ArrayList<>();
     private final List<PageMeta> metas = new ArrayList<>();
@@ -32,12 +34,36 @@ public class BufferStorage<T extends BufferView> {
 
     private long nextSlotId = 1L;
 
+    /**
+     * Creates a buffer storage using the legacy target-bound allocation path.
+     */
     public BufferStorage(Supplier<T> pageFactory, int pageSize) {
+        this(pageFactory, pageSize, false, false);
+    }
+
+    /**
+     * Creates a buffer storage using either legacy target-bound or DSA operations.
+     *
+     * <p>When <code>dsa</code> is true, <code>pageFactory</code> must create DSA-enabled views backed
+     * by instantiated buffers (DSA-created or bound once).</p>
+     */
+    public BufferStorage(Supplier<T> pageFactory, int pageSize, boolean dsa) {
+        this(pageFactory, pageSize, dsa, true);
+    }
+
+    private BufferStorage(
+            Supplier<T> pageFactory,
+            int pageSize,
+            boolean dsa,
+            boolean validatePageViewMode) {
+
         Preconditions.checkNotNull(pageFactory);
         Preconditions.checkArgument(pageSize > 0,
                 "Argument \"pageSize\" must be positive.");
 
         this.pageSize = pageSize;
+        this.dsa = dsa;
+        this.validatePageViewMode = validatePageViewMode;
         this.pageFactory = pageFactory;
     }
 
@@ -49,9 +75,27 @@ public class BufferStorage<T extends BufferView> {
     private void allocPage() {
         T view = pageFactory.get();
         Preconditions.checkNotNull(view);
+        if (validatePageViewMode) {
+            Preconditions.checkState(view.isDsaView() == dsa,
+                    "The page BufferView DSA mode must match its BufferStorage.");
+        }
 
-        int currentBufferID = view.fetchCurrentBoundBufferID();
-        view.bind();
+        if (dsa) {
+            allocPageStorage(view);
+        } else {
+            int currentBufferID = view.fetchCurrentBoundBufferID();
+            view.bind();
+            allocPageStorage(view);
+            view.bind(currentBufferID);
+        }
+
+        int pageIndex = pages.size();
+        pages.add(view);
+        metas.add(new PageMeta(pageSize));
+        pagesWithSpace.addLast(pageIndex);
+    }
+
+    private void allocPageStorage(T view) {
         view.allocPersistent(
                 pageSize,
                 MapBufferAccessBit.WRITE_BIT,
@@ -63,12 +107,6 @@ public class BufferStorage<T extends BufferView> {
                 MapBufferAccessBit.WRITE_BIT,
                 MapBufferAccessBit.MAP_PERSISTENT_BIT,
                 MapBufferAccessBit.MAP_COHERENT_BIT);
-        view.bind(currentBufferID);
-
-        int pageIndex = pages.size();
-        pages.add(view);
-        metas.add(new PageMeta(pageSize));
-        pagesWithSpace.addLast(pageIndex);
     }
 
     /**
@@ -147,6 +185,10 @@ public class BufferStorage<T extends BufferView> {
 
     public int getPageSize() {
         return pageSize;
+    }
+
+    public boolean isDsa() {
+        return dsa;
     }
 
     private Integer findPageWithSpace(int size) {

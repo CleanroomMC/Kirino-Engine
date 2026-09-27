@@ -9,6 +9,10 @@ public class VBOView extends BufferView {
         super(buffer);
     }
 
+    public VBOView(GLBuffer buffer, boolean dsa) {
+        super(buffer, dsa);
+    }
+
     @Override
     public int target() {
         return GL15.GL_ARRAY_BUFFER;

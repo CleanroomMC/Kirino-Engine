@@ -10,6 +10,10 @@ public class IDBView extends BufferView {
         super(buffer);
     }
 
+    public IDBView(GLBuffer buffer, boolean dsa) {
+        super(buffer, dsa);
+    }
+
     @Override
     public int target() {
         return GL40.GL_DRAW_INDIRECT_BUFFER;

@@ -9,6 +9,10 @@ public class SSBOView extends BufferView {
         super(buffer);
     }
 
+    public SSBOView(GLBuffer buffer, boolean dsa) {
+        super(buffer, dsa);
+    }
+
     @Override
     public int target() {
         return GL43.GL_SHADER_STORAGE_BUFFER;

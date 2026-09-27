@@ -9,6 +9,10 @@ public class EBOView extends BufferView {
         super(buffer);
     }
 
+    public EBOView(GLBuffer buffer, boolean dsa) {
+        super(buffer, dsa);
+    }
+
     @Override
     public int target() {
         return GL15.GL_ELEMENT_ARRAY_BUFFER;

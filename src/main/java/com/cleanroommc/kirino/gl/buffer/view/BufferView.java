@@ -57,8 +57,7 @@ public abstract class BufferView {
     /**
      * Creates a target-bound view.
      *
-     * <p>This preserves the original behavior. Call {@link #bind()} before operations that act on
-     * {@link #target()}.</p>
+     * <p>Call {@link #bind()} before operations that act on {@link #target()}.</p>
      */
     public BufferView(@NonNull GLBuffer buffer) {
         this(buffer, false);
