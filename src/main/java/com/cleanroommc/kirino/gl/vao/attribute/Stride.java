@@ -28,7 +28,7 @@ public class Stride {
 
     public Stride push(Slot slot) {
         Preconditions.checkArgument(cumulativeSize + slot.getSize() <= size,
-                "The maximum stride size is %d and you (%d) are exceeding it.", size, cumulativeSize + slot.getSize());
+                "The maximum stride size is %s and you (%s) are exceeding it.", size, cumulativeSize + slot.getSize());
 
         cumulativeSize += slot.getSize();
         slotStack.push(slot);
