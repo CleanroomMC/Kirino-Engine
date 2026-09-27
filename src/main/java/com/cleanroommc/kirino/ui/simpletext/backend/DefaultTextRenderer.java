@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.ui.simpletext.backend;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
@@ -551,10 +550,10 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
         glyphAtlas.close();
 
-        GLResourceManager.disposeEarly(instanceVbo.buffer);
-        GLResourceManager.disposeEarly(vao);
-        GLResourceManager.disposeEarly(program);
-        GLResourceManager.disposeEarly(vert);
-        GLResourceManager.disposeEarly(frag);
+        instanceVbo.buffer.disposeManually();
+        vao.disposeManually();
+        program.disposeManually();
+        vert.disposeManually();
+        frag.disposeManually();
     }
 }

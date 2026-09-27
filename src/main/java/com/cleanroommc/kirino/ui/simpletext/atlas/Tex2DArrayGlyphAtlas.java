@@ -19,7 +19,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
 
     @Override
     public void close() {
-        GLResourceManager.disposeEarly(storage.texture.texture);
+        storage.texture.texture.disposeManually();
     }
 
     public static final class LayerPage {
@@ -142,7 +142,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
             texture = newTexture;
             layerCapacity = newCapacity;
 
-            GLResourceManager.disposeEarly(oldTexture.texture);
+            oldTexture.texture.disposeManually();
         }
 
         @NonNull

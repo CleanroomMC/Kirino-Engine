@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl;
 
+import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.*;
 import org.lwjgl.opengl.GLCapabilities;
 
@@ -122,6 +123,7 @@ public final class GLDeviceInfo {
         return uboAlignment;
     }
 
+    @NonNull
     public static GLDeviceInfo captureSnapshot() {
         GLCapabilities caps = org.lwjgl.opengl.GL.getCapabilities();
 

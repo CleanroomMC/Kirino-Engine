@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.IDBView;
@@ -624,14 +623,14 @@ public class GuiRenderer implements AutoCloseable {
         MemoryUtil.memFree(linesPayloadWorkspace);
         MemoryUtil.memFree(idbWorkspace);
 
-        GLResourceManager.disposeEarly(arenaSsbo.buffer);
-        GLResourceManager.disposeEarly(drawInfo.buffer);
-        GLResourceManager.disposeEarly(rectPayload.buffer);
-        GLResourceManager.disposeEarly(linesPayload.buffer);
-        GLResourceManager.disposeEarly(idb.buffer);
+        arenaSsbo.buffer.disposeManually();
+        drawInfo.buffer.disposeManually();
+        rectPayload.buffer.disposeManually();
+        linesPayload.buffer.disposeManually();
+        idb.buffer.disposeManually();
 
-        GLResourceManager.disposeEarly(program);
-        GLResourceManager.disposeEarly(vert);
-        GLResourceManager.disposeEarly(frag);
+        program.disposeManually();
+        vert.disposeManually();
+        frag.disposeManually();
     }
 }

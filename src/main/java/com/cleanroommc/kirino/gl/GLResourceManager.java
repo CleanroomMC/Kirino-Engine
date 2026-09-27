@@ -1,15 +1,22 @@
 package com.cleanroommc.kirino.gl;
 
 import com.cleanroommc.kirino.engine.ShutdownManager;
+import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.NonNull;
 
 import java.util.PriorityQueue;
 
 /**
  * It activates itself (<code>active = true</code>) and registers the shutdown hook when the class is loaded.
+ *
+ * <p>Note: As a common user, you don't need to access this class 99% of times.</p>
  */
 public final class GLResourceManager {
+
+    private GLResourceManager() {
+    }
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino GLResourceManager");
 
@@ -34,10 +41,12 @@ public final class GLResourceManager {
      * Call this method to keep track of GL resources.
      * The GL resource will only be added to the tracking queue when <code>{@link #isActive()} == true</code>.
      */
-    public static void addDisposable(GLDisposable disposable) {
+    public static void addDisposable(@NonNull GLDisposable disposable) {
         if (!active) {
             return;
         }
+
+        Preconditions.checkNotNull(disposable);
 
         disposables.add(disposable);
     }
@@ -47,10 +56,12 @@ public final class GLResourceManager {
      *
      * <p>Only runs when <code>{@link #isActive()} == true</code>.</p>
      */
-    public static void disposeEarly(GLDisposable disposable) {
+    static void disposeEarly(@NonNull GLDisposable disposable) {
         if (!active) {
             return;
         }
+
+        Preconditions.checkNotNull(disposable);
 
         if (disposables.remove(disposable)) {
             disposable.dispose();

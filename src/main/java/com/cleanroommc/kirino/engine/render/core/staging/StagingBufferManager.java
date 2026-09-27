@@ -2,7 +2,6 @@ package com.cleanroommc.kirino.engine.render.core.staging;
 
 import com.cleanroommc.kirino.engine.render.core.staging.handle.*;
 import com.cleanroommc.kirino.gl.buffer.BufferStorage;
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.BufferUploadHint;
 import com.cleanroommc.kirino.gl.buffer.view.EBOView;
@@ -83,15 +82,15 @@ public class StagingBufferManager {
 
         handleGeneration++;
         for (VAO vao : temporaryVaos) {
-            GLResourceManager.disposeEarly(vao);
+            vao.disposeManually();
         }
         temporaryVaos.clear();
         for (VBOView vboView : temporaryVbos) {
-            GLResourceManager.disposeEarly(vboView.buffer);
+            vboView.buffer.disposeManually();
         }
         temporaryVbos.clear();
         for (EBOView eboView : temporaryEbos) {
-            GLResourceManager.disposeEarly(eboView.buffer);
+            eboView.buffer.disposeManually();
         }
         temporaryEbos.clear();
         active = true;
