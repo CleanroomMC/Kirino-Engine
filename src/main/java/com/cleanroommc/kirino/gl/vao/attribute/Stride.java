@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
 import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayDeque;
@@ -26,9 +27,11 @@ public class Stride {
         this.size = size;
     }
 
-    public Stride push(Slot slot) {
+    @NonNull
+    public Stride push(@NonNull Slot slot) {
+        Preconditions.checkNotNull(slot);
         Preconditions.checkArgument(cumulativeSize + slot.getSize() <= size,
-                "The maximum stride size is %d and you (%d) are exceeding it.", size, cumulativeSize + slot.getSize());
+                "The maximum stride size is %s and you (%s) are exceeding it.", size, cumulativeSize + slot.getSize());
 
         cumulativeSize += slot.getSize();
         slotStack.push(slot);

@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
@@ -29,7 +30,9 @@ public class AttributeLayout {
     }
 
     @NonNull
-    public AttributeLayout push(Stride stride) {
+    public AttributeLayout push(@NonNull Stride stride) {
+        Preconditions.checkNotNull(stride);
+
         strideStack.push(stride);
         return this;
     }
@@ -43,6 +46,7 @@ public class AttributeLayout {
         return strideStack.pop();
     }
 
+    @NonNull
     public String getDebugReport() {
         StringBuilder builder = new StringBuilder();
         builder.append("\n=====Attribute Layout Debug Report=====\n");
@@ -95,12 +99,16 @@ public class AttributeLayout {
      * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Number of VBOs must match the number of strides</li>
-     *     <li>Every {@link VBOView} must be unique (have an unique {@link VBOView#bufferID})</li>
      * </ul>
      *
      * @param vbos The VBOs
      */
-    public void upload(VBOView... vbos) {
+    public void upload(@NonNull VBOView @NonNull ... vbos) {
+        Preconditions.checkNotNull(vbos);
+        for (VBOView vbo : vbos) {
+            Preconditions.checkNotNull(vbo);
+        }
+
         int attributeIndex = 0;
         int strideIndex = 0;
         Iterator<Stride> strideIter = strideStack.descendingIterator();

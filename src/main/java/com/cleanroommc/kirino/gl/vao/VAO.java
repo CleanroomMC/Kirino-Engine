@@ -31,7 +31,7 @@ public class VAO extends GLDisposable {
     }
 
     /**
-     * OpenGL <code>bind(0)</code> might be called on several targets depending on the nullity of the arguments,
+     * OpenGL <code>bind(0)</code> might be called on several targets depending on the nullability of the arguments,
      * and <code>bind(0)</code> will be called on <code>vao</code>.
      *
      * <p>Only initialize VAO during the initial setup or early preparation stage of each frame.</p>
