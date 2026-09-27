@@ -23,6 +23,9 @@ import java.util.Optional;
  * <p>In target-bound mode, call {@link #bind()} before using the view and keep the binding unchanged.
  * In DSA mode, operations with a named-buffer equivalent act on {@link #bufferID} without
  * reading or modifying the target binding.</p>
+ *
+ * <p><i><b>Note</b></i>: GL buffers are intrinsically untyped! This is why we needed views.</p>
+ * <p>Note: No buffer shadow states are maintained. Expect full raw GL interoperability.</p>
  */
 public abstract class BufferView {
 
