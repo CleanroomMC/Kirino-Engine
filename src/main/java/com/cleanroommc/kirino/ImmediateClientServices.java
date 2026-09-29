@@ -17,6 +17,7 @@ import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.mcttf.glyph.GlyphBuilder;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.*;
@@ -291,7 +292,7 @@ public final class ImmediateClientServices {
                             new Tex2DArrayGlyphAtlas(1024, 1024),
                             context.getShaderAccess(),
                             1024),
-                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
+                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                     shaderAccess,
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
@@ -381,7 +382,8 @@ public final class ImmediateClientServices {
                         new Tex2DArrayGlyphAtlas(1024, 1024),
                         context.getShaderAccess(),
                         1024),
-                (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
+                // one scaled unit per Minecraft pixel: McTTF fonts are LINE_HEIGHT_PIXELS Minecraft pixels per em
+                (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                 shaderAccess,
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
                 new SimpleGuiRuntime(shaderAccess, dummyVao),

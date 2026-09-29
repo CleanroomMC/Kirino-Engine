@@ -33,6 +33,11 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     private final SimpleTextRuntime context;
     private final int pixelSize;
+
+    /**
+     * <p>Unit: Minecraft scaled resolution</p>
+     */
+    private final float standardFontSize;
     private final TextCommandList cmdList = new TextCommandList(64);
 
     private boolean batching;
@@ -72,12 +77,24 @@ public class DefaultTextProducer implements SimpleTextProducer {
     }
 
     public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize) {
+        this(context, pixelSize, STANDARD_GLYPH_SIZE);
+    }
+
+    /**
+     * @param standardFontSize The font size used when none is given, e.g. by
+     *                         {@link SimpleTextRuntime#append(String, float, float)}.
+     *                         Unit: Minecraft scaled resolution
+     */
+    public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize, float standardFontSize) {
         Preconditions.checkNotNull(context);
         Preconditions.checkState(context.getFont().type() == ST_FontBackendType.FREE_TYPE,
                 "Must have a FreeType backend context.");
+        Preconditions.checkArgument(standardFontSize > 0,
+                "Argument \"standardFontSize\"=%s must be positive.", standardFontSize);
 
         this.context = context;
         this.pixelSize = pixelSize;
+        this.standardFontSize = standardFontSize;
 
         estimateLineHeight();
     }
@@ -134,7 +151,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     @Override
     public float standardFontSize() {
-        return STANDARD_GLYPH_SIZE;
+        return standardFontSize;
     }
 
     /**
