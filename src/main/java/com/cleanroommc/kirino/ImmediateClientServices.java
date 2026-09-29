@@ -292,7 +292,7 @@ public final class ImmediateClientServices {
                             new Tex2DArrayGlyphAtlas(1024, 1024),
                             context.getShaderAccess(),
                             1024),
-                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
+                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                     shaderAccess,
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
