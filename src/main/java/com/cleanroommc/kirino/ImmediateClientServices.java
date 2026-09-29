@@ -292,7 +292,7 @@ public final class ImmediateClientServices {
                             new Tex2DArrayGlyphAtlas(1024, 1024),
                             context.getShaderAccess(),
                             1024),
-                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
+                    (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
                     shaderAccess,
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
@@ -382,7 +382,7 @@ public final class ImmediateClientServices {
                         new Tex2DArrayGlyphAtlas(1024, 1024),
                         context.getShaderAccess(),
                         1024),
-                // one scaled unit per Minecraft pixel: McTTF fonts are LINE_HEIGHT_PIXELS Minecraft pixels per em
+                // McTTF fonts are LINE_HEIGHT_PIXELS Minecraft pixels per em
                 (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                 shaderAccess,
                 new SimpleGuiRuntime(shaderAccess, dummyVao),

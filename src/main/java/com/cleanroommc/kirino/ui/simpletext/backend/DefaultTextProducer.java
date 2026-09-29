@@ -29,7 +29,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
     /**
      * <p>Unit: Minecraft scaled resolution</p>
      */
-    private final static float STANDARD_GLYPH_SIZE = 7;
+    private final static float STANDARD_FONT_SIZE = 8.6f;
 
     private final SimpleTextRuntime context;
     private final int pixelSize;
@@ -54,7 +54,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     /**
      * <p>Unit: Minecraft scaled resolution</p>
-     * <p>Note: Estimate under {@link #STANDARD_GLYPH_SIZE}.</p>
+     * <p>Note: Estimate under {@link #standardFontSize}.</p>
      */
     private float lineHeightEstimate;
 
@@ -70,21 +70,16 @@ public class DefaultTextProducer implements SimpleTextProducer {
             }
 
             GlyphMetrics metrics = context.getGlyphMetrics(glyph);
-            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), STANDARD_GLYPH_SIZE));
+            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), standardFontSize));
         });
 
         lineHeightEstimate = lineHeight[0] * 1.05f;
     }
 
     public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize) {
-        this(context, pixelSize, STANDARD_GLYPH_SIZE);
+        this(context, pixelSize, STANDARD_FONT_SIZE);
     }
 
-    /**
-     * @param standardFontSize The font size used when none is given, e.g. by
-     *                         {@link SimpleTextRuntime#append(String, float, float)}.
-     *                         Unit: Minecraft scaled resolution
-     */
     public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize, float standardFontSize) {
         Preconditions.checkNotNull(context);
         Preconditions.checkState(context.getFont().type() == ST_FontBackendType.FREE_TYPE,
@@ -169,10 +164,10 @@ public class DefaultTextProducer implements SimpleTextProducer {
             }
 
             GlyphMetrics metrics = context.getGlyphMetrics(glyph);
-            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), STANDARD_GLYPH_SIZE));
+            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), standardFontSize));
         });
 
-        return lineHeight[0] / STANDARD_GLYPH_SIZE * fontSize;
+        return lineHeight[0] / standardFontSize * fontSize;
     }
 
     public void beginBatch() {
