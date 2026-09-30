@@ -96,6 +96,7 @@ public class AttributeLayout {
     }
 
     /**
+     * <p>Note: This is the target-bound path. Non-DSA only.</p>
      * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Number of VBOs must match the number of strides</li>
@@ -142,6 +143,68 @@ public class AttributeLayout {
                 if (slot.getDivisor() != 0) {
                     GL33.glVertexAttribDivisor(attributeIndex, slot.getDivisor());
                 }
+
+                attributeIndex++;
+                usedSlotSize += slot.getSize();
+            }
+            strideIndex++;
+        }
+    }
+
+    /**
+     * <p>Note: This is the DSA path. DSA only.</p>
+     * <p>Prerequisites include:</p>
+     * <ul>
+     *     <li>Number of VBOs must match the number of strides</li>
+     * </ul>
+     *
+     * @param vaoID The VAO to modify
+     * @param vbos The VBOs
+     */
+    public void upload(int vaoID, @NonNull VBOView @NonNull ... vbos) {
+        Preconditions.checkNotNull(vbos);
+        for (VBOView vbo : vbos) {
+            Preconditions.checkNotNull(vbo);
+        }
+
+        int attributeIndex = 0;
+        int strideIndex = 0;
+        Iterator<Stride> strideIter = strideStack.descendingIterator();
+        while (strideIter.hasNext()) {
+            Stride stride = strideIter.next();
+
+            int usedSlotSize = 0;
+            Iterator<Slot> slotIter = stride.slotStack.descendingIterator();
+            while (slotIter.hasNext()) {
+                Slot slot = slotIter.next();
+
+                GL45.glVertexArrayVertexBuffer(
+                        vaoID,
+                        attributeIndex,
+                        vbos[strideIndex].bufferID,
+                        usedSlotSize,
+                        stride.getSize());
+
+                if (slot.getInterpretationType() == InterpretationType.TO_FLOAT_KIND) {
+                    GL45.glVertexArrayAttribFormat(
+                            vaoID,
+                            attributeIndex,
+                            slot.getCount(),
+                            slot.getType().glValue,
+                            slot.isNormalize(),
+                            0);
+                } else if (slot.getInterpretationType() == InterpretationType.TO_INT_KIND) {
+                    GL45.glVertexArrayAttribIFormat(
+                            vaoID,
+                            attributeIndex,
+                            slot.getCount(),
+                            slot.getType().glValue,
+                            0);
+                }
+
+                GL45.glVertexArrayAttribBinding(vaoID, attributeIndex, attributeIndex);
+                GL45.glEnableVertexArrayAttrib(vaoID, attributeIndex);
+                GL45.glVertexArrayBindingDivisor(vaoID, attributeIndex, slot.getDivisor());
 
                 attributeIndex++;
                 usedSlotSize += slot.getSize();
