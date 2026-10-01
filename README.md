@@ -8,15 +8,49 @@
 Minecraft rendering becomes difficult as implicit state and mixins couple rendering behavior.
 Our primary goal is 
 - To provide an explicit structure ([engine_overview](docs/engine_overview.md), [timeline](docs/render/timeline.md))
-- Overhaul most of Minecraft’s rendering in a future-proof manner ([engine_overview → Terrain Rendering](docs/engine_overview.md))
+- Overhaul most of Minecraft’s rendering in a future-proof manner
 - And provide a set of advanced rendering APIs to mod developers 
+
+You might wonder why it matters and what does _explicit structure_ mean exactly. 
+A few examples will explain the dilemma we're trying to resolve:
+- Can't determine which method to inject for your rendering logic
+- Hesitating on whether to `glEnable`/`glDisable` at the end
+- Unsure about which texture unit is available at the moment
+- etc.
+
+Things described above are only resolvable when the whole legacy rendering process 
+is rewritten and therefore owned. Don't mistake the goal for rewrite-for-rewrite's-sake.
+Jump to FAQs if this part raises more questions.
 
 ## FAQs
 
 <details>
 <summary>Click to Expand</summary>
 
-- Is it like a normal render mod?
+- Why is it different compared to OptiFine / Sodium / Iris?
+  - Because Kirino-Engine wants to bring actual architectural changes and APIs, and pays less attention to
+    _optimizations_ and _shaders_
+
+<br>
+
+- Will it be compatible with existing major **rendering mods**?
+  - It depends. Kirino's terrain renderer as a subsystem definitely conflicts with those,
+    but it doesn't imply that Kirino-Engine itself conflicts with those. Subsystems are planned to have
+    the abilities to be turned ON or OFF
+  - Other parts of Kirino will likely not be affected but Mixins from the mods may accidentally break compatibility
+  - Expect fixable incompatibilities. It's not structural level conflicts
+
+<br>
+
+- Will it be compatible with existing **mods** as the whole pipeline is rewritten?
+  - They're supposed to be compatible in most of the common scenarios, and 
+    iffy rendering Mixins are presumably the typical cause of incompatibilities
+  - The pipeline is being rewritten but that doesn't require every part of the old path to disappear at once.
+    That's basically the reason why it keeps compatibility.
+
+<br>
+
+- Is it like a _normal_ rendering mod?
   Like:
   ```java
   void update()
@@ -31,26 +65,14 @@ Our primary goal is
 
 <br>
 
-- Why is it different compared to OptiFine / Sodium / Iris?
-  - Because Kirino-Engine wants to bring actual architectural changes, and pays less attention to
-    _optimizations_ and _shaders_
-
-<br>
-
-- Will it be compatible with existing major render mods?
-  - No, because Kirino-Engine replaces the whole rendering pipeline
-  - _**But**_, it isn't coupled with rendering in order to remove the hard GL version requirement. 
-    A toggle, which defeats the point, is therefore provided to disable the rendering part of the engine
-
-<br>
-
-- What's the point of not being compatible with other render mods?
+- What's the point of building "yet another blah blah blah"?
   - To stop perpetuating legacy solutions and API-caller mindsets wrapped in modern graphics APIs
   
 <br>
 
 - What can I _expect_ as a player/mod dev when it's out?
-  - We provide what we want (read the next section). You might coincidentally like some of it
+  - We provide what we want (pretty much explained). 
+    You might coincidentally like some of it especially if you're a mod dev
 
 <br>
 
@@ -62,7 +84,7 @@ Our primary goal is
 <br>
 
 - How do I download it?
-  - You don't. It'll be shipped with Cleanroom with rolling updates
+  - You can't. It'll be shipped with Cleanroom with rolling updates
 
 </details>
 
