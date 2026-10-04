@@ -243,4 +243,21 @@ public class GLSLResourceParserTest {
                 () -> parse("layout(binding = 0) uniform sampler2D missingSemicolon"));
         assertFalse(exception.getMessage().isEmpty());
     }
+
+    @Test
+    public void test8() throws Exception {
+        ASTTranslationUnit root = parse(
+                """
+                        struct {
+                            vec3 pos;
+                        } light;
+                        """);
+
+        ASTStructDeclaration declaration = onlyDirectChild(root, ASTStructDeclaration.class);
+        ASTStructSpecifier specifier = onlyDirectChild(declaration, ASTStructSpecifier.class);
+        assertTrue(directChildren(specifier, ASTStructName.class).isEmpty());
+
+        ASTDeclaratorList declaratorList = onlyDirectChild(declaration, ASTDeclaratorList.class);
+        assertEquals("light", value(onlyDirectChild(declaratorList, ASTDeclarator.class)));
+    }
 }
