@@ -17,19 +17,42 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             ImmutableList.Builder<ShaderMeta.StructDeclaration> structs = ImmutableList.builder();
             ImmutableList.Builder<ShaderMeta.UniformDeclaration> uniforms = ImmutableList.builder();
             ImmutableList.Builder<ShaderMeta.InterfaceBlock> interfaceBlocks = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.GlobalLayoutDeclaration> globalLayouts = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.InputOutputDeclaration> inputOutputs = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.Declaration> topLevelDeclarations = ImmutableList.builder();
 
             for (int i = 0; i < astUnit.jjtGetNumChildren(); i++) {
                 Node child = astUnit.jjtGetChild(i);
                 if (child instanceof ASTStructDeclaration struct) {
-                    structs.add(structDeclaration(struct));
+                    ShaderMeta.StructDeclaration declaration = structDeclaration(struct);
+                    structs.add(declaration);
+                    topLevelDeclarations.add(declaration);
                 } else if (child instanceof ASTUniformDeclaration uniform) {
-                    uniforms.add(uniformDeclaration(uniform));
+                    ShaderMeta.UniformDeclaration declaration = uniformDeclaration(uniform);
+                    uniforms.add(declaration);
+                    topLevelDeclarations.add(declaration);
                 } else if (child instanceof ASTInterfaceBlockDeclaration interfaceBlock) {
-                    interfaceBlocks.add(interfaceBlock(interfaceBlock));
+                    ShaderMeta.InterfaceBlock declaration = interfaceBlock(interfaceBlock);
+                    interfaceBlocks.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTGlobalLayoutDeclaration globalLayout) {
+                    ShaderMeta.GlobalLayoutDeclaration declaration = globalLayout(globalLayout);
+                    globalLayouts.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTInputOutputDeclaration inputOutput) {
+                    ShaderMeta.InputOutputDeclaration declaration = inputOutput(inputOutput);
+                    inputOutputs.add(declaration);
+                    topLevelDeclarations.add(declaration);
                 }
             }
 
-            return new ShaderMeta(structs.build(), uniforms.build(), interfaceBlocks.build());
+            return new ShaderMeta(
+                    structs.build(),
+                    uniforms.build(),
+                    interfaceBlocks.build(),
+                    globalLayouts.build(),
+                    inputOutputs.build(),
+                    topLevelDeclarations.build());
         }
 
         @NonNull
@@ -100,11 +123,47 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
 
         @NonNull
         private static ImmutableList<String> qualifiers(@NonNull Node node) {
+            return qualifiers(node, null);
+        }
+
+        @NonNull
+        private static ImmutableList<String> qualifiers(@NonNull Node node, @Nullable String excluded) {
             ImmutableList.Builder<String> qualifiers = ImmutableList.builder();
-            for (ASTQualifier qualifier : directChildren(node, ASTQualifier.class)) {
-                qualifiers.add(value(qualifier));
+            for (int i = 0; i < node.jjtGetNumChildren(); i++) {
+                Node child = node.jjtGetChild(i);
+                if (child instanceof ASTQualifier qualifier) {
+                    String value = value(qualifier);
+                    if (!value.equals(excluded)) {
+                        qualifiers.add(value);
+                    }
+                } else if (child instanceof ASTStorageQualifier qualifier) {
+                    String value = value(qualifier);
+                    if (!value.equals(excluded)) {
+                        qualifiers.add(value);
+                    }
+                }
             }
             return qualifiers.build();
+        }
+
+        @NonNull
+        private static String storage(@NonNull Node node) {
+            ASTStorageQualifier storage = directChild(node, ASTStorageQualifier.class);
+            if (storage != null) {
+                return value(storage);
+            }
+
+            for (ASTQualifier qualifier : directChildren(node, ASTQualifier.class)) {
+                String value = value(qualifier);
+                if (value.equals("in")
+                        || value.equals("out")
+                        || value.equals("attribute")
+                        || value.equals("varying")) {
+                    return value;
+                }
+            }
+
+            throw new IllegalStateException("Missing storage qualifier under \"" + node.getClass().getSimpleName() + "\".");
         }
 
         @NonNull
@@ -170,7 +229,7 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             return new ShaderMeta.UniformDeclaration(
                     type(requireDirectChild(node, ASTTypeSpecifier.class)),
                     layouts(node),
-                    qualifiers(node),
+                    qualifiers(node, "uniform"),
                     declarators(requireDirectChild(node, ASTDeclaratorList.class)));
         }
 
@@ -183,13 +242,32 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             }
 
             ASTInstanceDeclarator instance = directChild(node, ASTInstanceDeclarator.class);
+            String storage = storage(node);
             return new ShaderMeta.InterfaceBlock(
-                    value(requireDirectChild(node, ASTStorageQualifier.class)),
+                    storage,
                     value(requireDirectChild(node, ASTBlockName.class)),
                     layouts(node),
-                    qualifiers(node),
+                    qualifiers(node, storage),
                     members.build(),
                     instance == null ? null : declarator(instance));
+        }
+
+        private static ShaderMeta.@NonNull GlobalLayoutDeclaration globalLayout(
+                @NonNull ASTGlobalLayoutDeclaration node) {
+
+            return new ShaderMeta.GlobalLayoutDeclaration(storage(node), layouts(node));
+        }
+
+        private static ShaderMeta.@NonNull InputOutputDeclaration inputOutput(
+                @NonNull ASTInputOutputDeclaration node) {
+
+            String storage = storage(node);
+            return new ShaderMeta.InputOutputDeclaration(
+                    storage,
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)),
+                    layouts(node),
+                    qualifiers(node, storage),
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)));
         }
     }
 

@@ -4,31 +4,36 @@ package com.cleanroommc.kirino.gl.shader.parser;
 public interface GLSLResourceParserTreeConstants
 {
   public int JJTTRANSLATIONUNIT = 0;
-  public int JJTINTERFACEBLOCKDECLARATION = 1;
-  public int JJTUNIFORMDECLARATION = 2;
-  public int JJTSTRUCTDECLARATION = 3;
-  public int JJTSTRUCTSPECIFIER = 4;
-  public int JJTMEMBERDECLARATION = 5;
-  public int JJTTYPESPECIFIER = 6;
-  public int JJTVOID = 7;
-  public int JJTLAYOUTQUALIFIER = 8;
-  public int JJTLAYOUTQUALIFIERITEM = 9;
-  public int JJTSTORAGEQUALIFIER = 10;
-  public int JJTQUALIFIER = 11;
-  public int JJTDECLARATORLIST = 12;
-  public int JJTDECLARATOR = 13;
-  public int JJTINSTANCEDECLARATOR = 14;
-  public int JJTARRAYSPECIFIER = 15;
-  public int JJTARRAYDIMENSION = 16;
-  public int JJTINITIALIZER = 17;
-  public int JJTBLOCKNAME = 18;
-  public int JJTSTRUCTNAME = 19;
+  public int JJTGLOBALLAYOUTDECLARATION = 1;
+  public int JJTSTORAGEQUALIFIER = 2;
+  public int JJTINTERFACEBLOCKDECLARATION = 3;
+  public int JJTUNIFORMDECLARATION = 4;
+  public int JJTINPUTOUTPUTDECLARATION = 5;
+  public int JJTSTRUCTDECLARATION = 6;
+  public int JJTSTRUCTSPECIFIER = 7;
+  public int JJTMEMBERDECLARATION = 8;
+  public int JJTTYPESPECIFIER = 9;
+  public int JJTVOID = 10;
+  public int JJTLAYOUTQUALIFIER = 11;
+  public int JJTLAYOUTQUALIFIERITEM = 12;
+  public int JJTQUALIFIER = 13;
+  public int JJTDECLARATORLIST = 14;
+  public int JJTDECLARATOR = 15;
+  public int JJTINSTANCEDECLARATOR = 16;
+  public int JJTARRAYSPECIFIER = 17;
+  public int JJTARRAYDIMENSION = 18;
+  public int JJTINITIALIZER = 19;
+  public int JJTBLOCKNAME = 20;
+  public int JJTSTRUCTNAME = 21;
 
 
   public String[] jjtNodeName = {
     "TranslationUnit",
+    "GlobalLayoutDeclaration",
+    "StorageQualifier",
     "InterfaceBlockDeclaration",
     "UniformDeclaration",
+    "InputOutputDeclaration",
     "StructDeclaration",
     "StructSpecifier",
     "MemberDeclaration",
@@ -36,7 +41,6 @@ public interface GLSLResourceParserTreeConstants
     "void",
     "LayoutQualifier",
     "LayoutQualifierItem",
-    "StorageQualifier",
     "Qualifier",
     "DeclaratorList",
     "Declarator",
@@ -48,4 +52,4 @@ public interface GLSLResourceParserTreeConstants
     "StructName",
   };
 }
-/* JavaCC - OriginalChecksum=04b4a6dbfb532b14745f224167f9ef07 (do not edit this line) */
+/* JavaCC - OriginalChecksum=95958c009a4cbc17219f402c80dd841c (do not edit this line) */

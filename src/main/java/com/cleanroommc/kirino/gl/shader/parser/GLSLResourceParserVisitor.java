@@ -5,15 +5,17 @@ public interface GLSLResourceParserVisitor
 {
   public Void visit(SimpleNode node, Void data);
   public Void visit(ASTTranslationUnit node, Void data);
+  public Void visit(ASTGlobalLayoutDeclaration node, Void data);
+  public Void visit(ASTStorageQualifier node, Void data);
   public Void visit(ASTInterfaceBlockDeclaration node, Void data);
   public Void visit(ASTUniformDeclaration node, Void data);
+  public Void visit(ASTInputOutputDeclaration node, Void data);
   public Void visit(ASTStructDeclaration node, Void data);
   public Void visit(ASTStructSpecifier node, Void data);
   public Void visit(ASTMemberDeclaration node, Void data);
   public Void visit(ASTTypeSpecifier node, Void data);
   public Void visit(ASTLayoutQualifier node, Void data);
   public Void visit(ASTLayoutQualifierItem node, Void data);
-  public Void visit(ASTStorageQualifier node, Void data);
   public Void visit(ASTQualifier node, Void data);
   public Void visit(ASTDeclaratorList node, Void data);
   public Void visit(ASTDeclarator node, Void data);
@@ -24,4 +26,4 @@ public interface GLSLResourceParserVisitor
   public Void visit(ASTBlockName node, Void data);
   public Void visit(ASTStructName node, Void data);
 }
-/* JavaCC - OriginalChecksum=c7fa5cc93726c275aa5621c232012df1 (do not edit this line) */
+/* JavaCC - OriginalChecksum=01804c8d6e082bb5f2cdc98a08b62aab (do not edit this line) */

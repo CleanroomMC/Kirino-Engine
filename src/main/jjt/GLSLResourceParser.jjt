@@ -53,9 +53,25 @@ public class GLSLResourceParser {
     private record ResourcePrefix(int storageKind, int firstTokenAfterQualifiers) {
     }
 
+    private boolean isGlobalLayoutDeclarationAhead() {
+        int i = 1;
+        if (getToken(i).kind != LAYOUT) {
+            return false;
+        }
+
+        do {
+            i = tokenAfterLayoutQualifier(i);
+            if (i < 0) {
+                return false;
+            }
+        } while (getToken(i).kind == LAYOUT);
+
+        return isGlobalLayoutStorageKind(getToken(i).kind) && getToken(i + 1).kind == SEMICOLON;
+    }
+
     private boolean isInterfaceBlockAhead() {
         ResourcePrefix prefix = scanResourcePrefix();
-        if (prefix == null) {
+        if (prefix == null || !isInterfaceBlockStorageKind(prefix.storageKind)) {
             return false;
         }
 
@@ -66,6 +82,20 @@ public class GLSLResourceParser {
     private boolean isUniformDeclarationAhead() {
         ResourcePrefix prefix = scanResourcePrefix();
         if (prefix == null || prefix.storageKind != UNIFORM) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        if (getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE) {
+            return false;
+        }
+
+        return getToken(i).kind == IDENTIFIER || getToken(i).kind == STRUCT;
+    }
+
+    private boolean isInputOutputDeclarationAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null || !isInputOutputStorageKind(prefix.storageKind)) {
             return false;
         }
 
@@ -110,7 +140,7 @@ public class GLSLResourceParser {
                 break;
             }
 
-            if (kind == UNIFORM || kind == BUFFER) {
+            if (isStorageKind(kind)) {
                 if (storageKind != -1) {
                     return null;
                 }
@@ -124,6 +154,22 @@ public class GLSLResourceParser {
             return null;
         }
         return new ResourcePrefix(storageKind, i);
+    }
+
+    private static boolean isStorageKind(int kind) {
+        return kind == UNIFORM || kind == BUFFER || isInputOutputStorageKind(kind);
+    }
+
+    private static boolean isGlobalLayoutStorageKind(int kind) {
+        return kind == UNIFORM || kind == BUFFER || kind == IN || kind == OUT;
+    }
+
+    private static boolean isInterfaceBlockStorageKind(int kind) {
+        return isGlobalLayoutStorageKind(kind);
+    }
+
+    private static boolean isInputOutputStorageKind(int kind) {
+        return kind == IN || kind == OUT || kind == ATTRIBUTE || kind == VARYING;
     }
 
     private int tokenAfterLayoutQualifier(int layoutIndex) {
@@ -378,11 +424,17 @@ ASTTranslationUnit TranslationUnit() #TranslationUnit :
 {}
 {
     (
+        LOOKAHEAD({ isGlobalLayoutDeclarationAhead() })
+        GlobalLayoutDeclaration()
+    |
         LOOKAHEAD({ isInterfaceBlockAhead() })
         InterfaceBlockDeclaration()
     |
         LOOKAHEAD({ isUniformDeclarationAhead() })
         UniformDeclaration()
+    |
+        LOOKAHEAD({ isInputOutputDeclarationAhead() })
+        InputOutputDeclaration()
     |
         LOOKAHEAD({ isStructDeclarationAhead() })
         StructDeclaration()
@@ -391,6 +443,21 @@ ASTTranslationUnit TranslationUnit() #TranslationUnit :
     )*
     <EOF>
     { return jjtThis; }
+}
+
+void GlobalLayoutDeclaration() #GlobalLayoutDeclaration :
+{}
+{
+    ( LayoutQualifier() )+
+    GlobalLayoutStorageQualifier()
+    <SEMICOLON>
+}
+
+void GlobalLayoutStorageQualifier() #StorageQualifier :
+{ Token qualifier; }
+{
+    ( qualifier = <UNIFORM> | qualifier = <BUFFER> | qualifier = <IN> | qualifier = <OUT> )
+    { jjtThis.jjtSetValue(qualifier.image); }
 }
 
 void InterfaceBlockDeclaration() #InterfaceBlockDeclaration :
@@ -406,6 +473,15 @@ void InterfaceBlockDeclaration() #InterfaceBlockDeclaration :
 }
 
 void UniformDeclaration() #UniformDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    DeclaratorList()
+    <SEMICOLON>
+}
+
+void InputOutputDeclaration() #InputOutputDeclaration :
 {}
 {
     ( Qualifier() )+

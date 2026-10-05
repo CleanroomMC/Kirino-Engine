@@ -12,10 +12,19 @@ public class GLSLResourceParserDefaultVisitor implements GLSLResourceParserVisit
   public Void visit(ASTTranslationUnit node, Void data){
     return defaultVisit(node, data);
   }
+  public Void visit(ASTGlobalLayoutDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTStorageQualifier node, Void data){
+    return defaultVisit(node, data);
+  }
   public Void visit(ASTInterfaceBlockDeclaration node, Void data){
     return defaultVisit(node, data);
   }
   public Void visit(ASTUniformDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTInputOutputDeclaration node, Void data){
     return defaultVisit(node, data);
   }
   public Void visit(ASTStructDeclaration node, Void data){
@@ -34,9 +43,6 @@ public class GLSLResourceParserDefaultVisitor implements GLSLResourceParserVisit
     return defaultVisit(node, data);
   }
   public Void visit(ASTLayoutQualifierItem node, Void data){
-    return defaultVisit(node, data);
-  }
-  public Void visit(ASTStorageQualifier node, Void data){
     return defaultVisit(node, data);
   }
   public Void visit(ASTQualifier node, Void data){
@@ -67,4 +73,4 @@ public class GLSLResourceParserDefaultVisitor implements GLSLResourceParserVisit
     return defaultVisit(node, data);
   }
 }
-/* JavaCC - OriginalChecksum=78759e2025f3850a63f0429cb9fafac2 (do not edit this line) */
+/* JavaCC - OriginalChecksum=9784f2cf54cd88f639be05bb457dd12d (do not edit this line) */

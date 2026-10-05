@@ -214,11 +214,12 @@ public class GLSLResourceParserTest {
                         }
                         """);
 
-        assertEquals(1, root.jjtGetNumChildren());
-        assertInstanceOf(ASTUniformDeclaration.class, root.jjtGetChild(0));
+        assertEquals(3, root.jjtGetNumChildren());
+        assertEquals(2, directChildren(root, ASTInputOutputDeclaration.class).size());
+        assertEquals(1, directChildren(root, ASTUniformDeclaration.class).size());
         assertTrue(descendants(root, ASTStructDeclaration.class).isEmpty());
         assertLayout(root, "binding", "TEXTURE_BINDING");
-        assertEquals("colorTexture", value(onlyDescendant(root, ASTDeclarator.class)));
+        assertEquals("colorTexture", value(onlyDescendant(onlyDirectChild(root, ASTUniformDeclaration.class), ASTDeclarator.class)));
     }
 
     @Test
@@ -259,5 +260,48 @@ public class GLSLResourceParserTest {
 
         ASTDeclaratorList declaratorList = onlyDirectChild(declaration, ASTDeclaratorList.class);
         assertEquals("light", value(onlyDirectChild(declaratorList, ASTDeclarator.class)));
+    }
+
+    @Test
+    public void test9() throws Exception {
+        ASTTranslationUnit root = parse(
+                """
+                        layout(std140) layout(row_major) uniform;
+                        layout(std430) buffer;
+                        layout(local_size_x = 8, local_size_y = 4) in;
+                        layout(triangle_strip, max_vertices = 3) out;
+                        """);
+
+        List<ASTGlobalLayoutDeclaration> declarations = directChildren(root, ASTGlobalLayoutDeclaration.class);
+        assertEquals(4, declarations.size());
+        assertEquals("uniform", value(onlyDirectChild(declarations.get(0), ASTStorageQualifier.class)));
+        assertEquals("buffer", value(onlyDirectChild(declarations.get(1), ASTStorageQualifier.class)));
+        assertEquals("in", value(onlyDirectChild(declarations.get(2), ASTStorageQualifier.class)));
+        assertEquals("out", value(onlyDirectChild(declarations.get(3), ASTStorageQualifier.class)));
+        assertLayout(declarations.get(0), "std140", null);
+        assertLayout(declarations.get(0), "row_major", null);
+        assertLayout(declarations.get(2), "local_size_x", "8");
+        assertLayout(declarations.get(2), "local_size_y", "4");
+        assertLayout(declarations.get(3), "max_vertices", "3");
+    }
+
+    @Test
+    public void test10() throws Exception {
+        ASTTranslationUnit root = parse(
+                """
+                        layout(location = 0) in vec3 position;
+                        layout(location = 1) out vec2 texCoord;
+                        attribute vec3 legacyPosition;
+                        varying vec2 legacyTexCoord;
+                        """);
+
+        List<ASTInputOutputDeclaration> declarations = directChildren(root, ASTInputOutputDeclaration.class);
+        assertEquals(4, declarations.size());
+        assertEquals("in", value(onlyDirectChild(declarations.get(0), ASTQualifier.class)));
+        assertEquals("out", value(onlyDirectChild(declarations.get(1), ASTQualifier.class)));
+        assertEquals("attribute", value(onlyDirectChild(declarations.get(2), ASTQualifier.class)));
+        assertEquals("varying", value(onlyDirectChild(declarations.get(3), ASTQualifier.class)));
+        assertLayout(declarations.get(0), "location", "0");
+        assertLayout(declarations.get(1), "location", "1");
     }
 }
