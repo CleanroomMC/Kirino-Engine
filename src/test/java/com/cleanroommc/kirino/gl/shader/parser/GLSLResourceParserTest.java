@@ -304,4 +304,50 @@ public class GLSLResourceParserTest {
         assertLayout(declarations.get(0), "location", "0");
         assertLayout(declarations.get(1), "location", "1");
     }
+
+    @Test
+    public void test11() throws Exception {
+        ASTTranslationUnit root = parse("""
+                uniform layout(std140);
+                layout(std430) buffer layout(row_major);
+                in layout(local_size_x = 8);
+                layout(triangle_strip) out layout(max_vertices = 3);
+                uniform U { float x; };
+                """);
+
+        List<ASTGlobalLayoutDeclaration> defaults = directChildren(root, ASTGlobalLayoutDeclaration.class);
+        assertEquals(4, defaults.size());
+        assertEquals(5, root.jjtGetNumChildren());
+        assertEquals(List.of("uniform", "buffer", "in", "out"), defaults
+                .stream().map(node -> value(onlyDirectChild(node, ASTStorageQualifier.class))).toList());
+        assertLayout(defaults.get(0), "std140", null);
+        assertEquals(List.of("std430", "row_major"), descendants(defaults.get(1), ASTLayoutQualifierItem.class)
+                .stream().map(node -> ((GLSLResourceParser.LayoutQualifierValue) value(node)).name()).toList());
+        assertLayout(defaults.get(2), "local_size_x", "8");
+        assertLayout(defaults.get(3), "max_vertices", "3");
+        assertInstanceOf(ASTInterfaceBlockDeclaration.class, root.jjtGetChild(4));
+    }
+
+    @Test
+    public void test12() throws Exception {
+        ASTTranslationUnit root = parse("""
+                const struct S { float x; } s = S(1.0);
+                struct T { float x; }[2] a[3], b;
+                struct { vec3 position; }[4] lights;
+                uniform S value;
+                """);
+
+        List<ASTStructDeclaration> structs = directChildren(root, ASTStructDeclaration.class);
+        assertEquals(3, structs.size());
+        assertEquals(4, root.jjtGetNumChildren());
+        assertEquals("const", value(onlyDirectChild(structs.get(0), ASTQualifier.class)));
+        assertEquals("S(1.0)", value(onlyDescendant(structs.get(0), ASTInitializer.class)));
+        ASTArraySpecifier typeArray = onlyDirectChild(structs.get(1), ASTArraySpecifier.class);
+        assertEquals("2", value(onlyDirectChild(typeArray, ASTArrayDimension.class)));
+        List<ASTDeclarator> declarators = directChildren(onlyDirectChild(structs.get(1), ASTDeclaratorList.class), ASTDeclarator.class);
+        assertEquals(List.of("a", "b"), declarators.stream().map(GLSLResourceParserTest::value).toList());
+        assertEquals("3", value(onlyDescendant(declarators.getFirst(), ASTArrayDimension.class)));
+        assertTrue(directChildren(onlyDirectChild(structs.get(2), ASTStructSpecifier.class), ASTStructName.class).isEmpty());
+        assertEquals("4", value(onlyDescendant(onlyDirectChild(structs.get(2), ASTArraySpecifier.class), ASTArrayDimension.class)));
+    }
 }

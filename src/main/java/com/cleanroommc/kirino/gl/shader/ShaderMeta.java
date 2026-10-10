@@ -7,6 +7,14 @@ import org.jspecify.annotations.Nullable;
 
 public final class ShaderMeta {
 
+    public record SourceSpan(int startLine, int startColumn, int endLine, int endColumn) {
+
+        public SourceSpan {
+            Preconditions.checkArgument(startLine > 0 && startColumn > 0);
+            Preconditions.checkArgument(endLine >= startLine && endColumn > 0);
+            Preconditions.checkArgument(endLine != startLine || endColumn >= startColumn);
+        }
+    }
 
     public sealed interface Declaration permits
             StructDeclaration,
@@ -14,22 +22,29 @@ public final class ShaderMeta {
             InterfaceBlock,
             GlobalLayoutDeclaration,
             InputOutputDeclaration {
+
+        @NonNull SourceSpan span();
     }
 
     /**
      * @param expression <code>null</code> when the qualifier is a bare name such as <code>std140</code> or <code>row_major</code>
      */
-    public record Layout(@NonNull String name, @Nullable String expression) {
+    public record Layout(@NonNull String name, @Nullable String expression, @NonNull SourceSpan span) {
 
         public Layout {
             Preconditions.checkNotNull(name);
+            Preconditions.checkNotNull(span);
         }
     }
 
     /**
      * @param expression <code>null</code> for an unsized array dimension (<code>[]</code>)
      */
-    public record ArrayDimension(@Nullable String expression) {
+    public record ArrayDimension(@Nullable String expression, @NonNull SourceSpan span) {
+
+        public ArrayDimension {
+            Preconditions.checkNotNull(span);
+        }
     }
 
     /**
@@ -38,11 +53,13 @@ public final class ShaderMeta {
     public record Declarator(
             @NonNull String name,
             @NonNull ImmutableList<ArrayDimension> arrayDimensions,
-            @Nullable String initializer) {
+            @Nullable String initializer,
+            @NonNull SourceSpan span) {
 
         public Declarator {
             Preconditions.checkNotNull(name);
             Preconditions.checkNotNull(arrayDimensions);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -53,10 +70,12 @@ public final class ShaderMeta {
     public record Type(
             @Nullable String name,
             @NonNull ImmutableList<ArrayDimension> arrayDimensions,
-            @Nullable StructDeclaration inlineStruct) {
+            @Nullable StructDeclaration inlineStruct,
+            @NonNull SourceSpan span) {
 
         public Type {
             Preconditions.checkNotNull(arrayDimensions);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -64,13 +83,15 @@ public final class ShaderMeta {
             @NonNull Type type,
             @NonNull ImmutableList<Layout> layouts,
             @NonNull ImmutableList<String> qualifiers,
-            @NonNull ImmutableList<Declarator> declarators) {
+            @NonNull ImmutableList<Declarator> declarators,
+            @NonNull SourceSpan span) {
 
         public Member {
             Preconditions.checkNotNull(type);
             Preconditions.checkNotNull(layouts);
             Preconditions.checkNotNull(qualifiers);
             Preconditions.checkNotNull(declarators);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -80,11 +101,19 @@ public final class ShaderMeta {
     public record StructDeclaration(
             @Nullable String name,
             @NonNull ImmutableList<Member> members,
-            @NonNull ImmutableList<Declarator> declarators) implements Declaration {
+            @NonNull ImmutableList<Declarator> declarators,
+            @NonNull ImmutableList<Layout> layouts,
+            @NonNull ImmutableList<String> qualifiers,
+            @NonNull ImmutableList<ArrayDimension> arrayDimensions,
+            @NonNull SourceSpan span) implements Declaration {
 
         public StructDeclaration {
             Preconditions.checkNotNull(members);
             Preconditions.checkNotNull(declarators);
+            Preconditions.checkNotNull(layouts);
+            Preconditions.checkNotNull(qualifiers);
+            Preconditions.checkNotNull(arrayDimensions);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -92,13 +121,15 @@ public final class ShaderMeta {
             @NonNull Type type,
             @NonNull ImmutableList<Layout> layouts,
             @NonNull ImmutableList<String> qualifiers,
-            @NonNull ImmutableList<Declarator> declarators) implements Declaration {
+            @NonNull ImmutableList<Declarator> declarators,
+            @NonNull SourceSpan span) implements Declaration {
 
         public UniformDeclaration {
             Preconditions.checkNotNull(type);
             Preconditions.checkNotNull(layouts);
             Preconditions.checkNotNull(qualifiers);
             Preconditions.checkNotNull(declarators);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -111,7 +142,8 @@ public final class ShaderMeta {
             @NonNull ImmutableList<Layout> layouts,
             @NonNull ImmutableList<String> qualifiers,
             @NonNull ImmutableList<Member> members,
-            @Nullable Declarator instance) implements Declaration {
+            @Nullable Declarator instance,
+            @NonNull SourceSpan span) implements Declaration {
 
         public InterfaceBlock {
             Preconditions.checkNotNull(storage);
@@ -119,16 +151,19 @@ public final class ShaderMeta {
             Preconditions.checkNotNull(layouts);
             Preconditions.checkNotNull(qualifiers);
             Preconditions.checkNotNull(members);
+            Preconditions.checkNotNull(span);
         }
     }
 
     public record GlobalLayoutDeclaration(
             @NonNull String storage,
-            @NonNull ImmutableList<Layout> layouts) implements Declaration {
+            @NonNull ImmutableList<Layout> layouts,
+            @NonNull SourceSpan span) implements Declaration {
 
         public GlobalLayoutDeclaration {
             Preconditions.checkNotNull(storage);
             Preconditions.checkNotNull(layouts);
+            Preconditions.checkNotNull(span);
         }
     }
 
@@ -137,7 +172,8 @@ public final class ShaderMeta {
             @NonNull Type type,
             @NonNull ImmutableList<Layout> layouts,
             @NonNull ImmutableList<String> qualifiers,
-            @NonNull ImmutableList<Declarator> declarators) implements Declaration {
+            @NonNull ImmutableList<Declarator> declarators,
+            @NonNull SourceSpan span) implements Declaration {
 
         public InputOutputDeclaration {
             Preconditions.checkNotNull(storage);
@@ -145,6 +181,7 @@ public final class ShaderMeta {
             Preconditions.checkNotNull(layouts);
             Preconditions.checkNotNull(qualifiers);
             Preconditions.checkNotNull(declarators);
+            Preconditions.checkNotNull(span);
         }
     }
 

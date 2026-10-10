@@ -65,6 +65,12 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             return (String) node.jjtGetValue();
         }
 
+        private static ShaderMeta.@NonNull SourceSpan span(@NonNull SimpleNode node) {
+            Token first = node.jjtGetFirstToken();
+            Token last = node.jjtGetLastToken();
+            return new ShaderMeta.SourceSpan(first.beginLine, first.beginColumn, last.endLine, last.endColumn);
+        }
+
         @NonNull
         private static <T extends Node> ImmutableList<T> directChildren(@NonNull Node node, @NonNull Class<T> type) {
             ImmutableList.Builder<T> children = ImmutableList.builder();
@@ -93,20 +99,22 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     type(requireDirectChild(node, ASTTypeSpecifier.class)),
                     layouts(node),
                     qualifiers(node),
-                    declarators(requireDirectChild(node, ASTDeclaratorList.class)));
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)),
+                    span(node));
         }
 
         private static ShaderMeta.@NonNull Type type(@NonNull ASTTypeSpecifier node) {
             ASTStructSpecifier inlineStruct = directChild(node, ASTStructSpecifier.class);
             if (inlineStruct != null) {
-                ShaderMeta.StructDeclaration definition = structDeclaration(inlineStruct, ImmutableList.of());
-                return new ShaderMeta.Type(definition.name(), arrayDimensions(node), definition);
+                ShaderMeta.StructDeclaration definition = structDeclaration(inlineStruct, inlineStruct);
+                return new ShaderMeta.Type(definition.name(), arrayDimensions(node), definition, span(node));
             }
 
             return new ShaderMeta.Type(
                     value(node),
                     arrayDimensions(node),
-                    null);
+                    null,
+                    span(node));
         }
 
         @NonNull
@@ -115,7 +123,7 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             for (ASTLayoutQualifier qualifier : directChildren(node, ASTLayoutQualifier.class)) {
                 for (ASTLayoutQualifierItem item : directChildren(qualifier, ASTLayoutQualifierItem.class)) {
                     GLSLResourceParser.LayoutQualifierValue layout = (GLSLResourceParser.LayoutQualifierValue) item.jjtGetValue();
-                    layouts.add(new ShaderMeta.Layout(layout.name(), layout.expression()));
+                    layouts.add(new ShaderMeta.Layout(layout.name(), layout.expression(), span(item)));
                 }
             }
             return layouts.build();
@@ -180,7 +188,8 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             return new ShaderMeta.Declarator(
                     value(node),
                     arrayDimensions(node),
-                    initializer == null ? null : value(initializer));
+                    initializer == null ? null : value(initializer),
+                    span(node));
         }
 
         @NonNull
@@ -192,7 +201,7 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
 
             ImmutableList.Builder<ShaderMeta.ArrayDimension> dimensions = ImmutableList.builder();
             for (ASTArrayDimension dimension : directChildren(specifier, ASTArrayDimension.class)) {
-                dimensions.add(new ShaderMeta.ArrayDimension(nullableValue(dimension)));
+                dimensions.add(new ShaderMeta.ArrayDimension(nullableValue(dimension), span(dimension)));
             }
             return dimensions.build();
         }
@@ -207,20 +216,27 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                 @NonNull ASTStructDeclaration node) {
 
             ASTStructSpecifier specifier = requireDirectChild(node, ASTStructSpecifier.class);
-            ASTDeclaratorList declaratorList = directChild(node, ASTDeclaratorList.class);
-            return structDeclaration(specifier, declaratorList == null ? ImmutableList.of() : declarators(declaratorList));
+            return structDeclaration(specifier, node);
         }
 
         private static ShaderMeta.@NonNull StructDeclaration structDeclaration(
                 @NonNull ASTStructSpecifier node,
-                @NonNull ImmutableList<ShaderMeta.Declarator> declarators) {
+                @NonNull SimpleNode declaration) {
 
             ASTStructName name = directChild(node, ASTStructName.class);
+            ASTDeclaratorList declaratorList = directChild(declaration, ASTDeclaratorList.class);
             ImmutableList.Builder<ShaderMeta.Member> members = ImmutableList.builder();
             for (ASTMemberDeclaration member : directChildren(node, ASTMemberDeclaration.class)) {
                 members.add(member(member));
             }
-            return new ShaderMeta.StructDeclaration(name == null ? null : value(name), members.build(), declarators);
+            return new ShaderMeta.StructDeclaration(
+                    name == null ? null : value(name),
+                    members.build(),
+                    declaratorList == null ? ImmutableList.of() : declarators(declaratorList),
+                    layouts(declaration),
+                    qualifiers(declaration),
+                    arrayDimensions(declaration),
+                    span(declaration));
         }
 
         private static ShaderMeta.@NonNull UniformDeclaration uniformDeclaration(
@@ -230,7 +246,8 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     type(requireDirectChild(node, ASTTypeSpecifier.class)),
                     layouts(node),
                     qualifiers(node, "uniform"),
-                    declarators(requireDirectChild(node, ASTDeclaratorList.class)));
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)),
+                    span(node));
         }
 
         private static ShaderMeta.@NonNull InterfaceBlock interfaceBlock(
@@ -249,13 +266,14 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     layouts(node),
                     qualifiers(node, storage),
                     members.build(),
-                    instance == null ? null : declarator(instance));
+                    instance == null ? null : declarator(instance),
+                    span(node));
         }
 
         private static ShaderMeta.@NonNull GlobalLayoutDeclaration globalLayout(
                 @NonNull ASTGlobalLayoutDeclaration node) {
 
-            return new ShaderMeta.GlobalLayoutDeclaration(storage(node), layouts(node));
+            return new ShaderMeta.GlobalLayoutDeclaration(storage(node), layouts(node), span(node));
         }
 
         private static ShaderMeta.@NonNull InputOutputDeclaration inputOutput(
@@ -267,7 +285,8 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     type(requireDirectChild(node, ASTTypeSpecifier.class)),
                     layouts(node),
                     qualifiers(node, storage),
-                    declarators(requireDirectChild(node, ASTDeclaratorList.class)));
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)),
+                    span(node));
         }
     }
 

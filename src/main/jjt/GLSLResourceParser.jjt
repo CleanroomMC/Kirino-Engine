@@ -55,18 +55,23 @@ public class GLSLResourceParser {
 
     private boolean isGlobalLayoutDeclarationAhead() {
         int i = 1;
-        if (getToken(i).kind != LAYOUT) {
-            return false;
-        }
-
-        do {
-            i = tokenAfterLayoutQualifier(i);
-            if (i < 0) {
-                return false;
+        boolean hasLayout = false;
+        boolean hasStorage = false;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return false;
+                }
+                hasLayout = true;
+            } else if (isGlobalLayoutStorageKind(kind) && !hasStorage) {
+                hasStorage = true;
+                i++;
+            } else {
+                return hasLayout && hasStorage && kind == SEMICOLON;
             }
-        } while (getToken(i).kind == LAYOUT);
-
-        return isGlobalLayoutStorageKind(getToken(i).kind) && getToken(i + 1).kind == SEMICOLON;
+        }
     }
 
     private boolean isInterfaceBlockAhead() {
@@ -109,6 +114,19 @@ public class GLSLResourceParser {
 
     private boolean isStructDeclarationAhead() {
         int i = 1;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return false;
+                }
+            } else if (isSimpleQualifierKind(kind)) {
+                i++;
+            } else {
+                break;
+            }
+        }
         if (getToken(i).kind != STRUCT) {
             return false;
         }
@@ -448,8 +466,7 @@ ASTTranslationUnit TranslationUnit() #TranslationUnit :
 void GlobalLayoutDeclaration() #GlobalLayoutDeclaration :
 {}
 {
-    ( LayoutQualifier() )+
-    GlobalLayoutStorageQualifier()
+    ( LayoutQualifier() | GlobalLayoutStorageQualifier() )+
     <SEMICOLON>
 }
 
@@ -493,7 +510,9 @@ void InputOutputDeclaration() #InputOutputDeclaration :
 void StructDeclaration() #StructDeclaration :
 {}
 {
+    ( Qualifier() )*
     StructSpecifier()
+    [ ArraySpecifier() ]
     [ DeclaratorList() ]
     <SEMICOLON>
 }
