@@ -7,12 +7,15 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL45;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Framebuffer extends GLDisposable {
+
     public final int fboID;
+    public final boolean dsa;
     private int width, height;
 
     public int width() {
@@ -38,10 +41,21 @@ public class Framebuffer extends GLDisposable {
         return depthAttachment;
     }
 
+    /**
+     * Target-bound path.
+     */
     public Framebuffer(int width, int height) {
+        this(width, height, false);
+    }
+
+    /**
+     * @param dsa Chooses target-bound path or DSA path
+     */
+    public Framebuffer(int width, int height, boolean dsa) {
         this.width = width;
         this.height = height;
-        fboID = GL30.glGenFramebuffers();
+        this.dsa = dsa;
+        fboID = dsa ? GL45.glCreateFramebuffers() : GL30.glGenFramebuffers();
         GLResourceManager.addDisposable(this);
     }
 
@@ -68,32 +82,50 @@ public class Framebuffer extends GLDisposable {
         };
     }
 
+    /**
+     * Checks the framebuffer setup in target-bound mode or DSA mode.
+     */
     public void check() {
-        int statusDraw = GL30.glCheckFramebufferStatus(GL30.GL_DRAW_FRAMEBUFFER);
+        int statusDraw = dsa
+            ? GL45.glCheckNamedFramebufferStatus(fboID, GL30.GL_DRAW_FRAMEBUFFER)
+            : GL30.glCheckFramebufferStatus(GL30.GL_DRAW_FRAMEBUFFER);
+
         if (statusDraw != GL30.GL_FRAMEBUFFER_COMPLETE) {
             throw new RuntimeException("Framebuffer DRAW incomplete: " + getStatusString(statusDraw));
         }
 
-        int statusRead = GL30.glCheckFramebufferStatus(GL30.GL_READ_FRAMEBUFFER);
+        int statusRead = dsa
+            ? GL45.glCheckNamedFramebufferStatus(fboID, GL30.GL_READ_FRAMEBUFFER)
+            : GL30.glCheckFramebufferStatus(GL30.GL_READ_FRAMEBUFFER);
+
         if (statusRead != GL30.GL_FRAMEBUFFER_COMPLETE) {
             throw new RuntimeException("Framebuffer READ incomplete: " + getStatusString(statusRead));
         }
     }
 
-    // bind fbo first
-    public void attach(FramebufferAttachment attachment) {
+    /**
+     * Attaches in target-bound mode or DSA mode.
+     */
+    public void attach(@NonNull FramebufferAttachment attachment) {
+        Preconditions.checkNotNull(attachment);
+
         switch (attachment.kind()) {
-            case COLOR -> {
-                colorAttachments.add(attachment);
-            }
-            case DEPTH -> {
-                depthAttachment = attachment;
-            }
+            case COLOR -> colorAttachments.add(attachment);
+            case DEPTH -> depthAttachment = attachment;
         }
-        attachment.attach();
+
+        if (dsa) {
+            attachment.attach(fboID);
+        } else {
+            attachment.attach();
+        }
     }
 
-    // no need to bind fbo
+    /**
+     * Resizes attachments.
+     *
+     * @see FramebufferAttachment#resize(int, int)
+     */
     public void resize(int width, int height) {
         this.width = width;
         this.height = height;
