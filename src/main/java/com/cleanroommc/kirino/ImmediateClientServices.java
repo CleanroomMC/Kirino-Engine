@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
+import com.cleanroommc.kirino.ui.font.KirinoFont;
 import com.cleanroommc.kirino.ui.font.McTtfFontManager;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
@@ -21,7 +22,6 @@ import com.cleanroommc.mcttf.glyph.GlyphBuilder;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.*;
-import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +30,9 @@ import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -272,7 +274,12 @@ public final class ImmediateClientServices {
             Preconditions.checkNotNull(dummyVao);
 
             guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        } else {
+            guiRuntime = null;
+        }
 
+        Path textFont = guiRuntime == null ? null : fetchTextFont();
+        if (textFont != null) {
             ST_Config config = new ST_Config(
                     ST_FontBackendType.FREE_TYPE,
                     48,
@@ -282,9 +289,7 @@ public final class ImmediateClientServices {
 
             textRuntime = new SimpleTextRuntime(
                     (rl, cfg) -> {
-                        Preconditions.checkNotNull(rl);
-
-                        FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                        FT_Face face = freeTypeManager.load(textFont, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
                     (context) -> new DefaultTextRenderer(
@@ -297,15 +302,23 @@ public final class ImmediateClientServices {
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     config,
-                    new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+                    null);
         } else {
-            guiRuntime = null;
             textRuntime = null;
         }
 
         ShutdownManager.register(this::dispose);
 
         LOGGER.info("Finished constructing ImmediateClientServices.");
+    }
+
+    private static @Nullable Path fetchTextFont() {
+        try {
+            return KirinoFont.SOURCE_HAN_SANS_HW.fetch();
+        } catch (IOException e) {
+            LOGGER.error("Failed to fetch the text runtime font, text is unavailable.", e);
+            return null;
+        }
     }
 
     /**
