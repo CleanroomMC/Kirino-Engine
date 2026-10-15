@@ -11,7 +11,6 @@ import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
 import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
 import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
-import com.cleanroommc.kirino.ui.font.KirinoFont;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeAlphaBitmap;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapDecoder;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapLoader;
@@ -33,8 +32,6 @@ import org.lwjgl.util.freetype.FreeType;
 import org.lwjgl.input.Keyboard;
 
 import java.awt.*;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 
 public class FreeTypeDebugHUD implements ImmediateHUD {
@@ -177,14 +174,10 @@ public class FreeTypeDebugHUD implements ImmediateHUD {
 
     private static FT_Face face() {
         if (freeTypeFace == null) {
-            try {
-                freeTypeFace = ImmediateClientServices.instance().freeType().load(
-                        KirinoFont.JETBRAINS_MONO_NL.fetch(),
-                        0,
-                        48);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            freeTypeFace = ImmediateClientServices.instance().freeType().load(
+                    new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf"),
+                    0,
+                    48);
         }
         return freeTypeFace;
     }

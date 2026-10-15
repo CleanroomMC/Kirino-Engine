@@ -12,9 +12,6 @@ import java.nio.file.Path;
  */
 public enum KirinoFont {
 
-    JETBRAINS_MONO_NL(
-            "jetbrains/jetbrains_mono_nl_regular.ttf",
-            "fb3b2575d7b0657359707993288f12a7360344d39387bb26050e276d61f6bd2a"),
     SOURCE_HAN_SANS_HW(
             "source_han_sans/source_han_sans_hw_vf.ttf",
             "9382849fce0197cfc792b528ac2f9ed26a1034084936f14ad67a4c7bdb19411e");

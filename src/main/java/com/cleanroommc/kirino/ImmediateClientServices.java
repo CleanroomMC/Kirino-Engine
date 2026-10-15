@@ -22,6 +22,7 @@ import com.cleanroommc.mcttf.glyph.GlyphBuilder;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.*;
+import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,6 +47,9 @@ import java.util.concurrent.TimeUnit;
 public final class ImmediateClientServices {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino ICS");
+
+    private static final ResourceLocation FALLBACK_TEXT_FONT =
+            new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf");
 
     private static final ImmediateClientServices INSTANCE = new ImmediateClientServices();
 
@@ -278,8 +282,8 @@ public final class ImmediateClientServices {
             guiRuntime = null;
         }
 
-        Path textFont = guiRuntime == null ? null : fetchTextFont();
-        if (textFont != null) {
+        if (guiRuntime != null) {
+            Path textFont = fetchTextFont();
             ST_Config config = new ST_Config(
                     ST_FontBackendType.FREE_TYPE,
                     48,
@@ -289,7 +293,9 @@ public final class ImmediateClientServices {
 
             textRuntime = new SimpleTextRuntime(
                     (rl, cfg) -> {
-                        FT_Face face = freeTypeManager.load(textFont, 0, cfg.pixelSize());
+                        FT_Face face = textFont != null
+                                ? freeTypeManager.load(textFont, 0, cfg.pixelSize())
+                                : freeTypeManager.load(FALLBACK_TEXT_FONT, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
                     (context) -> new DefaultTextRenderer(
@@ -316,7 +322,7 @@ public final class ImmediateClientServices {
         try {
             return KirinoFont.SOURCE_HAN_SANS_HW.fetch();
         } catch (IOException e) {
-            LOGGER.error("Failed to fetch the text runtime font, text is unavailable.", e);
+            LOGGER.warn("Failed to fetch the text runtime font, falling back to the bundled font without CJK glyphs.", e);
             return null;
         }
     }
