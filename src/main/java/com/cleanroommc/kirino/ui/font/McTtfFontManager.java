@@ -72,7 +72,7 @@ public final class McTtfFontManager {
         return Paths.get("").toAbsolutePath()
                 .resolve("cache")
                 .resolve("kirino")
-                .resolve("font");
+                .resolve("mcttf_fonts");
     }
 
     /**

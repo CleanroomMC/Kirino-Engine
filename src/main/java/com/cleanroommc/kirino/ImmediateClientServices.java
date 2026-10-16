@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.anone.lifecycle.MustNotClose;
+import com.cleanroommc.cleanroom.cache.Cache;
 import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
@@ -26,6 +28,7 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
@@ -33,6 +36,7 @@ import org.lwjgl.util.freetype.FreeType;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
@@ -129,6 +133,7 @@ public final class ImmediateClientServices {
      * <p>Note: This is supposed to be and must be the first {@link ImmediateClientServices} call and
      * must be the call that triggers class loading.</p>
      */
+    @ApiStatus.Internal
     public static void initAndWarmUp(
             @NonNull IReloadableResourceManager resourceManager) {
 
@@ -138,7 +143,7 @@ public final class ImmediateClientServices {
                 "Minecraft resource manager is supposed to be ready.");
         Preconditions.checkState(resourceManager == Minecraft.getMinecraft().getResourceManager());
 
-        LOGGER.info("The first launch typically takes longer...");
+        LOGGER.info("INITIALIZING. The first launch typically takes longer...");
 
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -174,6 +179,7 @@ public final class ImmediateClientServices {
      * <p>Note: This is accessed by hooks. Must not be called by clients!</p>
      * <p>Note: It'll be called right after the Splash process.</p>
      */
+    @ApiStatus.Internal
     public static void refreshMcFontIfNeeded() {
         if (INSTANCE.disableTextRuntimeVanilla) {
             return;
@@ -284,6 +290,7 @@ public final class ImmediateClientServices {
 
         if (guiRuntime != null) {
             Path textFont = fetchTextFont();
+
             ST_Config config = new ST_Config(
                     ST_FontBackendType.FREE_TYPE,
                     48,
@@ -318,12 +325,40 @@ public final class ImmediateClientServices {
         LOGGER.info("Finished constructing ImmediateClientServices.");
     }
 
-    private static @Nullable Path fetchTextFont() {
+    @Nullable
+    private static Path fetchTextFont() {
+        Path marker = Cache.global()
+                .namespace("kirino")
+                .root()
+                .resolve("fonts/cdn_failed");
+
+        if (Files.exists(marker)) {
+            LOGGER.info("Skipping font download due to a previous failure.");
+            return null;
+        }
+
+        LOGGER.info("Preparing the built-in font. The initial download takes longer.");
+
+        StopWatch stopWatch = StopWatch.createStarted();
+        boolean failed = false;
+
         try {
             return KirinoFont.SOURCE_HAN_SANS_HW.fetch();
         } catch (IOException e) {
+            failed = true;
             LOGGER.warn("Failed to fetch the text runtime font, falling back to the bundled font without CJK glyphs.", e);
+
+            try {
+                Files.createDirectories(marker.getParent());
+                Files.createFile(marker);
+            } catch (IOException ex) {
+                LOGGER.warn("Failed to create font download failure marker.", ex);
+            }
+
             return null;
+        } finally {
+            stopWatch.stop();
+            LOGGER.info("Finished preparing the built-in font {}. Time taken: {}ms.", failed ? "(Failed)" : "(Successful)", stopWatch.getTime(TimeUnit.MILLISECONDS));
         }
     }
 
@@ -334,6 +369,7 @@ public final class ImmediateClientServices {
      * <p>Note: Never cache the result since backend instance might be replaced by reloading.</p>
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleTextRuntime textVanilla() {
         Preconditions.checkState(textRuntimeVanilla != null,
@@ -460,6 +496,7 @@ public final class ImmediateClientServices {
      *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleTextRuntime text() {
         Preconditions.checkState(textRuntime != null,
@@ -479,6 +516,7 @@ public final class ImmediateClientServices {
      *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleGuiRuntime gui() {
         Preconditions.checkState(guiRuntime != null,
