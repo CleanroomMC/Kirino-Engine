@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
@@ -109,6 +110,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         BuilderImpl() {
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S currentState, @NonNull I input, @NonNull S nextState,
@@ -145,6 +147,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
@@ -176,6 +179,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
          *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
          * @return The builder
          */
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
@@ -197,6 +201,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
@@ -206,6 +211,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
@@ -216,6 +222,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> validate() {

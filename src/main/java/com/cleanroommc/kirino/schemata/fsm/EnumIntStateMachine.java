@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -128,6 +129,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return (states.length * (input - lowerInputBound)) + state.ordinal();
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> addTransition(@NonNull S state, @NonNull Integer input, @NonNull S nextState,
@@ -151,6 +153,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, Integer> callback) {
@@ -160,6 +163,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, Integer> callback) {
@@ -169,6 +173,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> initialState(@NonNull S initialState) {
@@ -178,6 +183,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> error(@NonNull ErrorCallback<S, Integer> errorCallback) {
@@ -188,6 +194,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, Integer> validate() {

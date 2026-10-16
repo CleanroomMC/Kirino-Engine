@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ecs.entity;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import org.jspecify.annotations.NonNull;
 
@@ -29,6 +30,7 @@ public final class EntityQuery {
      * @param component The component class
      * @return The query object
      */
+    @CanIgnoreReturnValue
     @NonNull
     public EntityQuery with(@NonNull Class<? extends CleanComponent> component) {
         mustHave.add(component);
@@ -44,6 +46,7 @@ public final class EntityQuery {
      * @param component The component class
      * @return The query object
      */
+    @CanIgnoreReturnValue
     @NonNull
     public EntityQuery without(@NonNull Class<? extends CleanComponent> component) {
         mustNotHave.add(component);

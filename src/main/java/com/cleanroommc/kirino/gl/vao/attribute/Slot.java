@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 
 import java.util.Objects;
@@ -47,6 +48,7 @@ public class Slot {
 
     // 0 for vertex data
     // 1 or more for instancing data
+    @CanIgnoreReturnValue
     public Slot setDivisor(int divisor) {
         Preconditions.checkArgument(divisor >= 0, "Divisor cannot be less than 0.");
 
@@ -54,6 +56,7 @@ public class Slot {
         return this;
     }
 
+    @CanIgnoreReturnValue
     public Slot setInterpretationType(InterpretationType type) {
         interpretationType = type;
         return this;
@@ -61,6 +64,7 @@ public class Slot {
 
     // only for InterpretationType.TO_FLOAT_KIND
     // especially for byte -> float ([0, 255] -> [0.0, 1.0])
+    @CanIgnoreReturnValue
     public Slot setNormalize(boolean flag) {
         normalize = flag;
         return this;

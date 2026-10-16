@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.semantic.morph;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItem;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItemType;
 import com.cleanroommc.kirino.schemata.semantic.space.SpaceSet;
@@ -53,6 +54,7 @@ public abstract class Morphism {
 
     private BijectiveMapFunction mapFunc = null;
 
+    @CanIgnoreReturnValue
     protected final Morphism modifyDomain(Consumer<SpaceSet> action) {
         action.accept(domain);
         codomain.clear();
@@ -61,6 +63,7 @@ public abstract class Morphism {
         return this;
     }
 
+    @CanIgnoreReturnValue
     protected final Morphism setMapFunc(BijectiveMapFunction mapFunc) {
         if (validation) {
             Preconditions.checkState(!(mapFunc.from != domainType || mapFunc.to != codomainType),
@@ -76,6 +79,7 @@ public abstract class Morphism {
         return this;
     }
 
+    @CanIgnoreReturnValue
     protected final Morphism mapAndCache() {
         if (validation) {
             Preconditions.checkState(mapFunc != null, "BijectiveMapFunction is null. Call setMapFunc() first.");

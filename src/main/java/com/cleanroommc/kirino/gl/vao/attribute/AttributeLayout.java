@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -28,6 +29,7 @@ public class AttributeLayout {
         return strideStack.descendingIterator().next();
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public AttributeLayout push(Stride stride) {
         strideStack.push(stride);

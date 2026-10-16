@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.staging;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 
 import java.nio.ByteBuffer;
@@ -25,6 +26,7 @@ public abstract class StagingBufferHandle<T extends StagingBufferHandle<T>> {
         Preconditions.checkState(generation == stagingBufferManager.getHandleGeneration(), "This handle is expired.");
     }
 
+    @CanIgnoreReturnValue
     @SuppressWarnings("unchecked")
     public final T write(int offset, ByteBuffer byteBuffer) {
         Preconditions.checkState(stagingBufferManager.active, "Must not access buffers from StagingBufferManager when the manager is inactive.");

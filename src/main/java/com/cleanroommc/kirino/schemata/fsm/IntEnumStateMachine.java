@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -129,6 +130,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return ((upperStateBound - lowerStateBound + 1) * input.ordinal()) + (state - lowerStateBound);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> addTransition(@NonNull Integer state, @NonNull I input, @NonNull Integer nextState,
@@ -158,6 +160,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, I> callback) {
@@ -169,6 +172,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, I> callback) {
@@ -180,6 +184,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> initialState(@NonNull Integer initialState) {
@@ -189,6 +194,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> error(@NonNull ErrorCallback<Integer, I> errorCallback) {
@@ -199,6 +205,7 @@ final class IntEnumStateMachine<I extends Enum<I>> implements FiniteStateMachine
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, I> validate() {

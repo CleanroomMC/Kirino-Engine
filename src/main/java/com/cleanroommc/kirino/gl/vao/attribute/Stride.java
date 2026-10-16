@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.Nullable;
 
@@ -26,6 +27,7 @@ public class Stride {
         this.size = size;
     }
 
+    @CanIgnoreReturnValue
     public Stride push(Slot slot) {
         Preconditions.checkArgument(cumulativeSize + slot.getSize() <= size,
                 "The maximum stride size is %s and you (%s) are exceeding it.", size, cumulativeSize + slot.getSize());

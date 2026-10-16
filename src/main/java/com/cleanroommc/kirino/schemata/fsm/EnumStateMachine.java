@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -122,6 +123,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return (states.length * input.ordinal()) + state.ordinal();
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
@@ -145,6 +147,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
@@ -154,6 +157,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
@@ -163,6 +167,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
@@ -172,6 +177,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
@@ -182,6 +188,7 @@ final class EnumStateMachine<S extends Enum<S>, I extends Enum<I>> implements Fi
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> validate() {

@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -41,6 +42,7 @@ public final class CmdLinesBuilder {
      * <p>Note: This doesn't affect the sequential write position used by
      * {@link #put(float, float)}.</p>
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdLinesBuilder set(int vertIndex, float x, float y) {
         Preconditions.checkElementIndex(vertIndex, vertexNum);
@@ -53,6 +55,7 @@ public final class CmdLinesBuilder {
     /**
      * Writes a vertex at the current sequential write position and advances it by one.
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdLinesBuilder put(float x, float y) {
         Preconditions.checkElementIndex(index, vertexNum);
@@ -69,6 +72,7 @@ public final class CmdLinesBuilder {
      * <p>Note: If neither <code>color1</code> nor <code>color2</code> is enabled,
      * the line is rendered with a solid <code>color0</code>.</p>
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdLinesBuilder color1(int color1) {
         flags |= SG_GuiOp.FLAG_COLOR1;
@@ -82,6 +86,7 @@ public final class CmdLinesBuilder {
      *
      * <p>Note: {@link #color1(int)} must also be enabled before emitting.</p>
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdLinesBuilder color2(int color2) {
         flags |= SG_GuiOp.FLAG_COLOR2;

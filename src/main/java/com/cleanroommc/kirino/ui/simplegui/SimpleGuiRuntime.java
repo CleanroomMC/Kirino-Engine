@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.google.common.base.Preconditions;
@@ -26,6 +27,7 @@ public class SimpleGuiRuntime implements AutoCloseable {
 
     private boolean batch = false;
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleGuiRuntime begin() {
         Preconditions.checkState(!batch, "Must not be batching.");
@@ -37,6 +39,7 @@ public class SimpleGuiRuntime implements AutoCloseable {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleGuiRuntime endDraw() {
         Preconditions.checkState(batch, "Must be batching already.");
@@ -48,6 +51,7 @@ public class SimpleGuiRuntime implements AutoCloseable {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleGuiRuntime append(@NonNull Consumer<GuiCommandStream> action) {
         Preconditions.checkNotNull(action);

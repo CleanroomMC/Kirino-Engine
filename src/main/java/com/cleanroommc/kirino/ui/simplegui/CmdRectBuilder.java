@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simplegui;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -53,6 +54,7 @@ public final class CmdRectBuilder {
      * @param r The corner radius
      * @param type The corner geometry type
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdRectBuilder radius(float r, int type) {
         Preconditions.checkArgument(r >= 0f, "Argument \"r\" must be no smaller than 0.");
@@ -88,6 +90,7 @@ public final class CmdRectBuilder {
      * @param width The outward border width
      * @param color The border color
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdRectBuilder border(float width, int color) {
         Preconditions.checkArgument(width >= 0f, "Argument \"width\" must be no smaller than 0.");
@@ -119,6 +122,7 @@ public final class CmdRectBuilder {
      * @param offsetY The vertical shadow/background offset
      * @param color The shadow/background color
      */
+    @CanIgnoreReturnValue
     @NonNull
     public CmdRectBuilder shadow(float blur, float offsetX, float offsetY, int color) {
         Preconditions.checkArgument(blur >= 0f, "Argument \"blur\" must be no smaller than 0.");

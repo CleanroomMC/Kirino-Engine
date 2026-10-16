@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.simpletext;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.ui.simplegui.CmdRectBuilder;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
@@ -135,6 +136,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     }
     //</editor-fold>
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime begin() {
         textProducer.beginBatch();
@@ -143,6 +145,7 @@ public class SimpleTextRuntime implements AutoCloseable {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime endDraw() {
         textProducer.endBatch();
@@ -192,6 +195,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     }
 
     //<editor-fold desc="append lines">
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime append(@NonNull String text, float x, float y) {
         Preconditions.checkNotNull(text);
@@ -207,6 +211,7 @@ public class SimpleTextRuntime implements AutoCloseable {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime append(@NonNull String text, float x, float y, float fontSize, int color) {
         Preconditions.checkNotNull(text);
@@ -228,12 +233,14 @@ public class SimpleTextRuntime implements AutoCloseable {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendEmptyLineBelow(float fontSize) {
         penY += textProducer.calcLineHeight("A", fontSize) + LINE_GAP;
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendEmptyLineBelow() {
         penY += textProducer.calcLineHeight("A", textProducer.standardFontSize()) + LINE_GAP;
@@ -243,6 +250,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text If the input is empty, it appends an empty line instead of doing nothing
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendBelow(@NonNull String text) {
         Preconditions.checkNotNull(text);
@@ -257,6 +265,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text If the input is empty, it appends an empty line instead of doing nothing
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendBelow(@NonNull String text, float fontSize, int color) {
         Preconditions.checkNotNull(text);
@@ -270,6 +279,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     //</editor-fold>
 
     //<editor-fold desc="append paragraphs">
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraph(
             @NonNull String text,
@@ -287,6 +297,7 @@ public class SimpleTextRuntime implements AutoCloseable {
                 0);
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraph(
             @NonNull String text,
@@ -309,6 +320,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text Even if the input is empty, it does nothing instead of appending an empty line
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphBelow(
             @NonNull String text,
@@ -324,6 +336,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text Even if the input is empty, it does nothing instead of appending an empty line
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphBelow(
             @NonNull String text,
@@ -340,6 +353,7 @@ public class SimpleTextRuntime implements AutoCloseable {
                 color);
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     private SimpleTextRuntime appendParagraph0(
             @NonNull String text,
@@ -683,11 +697,13 @@ public class SimpleTextRuntime implements AutoCloseable {
     //</editor-fold>
 
     //<editor-fold desc="append lines (styled text)">
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendStyled(@NonNull StyledText text, float x, float y) {
         return appendStyled(text, x, y, textProducer.standardFontSize());
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendStyled(@NonNull StyledText text, float x, float y, float fontSize) {
         Preconditions.checkNotNull(text);
@@ -721,6 +737,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text If the input is empty, it appends an empty line instead of doing nothing
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendBelowStyled(@NonNull StyledText text) {
         Preconditions.checkNotNull(text);
@@ -735,6 +752,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text If the input is empty, it appends an empty line instead of doing nothing
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendBelowStyled(@NonNull StyledText text, float fontSize) {
         Preconditions.checkNotNull(text);
@@ -748,6 +766,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     //</editor-fold>
 
     //<editor-fold desc="append paragraphs (styled text)">
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphStyled(
             @NonNull StyledText text,
@@ -763,6 +782,7 @@ public class SimpleTextRuntime implements AutoCloseable {
                 textProducer.standardFontSize());
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphStyled(
             @NonNull StyledText text,
@@ -782,6 +802,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text Even if the input is empty, it does nothing instead of appending an empty line
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphBelowStyled(
             @NonNull StyledText text,
@@ -797,6 +818,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     /**
      * @param text Even if the input is empty, it does nothing instead of appending an empty line
      */
+    @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime appendParagraphBelowStyled(
             @NonNull StyledText text,
@@ -811,6 +833,7 @@ public class SimpleTextRuntime implements AutoCloseable {
                 fontSize);
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     private SimpleTextRuntime appendParagraphStyled0(
             @NonNull StyledText text,

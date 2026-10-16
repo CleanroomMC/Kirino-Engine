@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -136,6 +137,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return ((input - lowerInputBound) * (upperStateBound - lowerStateBound + 1)) + (state - lowerStateBound);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> addTransition(@NonNull Integer state, @NonNull Integer input, @NonNull Integer nextState,
@@ -168,6 +170,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> setEntryCallback(@NonNull Integer state, @Nullable OnEnterStateCallback<Integer, Integer> callback) {
@@ -179,6 +182,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> setExitCallback(@NonNull Integer state, @Nullable OnExitStateCallback<Integer, Integer> callback) {
@@ -190,6 +194,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> initialState(@NonNull Integer initialState) {
@@ -201,6 +206,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> error(@NonNull ErrorCallback<Integer, Integer> errorCallback) {
@@ -211,6 +217,7 @@ final class IntRangeStateMachine implements FiniteStateMachine<Integer, Integer>
             return this;
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<Integer, Integer> validate() {

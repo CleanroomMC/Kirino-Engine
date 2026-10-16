@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.DrawCommand;
 import com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd.HighLevelDC;
@@ -49,6 +50,7 @@ public class DrawQueue {
      * @param graphicResourceManager The graphic resource manager
      * @return The <code>DrawQueue</code> itself
      */
+    @CanIgnoreReturnValue
     public DrawQueue compile(GraphicResourceManager graphicResourceManager) {
         // deque2 should be empty to begin with
         if (!deque2.isEmpty()) {
@@ -136,6 +138,7 @@ public class DrawQueue {
      * @param idbGenerator The indirect draw buffer manager
      * @return The <code>DrawQueue</code> itself
      */
+    @CanIgnoreReturnValue
     public DrawQueue simplify(IndirectDrawBufferGenerator idbGenerator) {
         // deque2 should be empty to begin with
         if (!deque2.isEmpty()) {
@@ -209,6 +212,7 @@ public class DrawQueue {
      *
      * @return The <code>DrawQueue</code> itself
      */
+    @CanIgnoreReturnValue
     public DrawQueue sort(DrawQueuePolicy policy) {
 
         return this;

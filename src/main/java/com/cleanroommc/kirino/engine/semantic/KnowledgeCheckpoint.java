@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.semantic;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -14,6 +15,7 @@ public final class KnowledgeCheckpoint {
     private final Map<KnowledgeKey<?>, Change<?>> changes = new LinkedHashMap<>();
     private final Set<String> unknownDomains = new LinkedHashSet<>();
 
+    @CanIgnoreReturnValue
     public <T> KnowledgeCheckpoint know(
             @NonNull KnowledgeKey<T> key,
             @NonNull T value) {
@@ -25,6 +27,7 @@ public final class KnowledgeCheckpoint {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public KnowledgeCheckpoint unknown(@NonNull KnowledgeKey<?> key) {
         Preconditions.checkNotNull(key);
@@ -33,6 +36,7 @@ public final class KnowledgeCheckpoint {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public KnowledgeCheckpoint unknownDomain(@NonNull String domain) {
         Preconditions.checkNotNull(domain);

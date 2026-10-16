@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
@@ -89,6 +90,7 @@ public final class PostProcessingSchedule {
         /**
          * @param priority Larger the <code>priority</code>, less prioritized the pass
          */
+        @CanIgnoreReturnValue
         @NonNull
         public EntryRef addPass(@NonNull String registeredName, int priority) {
             Preconditions.checkNotNull(registeredName);
@@ -96,6 +98,7 @@ public final class PostProcessingSchedule {
             return addSequence(priority, registeredName);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         public EntryRef addPass(@NonNull String registeredName) {
             Preconditions.checkNotNull(registeredName);
@@ -106,6 +109,7 @@ public final class PostProcessingSchedule {
         /**
          * @param priority Larger the <code>priority</code>, less prioritized the pass
          */
+        @CanIgnoreReturnValue
         @NonNull
         public EntryRef addSequence(int priority, @NonNull String @NonNull ... registeredNames) {
             Preconditions.checkNotNull(registeredNames);
@@ -134,6 +138,7 @@ public final class PostProcessingSchedule {
          *
          * <p>Order: <code>first</code> -> <code>second</code></p>
          */
+        @CanIgnoreReturnValue
         @NonNull
         public Builder before(@NonNull EntryRef first, @NonNull EntryRef second) {
             Preconditions.checkNotNull(first);
@@ -152,6 +157,7 @@ public final class PostProcessingSchedule {
          *
          * <p>Order: <code>entries[0]</code> -> <code>entries[1]</code> -> <code>entries[2]</code></p>
          */
+        @CanIgnoreReturnValue
         @NonNull
         public Builder chain(@NonNull EntryRef @NonNull ... refs) {
             Preconditions.checkNotNull(refs);

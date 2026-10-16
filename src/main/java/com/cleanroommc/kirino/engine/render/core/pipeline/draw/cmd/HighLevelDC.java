@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
@@ -46,6 +47,7 @@ public final class HighLevelDC implements DrawCommand {
         elementType = -1;
     }
 
+    @CanIgnoreReturnValue
     private HighLevelDC initHighLevelDC(
             String meshTicketID,
             int mode,
@@ -59,6 +61,7 @@ public final class HighLevelDC implements DrawCommand {
 
     // ========== filler methods ==========
 
+    @CanIgnoreReturnValue
     public HighLevelDC fillHighLevelDC(String meshTicketID, int mode, int elementType) {
         return initHighLevelDC(meshTicketID, mode, elementType);
     }

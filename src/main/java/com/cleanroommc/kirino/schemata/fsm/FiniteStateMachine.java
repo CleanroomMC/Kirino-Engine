@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.fsm;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -135,6 +136,7 @@ public interface FiniteStateMachine<S, I> {
          * @return the builder
          * @throws IllegalStateException If the state or input are non-existent in the set of states/inputs this exception will be thrown.
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                     @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
@@ -151,6 +153,7 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback);
 
@@ -164,6 +167,7 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback);
 
@@ -175,6 +179,7 @@ public interface FiniteStateMachine<S, I> {
          * @return The builder
          * @throws IllegalStateException If inputState is non-existent in the set of states this exception will be thrown
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> initialState(@NonNull S initialState);
 
@@ -186,6 +191,7 @@ public interface FiniteStateMachine<S, I> {
          * @param errorCallback The error callback
          * @return The builder
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback);
 
@@ -193,6 +199,7 @@ public interface FiniteStateMachine<S, I> {
          * @implNote Throw an exception if the FSM has states that can't be reached from any other state while not being the initial state
          * @implSpec Use DFS or another graph traversal algorithm
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<S, I> validate();
 
@@ -206,11 +213,13 @@ public interface FiniteStateMachine<S, I> {
         FiniteStateMachine<S, I> build();
 
         // defaults
+        @CanIgnoreReturnValue
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState) {
             return addTransition(state, input, nextState, null, null, null);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @NonNull OnEnterStateCallback<S, I> onEnterStateCallback,
@@ -221,6 +230,7 @@ public interface FiniteStateMachine<S, I> {
             return addTransition(state, input, nextState, onEnterStateCallback, onExitStateCallback, null);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @NonNull OnEnterStateCallback<S, I> onEnterStateCallback) {
@@ -229,6 +239,7 @@ public interface FiniteStateMachine<S, I> {
             return addTransition(state, input, nextState, onEnterStateCallback, null, null);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @NonNull OnExitStateCallback<S, I> onExitStateCallback) {
@@ -237,6 +248,7 @@ public interface FiniteStateMachine<S, I> {
             return addTransition(state, input, nextState, null, onExitStateCallback, null);
         }
 
+        @CanIgnoreReturnValue
         @NonNull
         default Builder<S, I> addTransition(@NonNull S state, @NonNull I input, @NonNull S nextState,
                                             @NonNull Rollback<S, I> rollbackCallback) {
