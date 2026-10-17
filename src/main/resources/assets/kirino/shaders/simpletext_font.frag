@@ -90,7 +90,7 @@ float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, vec2 sizePx, float 
     float distancePx = length(pa - ba * h);
     float signedDistancePx = halfThicknessPx - distancePx;
 
-    return clamp(0.5 + signedDistancePx * (0.5 / sdfSpread), 0.0, 1.0);
+    return clamp(0.5 + signedDistancePx * (0.5 / float(sdfSpread)), 0.0, 1.0);
 }
 
 float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, float halfThicknessPx)
@@ -136,10 +136,10 @@ float sampleAtlas(vec2 atlasUV)
 vec4 unpackARGB(uint c)
 {
     return vec4(
-        ((c >> 16u) & 255u) / 255.0,
-        ((c >> 8u) & 255u) / 255.0,
-        (c & 255u) / 255.0,
-        ((c >> 24u) & 255u) / 255.0);
+        float((c >> 16u) & 255u) / 255.0,
+        float((c >> 8u) & 255u) / 255.0,
+        float(c & 255u) / 255.0,
+        float((c >> 24u) & 255u) / 255.0);
 }
 
 float sampleGlyphLocal(vec2 localUV)
