@@ -124,18 +124,18 @@ public class Framebuffer extends GLDisposable {
     /**
      * Resizes attachments.
      *
-     * @see FramebufferAttachment#resize(int, int)
+     * @see FramebufferAttachment#resize(int, int, int)
      */
     public void resize(int width, int height) {
         this.width = width;
         this.height = height;
         for (FramebufferAttachment attachment : colorAttachments) {
             if (attachment != null) {
-                attachment.resize(width, height);
+                attachment.resize(width, height, fboID);
             }
         }
         if (depthAttachment != null) {
-            depthAttachment.resize(width, height);
+            depthAttachment.resize(width, height, fboID);
         }
     }
 

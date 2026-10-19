@@ -4,34 +4,52 @@ import com.cleanroommc.kirino.gl.framebuffer.meta.AttachmentKind;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL45;
 
+import java.util.function.BiFunction;
+
 public class DepthAttachment implements FramebufferAttachment {
 
-    public final Texture2DAccessor texture2D;
+    public Texture2DAccessor texture2D;
+    public final @Nullable BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory;
     public final boolean dsa;
 
     /**
-     * Target-bound mode. {@link #resize(int, int)} will be performed via the target-bound mode.
+     * Target-bound mode. {@link #resize(int, int, int)} will be performed via the target-bound mode.
      *
      * <p>Note: The texture accessor must be non-DSA.</p>
      */
     public DepthAttachment(@NonNull Texture2DAccessor texture2D) {
-        this(texture2D, false);
+        Preconditions.checkNotNull(texture2D);
+        Preconditions.checkState(!texture2D.isDsaOn());
+
+        this.texture2D = texture2D;
+        texture2DFactory = null;
+        dsa = false;
     }
 
     /**
-     * <p>Note: The DSA status of the texture accessor must match <code>dsa</code>.</p>
+     * DSA mode. {@link #resize(int, int, int)} will be performed via the DSA mode.
      *
-     * @param dsa This determines how {@link #resize(int, int)} is performed
+     * <p>Note: The initial texture accessor must be DSA.</p>
+     * <p>Note: <code>texture2DFactory</code> must be a DSA texture factory
+     * (Texture ID: DSA-created or bound once; Texture Accessor: DSA).</p>
+     *
+     * @param texture2DFactory Input: width, height; Output: allocated DSA texture
      */
-    public DepthAttachment(@NonNull Texture2DAccessor texture2D, boolean dsa) {
-        Preconditions.checkNotNull(texture2D);
-        Preconditions.checkArgument(texture2D.isDsaOn() == dsa);
+    public DepthAttachment(
+            @NonNull Texture2DAccessor initialTexture2D,
+            @NonNull BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory) {
 
-        this.texture2D = texture2D;
-        this.dsa = dsa;
+        Preconditions.checkNotNull(initialTexture2D);
+        Preconditions.checkState(initialTexture2D.isDsaOn());
+        Preconditions.checkNotNull(texture2DFactory);
+
+        texture2D = initialTexture2D;
+        this.texture2DFactory = texture2DFactory;
+        dsa = true;
     }
 
     @Override
@@ -50,13 +68,20 @@ public class DepthAttachment implements FramebufferAttachment {
     }
 
     @Override
-    public void resize(int width, int height) {
+    public void resize(int width, int height, int fboID) {
         if (dsa) {
-            texture2D.highlevel().resizeAndAllocEmpty(width, height);
+            Preconditions.checkNotNull(texture2DFactory);
+            Texture2DAccessor newTexture2D = Preconditions.checkNotNull(texture2DFactory.apply(width, height));
+            Preconditions.checkState(newTexture2D.isDsaOn());
+
+            Texture2DAccessor oldTexture2D = texture2D;
+            texture2D = newTexture2D;
+
+            attach(fboID); // overrides the old one
+
+            oldTexture2D.texture.disposeManually();
         } else {
-            texture2D.bind();
             texture2D.highlevel().resizeAndAllocEmpty(width, height);
-            texture2D.bind(0);
         }
     }
 }

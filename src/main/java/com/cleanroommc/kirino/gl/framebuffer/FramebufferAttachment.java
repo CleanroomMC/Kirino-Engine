@@ -21,6 +21,8 @@ public interface FramebufferAttachment {
 
     /**
      * Resizes the backing storage using target-bound or DSA path.
+     *
+     * @param fboID This is only needed for the DSA path
      */
-    void resize(int width, int height);
+    void resize(int width, int height, int fboID);
 }
