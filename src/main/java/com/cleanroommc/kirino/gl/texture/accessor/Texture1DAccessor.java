@@ -11,6 +11,9 @@ import org.lwjgl.opengl.*;
 import java.nio.ByteBuffer;
 
 /**
+ * <p>Note: (<i>This is not derived from the GL spec but a stricter enforcement</i>)
+ * <b>Mutable texture storage allocation is not supported in DSA mode.</b></p>
+ *
  * <p>Available raw GL operations:</p>
  * <ul>
  *     <li><code>texStorage1D</code></li>

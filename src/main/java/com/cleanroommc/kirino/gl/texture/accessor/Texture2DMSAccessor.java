@@ -9,6 +9,9 @@ import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL45;
 
 /**
+ * <p>Note: (<i>This is not derived from the GL spec but a stricter enforcement</i>)
+ * <b>Mutable texture storage allocation is not supported in DSA mode.</b></p>
+ *
  * <p>Available raw GL operations:</p>
  * <ul>
  *     <li><code>texImage2DMultisample</code></li>
