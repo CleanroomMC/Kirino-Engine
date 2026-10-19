@@ -20,22 +20,34 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
     private final Rollback<S, Integer>[] rollbacks;
     private final ErrorCallback<S, Integer> error;
     private int state;
+    private boolean processing;
     private final Deque<FSMBacklogPair<S, Integer>> backlog = new ArrayDeque<>();
 
-    EnumIntStateMachine(int lowerInputBound, int upperInputBound,
-                        @NonNull S[] states, int @NonNull [] transitionMap,
-                        OnEnterStateCallback<S, Integer> @NonNull [] stateEnterCallbackMap,
-                        OnExitStateCallback<S, Integer> @NonNull [] stateExitCallbackMap,
-                        Rollback<S, Integer> @NonNull [] rollbacks,
-                        @Nullable ErrorCallback<S, Integer> error,
-                        @NonNull S initialState) {
+    EnumIntStateMachine(
+            int lowerInputBound,
+            int upperInputBound,
+            @NonNull S[] states,
+            int @NonNull [] transitionMap,
+            OnEnterStateCallback<S, Integer> @NonNull [] stateEnterCallbackMap,
+            OnExitStateCallback<S, Integer> @NonNull [] stateExitCallbackMap,
+            Rollback<S, Integer> @NonNull [] rollbacks,
+            @Nullable ErrorCallback<S, Integer> error,
+            @NonNull S initialState) {
+
+        Preconditions.checkNotNull(states);
+        Preconditions.checkNotNull(transitionMap);
+        Preconditions.checkNotNull(stateEnterCallbackMap);
+        Preconditions.checkNotNull(stateExitCallbackMap);
+        Preconditions.checkNotNull(rollbacks);
+        Preconditions.checkNotNull(initialState);
+
         this.lowerInputBound = lowerInputBound;
         this.upperInputBound = upperInputBound;
         this.states = states;
-        this.transitionMap = transitionMap;
-        this.stateEnterCallbackMap = stateEnterCallbackMap;
-        this.stateExitCallbackMap = stateExitCallbackMap;
-        this.rollbacks = rollbacks;
+        this.transitionMap = transitionMap.clone();
+        this.stateEnterCallbackMap = stateEnterCallbackMap.clone();
+        this.stateExitCallbackMap = stateExitCallbackMap.clone();
+        this.rollbacks = rollbacks.clone();
         this.error = error;
         state = initialState.ordinal();
     }
@@ -46,54 +58,78 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         return states[state];
     }
 
-    private int index(Integer input, Integer state) {
+    private int index(int input, int state) {
         return (states.length * (input - lowerInputBound)) + state;
     }
 
     @NonNull
     @Override
     public Optional<S> accept(@NonNull Integer input) {
-        Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound), "Input %s is out of range [%s, %s].", input, lowerInputBound, upperInputBound);
+        Preconditions.checkNotNull(input, "Argument \"input\" must not be null.");
+        Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound),
+                "Argument \"input\"=%s must be in range [%s, %s].", input, lowerInputBound, upperInputBound);
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
 
-        final int idx = index(input, state);
-        if (transitionMap[idx] != -1) {
-            backlog.push(new FSMBacklogPair<>(states[state], input));
+        processing = true;
+
+        try {
+            int next = transitionMap[index(input, state)];
+            if (next == -1) {
+                if (error != null) {
+                    error.error(states[state], input);
+                }
+
+                return Optional.empty();
+            }
+
             if (stateExitCallbackMap[state] != null) {
-                stateExitCallbackMap[state].transition(states[state], input, states[transitionMap[idx]]);
+                stateExitCallbackMap[state].transition(states[state], input, states[next]);
             }
-            if (stateEnterCallbackMap[transitionMap[idx]] != null) {
-                stateEnterCallbackMap[transitionMap[idx]].transition(states[state], input, states[transitionMap[idx]]);
+            if (stateEnterCallbackMap[next] != null) {
+                stateEnterCallbackMap[next].transition(states[state], input, states[next]);
             }
-            state = transitionMap[idx];
-        } else {
-            if (error != null) {
-                error.error(states[state], input);
-            }
-            return Optional.empty();
-        }
 
-        return Optional.of(states[state]);
+            backlog.push(new FSMBacklogPair<>(states[state], input));
+            state = next;
+
+            return Optional.of(states[state]);
+        } finally {
+            processing = false;
+        }
     }
 
     @NonNull
     @Override
     public Optional<FSMBacklogPair<S, Integer>> backtrack() {
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
+
         if (backlog.isEmpty()) {
             return Optional.empty();
         }
 
-        FSMBacklogPair<S, Integer> pair = backlog.pop();
-        Rollback<S, Integer> rollback = rollbacks[index(pair.input(), pair.state().ordinal())];
-        if (rollback != null) {
-            rollback.rollback(states[state], pair.input(), pair.state());
+        processing = true;
+
+        try {
+            FSMBacklogPair<S, Integer> pair = backlog.peek();
+            Rollback<S, Integer> rollback = rollbacks[index(pair.input(), pair.state().ordinal())];
+            if (rollback != null) {
+                rollback.rollback(states[state], pair.input(), pair.state());
+            }
+
+            FSMBacklogPair<S, Integer> result = new FSMBacklogPair<>(states[state], pair.input());
+            backlog.pop();
+            state = pair.state().ordinal();
+
+            return Optional.of(result);
+        } finally {
+            processing = false;
         }
-        FSMBacklogPair<S, Integer> result = new FSMBacklogPair<>(states[state], pair.input());
-        state = pair.state().ordinal();
-        return Optional.of(result);
     }
 
     @Override
     public void reset() {
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
+
         if (!backlog.isEmpty()) {
             state = backlog.pollLast().state().ordinal();
             backlog.clear();
@@ -101,6 +137,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
     }
 
     static class BuilderImpl<S extends Enum<S>> implements Builder<S, Integer> {
+
         private final int lowerInputBound, upperInputBound;
         private final int[] transitionMap;
         private final S[] states;
@@ -111,34 +148,48 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         private S initialState;
 
         @SuppressWarnings("unchecked")
-        BuilderImpl(Class<S> stateClass, int lowerInputBound, int upperInputBound) {
+        BuilderImpl(@NonNull Class<S> stateClass, int lowerInputBound, int upperInputBound) {
+            int inputCount = FSMPreconditions.rangeSize(lowerInputBound, upperInputBound);
+            S[] states = FSMPreconditions.enumConstants(stateClass);
+
+            Preconditions.checkArgument(states.length > 0, "The state enum must not be empty.");
+
+            int size = FSMPreconditions.transitionCount(states.length, inputCount);
+
             this.lowerInputBound = lowerInputBound;
             this.upperInputBound = upperInputBound;
-            states = stateClass.getEnumConstants();
-            final int size = states.length * (upperInputBound - lowerInputBound + 1);
+            this.states = states;
             transitionMap = new int[size];
+
             for (int i = 0; i < size; i++) {
                 transitionMap[i] = -1;
             }
+
             stateEnterCallbackMap = new OnEnterStateCallback[states.length];
             stateExitCallbackMap = new OnExitStateCallback[states.length];
             rollbacks = new Rollback[size];
         }
 
-        private int index(Integer input, S state) {
+        private int index(int input, S state) {
             return (states.length * (input - lowerInputBound)) + state.ordinal();
         }
 
         @CanIgnoreReturnValue
         @NonNull
         @Override
-        public Builder<S, Integer> addTransition(@NonNull S state, @NonNull Integer input, @NonNull S nextState,
-                                                 @Nullable OnEnterStateCallback<S, Integer> onEnterStateCallback,
-                                                 @Nullable OnExitStateCallback<S, Integer> onExitStateCallback,
-                                                 @Nullable Rollback<S, Integer> rollbackCallback) {
-            Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
-            Preconditions.checkNotNull(nextState, "Parameter \"nextState\" must not be null.");
-            Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound), "Input %s is out of range [%s, %s].", input, lowerInputBound, upperInputBound);
+        public Builder<S, Integer> addTransition(
+                @NonNull S state,
+                @NonNull Integer input,
+                @NonNull S nextState,
+                @Nullable OnEnterStateCallback<S, Integer> onEnterStateCallback,
+                @Nullable OnExitStateCallback<S, Integer> onExitStateCallback,
+                @Nullable Rollback<S, Integer> rollbackCallback) {
+
+            Preconditions.checkNotNull(state, "Argument \"state\" must not be null.");
+            Preconditions.checkNotNull(input, "Argument \"input\" must not be null.");
+            Preconditions.checkNotNull(nextState, "Argument \"nextState\" must not be null.");
+            Preconditions.checkArgument(!(input < lowerInputBound || input > upperInputBound),
+                    "Argument \"input\"=%s must be in range [%s, %s].", input, lowerInputBound, upperInputBound);
 
             final int idx = index(input, state);
             transitionMap[idx] = nextState.ordinal();
@@ -156,8 +207,11 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @CanIgnoreReturnValue
         @NonNull
         @Override
-        public Builder<S, Integer> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, Integer> callback) {
-            Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
+        public Builder<S, Integer> setEntryCallback(
+                @NonNull S state,
+                @Nullable OnEnterStateCallback<S, Integer> callback) {
+
+            Preconditions.checkNotNull(state, "Argument \"state\" must not be null.");
 
             stateEnterCallbackMap[state.ordinal()] = callback;
             return this;
@@ -166,8 +220,11 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @CanIgnoreReturnValue
         @NonNull
         @Override
-        public Builder<S, Integer> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, Integer> callback) {
-            Preconditions.checkNotNull(state, "Parameter \"state\" must not be null.");
+        public Builder<S, Integer> setExitCallback(
+                @NonNull S state,
+                @Nullable OnExitStateCallback<S, Integer> callback) {
+
+            Preconditions.checkNotNull(state, "Argument \"state\" must not be null.");
 
             stateExitCallbackMap[state.ordinal()] = callback;
             return this;
@@ -177,7 +234,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @NonNull
         @Override
         public Builder<S, Integer> initialState(@NonNull S initialState) {
-            Preconditions.checkNotNull(initialState, "Parameter \"initialState\" must not be null.");
+            Preconditions.checkNotNull(initialState, "Argument \"initialState\" must not be null.");
 
             this.initialState = initialState;
             return this;
@@ -188,7 +245,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @Override
         public Builder<S, Integer> error(@NonNull ErrorCallback<S, Integer> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
-                    "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
+                    "Argument \"errorCallback\" must not be null; omit error() to disable the failure callback.");
 
             error = errorCallback;
             return this;
@@ -204,11 +261,14 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             BitSet reachable = new BitSet(states.length);
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
+
             while (!stack.isEmpty()) {
                 S state = stack.pop();
                 if (!reachable.get(state.ordinal())) {
                     reachable.set(state.ordinal());
-                    for (int input = lowerInputBound; input <= upperInputBound; input++) {
+                    int inputCount = transitionMap.length / states.length;
+                    for (int inputIndex = 0; inputIndex < inputCount; inputIndex++) {
+                        int input = lowerInputBound + inputIndex;
                         int next = transitionMap[index(input, state)];
                         if (!(next == -1 || next == state.ordinal())) {
                             stack.push(states[next]);
@@ -218,7 +278,7 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
             }
 
             Preconditions.checkState(reachable.cardinality() == states.length,
-                    "Some state not reachable.");
+                    "Some states are not reachable from the initial state.");
 
             return this;
         }
@@ -226,10 +286,18 @@ final class EnumIntStateMachine<S extends Enum<S>> implements FiniteStateMachine
         @NonNull
         @Override
         public FiniteStateMachine<S, Integer> build() {
-            Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
+            Preconditions.checkState(initialState != null, "The initial state must be set before the FSM is built.");
 
-            return new EnumIntStateMachine<S>(lowerInputBound, upperInputBound,
-                    states, transitionMap, stateEnterCallbackMap, stateExitCallbackMap, rollbacks, error, initialState);
+            return new EnumIntStateMachine<>(
+                    lowerInputBound,
+                    upperInputBound,
+                    states,
+                    transitionMap,
+                    stateEnterCallbackMap,
+                    stateExitCallbackMap,
+                    rollbacks,
+                    error,
+                    initialState);
         }
     }
 }

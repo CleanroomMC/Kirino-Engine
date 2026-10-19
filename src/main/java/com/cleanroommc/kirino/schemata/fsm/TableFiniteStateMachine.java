@@ -2,13 +2,20 @@ package com.cleanroommc.kirino.schemata.fsm;
 
 import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableTable;
 import com.google.common.collect.Table;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
 
@@ -18,18 +25,27 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     private final Table<I, S, Rollback<S, I>> rollbackTable;
     private final ErrorCallback<S, I> errorCallback;
     private S state;
+    private boolean processing;
     private final Deque<FSMBacklogPair<S, I>> stack = new ArrayDeque<>();
 
-    TableFiniteStateMachine(@NonNull Table<I, S, S> transitionMap,
-                            @NonNull Map<S, OnEnterStateCallback<S, I>> entryCallbacks,
-                            @NonNull Map<S, OnExitStateCallback<S, I>> exitCallbacks,
-                            @NonNull Table<I, S,Rollback<S, I>> rollbackTable,
-                            @Nullable ErrorCallback<S, I> errorCallback,
-                            @NonNull S initialState) {
-        this.transitionMap = transitionMap;
-        this.entryCallbacks = entryCallbacks;
-        this.exitCallbacks = exitCallbacks;
-        this.rollbackTable = rollbackTable;
+    TableFiniteStateMachine(
+            @NonNull Table<I, S, S> transitionMap,
+            @NonNull Map<S, OnEnterStateCallback<S, I>> entryCallbacks,
+            @NonNull Map<S, OnExitStateCallback<S, I>> exitCallbacks,
+            @NonNull Table<I, S, Rollback<S, I>> rollbackTable,
+            @Nullable ErrorCallback<S, I> errorCallback,
+            @NonNull S initialState) {
+
+        Preconditions.checkNotNull(transitionMap);
+        Preconditions.checkNotNull(entryCallbacks);
+        Preconditions.checkNotNull(exitCallbacks);
+        Preconditions.checkNotNull(rollbackTable);
+        Preconditions.checkNotNull(initialState);
+
+        this.transitionMap = ImmutableTable.copyOf(transitionMap);
+        this.entryCallbacks = ImmutableMap.copyOf(entryCallbacks);
+        this.exitCallbacks = ImmutableMap.copyOf(exitCallbacks);
+        this.rollbackTable = ImmutableTable.copyOf(rollbackTable);
         this.errorCallback = errorCallback;
         state = initialState;
     }
@@ -37,34 +53,37 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     @NonNull
     @Override
     public Optional<S> accept(@NonNull I input) {
-        Preconditions.checkNotNull(input, "Provided \"input\" can't be null.");
-        Preconditions.checkArgument(transitionMap.containsRow(input), "%s is not a valid input.", input);
+        Preconditions.checkNotNull(input, "Argument \"input\" must not be null.");
+        Preconditions.checkArgument(transitionMap.containsRow(input),
+                "Argument \"input\"=%s must be a configured input.", input);
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
 
-        if (!transitionMap.contains(input, state)) {
-            if (errorCallback != null) {
-                errorCallback.error(state, input);
+        processing = true;
+
+        try {
+            S newState = transitionMap.get(input, state);
+            if (newState == null) {
+                if (errorCallback != null) {
+                    errorCallback.error(state, input);
+                }
+
+                return Optional.empty();
             }
-            return Optional.empty();
-        }
 
-        S newState = transitionMap.get(input, state);
-        if (newState != null) {
-            stack.push(new FSMBacklogPair<S, I>(state, input));
             if (exitCallbacks.containsKey(state)) {
                 exitCallbacks.get(state).transition(state, input, newState);
             }
             if (entryCallbacks.containsKey(newState)) {
                 entryCallbacks.get(newState).transition(state, input, newState);
             }
-            state = newState;
-        } else {
-            if (errorCallback != null){
-                errorCallback.error(state, input);
-            }
-            return Optional.empty();
-        }
 
-        return Optional.of(state);
+            stack.push(new FSMBacklogPair<>(state, input));
+            state = newState;
+
+            return Optional.of(state);
+        } finally {
+            processing = false;
+        }
     }
 
     @NonNull
@@ -76,23 +95,35 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     @NonNull
     @Override
     public Optional<FSMBacklogPair<S, I>> backtrack() {
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
+
         if (stack.isEmpty()) {
             return Optional.empty();
         }
 
-        FSMBacklogPair<S, I> entry = stack.pop();
-        Rollback<S, I> rollback = rollbackTable.get(entry.input(), entry.state());
-        if (rollback != null) {
-            rollback.rollback(state, entry.input(), entry.state());
-        }
+        processing = true;
 
-        FSMBacklogPair<S, I> result = new FSMBacklogPair<>(state, entry.input());
-        state = entry.state();
-        return Optional.of(result);
+        try {
+            FSMBacklogPair<S, I> entry = stack.peek();
+            Rollback<S, I> rollback = rollbackTable.get(entry.input(), entry.state());
+            if (rollback != null) {
+                rollback.rollback(state, entry.input(), entry.state());
+            }
+
+            FSMBacklogPair<S, I> result = new FSMBacklogPair<>(state, entry.input());
+            stack.pop();
+            state = entry.state();
+
+            return Optional.of(result);
+        } finally {
+            processing = false;
+        }
     }
 
     @Override
     public void reset() {
+        Preconditions.checkState(!processing, "FSM callbacks must not modify the same FSM.");
+
         if (!stack.isEmpty()) {
             state = stack.pollLast().state();
             stack.clear();
@@ -100,10 +131,11 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
     }
 
     static class BuilderImpl<S, I> implements Builder<S, I> {
-        private final ImmutableTable.Builder<I, S, S> builder = ImmutableTable.builder();
-        private ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> entryCallbackMapBuilder = ImmutableMap.builder();
-        private ImmutableMap.Builder<S, OnExitStateCallback<S, I>> exitCallbackMapBuilder = ImmutableMap.builder();
-        private final ImmutableTable.Builder<I, S, Rollback<S, I>> rollbackTable = ImmutableTable.builder();
+
+        private final Table<I, S, S> transitionMap = HashBasedTable.create();
+        private final Map<S, OnEnterStateCallback<S, I>> entryCallbacks = new HashMap<>();
+        private final Map<S, OnExitStateCallback<S, I>> exitCallbacks = new HashMap<>();
+        private final Table<I, S, Rollback<S, I>> rollbackTable = HashBasedTable.create();
         private S initialState = null;
         private ErrorCallback<S, I> error = null;
 
@@ -113,23 +145,27 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         @CanIgnoreReturnValue
         @NonNull
         @Override
-        public Builder<S, I> addTransition(@NonNull S currentState, @NonNull I input, @NonNull S nextState,
-                                                                       @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
-                                                                       @Nullable OnExitStateCallback<S, I> onExitStateCallback,
-                                                                       FiniteStateMachine.@Nullable Rollback<S, I> rollback) {
-            Preconditions.checkNotNull(currentState, "Parameter \"currentState\" can't be null.");
-            Preconditions.checkNotNull(input, "Parameter \"input\" can't be null.");
-            Preconditions.checkNotNull(nextState,  "Parameter \"nextState\" can't be null.");
+        public Builder<S, I> addTransition(
+                @NonNull S currentState,
+                @NonNull I input,
+                @NonNull S nextState,
+                @Nullable OnEnterStateCallback<S, I> onEnterStateCallback,
+                @Nullable OnExitStateCallback<S, I> onExitStateCallback,
+                @Nullable Rollback<S, I> rollback) {
 
-            builder.put(input, currentState, nextState);
+            Preconditions.checkNotNull(currentState, "Argument \"currentState\" must not be null.");
+            Preconditions.checkNotNull(input, "Argument \"input\" must not be null.");
+            Preconditions.checkNotNull(nextState, "Argument \"nextState\" must not be null.");
+
+            transitionMap.put(input, currentState, nextState);
             if (onEnterStateCallback != null) {
-                entryCallbackMapBuilder.put(nextState, onEnterStateCallback);
+                entryCallbacks.put(nextState, onEnterStateCallback);
             }
             if (onExitStateCallback != null) {
-                exitCallbackMapBuilder.put(currentState, onExitStateCallback);
+                exitCallbacks.put(currentState, onExitStateCallback);
             }
             if (rollback == null) {
-                // todo: remove the cell to keep the semantics consistency
+                rollbackTable.remove(input, currentState);
             } else {
                 rollbackTable.put(input, currentState, rollback);
             }
@@ -137,65 +173,31 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             return this;
         }
 
-        /**
-         * Sets the entry callback for a state. It's not recommended to delete a callback by passing null because
-         * it violates the immutable pattern and is performance heavy.
-         *
-         * @param state The state for which the callback will be set.
-         * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
-         *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
-         * @return The builder
-         */
         @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setEntryCallback(@NonNull S state, @Nullable OnEnterStateCallback<S, I> callback) {
-            Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
+            Preconditions.checkNotNull(state, "Argument \"state\" must not be null.");
 
             if (callback == null) {
-                ImmutableMap<S, OnEnterStateCallback<S, I>> map = entryCallbackMapBuilder.buildKeepingLast();
-                ImmutableMap.Builder<S, OnEnterStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                for (Map.Entry<S, OnEnterStateCallback<S, I>> entry : map.entrySet()) {
-                    if (!Objects.equals(entry.getKey(), state)) {
-                        newBuilder.put(entry);
-                    }
-                }
-                entryCallbackMapBuilder = newBuilder;
+                entryCallbacks.remove(state);
             } else {
-                entryCallbackMapBuilder.put(state, callback);
+                entryCallbacks.put(state, callback);
             }
 
             return this;
         }
 
-        /**
-         * Sets the exit callback for a state. It's not recommended to delete a callback by passing null because
-         * it violates the immutable pattern and is performance heavy.
-         *
-         * @param state The state for which the callback will be set.
-         * @param callback The callback to be set for the state, unlike
-         * {@link Builder#addTransition(Object, Object, Object, OnEnterStateCallback, OnExitStateCallback, Rollback)}
-         *                 this method <b>does in fact invalidate a callback when this parameter is equal to null.</b>
-         * @return The builder
-         */
         @CanIgnoreReturnValue
         @NonNull
         @Override
         public Builder<S, I> setExitCallback(@NonNull S state, @Nullable OnExitStateCallback<S, I> callback) {
-            Preconditions.checkNotNull(state, "Provided \"state\" can't be null.");
+            Preconditions.checkNotNull(state, "Argument \"state\" must not be null.");
 
             if (callback == null) {
-                ImmutableMap<S, OnExitStateCallback<S, I>> map = exitCallbackMapBuilder.buildKeepingLast();
-                ImmutableMap.Builder<S, OnExitStateCallback<S, I>> newBuilder = ImmutableMap.builder();
-                for (Map.Entry<S, OnExitStateCallback<S, I>> entry : map.entrySet()) {
-                    if (!Objects.equals(entry.getKey(), state)) {
-                        newBuilder.put(entry);
-                    }
-                }
-                exitCallbackMapBuilder = newBuilder;
+                exitCallbacks.remove(state);
             } else {
-                exitCallbackMapBuilder.put(state, callback);
+                exitCallbacks.put(state, callback);
             }
 
             return this;
@@ -205,7 +207,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         @NonNull
         @Override
         public Builder<S, I> initialState(@NonNull S initialState) {
-            Preconditions.checkNotNull(initialState, "Provided \"initialState\" can't be null.");
+            Preconditions.checkNotNull(initialState, "Argument \"initialState\" must not be null.");
 
             this.initialState = initialState;
             return this;
@@ -216,7 +218,7 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         @Override
         public Builder<S, I> error(@NonNull ErrorCallback<S, I> errorCallback) {
             Preconditions.checkNotNull(errorCallback,
-                    "Provided \"errorCallback\" can't be null, if you don't want to use a failure callback don't call this function.");
+                    "Argument \"errorCallback\" must not be null; omit error() to disable the failure callback.");
 
             error = errorCallback;
             return this;
@@ -229,30 +231,28 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
             Preconditions.checkState(initialState != null,
                     "The initial state must be set before the FSM is validated.");
 
-            Table<I, S, S> table = builder.build();
-
             Set<S> allStates = new HashSet<>();
             allStates.add(initialState);
-            allStates.addAll(table.columnKeySet());
-            allStates.addAll(table.values());
+            allStates.addAll(transitionMap.columnKeySet());
+            allStates.addAll(transitionMap.values());
+            allStates.addAll(entryCallbacks.keySet());
+            allStates.addAll(exitCallbacks.keySet());
 
             Set<S> reachable = new HashSet<>();
             Deque<S> stack = new ArrayDeque<>();
             stack.push(initialState);
+
             while (!stack.isEmpty()) {
                 S state = stack.pop();
-                if (!reachable.contains(state)) {
-                    reachable.add(state);
-                    for (I input : table.rowKeySet()) {
-                        if (table.contains(input, state)) {
-                            stack.push(table.get(input,state));
-                        }
+                if (reachable.add(state)) {
+                    for (S nextState : transitionMap.column(state).values()) {
+                        stack.push(nextState);
                     }
                 }
             }
 
             Preconditions.checkState(reachable.containsAll(allStates),
-                    "Some state not reachable.");
+                    "Some states are not reachable from the initial state.");
 
             return this;
         }
@@ -260,12 +260,15 @@ final class TableFiniteStateMachine<S, I> implements FiniteStateMachine<S, I> {
         @NonNull
         @Override
         public FiniteStateMachine<S, I> build() {
-            Preconditions.checkNotNull(initialState, "The Initial State must be set before the FSM is built.");
+            Preconditions.checkState(initialState != null, "The initial state must be set before the FSM is built.");
 
-            return new TableFiniteStateMachine<>(builder.buildOrThrow(),
-                    entryCallbackMapBuilder.buildKeepingLast(),
-                    exitCallbackMapBuilder.buildKeepingLast(),
-                    rollbackTable.buildOrThrow(), error, initialState);
+            return new TableFiniteStateMachine<>(
+                    transitionMap,
+                    entryCallbacks,
+                    exitCallbacks,
+                    rollbackTable,
+                    error,
+                    initialState);
         }
     }
 }
