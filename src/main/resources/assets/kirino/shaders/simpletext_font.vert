@@ -187,12 +187,12 @@ void main()
     Hint = uint(hint);
 
     bool enableObfuscated = (Hint & (1u << 24)) != 0u;
-    bool enableitalic = (Hint & (1u << 26)) != 0u;
+    bool enableItalic = (Hint & (1u << 26)) != 0u;
 
     vec2 corner = corners[gl_VertexID];
     vec2 pos = rect.xy + corner * rect.zw;
 
-    if (enableitalic)
+    if (enableItalic)
     {
         float italicScope = 0.22;
         pos.x += (1.0 - corner.y) * rect.w * italicScope;

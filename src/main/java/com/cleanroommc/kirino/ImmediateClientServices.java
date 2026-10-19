@@ -158,6 +158,9 @@ public final class ImmediateClientServices {
 
         // register reload listener only if text vanilla is enabled
         if (!INSTANCE.disableTextRuntimeVanilla) {
+            // this will be skipped for
+            // - the immediate initial callback
+            // - the first reload callback when the resource manager initializes (presumably during GL shared context)
             resourceManager.registerReloadListener(new McFontReloadListener(
                     INSTANCE,
                     resourceManager));
