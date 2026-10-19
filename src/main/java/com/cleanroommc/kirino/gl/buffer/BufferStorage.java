@@ -16,8 +16,21 @@ import java.util.function.Supplier;
  *
  * <p>Note: This class is not thread-safe. Allocation and release must happen on the thread that owns
  * the OpenGL context.</p>
+ *
+ * <p>The storage should be closed explicitly when no longer used. Its GL buffers are also disposed
+ * automatically at shutdown (don't worry about GL resource lifetime). Pages and slots must not be used after closing the storage.</p>
  */
-public class BufferStorage<T extends BufferView> {
+public class BufferStorage<T extends BufferView> implements AutoCloseable {
+
+    /**
+     * <p>Note: Must be called on the main thread that owns the GL context.</p>
+     */
+    @Override
+    public void close() {
+        for (T page : pages) {
+            page.buffer.disposeManually();
+        }
+    }
 
     private final int pageSize;
     private final boolean dsa;
@@ -68,9 +81,9 @@ public class BufferStorage<T extends BufferView> {
     }
 
     /**
-     * It needs to be called on the main thread that has the GL context.
+     * It needs to be called on the main thread that owns the GL context.
      *
-     * <p>Note: It won't change GL buffer binding.</p>
+     * <p>Note: It'll ensure that GL buffer binding remains the same.</p>
      */
     private void allocPage() {
         T view = pageFactory.get();
