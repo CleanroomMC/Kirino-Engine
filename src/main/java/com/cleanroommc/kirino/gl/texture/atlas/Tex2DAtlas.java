@@ -31,7 +31,7 @@ public class Tex2DAtlas extends AbstractPagedPlanarTextureAtlas<Texture2DAccesso
             int unpackAlignment,
             @NonNull PayloadInterpreter payloadInterpreter) {
 
-        this(pageWidth, pageHeight, true, format,
+        this(pageWidth, pageHeight, false, format,
                 filterModeMin, filterModeMag, wrapModeS, wrapModeT, unpackAlignment, payloadInterpreter);
     }
 

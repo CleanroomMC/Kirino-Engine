@@ -211,7 +211,7 @@ public class Tex2DArrayAtlas extends AbstractPagedPlanarTextureAtlas<Tex2DArrayA
             int unpackAlignment,
             @NonNull PayloadInterpreter payloadInterpreter) {
 
-        this(pageWidth, pageHeight, DEFAULT_INITIAL_LAYER_CAPACITY, true, format,
+        this(pageWidth, pageHeight, DEFAULT_INITIAL_LAYER_CAPACITY, false, format,
                 filterModeMin, filterModeMag, wrapModeS, wrapModeT, unpackAlignment, payloadInterpreter);
     }
 
@@ -227,7 +227,7 @@ public class Tex2DArrayAtlas extends AbstractPagedPlanarTextureAtlas<Tex2DArrayA
             int unpackAlignment,
             @NonNull PayloadInterpreter payloadInterpreter) {
 
-        this(pageWidth, pageHeight, initialLayerCapacity, true, format,
+        this(pageWidth, pageHeight, initialLayerCapacity, false, format,
                 filterModeMin, filterModeMag, wrapModeS, wrapModeT, unpackAlignment, payloadInterpreter);
     }
 
