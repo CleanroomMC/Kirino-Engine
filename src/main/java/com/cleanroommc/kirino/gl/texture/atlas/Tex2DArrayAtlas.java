@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.texture.atlas;
 
+import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DArrayAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -8,7 +9,6 @@ import com.cleanroommc.kirino.gl.texture.meta.WrapMode;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 import java.nio.ByteBuffer;
@@ -97,8 +97,7 @@ public class Tex2DArrayAtlas extends AbstractPagedPlanarTextureAtlas<Tex2DArrayA
             this.unpackAlignment = unpackAlignment;
             this.pageWidth = pageWidth;
             this.pageHeight = pageHeight;
-            // todo: move to gl device info
-            maxLayerCount = GL11.glGetInteger(GL30.GL_MAX_ARRAY_TEXTURE_LAYERS);
+            maxLayerCount = KirinoClientCore.GL_DEVICE_INFO.getMaxArrayTextureLayers();
 
             Preconditions.checkArgument(initialLayerCapacity <= maxLayerCount,
                     "Initial layer capacity=%s exceeds maximum=%s.",
