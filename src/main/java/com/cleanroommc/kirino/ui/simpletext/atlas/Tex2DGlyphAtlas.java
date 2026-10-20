@@ -42,14 +42,19 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
         Preconditions.checkArgument(slot.getHeight() == bitmap.height(),
                 "Slot height=%s must match bitmap height=%s.", slot.getHeight(), bitmap.height());
 
+        // potential stall; doesn't matter anyway
+        int previousUnpackAlignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT);
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        slot.getPage().highlevel().uploadSubImage(
+        try {
+            slot.getPage().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
                 slot.getWidth(),
                 slot.getHeight(),
                 bitmap.byteBuffer());
-        GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
+        } finally {
+            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+        }
     }
 }

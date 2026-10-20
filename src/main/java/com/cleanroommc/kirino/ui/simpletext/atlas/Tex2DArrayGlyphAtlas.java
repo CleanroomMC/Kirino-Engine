@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ui.simpletext.atlas;
 
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DArrayAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -203,8 +202,11 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
         Preconditions.checkState(page.getLayer() == slot.getPageIndex(),
                 "Layer=%s must match page index=%s.", page.getLayer(), slot.getPageIndex());
 
+        // potential stall; doesn't matter anyway
+        int previousUnpackAlignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT);
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        page.getTexture().highlevel().uploadSubImage(
+        try {
+            page.getTexture().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
@@ -213,6 +215,8 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                 slot.getHeight(),
                 1,
                 bitmap.byteBuffer());
-        GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
+        } finally {
+            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+        }
     }
 }
