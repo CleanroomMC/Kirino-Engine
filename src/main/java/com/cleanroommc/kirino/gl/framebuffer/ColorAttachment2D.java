@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL45;
 
 import java.util.function.BiFunction;
 
-public class ColorAttachment implements FramebufferAttachment {
+public class ColorAttachment2D implements FramebufferAttachment {
 
     public final int index;
     public Texture2DAccessor texture2D;
@@ -22,7 +22,7 @@ public class ColorAttachment implements FramebufferAttachment {
      *
      * <p>Note: The texture accessor must be non-DSA.</p>
      */
-    public ColorAttachment(int index, @NonNull Texture2DAccessor texture2D) {
+    public ColorAttachment2D(int index, @NonNull Texture2DAccessor texture2D) {
         Preconditions.checkNotNull(texture2D);
         Preconditions.checkState(!texture2D.isDsaOn());
 
@@ -41,7 +41,7 @@ public class ColorAttachment implements FramebufferAttachment {
      *
      * @param texture2DFactory Input: width, height; Output: allocated DSA texture
      */
-    public ColorAttachment(
+    public ColorAttachment2D(
             int index,
             @NonNull Texture2DAccessor initialTexture2D,
             @NonNull BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory) {

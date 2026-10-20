@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL45;
 
 import java.util.function.BiFunction;
 
-public class DepthStencilAttachment implements FramebufferAttachment {
+public class DepthStencilAttachment2D implements FramebufferAttachment {
 
     public Texture2DAccessor texture2D;
     public final @Nullable BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory;
@@ -23,7 +23,7 @@ public class DepthStencilAttachment implements FramebufferAttachment {
      *
      * <p>Note: The texture accessor must be non-DSA.</p>
      */
-    public DepthStencilAttachment(@NonNull Texture2DAccessor texture2D) {
+    public DepthStencilAttachment2D(@NonNull Texture2DAccessor texture2D) {
         Preconditions.checkNotNull(texture2D);
         Preconditions.checkState(!texture2D.isDsaOn());
 
@@ -43,7 +43,7 @@ public class DepthStencilAttachment implements FramebufferAttachment {
      *
      * @param texture2DFactory Input: width, height; Output: allocated DSA texture
      */
-    public DepthStencilAttachment(
+    public DepthStencilAttachment2D(
             @NonNull Texture2DAccessor initialTexture2D,
             @NonNull BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory) {
 
@@ -63,7 +63,7 @@ public class DepthStencilAttachment implements FramebufferAttachment {
      *
      * <p>Note: The renderbuffer must be non-DSA.</p>
      */
-    public DepthStencilAttachment(@NonNull GLRenderBuffer renderBuffer) {
+    public DepthStencilAttachment2D(@NonNull GLRenderBuffer renderBuffer) {
         this(renderBuffer, false);
     }
 
@@ -72,7 +72,7 @@ public class DepthStencilAttachment implements FramebufferAttachment {
      *
      * @param dsa This determines how {@link #resize(int, int, int)} is performed
      */
-    public DepthStencilAttachment(@NonNull GLRenderBuffer renderBuffer, boolean dsa) {
+    public DepthStencilAttachment2D(@NonNull GLRenderBuffer renderBuffer, boolean dsa) {
         Preconditions.checkNotNull(renderBuffer);
         Preconditions.checkArgument(renderBuffer.dsa == dsa);
 

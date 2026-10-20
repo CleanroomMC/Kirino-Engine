@@ -3,8 +3,8 @@ package com.cleanroommc.kirino.engine.render.core.pipeline.post;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.PingPongFramebuffer;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.ResolutionContainer;
 import com.cleanroommc.kirino.engine.render.core.framebuffer.ScalableFramebuffer;
-import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
-import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment;
+import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment2D;
+import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment2D;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
@@ -191,14 +191,14 @@ public class FramebufferStore {
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
             color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
-            mainFramebuffer.framebuffer.attach(new ColorAttachment(0, color0Tex));
+            mainFramebuffer.framebuffer.attach(new ColorAttachment2D(0, color0Tex));
 
             Texture2DAccessor depthTex = new Texture2DAccessor(false, GLTexture.newTex2D(false, false, mainFramebuffer.framebuffer.width(), mainFramebuffer.framebuffer.height()));
             depthTex.bind();
             depthTex.highlevel().allocEmpty(true, TextureFormat.D24S8);
             depthTex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             depthTex.bind(0);
-            mainFramebuffer.framebuffer.attach(new DepthStencilAttachment(depthTex));
+            mainFramebuffer.framebuffer.attach(new DepthStencilAttachment2D(depthTex));
 
             mainFramebuffer.framebuffer.check();
 
@@ -221,7 +221,7 @@ public class FramebufferStore {
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
             color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
-            intermediateFramebuffer.attach(new ColorAttachment(0, color0Tex));
+            intermediateFramebuffer.attach(new ColorAttachment2D(0, color0Tex));
 
             intermediateFramebuffer.check();
 
@@ -242,7 +242,7 @@ public class FramebufferStore {
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
             color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
-            pingPongFramebuffer.framebufferA().attach(new ColorAttachment(0, color0Tex));
+            pingPongFramebuffer.framebufferA().attach(new ColorAttachment2D(0, color0Tex));
 
             pingPongFramebuffer.framebufferA().check();
 
@@ -263,7 +263,7 @@ public class FramebufferStore {
             color0Tex.highlevel().allocEmpty(true, enableHDR ? TextureFormat.RGBA16F : TextureFormat.RGBA8_UNORM);
             color0Tex.setCommonParams(FilterMode.NEAREST, FilterMode.NEAREST, WrapMode.CLAMP, WrapMode.CLAMP);
             color0Tex.bind(0);
-            pingPongFramebuffer.framebufferB().attach(new ColorAttachment(0, color0Tex));
+            pingPongFramebuffer.framebufferB().attach(new ColorAttachment2D(0, color0Tex));
 
             pingPongFramebuffer.framebufferB().check();
 

@@ -10,7 +10,7 @@ import org.lwjgl.opengl.GL45;
 
 import java.util.function.BiFunction;
 
-public class DepthAttachment implements FramebufferAttachment {
+public class DepthAttachment2D implements FramebufferAttachment {
 
     public Texture2DAccessor texture2D;
     public final @Nullable BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory;
@@ -21,7 +21,7 @@ public class DepthAttachment implements FramebufferAttachment {
      *
      * <p>Note: The texture accessor must be non-DSA.</p>
      */
-    public DepthAttachment(@NonNull Texture2DAccessor texture2D) {
+    public DepthAttachment2D(@NonNull Texture2DAccessor texture2D) {
         Preconditions.checkNotNull(texture2D);
         Preconditions.checkState(!texture2D.isDsaOn());
 
@@ -39,7 +39,7 @@ public class DepthAttachment implements FramebufferAttachment {
      *
      * @param texture2DFactory Input: width, height; Output: allocated DSA texture
      */
-    public DepthAttachment(
+    public DepthAttachment2D(
             @NonNull Texture2DAccessor initialTexture2D,
             @NonNull BiFunction<Integer, Integer, Texture2DAccessor> texture2DFactory) {
 

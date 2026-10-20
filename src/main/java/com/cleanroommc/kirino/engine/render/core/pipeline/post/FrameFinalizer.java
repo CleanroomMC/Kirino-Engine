@@ -4,8 +4,8 @@ import com.cleanroommc.kirino.engine.render.core.gl.semantic.GLKnowledgeKeys;
 import com.cleanroommc.kirino.engine.render.core.pipeline.PassDescriptor;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
-import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
-import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment;
+import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment2D;
+import com.cleanroommc.kirino.gl.framebuffer.DepthStencilAttachment2D;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.google.common.base.Preconditions;
 import org.apache.logging.log4j.Logger;
@@ -176,7 +176,7 @@ public class FrameFinalizer {
                         store.getMinecraftFramebuffer().isStencilEnabled() ? GL11.GL_DEPTH_BUFFER_BIT | GL11.GL_STENCIL_BUFFER_BIT : GL11.GL_DEPTH_BUFFER_BIT,
                         GL11.GL_NEAREST);
             } else {
-                DepthStencilAttachment depthAttachmentSrc = ((DepthStencilAttachment) store.getMainFramebuffer().framebuffer.getDepthAttachment());
+                DepthStencilAttachment2D depthAttachmentSrc = ((DepthStencilAttachment2D) store.getMainFramebuffer().framebuffer.getDepthAttachment());
                 Preconditions.checkNotNull(depthAttachmentSrc);
 
                 GL43.glCopyImageSubData(
@@ -226,7 +226,7 @@ public class FrameFinalizer {
                             0, 0, store.getMinecraftFramebuffer().framebufferTextureWidth, store.getMinecraftFramebuffer().framebufferTextureHeight,
                             GL11.GL_COLOR_BUFFER_BIT, GL11.GL_NEAREST);
                 } else {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
+                    ColorAttachment2D colorAttachmentSrc = ((ColorAttachment2D) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
@@ -309,8 +309,8 @@ public class FrameFinalizer {
         if (enablePostProcessing) {
             if (store.getMainFramebuffer().getRatio() == 1f) {
                 if (store.getChainMode() == FramebufferChainMode.INTERMEDIATE) {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
-                    ColorAttachment colorAttachmentDest = ((ColorAttachment) store.getIntermediateFramebuffer().getColorAttachment(0));
+                    ColorAttachment2D colorAttachmentSrc = ((ColorAttachment2D) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
+                    ColorAttachment2D colorAttachmentDest = ((ColorAttachment2D) store.getIntermediateFramebuffer().getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
@@ -324,8 +324,8 @@ public class FrameFinalizer {
 
                     postProcessingManager.postProcess(storage, glKnowledge);
                 } else if (store.getChainMode() == FramebufferChainMode.PING_PONG) {
-                    ColorAttachment colorAttachmentSrc = ((ColorAttachment) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
-                    ColorAttachment colorAttachmentDest = ((ColorAttachment) store.getPingPongFramebuffer().framebufferA().getColorAttachment(0));
+                    ColorAttachment2D colorAttachmentSrc = ((ColorAttachment2D) store.getMainFramebuffer().framebuffer.getColorAttachment(0));
+                    ColorAttachment2D colorAttachmentDest = ((ColorAttachment2D) store.getPingPongFramebuffer().framebufferA().getColorAttachment(0));
                     GL43.glCopyImageSubData(
                             colorAttachmentSrc.texture2D.texture.textureID,
                             colorAttachmentSrc.texture2D.target(),
