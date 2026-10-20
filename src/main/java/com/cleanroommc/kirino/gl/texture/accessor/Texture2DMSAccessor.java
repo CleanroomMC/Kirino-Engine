@@ -89,24 +89,25 @@ public class Texture2DMSAccessor extends TextureAccessorExt implements TextureAc
         //<editor-fold desc="convenient allocation overloads">
         @Override
         public void resizeAndAllocEmpty(int width, int height) {
-            MethodHolder.setExtentX(accessor.texture, width);
-            MethodHolder.setExtentY(accessor.texture, height);
             TextureFormat format = accessor.texture.currentFormat();
             if (format == null) {
-                allocEmpty(!accessor.dsa);
+                allocEmpty(width, height, !accessor.dsa, TextureFormat.RGBA8_UNORM);
             } else {
-                allocEmpty(!accessor.dsa, format);
+                allocEmpty(width, height, !accessor.dsa, format);
             }
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
         }
 
         @Override
         public void resizeAndAllocEmpty(int width, int height, @NonNull TextureFormat format) {
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, !accessor.dsa, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-
-            allocEmpty(!accessor.dsa, format);
         }
 
         @Override
@@ -116,9 +117,18 @@ public class Texture2DMSAccessor extends TextureAccessorExt implements TextureAc
 
         @Override
         public void allocEmpty(boolean mutable, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), mutable, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                boolean mutable,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(format);
 
-            allocEmpty(new StorageOptions(mutable, 1), format);
+            allocEmpty(width, height, new StorageOptions(mutable, 1), format);
         }
         //</editor-fold>
 
@@ -133,18 +143,26 @@ public class Texture2DMSAccessor extends TextureAccessorExt implements TextureAc
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, options, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
-            allocEmpty(options, format);
         }
 
         @Override
         public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), options, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                @NonNull StorageOptions options,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
             int samples = accessor.texture.samples();
 
             Preconditions.checkState(width > 0);

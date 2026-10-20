@@ -180,41 +180,43 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
         //<editor-fold desc="convenient allocation overloads">
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers) {
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                allocEmpty(width, height, depthOrLayers, true, TextureFormat.RGBA8_UNORM);
+            } else {
+                allocEmpty(width, height, depthOrLayers, true, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-            TextureFormat format = accessor.texture.currentFormat();
-            if (format == null) {
-                allocEmpty(true);
-            } else {
-                allocEmpty(true, format);
-            }
         }
 
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers, @NonNull TextureFormat format) {
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, true, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-
-            allocEmpty(true, format);
         }
 
         @Override
         public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull ByteBuffer byteBuffer) {
             Preconditions.checkNotNull(byteBuffer);
 
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                alloc(width, height, depthOrLayers, true, byteBuffer, TextureFormat.RGBA8_UNORM);
+            } else {
+                alloc(width, height, depthOrLayers, true, byteBuffer, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-            TextureFormat format = accessor.texture.currentFormat();
-            if (format == null) {
-                alloc(true, byteBuffer);
-            } else {
-                alloc(true, byteBuffer, format);
-            }
         }
 
         @Override
@@ -222,11 +224,11 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, true, byteBuffer, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-
-            alloc(true, byteBuffer, format);
         }
 
         @Override
@@ -238,17 +240,28 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
         @Override
         public void alloc(boolean mutable, @NonNull ByteBuffer byteBuffer, @NonNull TextureFormat format) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), mutable, byteBuffer, format);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull ByteBuffer byteBuffer,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
 
-            MethodHolder.setCurrentFormat(accessor.texture, format);
-
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), 0, format.format, format.type, byteBuffer);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers, 0, format.format, format.type, byteBuffer);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ());
-                accessor.texSubImage3D(0, 0, 0, 0, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), format.format, format.type, byteBuffer);
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers);
+                accessor.texSubImage3D(0, 0, 0, 0, width, height, depthOrLayers, format.format, format.type, byteBuffer);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
 
         @Override
@@ -258,15 +271,25 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
         @Override
         public void allocEmpty(boolean mutable, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), mutable, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(format);
 
-            MethodHolder.setCurrentFormat(accessor.texture, format);
-
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), 0, format.format, format.type, null);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers, 0, format.format, format.type, null);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ());
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
         //</editor-fold>
 
@@ -276,10 +299,11 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, options, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-            allocEmpty(options, format);
         }
 
         @Override
@@ -288,21 +312,32 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, options, data, format, generateMipmaps);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setExtentZ(accessor.texture, depthOrLayers);
-            alloc(options, data, format, generateMipmaps);
         }
 
         @Override
         public void alloc(@NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), options, data, format, generateMipmaps);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format,
+                boolean generateMipmaps) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int depth = accessor.texture.extentZ();
+            int depth = depthOrLayers;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -310,7 +345,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkState(depth > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, Math.max(height, depthOrLayers)));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);
@@ -339,12 +374,20 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
 
         @Override
         public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.extentZ(), options, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int depth = accessor.texture.extentZ();
+            int depth = depthOrLayers;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -352,7 +395,7 @@ public class Texture3DAccessor extends TextureAccessorExt implements TextureAcce
             Preconditions.checkState(depth > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, Math.max(height, depthOrLayers)));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);

@@ -193,41 +193,43 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
         //<editor-fold desc="convenient allocation overloads">
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers) {
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                allocEmpty(width, height, depthOrLayers, true, TextureFormat.RGBA8_UNORM);
+            } else {
+                allocEmpty(width, height, depthOrLayers, true, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            TextureFormat format = accessor.texture.currentFormat();
-            if (format == null) {
-                allocEmpty(true);
-            } else {
-                allocEmpty(true, format);
-            }
         }
 
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers, @NonNull TextureFormat format) {
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, true, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-
-            allocEmpty(true, format);
         }
 
         @Override
         public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull ByteBuffer byteBuffer) {
             Preconditions.checkNotNull(byteBuffer);
 
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                alloc(width, height, depthOrLayers, true, byteBuffer, TextureFormat.RGBA8_UNORM);
+            } else {
+                alloc(width, height, depthOrLayers, true, byteBuffer, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            TextureFormat format = accessor.texture.currentFormat();
-            if (format == null) {
-                alloc(true, byteBuffer);
-            } else {
-                alloc(true, byteBuffer, format);
-            }
         }
 
         @Override
@@ -235,11 +237,11 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, true, byteBuffer, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-
-            alloc(true, byteBuffer, format);
         }
 
         @Override
@@ -251,18 +253,29 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
 
         @Override
         public void alloc(boolean mutable, @NonNull ByteBuffer byteBuffer, @NonNull TextureFormat format) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, byteBuffer, format);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull ByteBuffer byteBuffer,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
-            checkDimensions();
-
-            MethodHolder.setCurrentFormat(accessor.texture, format);
+            checkDimensions(width, height);
 
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), faceLayerCount(), 0, format.format, format.type, byteBuffer);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers * 6, 0, format.format, format.type, byteBuffer);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), faceLayerCount());
-                accessor.texSubImage3D(0, 0, 0, 0, accessor.texture.extentX(), accessor.texture.extentY(), faceLayerCount(), format.format, format.type, byteBuffer);
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers * 6);
+                accessor.texSubImage3D(0, 0, 0, 0, width, height, depthOrLayers * 6, format.format, format.type, byteBuffer);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
 
         @Override
@@ -272,16 +285,26 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
 
         @Override
         public void allocEmpty(boolean mutable, @NonNull TextureFormat format) {
-            Preconditions.checkNotNull(format);
-            checkDimensions();
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, format);
+        }
 
-            MethodHolder.setCurrentFormat(accessor.texture, format);
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(format);
+            checkDimensions(width, height);
 
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), faceLayerCount(), 0, format.format, format.type, null);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers * 6, 0, format.format, format.type, null);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), faceLayerCount());
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers * 6);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
         //</editor-fold>
 
@@ -291,10 +314,11 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, options, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            allocEmpty(options, format);
         }
 
         @Override
@@ -303,22 +327,33 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, options, data, format, generateMipmaps);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            alloc(options, data, format, generateMipmaps);
         }
 
         @Override
         public void alloc(@NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, data, format, generateMipmaps);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format,
+                boolean generateMipmaps) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
-            checkDimensions();
+            checkDimensions(width, height);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int layers = faceLayerCount();
+            int layers = depthOrLayers * 6;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -326,7 +361,7 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             Preconditions.checkState(layers > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);
@@ -355,13 +390,21 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
 
         @Override
         public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
-            checkDimensions();
+            checkDimensions(width, height);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int layers = faceLayerCount();
+            int layers = depthOrLayers * 6;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -369,7 +412,7 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             Preconditions.checkState(layers > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);
@@ -518,10 +561,7 @@ public class TextureCubemapArrayAccessor extends TextureAccessorExt implements T
             return accessor.texture.layers() * 6;
         }
 
-        private void checkDimensions() {
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-
+        private void checkDimensions(int width, int height) {
             Preconditions.checkState(width == height,
                     "Cubemap array width=%s must match height=%s.", width, height);
         }
