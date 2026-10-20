@@ -81,7 +81,9 @@ public class DepthAttachment implements FramebufferAttachment {
 
             oldTexture2D.texture.disposeManually();
         } else {
+            texture2D.bind();
             texture2D.highlevel().resizeAndAllocEmpty(width, height);
+            texture2D.bind(0);
         }
     }
 }
