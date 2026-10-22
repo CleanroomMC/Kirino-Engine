@@ -214,8 +214,9 @@ public class GLSLResourceParserTest {
                         }
                         """);
 
-        assertEquals(3, root.jjtGetNumChildren());
+        assertEquals(4, root.jjtGetNumChildren());
         assertEquals(2, directChildren(root, ASTInputOutputDeclaration.class).size());
+        assertEquals(1, directChildren(root, ASTVariableDeclaration.class).size());
         assertEquals(1, directChildren(root, ASTUniformDeclaration.class).size());
         assertTrue(descendants(root, ASTStructDeclaration.class).isEmpty());
         assertLayout(root, "binding", "TEXTURE_BINDING");
@@ -227,7 +228,7 @@ public class GLSLResourceParserTest {
         ASTTranslationUnit root = parse(
                 """
                         #version 450
-                        
+
                         layout(binding = 1) uniform sampler2D textureMap;
                         """);
 
@@ -307,13 +308,14 @@ public class GLSLResourceParserTest {
 
     @Test
     public void test11() throws Exception {
-        ASTTranslationUnit root = parse("""
-                uniform layout(std140);
-                layout(std430) buffer layout(row_major);
-                in layout(local_size_x = 8);
-                layout(triangle_strip) out layout(max_vertices = 3);
-                uniform U { float x; };
-                """);
+        ASTTranslationUnit root = parse(
+                """
+                        uniform layout(std140);
+                        layout(std430) buffer layout(row_major);
+                        in layout(local_size_x = 8);
+                        layout(triangle_strip) out layout(max_vertices = 3);
+                        uniform U { float x; };
+                        """);
 
         List<ASTGlobalLayoutDeclaration> defaults = directChildren(root, ASTGlobalLayoutDeclaration.class);
         assertEquals(4, defaults.size());
@@ -330,12 +332,13 @@ public class GLSLResourceParserTest {
 
     @Test
     public void test12() throws Exception {
-        ASTTranslationUnit root = parse("""
-                const struct S { float x; } s = S(1.0);
-                struct T { float x; }[2] a[3], b;
-                struct { vec3 position; }[4] lights;
-                uniform S value;
-                """);
+        ASTTranslationUnit root = parse(
+                """
+                        const struct S { float x; } s = S(1.0);
+                        struct T { float x; }[2] a[3], b;
+                        struct { vec3 position; }[4] lights;
+                        uniform S value;
+                        """);
 
         List<ASTStructDeclaration> structs = directChildren(root, ASTStructDeclaration.class);
         assertEquals(3, structs.size());

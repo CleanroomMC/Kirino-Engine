@@ -10,7 +10,7 @@ import java.io.StringReader;
 
 public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
 
-    private record ShaderMetaBuilder(@NonNull ASTTranslationUnit astUnit) {
+    private record ShaderMetaBuilder(@NonNull ASTTranslationUnit astUnit, @NonNull ShaderType shaderType) {
 
         @NonNull
         ShaderMeta build() {
@@ -19,39 +19,70 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             ImmutableList.Builder<ShaderMeta.InterfaceBlock> interfaceBlocks = ImmutableList.builder();
             ImmutableList.Builder<ShaderMeta.GlobalLayoutDeclaration> globalLayouts = ImmutableList.builder();
             ImmutableList.Builder<ShaderMeta.InputOutputDeclaration> inputOutputs = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.VariableDeclaration> variables = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.QualifierDeclaration> qualifierDeclarations = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.PrecisionDeclaration> precisionDeclarations = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.SubroutineTypeDeclaration> subroutineTypes = ImmutableList.builder();
+            ImmutableList.Builder<ShaderMeta.SubroutineFunctionDeclaration> subroutineFunctions = ImmutableList.builder();
             ImmutableList.Builder<ShaderMeta.Declaration> topLevelDeclarations = ImmutableList.builder();
 
             for (int i = 0; i < astUnit.jjtGetNumChildren(); i++) {
                 Node child = astUnit.jjtGetChild(i);
-                if (child instanceof ASTStructDeclaration struct) {
-                    ShaderMeta.StructDeclaration declaration = structDeclaration(struct);
+                if (child instanceof ASTStructDeclaration node) {
+                    ShaderMeta.StructDeclaration declaration = structDeclaration(node);
                     structs.add(declaration);
                     topLevelDeclarations.add(declaration);
-                } else if (child instanceof ASTUniformDeclaration uniform) {
-                    ShaderMeta.UniformDeclaration declaration = uniformDeclaration(uniform);
+                } else if (child instanceof ASTUniformDeclaration node) {
+                    ShaderMeta.UniformDeclaration declaration = uniformDeclaration(node);
                     uniforms.add(declaration);
                     topLevelDeclarations.add(declaration);
-                } else if (child instanceof ASTInterfaceBlockDeclaration interfaceBlock) {
-                    ShaderMeta.InterfaceBlock declaration = interfaceBlock(interfaceBlock);
+                } else if (child instanceof ASTInterfaceBlockDeclaration node) {
+                    ShaderMeta.InterfaceBlock declaration = interfaceBlock(node);
                     interfaceBlocks.add(declaration);
                     topLevelDeclarations.add(declaration);
-                } else if (child instanceof ASTGlobalLayoutDeclaration globalLayout) {
-                    ShaderMeta.GlobalLayoutDeclaration declaration = globalLayout(globalLayout);
+                } else if (child instanceof ASTGlobalLayoutDeclaration node) {
+                    ShaderMeta.GlobalLayoutDeclaration declaration = globalLayoutDeclaration(node);
                     globalLayouts.add(declaration);
                     topLevelDeclarations.add(declaration);
-                } else if (child instanceof ASTInputOutputDeclaration inputOutput) {
-                    ShaderMeta.InputOutputDeclaration declaration = inputOutput(inputOutput);
+                } else if (child instanceof ASTInputOutputDeclaration node) {
+                    ShaderMeta.InputOutputDeclaration declaration = inputOutputDeclaration(node);
                     inputOutputs.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTVariableDeclaration node) {
+                    ShaderMeta.VariableDeclaration declaration = variableDeclaration(node);
+                    variables.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTQualifierDeclaration node) {
+                    ShaderMeta.QualifierDeclaration declaration = qualifierDeclaration(node);
+                    qualifierDeclarations.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTPrecisionDeclaration node) {
+                    ShaderMeta.PrecisionDeclaration declaration = precisionDeclaration(node);
+                    precisionDeclarations.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTSubroutineTypeDeclaration node) {
+                    ShaderMeta.SubroutineTypeDeclaration declaration = subroutineTypeDeclaration(node);
+                    subroutineTypes.add(declaration);
+                    topLevelDeclarations.add(declaration);
+                } else if (child instanceof ASTSubroutineFunctionDeclaration node) {
+                    ShaderMeta.SubroutineFunctionDeclaration declaration = subroutineFunctionDeclaration(node);
+                    subroutineFunctions.add(declaration);
                     topLevelDeclarations.add(declaration);
                 }
             }
 
             return new ShaderMeta(
+                    shaderType,
                     structs.build(),
                     uniforms.build(),
                     interfaceBlocks.build(),
                     globalLayouts.build(),
                     inputOutputs.build(),
+                    variables.build(),
+                    qualifierDeclarations.build(),
+                    precisionDeclarations.build(),
+                    subroutineTypes.build(),
+                    subroutineFunctions.build(),
                     topLevelDeclarations.build());
         }
 
@@ -156,6 +187,12 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
 
         @NonNull
         private static String storage(@NonNull Node node) {
+            return Preconditions.checkNotNull(nullableStorage(node),
+                    "Missing storage qualifier under \"%s\".", node.getClass().getSimpleName());
+        }
+
+        @Nullable
+        private static String nullableStorage(@NonNull Node node) {
             ASTStorageQualifier storage = directChild(node, ASTStorageQualifier.class);
             if (storage != null) {
                 return value(storage);
@@ -166,12 +203,13 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                 if (value.equals("in")
                         || value.equals("out")
                         || value.equals("attribute")
-                        || value.equals("varying")) {
+                        || value.equals("varying")
+                        || value.equals("shared")) {
                     return value;
                 }
             }
 
-            throw new IllegalStateException("Missing storage qualifier under \"" + node.getClass().getSimpleName() + "\".");
+            return null;
         }
 
         @NonNull
@@ -212,6 +250,18 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     "Missing \"%s\" child under \"%s\".", type.getSimpleName(), node.getClass().getSimpleName());
         }
 
+        @NonNull
+        private static ImmutableList<ShaderMeta.Parameter> parameters(@NonNull SimpleNode node) {
+            ImmutableList.Builder<ShaderMeta.Parameter> parameters = ImmutableList.builder();
+            for (ASTParameter parameter : directChildren(node, ASTParameter.class)) {
+                parameters.add(new ShaderMeta.Parameter(nullableValue(parameter),
+                    type(requireDirectChild(parameter, ASTTypeSpecifier.class)), arrayDimensions(parameter),
+                    qualifiers(parameter), span(parameter)));
+            }
+            return parameters.build();
+        }
+
+        //<editor-fold desc="decls">
         private static ShaderMeta.@NonNull StructDeclaration structDeclaration(
                 @NonNull ASTStructDeclaration node) {
 
@@ -229,6 +279,7 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             for (ASTMemberDeclaration member : directChildren(node, ASTMemberDeclaration.class)) {
                 members.add(member(member));
             }
+
             return new ShaderMeta.StructDeclaration(
                     name == null ? null : value(name),
                     members.build(),
@@ -270,36 +321,80 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
                     span(node));
         }
 
-        private static ShaderMeta.@NonNull GlobalLayoutDeclaration globalLayout(
+        private static ShaderMeta.@NonNull GlobalLayoutDeclaration globalLayoutDeclaration(
                 @NonNull ASTGlobalLayoutDeclaration node) {
 
             return new ShaderMeta.GlobalLayoutDeclaration(storage(node), layouts(node), span(node));
         }
 
-        private static ShaderMeta.@NonNull InputOutputDeclaration inputOutput(
-                @NonNull ASTInputOutputDeclaration node) {
+        private static ShaderMeta.@NonNull InputOutputDeclaration inputOutputDeclaration(
+            @NonNull ASTInputOutputDeclaration node) {
 
             String storage = storage(node);
             return new ShaderMeta.InputOutputDeclaration(
-                    storage,
-                    type(requireDirectChild(node, ASTTypeSpecifier.class)),
-                    layouts(node),
-                    qualifiers(node, storage),
-                    declarators(requireDirectChild(node, ASTDeclaratorList.class)),
-                    span(node));
+                storage,
+                type(requireDirectChild(node, ASTTypeSpecifier.class)),
+                layouts(node),
+                qualifiers(node, storage),
+                declarators(requireDirectChild(node, ASTDeclaratorList.class)),
+                span(node));
         }
+
+        private static ShaderMeta.@NonNull VariableDeclaration variableDeclaration(@NonNull ASTVariableDeclaration node) {
+            String storage = nullableStorage(node);
+            return new ShaderMeta.VariableDeclaration(storage,
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)), layouts(node), qualifiers(node, storage),
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)), span(node));
+        }
+
+        private static ShaderMeta.@NonNull QualifierDeclaration qualifierDeclaration(@NonNull ASTQualifierDeclaration node) {
+            ASTDeclaratorList names = directChild(node, ASTDeclaratorList.class);
+            String storage = nullableStorage(node);
+            return new ShaderMeta.QualifierDeclaration(storage, layouts(node), qualifiers(node, storage),
+                    names == null ? ImmutableList.of() : declarators(names), span(node));
+        }
+
+        private static ShaderMeta.@NonNull PrecisionDeclaration precisionDeclaration(@NonNull ASTPrecisionDeclaration node) {
+            return new ShaderMeta.PrecisionDeclaration(value(node),
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)), span(node));
+        }
+
+        private static ShaderMeta.@NonNull SubroutineTypeDeclaration subroutineTypeDeclaration(
+                @NonNull ASTSubroutineTypeDeclaration node) {
+
+            return new ShaderMeta.SubroutineTypeDeclaration(value(requireDirectChild(node, ASTFunctionName.class)),
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)), parameters(node), layouts(node),
+                    qualifiers(node, "subroutine"), span(node));
+        }
+
+        private static ShaderMeta.@NonNull SubroutineFunctionDeclaration subroutineFunctionDeclaration(
+                @NonNull ASTSubroutineFunctionDeclaration node) {
+
+            ImmutableList.Builder<String> compatibleTypes = ImmutableList.builder();
+            for (ASTQualifier qualifier : directChildren(node, ASTQualifier.class)) {
+                for (ASTSubroutineTypeName type : directChildren(qualifier, ASTSubroutineTypeName.class)) {
+                    compatibleTypes.add(value(type));
+                }
+            }
+
+            return new ShaderMeta.SubroutineFunctionDeclaration(value(requireDirectChild(node, ASTFunctionName.class)),
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)), parameters(node), compatibleTypes.build(),
+                    layouts(node), qualifiers(node, "subroutine"), Boolean.TRUE.equals(node.jjtGetValue()), span(node));
+        }
+        //</editor-fold>
     }
 
     @NonNull
     private static ASTTranslationUnit parse(@NonNull String source) throws ParseException {
-        Preconditions.checkNotNull(source);
-
         return new GLSLResourceParser(new StringReader(source)).TranslationUnit();
     }
 
     @Nullable
     @Override
-    public ShaderMeta analyze(@NonNull String shaderSource) {
+    public ShaderMeta analyze(@NonNull String shaderSource, @NonNull ShaderType shaderType) {
+        Preconditions.checkNotNull(shaderSource);
+        Preconditions.checkNotNull(shaderType);
+
         final ASTTranslationUnit astUnit;
         try {
             astUnit = parse(shaderSource);
@@ -307,6 +402,6 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
             return null;
         }
 
-        return (new ShaderMetaBuilder(astUnit)).build();
+        return (new ShaderMetaBuilder(astUnit, shaderType)).build();
     }
 }

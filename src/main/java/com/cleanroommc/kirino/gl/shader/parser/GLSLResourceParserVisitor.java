@@ -25,5 +25,13 @@ public interface GLSLResourceParserVisitor
   public Void visit(ASTInitializer node, Void data);
   public Void visit(ASTBlockName node, Void data);
   public Void visit(ASTStructName node, Void data);
+  public Void visit(ASTVariableDeclaration node, Void data);
+  public Void visit(ASTQualifierDeclaration node, Void data);
+  public Void visit(ASTPrecisionDeclaration node, Void data);
+  public Void visit(ASTSubroutineTypeDeclaration node, Void data);
+  public Void visit(ASTSubroutineFunctionDeclaration node, Void data);
+  public Void visit(ASTParameter node, Void data);
+  public Void visit(ASTFunctionName node, Void data);
+  public Void visit(ASTSubroutineTypeName node, Void data);
 }
-/* JavaCC - OriginalChecksum=01804c8d6e082bb5f2cdc98a08b62aab (do not edit this line) */
+/* JavaCC - OriginalChecksum=74e97f8ae9a861dc3590299273b3a6ca (do not edit this line) */

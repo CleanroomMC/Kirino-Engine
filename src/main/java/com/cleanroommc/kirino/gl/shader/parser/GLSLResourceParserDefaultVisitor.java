@@ -72,5 +72,29 @@ public class GLSLResourceParserDefaultVisitor implements GLSLResourceParserVisit
   public Void visit(ASTStructName node, Void data){
     return defaultVisit(node, data);
   }
+  public Void visit(ASTVariableDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTQualifierDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTPrecisionDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTSubroutineTypeDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTSubroutineFunctionDeclaration node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTParameter node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTFunctionName node, Void data){
+    return defaultVisit(node, data);
+  }
+  public Void visit(ASTSubroutineTypeName node, Void data){
+    return defaultVisit(node, data);
+  }
 }
-/* JavaCC - OriginalChecksum=9784f2cf54cd88f639be05bb457dd12d (do not edit this line) */
+/* JavaCC - OriginalChecksum=021831f46bb3845c117d6e5474c86df3 (do not edit this line) */

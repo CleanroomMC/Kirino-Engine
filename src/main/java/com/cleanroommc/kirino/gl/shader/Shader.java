@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.shader;
 
+import com.cleanroommc.anone.reveal.ReflectiveInvocation;
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.google.common.base.Preconditions;
@@ -16,6 +17,7 @@ import java.util.Optional;
  */
 public class Shader extends GLDisposable {
 
+    @ReflectiveInvocation
     private Shader(
             @NonNull String shaderSource,
             @NonNull String shaderName,
@@ -101,7 +103,7 @@ public class Shader extends GLDisposable {
     public void analyze(@NonNull ShaderAnalyzer analyzer) {
         Preconditions.checkNotNull(analyzer);
 
-        shaderMeta = analyzer.analyze(shaderSource);
+        shaderMeta = analyzer.analyze(shaderSource, shaderType);
     }
 
     /**

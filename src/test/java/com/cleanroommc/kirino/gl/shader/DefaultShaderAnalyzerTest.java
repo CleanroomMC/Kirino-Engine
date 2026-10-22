@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class DefaultShaderAnalyzerTest {
 
     private static ShaderMeta analyze(String source) {
-        ShaderMeta meta = new DefaultShaderAnalyzer().analyze(source);
+        ShaderMeta meta = new DefaultShaderAnalyzer().analyze(source, ShaderType.VERTEX);
         assertNotNull(meta);
         return meta;
     }
@@ -140,5 +140,115 @@ class DefaultShaderAnalyzerTest {
         assertEquals("uniform float x;", sourceAt(source, uniform.span()));
         assertEquals("float", sourceAt(source, uniform.type().span()));
         assertEquals("x", sourceAt(source, uniform.declarators().getFirst().span()));
+    }
+
+    @Test
+    void test5() {
+        String source = """
+                const int COUNT = 2, TOTAL = COUNT * 2;
+                shared vec4 tile[COUNT];
+                float scratch;
+                vec4 helper(vec4 value) {
+                    const int LOCAL_ONLY = 3;
+                    return value;
+                }
+                uniform vec4 values[TOTAL];
+                """;
+        ShaderMeta meta = analyze(source);
+
+        assertEquals(3, meta.variables.size());
+        assertEquals(List.of("const"), meta.variables.get(0).qualifiers());
+        assertEquals(List.of("COUNT", "TOTAL"), meta.variables.get(0).declarators().stream()
+                .map(ShaderMeta.Declarator::name).toList());
+        assertEquals("COUNT*2", meta.variables.get(0).declarators().get(1).initializer());
+        assertEquals("shared", meta.variables.get(1).storage());
+        assertEquals("COUNT", meta.variables.get(1).declarators().getFirst().arrayDimensions().getFirst().expression());
+        assertNull(meta.variables.get(2).storage());
+        assertEquals(4, meta.topLevelDeclarations.size());
+        assertSame(meta.variables.getFirst(), meta.topLevelDeclarations.getFirst());
+        assertSame(meta.uniforms.getFirst(), meta.topLevelDeclarations.getLast());
+        assertEquals("TOTAL", meta.uniforms.getFirst().declarators().getFirst().arrayDimensions().getFirst().expression());
+        assertEquals("shared vec4 tile[COUNT];", sourceAt(source, meta.variables.get(1).span()));
+    }
+
+    @Test
+    void test6() {
+        String source = """
+                precision mediump float;
+                precision highp sampler2D;
+                invariant gl_Position;
+                precise first, second;
+                uniform vec4 tint;
+                """;
+        ShaderMeta meta = analyze(source);
+
+        assertEquals(2, meta.precisions.size());
+        assertEquals("mediump", meta.precisions.getFirst().precision());
+        assertEquals("sampler2D", meta.precisions.getLast().type().name());
+        assertEquals("precision highp sampler2D;", sourceAt(source, meta.precisions.getLast().span()));
+        assertEquals(2, meta.qualifiers.size());
+        assertEquals(List.of("invariant"), meta.qualifiers.getFirst().qualifiers());
+        assertEquals("gl_Position", meta.qualifiers.getFirst().declarators().getFirst().name());
+        assertEquals(List.of("first", "second"), meta.qualifiers.getLast().declarators().stream()
+                .map(ShaderMeta.Declarator::name).toList());
+        assertEquals(5, meta.topLevelDeclarations.size());
+    }
+
+    @Test
+    void test7() {
+        String source = """
+                subroutine vec4 Shade(const in vec3 normal, out vec4 values[2]);
+                subroutine vec4 Other(vec3, out vec4[2]);
+                subroutine void NoArgs(void);
+                layout(index = 3) subroutine(Shade, Other) vec4 shade(const in vec3 normal, out vec4 values[2]) {
+                    struct LocalOnly { float ignored; };
+                    if (true) { values[0] = vec4(normal, 1.0); }
+                    return values[0];
+                }
+                subroutine uniform Shade selected[2];
+                uniform float after;
+                """;
+        ShaderMeta meta = analyze(source);
+
+        assertEquals(3, meta.subroutineTypes.size());
+        ShaderMeta.SubroutineTypeDeclaration shade = meta.subroutineTypes.getFirst();
+        assertEquals("Shade", shade.name());
+        assertEquals(List.of("const", "in"), shade.parameters().getFirst().qualifiers());
+        assertEquals("normal", shade.parameters().getFirst().name());
+        assertEquals("2", shade.parameters().getLast().arrayDimensions().getFirst().expression());
+        assertNull(meta.subroutineTypes.get(1).parameters().getFirst().name());
+        assertEquals("2", meta.subroutineTypes.get(1).parameters().getLast().type().arrayDimensions().getFirst().expression());
+        assertTrue(meta.subroutineTypes.getLast().parameters().isEmpty());
+        assertEquals(1, meta.subroutineFunctions.size());
+        ShaderMeta.SubroutineFunctionDeclaration function = meta.subroutineFunctions.getFirst();
+        assertEquals("shade", function.name());
+        assertEquals(List.of("Shade", "Other"), function.compatibleTypes());
+        assertEquals("3", function.layouts().getFirst().expression());
+        assertTrue(function.definition());
+        assertTrue(sourceAt(source, function.span()).endsWith("}"));
+        assertTrue(meta.structs.isEmpty());
+        assertEquals(2, meta.uniforms.size());
+        assertEquals(List.of("subroutine"), meta.uniforms.getFirst().qualifiers());
+        assertEquals("selected", meta.uniforms.getFirst().declarators().getFirst().name());
+        assertEquals("after", meta.uniforms.getLast().declarators().getFirst().name());
+        assertEquals(6, meta.topLevelDeclarations.size());
+    }
+
+    @Test
+    void test8() {
+        ShaderMeta meta = analyze("subroutine vec4 Shade(); subroutine(Shade) vec4 missingBody();");
+
+        assertTrue(meta.subroutineTypes.getFirst().parameters().isEmpty());
+        assertFalse(meta.subroutineFunctions.getFirst().definition());
+    }
+
+    @Test
+    void test9() {
+        ShaderAnalyzer analyzer = new DefaultShaderAnalyzer();
+
+        assertNull(analyzer.analyze("precision highp;", ShaderType.VERTEX));
+        assertNull(analyzer.analyze("const int COUNT = ;", ShaderType.VERTEX));
+        assertNull(analyzer.analyze("subroutine vec4 Shade(", ShaderType.VERTEX));
+        assertNull(analyzer.analyze("subroutine(Shade) vec4 broken() { return vec4(1.0);", ShaderType.VERTEX));
     }
 }

@@ -77,29 +77,33 @@ public interface GLSLResourceParserConstants {
   /** RegularExpression Id. */
   int FALSE = 33;
   /** RegularExpression Id. */
-  int NUMBER = 34;
+  int PRECISION = 34;
   /** RegularExpression Id. */
-  int IDENTIFIER = 35;
+  int SUBROUTINE = 35;
   /** RegularExpression Id. */
-  int LEFT_PAREN = 36;
+  int NUMBER = 36;
   /** RegularExpression Id. */
-  int RIGHT_PAREN = 37;
+  int IDENTIFIER = 37;
   /** RegularExpression Id. */
-  int LEFT_BRACKET = 38;
+  int LEFT_PAREN = 38;
   /** RegularExpression Id. */
-  int RIGHT_BRACKET = 39;
+  int RIGHT_PAREN = 39;
   /** RegularExpression Id. */
-  int LEFT_BRACE = 40;
+  int LEFT_BRACKET = 40;
   /** RegularExpression Id. */
-  int RIGHT_BRACE = 41;
+  int RIGHT_BRACKET = 41;
   /** RegularExpression Id. */
-  int COMMA = 42;
+  int LEFT_BRACE = 42;
   /** RegularExpression Id. */
-  int SEMICOLON = 43;
+  int RIGHT_BRACE = 43;
   /** RegularExpression Id. */
-  int EQUAL = 44;
+  int COMMA = 44;
   /** RegularExpression Id. */
-  int OTHER = 45;
+  int SEMICOLON = 45;
+  /** RegularExpression Id. */
+  int EQUAL = 46;
+  /** RegularExpression Id. */
+  int OTHER = 47;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -140,6 +144,8 @@ public interface GLSLResourceParserConstants {
     "\"lowp\"",
     "\"true\"",
     "\"false\"",
+    "\"precision\"",
+    "\"subroutine\"",
     "<NUMBER>",
     "<IDENTIFIER>",
     "\"(\"",

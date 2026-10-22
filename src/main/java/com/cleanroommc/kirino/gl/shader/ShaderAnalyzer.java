@@ -8,5 +8,5 @@ public interface ShaderAnalyzer {
     /**
      * @implNote The result must be deterministic
      */
-    @Nullable ShaderMeta analyze(@NonNull String shaderSource);
+    @Nullable ShaderMeta analyze(@NonNull String shaderSource, @NonNull ShaderType shaderType);
 }

@@ -25,6 +25,14 @@ public interface GLSLResourceParserTreeConstants
   public int JJTINITIALIZER = 19;
   public int JJTBLOCKNAME = 20;
   public int JJTSTRUCTNAME = 21;
+  public int JJTVARIABLEDECLARATION = 22;
+  public int JJTQUALIFIERDECLARATION = 23;
+  public int JJTPRECISIONDECLARATION = 24;
+  public int JJTSUBROUTINETYPEDECLARATION = 25;
+  public int JJTSUBROUTINEFUNCTIONDECLARATION = 26;
+  public int JJTPARAMETER = 27;
+  public int JJTFUNCTIONNAME = 28;
+  public int JJTSUBROUTINETYPENAME = 29;
 
 
   public String[] jjtNodeName = {
@@ -50,6 +58,14 @@ public interface GLSLResourceParserTreeConstants
     "Initializer",
     "BlockName",
     "StructName",
+    "VariableDeclaration",
+    "QualifierDeclaration",
+    "PrecisionDeclaration",
+    "SubroutineTypeDeclaration",
+    "SubroutineFunctionDeclaration",
+    "Parameter",
+    "FunctionName",
+    "SubroutineTypeName",
   };
 }
-/* JavaCC - OriginalChecksum=95958c009a4cbc17219f402c80dd841c (do not edit this line) */
+/* JavaCC - OriginalChecksum=7a60d56c6c336c0e8582336db7605455 (do not edit this line) */

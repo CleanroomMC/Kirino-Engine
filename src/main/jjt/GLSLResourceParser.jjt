@@ -138,6 +138,64 @@ public class GLSLResourceParser {
         return getToken(i).kind == LEFT_BRACE;
     }
 
+    private boolean isSubroutineDeclarationAhead(boolean function) {
+        int end = tokenAfterDeclarationQualifiers();
+        if (end < 0) {
+            return false;
+        }
+        boolean subroutine = false;
+        boolean compatibleTypes = false;
+        for (int i = 1; i < end; i++) {
+            int kind = getToken(i).kind;
+            if (kind == UNIFORM) {
+                return false;
+            }
+            if (kind == SUBROUTINE) {
+                subroutine = true;
+                compatibleTypes = getToken(i + 1).kind == LEFT_PAREN;
+            }
+        }
+        return subroutine && compatibleTypes == function;
+    }
+
+    private boolean isQualifierDeclarationAhead() {
+        int i = tokenAfterDeclarationQualifiers();
+        if (i <= 1) {
+            return false;
+        }
+        return getToken(i).kind == SEMICOLON
+                || getToken(i).kind == IDENTIFIER
+                && (getToken(i + 1).kind == SEMICOLON || getToken(i + 1).kind == COMMA);
+    }
+
+    private boolean isVariableDeclarationAhead() {
+        int i = tokenAfterDeclarationQualifiers();
+        if (i < 0 || getToken(i).kind != IDENTIFIER) {
+            return false;
+        }
+        i++;
+        while (getToken(i).kind == LEFT_BRACKET) {
+            int depth = 1;
+            i++;
+            while (depth > 0) {
+                int kind = getToken(i++).kind;
+                if (kind == EOF) {
+                    return false;
+                }
+                if (kind == LEFT_BRACKET) {
+                    depth++;
+                } else if (kind == RIGHT_BRACKET) {
+                    depth--;
+                }
+            }
+        }
+        if (getToken(i).kind != IDENTIFIER) {
+            return false;
+        }
+        int next = getToken(i + 1).kind;
+        return next == EQUAL || next == LEFT_BRACKET || next == COMMA || next == SEMICOLON || next == EOF;
+    }
+
     private ResourcePrefix scanResourcePrefix() {
         int i = 1;
         int storageKind = -1;
@@ -147,6 +205,15 @@ public class GLSLResourceParser {
             int kind = getToken(i).kind;
             if (kind == LAYOUT) {
                 i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return null;
+                }
+                consumedQualifier = true;
+                continue;
+            }
+
+            if (kind == SUBROUTINE) {
+                i = getToken(i + 1).kind == LEFT_PAREN ? tokenAfterLayoutQualifier(i) : i + 1;
                 if (i < 0) {
                     return null;
                 }
@@ -190,29 +257,6 @@ public class GLSLResourceParser {
         return kind == IN || kind == OUT || kind == ATTRIBUTE || kind == VARYING;
     }
 
-    private int tokenAfterLayoutQualifier(int layoutIndex) {
-        int i = layoutIndex + 1;
-        if (getToken(i).kind != LEFT_PAREN) {
-            return -1;
-        }
-
-        int depth = 1;
-        i++;
-        while (depth > 0) {
-            int kind = getToken(i).kind;
-            if (kind == EOF) {
-                return -1;
-            }
-            if (kind == LEFT_PAREN) {
-                depth++;
-            } else if (kind == RIGHT_PAREN) {
-                depth--;
-            }
-            i++;
-        }
-        return i;
-    }
-
     private static boolean isSimpleQualifierKind(int kind) {
         switch (kind) {
             case CONST:
@@ -243,6 +287,46 @@ public class GLSLResourceParser {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    private int tokenAfterLayoutQualifier(int layoutIndex) {
+        int i = layoutIndex + 1;
+        if (getToken(i).kind != LEFT_PAREN) {
+            return -1;
+        }
+
+        int depth = 1;
+        i++;
+        while (depth > 0) {
+            int kind = getToken(i).kind;
+            if (kind == EOF) {
+                return -1;
+            }
+            if (kind == LEFT_PAREN) {
+                depth++;
+            } else if (kind == RIGHT_PAREN) {
+                depth--;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    private int tokenAfterDeclarationQualifiers() {
+        int i = 1;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT || kind == SUBROUTINE && getToken(i + 1).kind == LEFT_PAREN) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return -1;
+                }
+            } else if (kind == SUBROUTINE || isSimpleQualifierKind(kind)) {
+                i++;
+            } else {
+                return i;
+            }
         }
     }
 
@@ -311,7 +395,7 @@ public class GLSLResourceParser {
         return Character.isLetterOrDigit(c) || c == '_';
     }
 
-    private void skipExternalDeclaration(int firstKind) {
+    private boolean skipExternalDeclaration(int firstKind) {
         int parenDepth = 0;
         int bracketDepth = 0;
         int braceDepth = 0;
@@ -344,15 +428,15 @@ public class GLSLResourceParser {
                     if (getToken(1).kind == SEMICOLON) {
                         getNextToken();
                     }
-                    return;
+                    return true;
                 }
             } else if (kind == SEMICOLON && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
-                return;
+                return true;
             }
 
             kind = getToken(1).kind;
             if (kind == EOF) {
-                return;
+                return false;
             }
             getNextToken();
         }
@@ -408,6 +492,8 @@ TOKEN :
 |   < LOWP: "lowp" >
 |   < TRUE: "true" >
 |   < FALSE: "false" >
+|   < PRECISION: "precision" >
+|   < SUBROUTINE: "subroutine" >
 }
 
 TOKEN :
@@ -456,6 +542,20 @@ ASTTranslationUnit TranslationUnit() #TranslationUnit :
     |
         LOOKAHEAD({ isStructDeclarationAhead() })
         StructDeclaration()
+    |
+        LOOKAHEAD(1) PrecisionDeclaration()
+    |
+        LOOKAHEAD({ isSubroutineDeclarationAhead(true) })
+        SubroutineFunctionDeclaration()
+    |
+        LOOKAHEAD({ isSubroutineDeclarationAhead(false) })
+        SubroutineTypeDeclaration()
+    |
+        LOOKAHEAD({ isQualifierDeclarationAhead() })
+        QualifierDeclaration()
+    |
+        LOOKAHEAD({ isVariableDeclarationAhead() })
+        VariableDeclaration()
     |
         SkipExternalDeclaration()
     )*
@@ -553,6 +653,8 @@ void Qualifier() #void :
 {}
 {
     LayoutQualifier()
+|
+    SubroutineQualifier()
 |
     StorageQualifier()
 |
@@ -700,6 +802,108 @@ void StructName() #StructName :
     { jjtThis.jjtSetValue(name.image); }
 }
 
+void VariableDeclaration() #VariableDeclaration :
+{}
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    DeclaratorList()
+    <SEMICOLON>
+}
+
+void QualifierDeclaration() #QualifierDeclaration :
+{}
+{
+    ( Qualifier() )+
+    [ MemberDeclaratorList() ]
+    <SEMICOLON>
+}
+
+void PrecisionDeclaration() #PrecisionDeclaration :
+{ Token precision; }
+{
+    <PRECISION>
+    ( precision = <HIGHP> | precision = <MEDIUMP> | precision = <LOWP> )
+    { jjtThis.jjtSetValue(precision.image); }
+    TypeSpecifier()
+    <SEMICOLON>
+}
+
+void SubroutineTypeDeclaration() #SubroutineTypeDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    FunctionName()
+    <LEFT_PAREN> ParameterList() <RIGHT_PAREN>
+    <SEMICOLON>
+}
+
+void SubroutineFunctionDeclaration() #SubroutineFunctionDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    FunctionName()
+    <LEFT_PAREN> ParameterList() <RIGHT_PAREN>
+    (
+        <LEFT_BRACE>
+        {
+            if (!skipExternalDeclaration(LEFT_BRACE)) {
+                throw new ParseException("Unterminated subroutine function body.");
+            }
+            jjtThis.jjtSetLastToken(getToken(0));
+            jjtThis.jjtSetValue(Boolean.TRUE);
+        }
+    |
+        <SEMICOLON>
+        { jjtThis.jjtSetValue(Boolean.FALSE); }
+    )
+}
+
+void ParameterList() #void :
+{}
+{
+    [
+        LOOKAHEAD({ getToken(1).kind == IDENTIFIER && getToken(1).image.equals("void")
+                && getToken(2).kind == RIGHT_PAREN })
+        <IDENTIFIER>
+    |
+        Parameter() ( <COMMA> Parameter() )*
+    ]
+}
+
+void Parameter() #Parameter :
+{ Token name = null; }
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    [ name = <IDENTIFIER> [ ArraySpecifier() ] ]
+    { if (name != null) { jjtThis.jjtSetValue(name.image); } }
+}
+
+void FunctionName() #FunctionName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void SubroutineQualifier() #Qualifier :
+{}
+{
+    <SUBROUTINE>
+    [ <LEFT_PAREN> SubroutineTypeName() ( <COMMA> SubroutineTypeName() )* <RIGHT_PAREN> ]
+    { jjtThis.jjtSetValue("subroutine"); }
+}
+
+void SubroutineTypeName() #SubroutineTypeName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
 void SkipExternalDeclaration() #void :
 { Token first; }
 {
@@ -713,6 +917,8 @@ Token AnyToken() #void :
     (
         token = <LAYOUT>
     |   token = <STRUCT>
+    |   token = <PRECISION>
+    |   token = <SUBROUTINE>
     |   token = <UNIFORM>
     |   token = <BUFFER>
     |   token = <CONST>
