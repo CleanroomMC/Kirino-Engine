@@ -99,13 +99,13 @@ public final class MinecraftResourceUtils {
      * It finds the absolute path for resources inside the dev env.
      *
      * <p>Note: It's only able to find a subset of dev env resources:
-     * <code>forge</code> and <code>kirino</code> resources including test data to be exact.</p>
+     * <code>forge</code>, <code>kirino</code> and <code>cleanroom</code> resources including test data to be exact.</p>
      */
     @Nullable
     private static String findResourceDevEnv(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
-        Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino"),
-                "Provided ResourceLocation \"%s\" must either be \"forge\" or \"kirino\" namespace.", rl.toString());
+        Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino") || rl.getNamespace().equals("cleanroom"),
+                "Provided ResourceLocation \"%s\" must be \"forge\", \"kirino\" or \"cleanroom\" namespace.", rl.toString());
 
         File repo = findCleanroomRoot();
         Preconditions.checkNotNull(repo);
@@ -116,18 +116,10 @@ public final class MinecraftResourceUtils {
         File resources4 = new File(repo, "module/kirino/src/test/resources/assets/kirino");
         File resources5 = new File(repo, "module/cleanroom/src/main/resources/assets/cleanroom");
         File resources6 = new File(repo, "module/cleanroom/src/test/resources/assets/cleanroom");
-        Preconditions.checkState(resources1.exists() &&
-                        resources1.isDirectory() &&
-                        resources2.exists() &&
+
+        Preconditions.checkState(resources1.isDirectory() &&
                         resources2.isDirectory() &&
-                        resources3.exists() &&
-                        resources3.isDirectory() &&
-                        resources4.exists() &&
-                        resources4.isDirectory() &&
-                        resources5.exists() &&
-                        resources5.isDirectory() &&
-                        resources6.exists() &&
-                        resources6.isDirectory(),
+                        resources5.isDirectory(),
                 "This is not the dev env.");
 
         String target = rl.getPath();
