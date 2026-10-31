@@ -369,7 +369,9 @@ public final class ConstantExpressions {
                 return Kind.valueOf(name.toUpperCase(java.util.Locale.ROOT));
             }
 
-            if ((name.equals("abs") || name.equals("sign")) && arguments.size() == 1 && arguments.getFirst().kind() == Kind.INT) {
+            if ((name.equals("abs") || name.equals("sign"))
+                    && arguments.size() == 1
+                    && arguments.getFirst().kind() == Kind.INT) {
                 return Kind.INT;
             }
 
