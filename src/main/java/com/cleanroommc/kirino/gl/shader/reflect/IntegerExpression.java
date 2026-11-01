@@ -23,4 +23,9 @@ public record IntegerExpression(@NonNull String expression, @Nullable Long value
 
         return value;
     }
+
+    @NonNull
+    public static IntegerExpression literal(long value) {
+        return new IntegerExpression(Long.toString(value), value);
+    }
 }

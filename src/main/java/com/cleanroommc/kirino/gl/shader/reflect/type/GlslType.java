@@ -36,4 +36,27 @@ public sealed interface GlslType permits
         }
         return Optional.of(current);
     }
+
+    @NonNull
+    default GlslType base() {
+        GlslType type = this;
+        while (type instanceof ArrayType array) {
+            type = array.elementType();
+        }
+        return type;
+    }
+
+    static boolean sameType(@NonNull GlslType left, @NonNull GlslType right) {
+        Preconditions.checkNotNull(left);
+        Preconditions.checkNotNull(right);
+
+        if (left instanceof ArrayType(GlslType elementType, ArrayExtent extent) && right instanceof ArrayType(GlslType elementType1, ArrayExtent extent1)) {
+            return sameType(elementType, elementType1)
+                    && (extent.length().isEmpty()
+                            || extent1.length().isEmpty()
+                            || extent.length().getAsLong() == extent1.length().getAsLong());
+        }
+
+        return left.equals(right);
+    }
 }

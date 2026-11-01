@@ -62,6 +62,18 @@ public final class ConstantExpressions {
         return new IntegerExpression(expression, value == null || value.kind() == Kind.BOOL ? null : value.number());
     }
 
+    @Nullable
+    public IntegerExpression add(@Nullable IntegerExpression left, @NonNull String right) {
+        Preconditions.checkNotNull(right);
+
+        return left == null ? null : expression("(" + left.expression() + ")+(" + right + ")");
+    }
+
+    @Nullable
+    public IntegerExpression round(@Nullable IntegerExpression value, int alignment) {
+        return value == null ? null : expression("((" + value.expression() + ")+" + (alignment - 1) + ")/" + alignment + "*" + alignment);
+    }
+
     public ConstantExpressions(@NonNull ShaderMeta meta) {
         Preconditions.checkNotNull(meta);
 
