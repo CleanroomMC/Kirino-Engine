@@ -117,11 +117,12 @@ final class ShaderSemantics {
                             effectiveLayout = effectiveLayout.withOffset(atomicOffset);
 
                             StringBuilder count = new StringBuilder("1");
-                            while (type instanceof ArrayType(GlslType elementType, ArrayExtent extent)) {
+                            GlslType current = type;
+                            while (current instanceof ArrayType(GlslType elementType, ArrayExtent extent)) {
                                 Preconditions.checkArgument(extent.size() != null, "An atomic counter array must be sized.");
 
                                 count.append("*(").append(extent.size().expression()).append(')');
-                                type = elementType;
+                                current = elementType;
                             }
 
                             atomicOffset = expressions.expression("(" + atomicOffset.expression() + ")+4*(" + count.toString() + ")");

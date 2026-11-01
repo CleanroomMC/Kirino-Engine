@@ -13,6 +13,7 @@ import com.cleanroommc.kirino.gl.shader.reflect.resource.StorageType;
 import com.cleanroommc.kirino.gl.shader.reflect.resource.Uniform;
 import com.cleanroommc.kirino.gl.shader.reflect.resource.Variable;
 import com.cleanroommc.kirino.gl.shader.reflect.type.ArrayType;
+import com.cleanroommc.kirino.gl.shader.reflect.type.AtomicCounterType;
 import com.cleanroommc.kirino.gl.shader.reflect.type.ImageType;
 import com.cleanroommc.kirino.gl.shader.reflect.type.ScalarType;
 import com.cleanroommc.kirino.gl.shader.reflect.type.VectorType;
@@ -168,6 +169,48 @@ class ShaderSemanticsTest {
 
         assertEquals(16, layout.alignment());
         assertEquals(80, layout.size());
+    }
+
+    @Test
+    void testAtomicCounters() {
+        ShaderSemantics semantics = semantics("""
+                layout(binding = 0) uniform atomic_uint counters[4], afterArray;
+                layout(binding = 0) uniform atomic_uint grid[2][3];
+                layout(binding = 0) uniform atomic_uint afterGrid;
+                layout(binding = 1) uniform atomic_uint independent;
+                """, ShaderType.FRAGMENT);
+
+        Uniform counters = semantics.uniforms.get("counters");
+        assertNotNull(counters);
+        assertEquals(StorageType.ATOMIC_COUNTER, counters.storageType());
+        ArrayType array = assertInstanceOf(ArrayType.class, counters.type());
+        assertEquals(4, array.extent().length().orElseThrow());
+        assertEquals(AtomicCounterType.INSTANCE, array.elementType());
+
+        Uniform grid = semantics.uniforms.get("grid");
+        assertNotNull(grid);
+        ArrayType outer = assertInstanceOf(ArrayType.class, grid.type());
+        ArrayType inner = assertInstanceOf(ArrayType.class, outer.elementType());
+        assertEquals(2, outer.extent().length().orElseThrow());
+        assertEquals(3, inner.extent().length().orElseThrow());
+        assertEquals(AtomicCounterType.INSTANCE, inner.elementType());
+
+        String[] names = {"counters", "afterArray", "grid", "afterGrid", "independent"};
+        long[] expectedOffsets = {0, 16, 20, 44, 0};
+        for (int i = 0; i < names.length; i++) {
+            Uniform uniform = semantics.uniforms.get(names[i]);
+            assertNotNull(uniform);
+            assertNotNull(uniform.layout().offset());
+            assertEquals(expectedOffsets[i], uniform.layout().offset().requireValue(), names[i]);
+        }
+
+        Uniform afterArray = semantics.uniforms.get("afterArray");
+        assertNotNull(afterArray);
+        assertEquals(AtomicCounterType.INSTANCE, afterArray.type());
+
+        Uniform afterGrid = semantics.uniforms.get("afterGrid");
+        assertNotNull(afterGrid);
+        assertEquals(AtomicCounterType.INSTANCE, afterGrid.type());
     }
 
     @Test
