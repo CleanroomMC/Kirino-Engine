@@ -131,7 +131,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
     @Override
     public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
         Preconditions.checkState(pass == 0 || pass == 1 || pass == 2,
-                "Invalid pass number %d. Must be either 0 or 1 or 2.", pass);
+                "Invalid pass number %s. Must be either 0 or 1 or 2.", pass);
 
         if (!isDirtyArray.getBool(index)) {
             return;
@@ -188,11 +188,11 @@ public class ChunkMeshletGenJob implements ParallelJob {
      */
     boolean blockExists(ChunkCluster chunkCluster, int x, int y, int z) {
         Preconditions.checkArgument(x >= -1 && x <= 16,
-                "Argument \"x\"=%d must be between [-1, 16].", x);
+                "Argument \"x\"=%s must be between [-1, 16].", x);
         Preconditions.checkArgument(y >= -1 && y <= 16,
-                "Argument \"y\"=%d must be between [-1, 16].", y);
+                "Argument \"y\"=%s must be between [-1, 16].", y);
         Preconditions.checkArgument(z >= -1 && z <= 16,
-                "Argument \"z\"=%d must be between [-1, 16].", z);
+                "Argument \"z\"=%s must be between [-1, 16].", z);
 
         if ((x == -1 || x == 16) && (y == -1 || y == 16) && (z == -1 || z == 16)) {
             return false;

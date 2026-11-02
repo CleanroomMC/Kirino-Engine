@@ -29,10 +29,15 @@ public class DefaultTextProducer implements SimpleTextProducer {
     /**
      * <p>Unit: Minecraft scaled resolution</p>
      */
-    private final static float STANDARD_GLYPH_SIZE = 7;
+    private final static float STANDARD_FONT_SIZE = 8.6f;
 
     private final SimpleTextRuntime context;
     private final int pixelSize;
+
+    /**
+     * <p>Unit: Minecraft scaled resolution</p>
+     */
+    private final float standardFontSize;
     private final TextCommandList cmdList = new TextCommandList(64);
 
     private boolean batching;
@@ -49,7 +54,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     /**
      * <p>Unit: Minecraft scaled resolution</p>
-     * <p>Note: Estimate under {@link #STANDARD_GLYPH_SIZE}.</p>
+     * <p>Note: Estimate under {@link #standardFontSize}.</p>
      */
     private float lineHeightEstimate;
 
@@ -65,19 +70,26 @@ public class DefaultTextProducer implements SimpleTextProducer {
             }
 
             GlyphMetrics metrics = context.getGlyphMetrics(glyph);
-            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), STANDARD_GLYPH_SIZE));
+            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), standardFontSize));
         });
 
         lineHeightEstimate = lineHeight[0] * 1.05f;
     }
 
     public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize) {
+        this(context, pixelSize, STANDARD_FONT_SIZE);
+    }
+
+    public DefaultTextProducer(@NonNull SimpleTextRuntime context, int pixelSize, float standardFontSize) {
         Preconditions.checkNotNull(context);
         Preconditions.checkState(context.getFont().type() == ST_FontBackendType.FREE_TYPE,
                 "Must have a FreeType backend context.");
+        Preconditions.checkArgument(standardFontSize > 0,
+                "Argument \"standardFontSize\"=%s must be positive.", standardFontSize);
 
         this.context = context;
         this.pixelSize = pixelSize;
+        this.standardFontSize = standardFontSize;
 
         estimateLineHeight();
     }
@@ -134,7 +146,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
 
     @Override
     public float standardFontSize() {
-        return STANDARD_GLYPH_SIZE;
+        return standardFontSize;
     }
 
     /**
@@ -152,10 +164,10 @@ public class DefaultTextProducer implements SimpleTextProducer {
             }
 
             GlyphMetrics metrics = context.getGlyphMetrics(glyph);
-            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), STANDARD_GLYPH_SIZE));
+            lineHeight[0] = Math.max(lineHeight[0], pixel2screen(metrics.getBearingY(), standardFontSize));
         });
 
-        return lineHeight[0] / STANDARD_GLYPH_SIZE * fontSize;
+        return lineHeight[0] / standardFontSize * fontSize;
     }
 
     public void beginBatch() {

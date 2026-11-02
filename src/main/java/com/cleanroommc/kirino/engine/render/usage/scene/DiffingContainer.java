@@ -43,7 +43,7 @@ public class DiffingContainer {
 
     public boolean updateForegroundRenderDis() {
         int renderDis = Minecraft.getMinecraft().gameSettings.renderDistanceChunks;
-        renderDis = Math.max(renderDis, KirinoConfig.NEEDS_RESTART.foregroundRenderDistance);
+        renderDis = Math.min(renderDis, KirinoConfig.NEEDS_RESTART.foregroundRenderDistance);
         if (oldForegroundRenderDis != renderDis) {
             oldForegroundRenderDis = renderDis;
             return true;

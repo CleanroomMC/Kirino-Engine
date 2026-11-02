@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -27,6 +28,7 @@ public class Stride {
         this.size = size;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public Stride push(@NonNull Slot slot) {
         Preconditions.checkNotNull(slot);

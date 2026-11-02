@@ -54,7 +54,8 @@ const uint TEXT_COLOR_PALETTE_32[32] = uint[32](
     0xFF0080u, // 30 rose
     0xFF80B5u);// 31 pink
 
-uint decodeTextColor(uint hint) {
+uint decodeTextColor(uint hint)
+{
     uint index = hint & 0x1Fu;
     return 0xFF000000u | TEXT_COLOR_PALETTE_32[index];
 }
@@ -90,7 +91,7 @@ float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, vec2 sizePx, float 
     float distancePx = length(pa - ba * h);
     float signedDistancePx = halfThicknessPx - distancePx;
 
-    return clamp(0.5 + signedDistancePx * (0.5 / sdfSpread), 0.0, 1.0);
+    return clamp(0.5 + signedDistancePx * (0.5 / float(sdfSpread)), 0.0, 1.0);
 }
 
 float lineSegmentSDF(vec2 localUV, vec2 localA, vec2 localB, float halfThicknessPx)
@@ -136,10 +137,10 @@ float sampleAtlas(vec2 atlasUV)
 vec4 unpackARGB(uint c)
 {
     return vec4(
-        ((c >> 16u) & 255u) / 255.0,
-        ((c >> 8u) & 255u) / 255.0,
-        (c & 255u) / 255.0,
-        ((c >> 24u) & 255u) / 255.0);
+        float((c >> 16u) & 255u) / 255.0,
+        float((c >> 8u) & 255u) / 255.0,
+        float(c & 255u) / 255.0,
+        float((c >> 24u) & 255u) / 255.0);
 }
 
 float sampleGlyphLocal(vec2 localUV)
@@ -444,31 +445,40 @@ float obfuscatedShadowMask(vec2 atlasUV, float edge, float w)
 float directionalShadow(bool enableObfuscated, vec2 atlasUV, vec2 texel, float fillEdge, float w)
 {
     const vec2 SHADOW_DIR = normalize(vec2(1.0, 1.0));
-    const int SHADOW_STEPS = 6;
+    const float SHADOW_LENGTH = 6.0;
 
-    float shadow = 0.0;
+    int shadowSteps = enableObfuscated ? 5 : 20;
+    float stepSize = (SHADOW_LENGTH - 1.0) / float(shadowSteps);
+    vec2 sideUV = vec2(-SHADOW_DIR.y, SHADOW_DIR.x) * texel;
 
-    for (int i = 1; i <= SHADOW_STEPS; i++)
+    vec3 shadow = vec3(0.0);
+
+    for (int i = 0; i <= shadowSteps; i++)
     {
-        vec2 shadowUV = atlasUV - SHADOW_DIR * texel * float(i);
+        float shadowDistance = 1.0 + float(i) * stepSize;
+        vec2 shadowUV = atlasUV - SHADOW_DIR * texel * shadowDistance;
 
-        float mask;
+        vec3 mask;
         if (enableObfuscated)
         {
-            mask = obfuscatedShadowMask(shadowUV, fillEdge, w);
+            mask = vec3(obfuscatedShadowMask(shadowUV, fillEdge, w));
         }
         else
         {
-            float dist = sampleAtlas(shadowUV);
-            mask = smoothstep(fillEdge - w, fillEdge + w, dist);
+            vec3 dist = vec3(
+                sampleAtlas(shadowUV),
+                sampleAtlas(shadowUV - sideUV),
+                sampleAtlas(shadowUV + sideUV));
+            vec3 width = max(fwidth(dist), vec3(0.001));
+            mask = smoothstep(vec3(fillEdge) - width, vec3(fillEdge) + width, dist);
         }
 
-        float t = float(i - 1) / float(max(SHADOW_STEPS - 1, 1));
+        float t = clamp((shadowDistance - 1.0) / (SHADOW_LENGTH - 1.0), 0.0, 1.0);
         float weight = mix(1.0, 0.55, pow(t, 1.5));
         shadow = max(shadow, mask * weight);
     }
 
-    return shadow;
+    return max(shadow.x, min(shadow.y, shadow.z));
 }
 
 void main()
@@ -480,7 +490,7 @@ void main()
 
     vec4 color = unpackARGB(Color);
     vec4 outlineColor = enableOutline ? vec4(unpackARGB(decodeTextColor(Hint)).xyz, color.a) : vec4(0.0, 0.0, 0.0, color.a);
-    vec4 shadowColor = vec4(0.0, 0.0, 0.0, color.a * 0.75);
+    vec4 shadowColor = vec4(0.0, 0.0, 0.0, color.a * 0.525);
     float boldness = enableBold ? 0.1 : 0.0;
 
     vec2 texel = 1.0 / vec2(textureSize(atlas, 0).xy);

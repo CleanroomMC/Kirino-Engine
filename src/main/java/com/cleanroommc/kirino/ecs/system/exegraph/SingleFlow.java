@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ecs.system.exegraph;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
 import com.google.common.base.Preconditions;
@@ -27,6 +28,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             nodes.put(END_NODE, new BarrierNode(END_NODE, null));
         }
 
+        @CanIgnoreReturnValue
         @Override
         public @NonNull Builder<SingleFlow<TSys>> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback) {
             Preconditions.checkNotNull(nodeID);
@@ -39,6 +41,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             return this;
         }
 
+        @CanIgnoreReturnValue
         @Override
         public @NonNull Builder<SingleFlow<TSys>> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID) {
             Preconditions.checkNotNull(fromNodeID);
@@ -47,6 +50,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             return addTransitionInternal(null, fromNodeID, toNodeID);
         }
 
+        @CanIgnoreReturnValue
         @SuppressWarnings("unchecked")
         @Override
         public @NonNull Builder<SingleFlow<TSys>> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID) {
@@ -62,6 +66,7 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             return addTransitionInternal(system, fromNodeID, toNodeID);
         }
 
+        @CanIgnoreReturnValue
         private @NonNull Builder<SingleFlow<TSys>> addTransitionInternal(@Nullable CleanSystem task, String fromNodeID, String toNodeID) {
             BarrierNode from = nodes.get(fromNodeID);
             BarrierNode to = nodes.get(toNodeID);
@@ -72,18 +77,21 @@ public class SingleFlow<TSys extends CleanSystem> extends AbstractFlow {
             return this;
         }
 
+        @CanIgnoreReturnValue
         @Override
         public @NonNull Builder<SingleFlow<TSys>> setStartNodeCallback(@Nullable Runnable callback) {
             nodes.get(START_NODE).callback = callback;
             return this;
         }
 
+        @CanIgnoreReturnValue
         @Override
         public @NonNull Builder<SingleFlow<TSys>> setEndNodeCallback(@Nullable Runnable callback) {
             nodes.get(END_NODE).callback = callback;
             return this;
         }
 
+        @CanIgnoreReturnValue
         @Override
         public @NonNull Builder<SingleFlow<TSys>> setFinishCallback(@Nullable Runnable callback) {
             finishCallback = callback;

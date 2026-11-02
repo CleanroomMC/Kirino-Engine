@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ecs.system.exegraph;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
@@ -67,6 +68,7 @@ public interface SystemExeFlowGraph {
          * @implNote Check the precondition that <code>nodeID</code> isn't {@link #START_NODE} or {@link #END_NODE}
          * @param nodeID The node ID
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> addBarrierNode(@NonNull String nodeID, @Nullable Runnable callback);
 
@@ -74,6 +76,7 @@ public interface SystemExeFlowGraph {
          * A dummy version of {@link #addTransition(CleanSystem, String, String)}.
          * No system will be executed but you can still have callbacks.
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> addDummyTransition(@NonNull String fromNodeID, @NonNull String toNodeID);
 
@@ -85,6 +88,7 @@ public interface SystemExeFlowGraph {
          * @param fromNodeID From
          * @param toNodeID To
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> addTransition(@NonNull CleanSystem task, @NonNull String fromNodeID, @NonNull String toNodeID);
 
@@ -93,6 +97,7 @@ public interface SystemExeFlowGraph {
          *
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> setStartNodeCallback(@Nullable Runnable callback);
 
@@ -101,6 +106,7 @@ public interface SystemExeFlowGraph {
          *
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> setEndNodeCallback(@Nullable Runnable callback);
 
@@ -111,6 +117,7 @@ public interface SystemExeFlowGraph {
          *
          * <p>A <code>null</code> callback clears the current callback.</p>
          */
+        @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> setFinishCallback(@Nullable Runnable callback);
 

@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.pipeline.draw.cmd;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.schemata.pool.ThreadSafeGenPool;
 import org.jspecify.annotations.NonNull;
@@ -83,6 +84,7 @@ public final class LowLevelDC implements DrawCommand {
 
     // ========== filler methods ==========
 
+    @CanIgnoreReturnValue
     public LowLevelDC fillElement(int vao, int mode, int indicesCount, int elementType, int eboOffset) {
         this.type = DrawType.ELEMENTS;
         this.vao = vao;
@@ -93,6 +95,7 @@ public final class LowLevelDC implements DrawCommand {
         return this;
     }
 
+    @CanIgnoreReturnValue
     public LowLevelDC fillElementInstanced(int vao, int mode, int indicesCount, int elementType, int eboOffset, int instanceCount) {
         this.type = DrawType.ELEMENTS_INSTANCED;
         this.vao = vao;
@@ -104,6 +107,7 @@ public final class LowLevelDC implements DrawCommand {
         return this;
     }
 
+    @CanIgnoreReturnValue
     public LowLevelDC fillMultiElementIndirect(int vao, int idb, int mode, int elementType, int idbOffset, int idbStride, int instanceCount) {
         this.type = DrawType.MULTI_ELEMENTS_INDIRECT;
         this.vao = vao;
@@ -116,6 +120,7 @@ public final class LowLevelDC implements DrawCommand {
         return this;
     }
 
+    @CanIgnoreReturnValue
     public LowLevelDC fillMultiElementIndirectUnit(int vao, int mode, int elementType, int idIndicesCount, int idInstanceCount, int idEboFirstIndex, int idBaseVertex, int idBaseInstance) {
         this.type = DrawType.MULTI_ELEMENTS_INDIRECT_UNIT;
         this.vao = vao;

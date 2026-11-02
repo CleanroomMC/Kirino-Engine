@@ -15,10 +15,10 @@ out vec4 FragColor;
 vec4 unpackARGB(uint c)
 {
     return vec4(
-        ((c >> 16u) & 255u) / 255.0,
-        ((c >> 8u) & 255u) / 255.0,
-        (c & 255u) / 255.0,
-        ((c >> 24u) & 255u) / 255.0);
+        float((c >> 16u) & 255u) / 255.0,
+        float((c >> 8u) & 255u) / 255.0,
+        float(c & 255u) / 255.0,
+        float((c >> 24u) & 255u) / 255.0);
 }
 
 uint hashUint(uint x)
@@ -106,7 +106,7 @@ float lineSegmentSDF(vec2 localP, vec2 localA, vec2 localB, float halfThicknessP
     float distancePx = length(pa - ba * h);
     float signedDistancePx = halfThicknessPx - distancePx;
 
-    return clamp(0.5 + signedDistancePx * (0.5 / sdfSpread), 0.0, 1.0);
+    return clamp(0.5 + signedDistancePx * (0.5 / float(sdfSpread)), 0.0, 1.0);
 }
 
 vec2 mirrorGlyphAcrossAxis(vec2 localP, vec2 axis)

@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.schemata.semantic.morph;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItem;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItemType;
 import com.cleanroommc.kirino.schemata.semantic.space.SpaceSet;
@@ -45,6 +46,7 @@ public abstract class BijectiveMapFunction {
      * @param func A function that maps one {@link SpaceItem} to another
      * @return Itself
      */
+    @CanIgnoreReturnValue
     protected final BijectiveMapFunction setFunc(Function<SpaceItem, SpaceItem> func) {
         this.func = func;
         valid = true;

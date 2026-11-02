@@ -88,10 +88,10 @@ out flat float TotalLineLength;
 vec4 unpackARGB(uint c)
 {
     return vec4(
-        ((c >> 16u) & 255u) / 255.0,
-        ((c >> 8u) & 255u) / 255.0,
-        (c & 255u) / 255.0,
-        ((c >> 24u) & 255u) / 255.0);
+        float((c >> 16u) & 255u) / 255.0,
+        float((c >> 8u) & 255u) / 255.0,
+        float(c & 255u) / 255.0,
+        float((c >> 24u) & 255u) / 255.0);
 }
 
 vec2 res2Ndc(vec2 res, vec2 p)

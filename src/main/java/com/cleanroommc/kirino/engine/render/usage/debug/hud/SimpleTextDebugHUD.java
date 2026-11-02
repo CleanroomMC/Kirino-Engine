@@ -98,6 +98,7 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
         if (ICS.instance().textVanillaAvailable()) {
             ICS.instance().textVanilla()
                     .begin()
+                    .append("Shadow OFF", 310, 20)
                     .appendParagraphStyled(
                             new StyledText("Hello world,\nthis is a styled paragraph wrapping test. " +
                                     "这是一个用于测试自动换行的中文段落，包含逗号、句号，以及一些比较长的内容。" +
@@ -109,34 +110,5 @@ public class SimpleTextDebugHUD implements ImmediateHUD {
                             80)
                     .endDraw();
         }
-
-//        ICS.instance().text()
-//                .begin()
-//                .appendStyled(new StyledText("abc §b[bold]§ def"), 310, 30)
-//                .appendBelowStyled(new StyledText("§b[bold §i[italic]§ bold]§"))
-//                .appendBelowStyled(new StyledText("[ abc[def"))
-//                .appendBelowStyled(new StyledText("] abc]def"))
-//                .appendBelowStyled(new StyledText("[abc] [] ]["))
-//                .appendBelowStyled(new StyledText("abc\\§def"))
-//                .appendBelowStyled(new StyledText("\\ abc\\\\def"))
-//                .appendBelowStyled(new StyledText("]§ abc]\\§def"))
-//                .appendBelowStyled(new StyledText("[abc\\😀def"))
-//                .appendBelowStyled(new StyledText("\\: abc\\"))
-//                .appendBelowStyled(new StyledText("A §b[B §i[C]§ B]§ A"))
-//                .appendBelowStyled(new StyledText("§u;uc=red[red underline]§ normal"))
-//                .appendBelowStyled(new StyledText("§oc=invalid;b[should be bold]§"))
-//                .appendBelowStyled(new StyledText("§c=rgb(10;200;30)[valid]§ §c=rgb(nope;40;50)[must not become 10,40,50]§"))
-//                .appendBelowStyled(new StyledText("§c=rgb(256;0;0)[invalid]§"))
-//                .appendBelowStyled(new StyledText("§c=rgb(-1;0;0)[invalid]§"))
-//                .appendBelowStyled(new StyledText("abc§"))
-//                .appendBelowStyled(new StyledText("abc§b"))
-//                .appendBelowStyled(new StyledText("abc§c=red"))
-//                .appendBelowStyled(new StyledText("abc§c=#FF0000"))
-//                .appendBelowStyled(new StyledText("abc§c=rgb(255;0;0"))
-//                .appendBelowStyled(new StyledText("abc§uc=red]123"))
-//                .appendBelowStyled(new StyledText("]\\§abc [\\§abc"))
-//                .appendBelowStyled(new StyledText("]\\§abc [\\\\§abc"))
-//                .appendBelowStyled(new StyledText("\\§b[no longer styled]\\§"))
-//                .endDraw();
     }
 }

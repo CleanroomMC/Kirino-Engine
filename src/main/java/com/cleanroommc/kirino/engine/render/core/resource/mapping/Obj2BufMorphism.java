@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.resource.mapping;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItem;
 import com.cleanroommc.kirino.schemata.semantic.entity.SpaceItemType;
 import com.cleanroommc.kirino.schemata.semantic.morph.BijectiveMapFunction;
@@ -26,11 +27,13 @@ public class Obj2BufMorphism extends Morphism {
         turnOffValidation();
     }
 
+    @CanIgnoreReturnValue
     public Obj2BufMorphism update(Consumer<SpaceSet> action) {
         modifyDomain(action);
         return this;
     }
 
+    @CanIgnoreReturnValue
     public Obj2BufMorphism build() {
         mapAndCache();
         return this;

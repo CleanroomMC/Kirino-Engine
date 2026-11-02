@@ -1,11 +1,14 @@
 package com.cleanroommc.kirino;
 
+import com.cleanroommc.anone.lifecycle.MustNotClose;
+import com.cleanroommc.cleanroom.cache.Cache;
 import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.cleanroommc.kirino.gl.vao.VAO;
 import com.cleanroommc.kirino.gl.vao.attribute.AttributeLayout;
 import com.cleanroommc.kirino.gl.vao.attribute.Stride;
+import com.cleanroommc.kirino.ui.font.KirinoFont;
 import com.cleanroommc.kirino.ui.font.McTtfFontManager;
 import com.cleanroommc.kirino.ui.simplegui.SimpleGuiRuntime;
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
@@ -17,6 +20,7 @@ import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.mcttf.glyph.GlyphBuilder;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.*;
@@ -24,12 +28,16 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.util.freetype.FT_Face;
 import org.lwjgl.util.freetype.FreeType;
 
+import java.io.IOException;
 import java.lang.invoke.MethodHandle;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -43,6 +51,9 @@ import java.util.concurrent.TimeUnit;
 public final class ImmediateClientServices {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino ICS");
+
+    private static final ResourceLocation FALLBACK_TEXT_FONT =
+            new ResourceLocation("kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf");
 
     private static final ImmediateClientServices INSTANCE = new ImmediateClientServices();
 
@@ -122,6 +133,7 @@ public final class ImmediateClientServices {
      * <p>Note: This is supposed to be and must be the first {@link ImmediateClientServices} call and
      * must be the call that triggers class loading.</p>
      */
+    @ApiStatus.Internal
     public static void initAndWarmUp(
             @NonNull IReloadableResourceManager resourceManager) {
 
@@ -131,7 +143,7 @@ public final class ImmediateClientServices {
                 "Minecraft resource manager is supposed to be ready.");
         Preconditions.checkState(resourceManager == Minecraft.getMinecraft().getResourceManager());
 
-        LOGGER.info("The first launch typically takes longer...");
+        LOGGER.info("INITIALIZING. The first launch typically takes longer...");
 
         StopWatch stopWatch = StopWatch.createStarted();
 
@@ -146,6 +158,9 @@ public final class ImmediateClientServices {
 
         // register reload listener only if text vanilla is enabled
         if (!INSTANCE.disableTextRuntimeVanilla) {
+            // this will be skipped for
+            // - the immediate initial callback
+            // - the first reload callback when the resource manager initializes (presumably during GL shared context)
             resourceManager.registerReloadListener(new McFontReloadListener(
                     INSTANCE,
                     resourceManager));
@@ -167,6 +182,7 @@ public final class ImmediateClientServices {
      * <p>Note: This is accessed by hooks. Must not be called by clients!</p>
      * <p>Note: It'll be called right after the Splash process.</p>
      */
+    @ApiStatus.Internal
     public static void refreshMcFontIfNeeded() {
         if (INSTANCE.disableTextRuntimeVanilla) {
             return;
@@ -271,6 +287,12 @@ public final class ImmediateClientServices {
             Preconditions.checkNotNull(dummyVao);
 
             guiRuntime = new SimpleGuiRuntime(shaderAccess, dummyVao);
+        } else {
+            guiRuntime = null;
+        }
+
+        if (guiRuntime != null) {
+            Path textFont = fetchTextFont();
 
             ST_Config config = new ST_Config(
                     ST_FontBackendType.FREE_TYPE,
@@ -281,9 +303,9 @@ public final class ImmediateClientServices {
 
             textRuntime = new SimpleTextRuntime(
                     (rl, cfg) -> {
-                        Preconditions.checkNotNull(rl);
-
-                        FT_Face face = freeTypeManager.load(rl, 0, cfg.pixelSize());
+                        FT_Face face = textFont != null
+                                ? freeTypeManager.load(textFont, 0, cfg.pixelSize())
+                                : freeTypeManager.load(FALLBACK_TEXT_FONT, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
                     (context) -> new DefaultTextRenderer(
@@ -296,15 +318,51 @@ public final class ImmediateClientServices {
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     config,
-                    new ResourceLocation("kirino:fonts/source_han_sans/source_han_sans_hw_vf.ttf"));
+                    null);
         } else {
-            guiRuntime = null;
             textRuntime = null;
         }
 
         ShutdownManager.register(this::dispose);
 
         LOGGER.info("Finished constructing ImmediateClientServices.");
+    }
+
+    @Nullable
+    private static Path fetchTextFont() {
+        Path marker = Cache.global()
+                .namespace("kirino")
+                .root()
+                .resolve("fonts/cdn_failed");
+
+        if (Files.exists(marker)) {
+            LOGGER.info("Skipping font download due to a previous failure.");
+            return null;
+        }
+
+        LOGGER.info("Preparing the built-in font. The initial download takes longer.");
+
+        StopWatch stopWatch = StopWatch.createStarted();
+        boolean failed = false;
+
+        try {
+            return KirinoFont.SOURCE_HAN_SANS_HW.fetch();
+        } catch (IOException e) {
+            failed = true;
+            LOGGER.warn("Failed to fetch the text runtime font, falling back to the bundled font without CJK glyphs.", e);
+
+            try {
+                Files.createDirectories(marker.getParent());
+                Files.createFile(marker);
+            } catch (IOException ex) {
+                LOGGER.warn("Failed to create font download failure marker.", ex);
+            }
+
+            return null;
+        } finally {
+            stopWatch.stop();
+            LOGGER.info("Finished preparing the built-in font {}. Time taken: {}ms.", failed ? "(Failed)" : "(Successful)", stopWatch.getTime(TimeUnit.MILLISECONDS));
+        }
     }
 
     /**
@@ -314,6 +372,7 @@ public final class ImmediateClientServices {
      * <p>Note: Never cache the result since backend instance might be replaced by reloading.</p>
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleTextRuntime textVanilla() {
         Preconditions.checkState(textRuntimeVanilla != null,
@@ -381,7 +440,8 @@ public final class ImmediateClientServices {
                         new Tex2DArrayGlyphAtlas(1024, 1024),
                         context.getShaderAccess(),
                         1024),
-                (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
+                // McTTF fonts are LINE_HEIGHT_PIXELS Minecraft pixels per em
+                (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                 shaderAccess,
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
@@ -439,6 +499,7 @@ public final class ImmediateClientServices {
      *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleTextRuntime text() {
         Preconditions.checkState(textRuntime != null,
@@ -458,6 +519,7 @@ public final class ImmediateClientServices {
      *
      * <p>Note: <i><b>This is a borrowed runtime. Must not <code>close</code>!</b></i></p>
      */
+    @MustNotClose
     @NonNull
     public SimpleGuiRuntime gui() {
         Preconditions.checkState(guiRuntime != null,

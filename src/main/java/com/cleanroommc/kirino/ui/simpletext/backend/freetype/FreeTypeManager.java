@@ -14,6 +14,8 @@ import org.lwjgl.util.freetype.FreeType;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -41,9 +43,9 @@ public final class FreeTypeManager {
 
     /**
      * <p>Note: Unlike buffers passed to <code>load(ByteBuffer)</code>,
-     * these buffers are owned by FreeTypeManager.</p>
+     * these buffers are owned by FreeTypeManager. Keys are {@link ResourceLocation}s or {@link Path}s.</p>
      */
-    private final Map<ResourceLocation, ByteBuffer> fontDataCache = new HashMap<>();
+    private final Map<Object, ByteBuffer> fontDataCache = new HashMap<>();
 
     /**
      * Can be called multiple times without crashing.
@@ -94,7 +96,17 @@ public final class FreeTypeManager {
         Preconditions.checkState(initialized, "Must be initialized.");
         Preconditions.checkNotNull(rl);
 
-        ByteBuffer fontBuffer = fontDataCache.computeIfAbsent(rl, FreeTypeManager::loadResource);
+        ByteBuffer fontBuffer = fontDataCache.computeIfAbsent(rl, _ -> loadResource(rl));
+
+        return load(fontBuffer, faceIndex, pixelSize);
+    }
+
+    @NonNull
+    public FT_Face load(@NonNull Path file, long faceIndex, int pixelSize) {
+        Preconditions.checkState(initialized, "Must be initialized.");
+        Preconditions.checkNotNull(file);
+
+        ByteBuffer fontBuffer = fontDataCache.computeIfAbsent(file, _ -> loadFile(file));
 
         return load(fontBuffer, faceIndex, pixelSize);
     }
@@ -298,6 +310,24 @@ public final class FreeTypeManager {
             return buffer;
         } catch (Throwable e) {
             throw new RuntimeException("Failed to load font resource: " + rl, e);
+        }
+    }
+
+    @NonNull
+    private static ByteBuffer loadFile(@NonNull Path file) {
+        try {
+            byte[] bytes = Files.readAllBytes(file);
+
+            Preconditions.checkState(bytes.length > 0,
+                    "Empty font file: %s", file);
+
+            ByteBuffer buffer = MemoryUtil.memAlloc(bytes.length);
+            buffer.put(bytes);
+            buffer.flip();
+
+            return buffer;
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to load font file: " + file, e);
         }
     }
 }

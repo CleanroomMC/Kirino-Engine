@@ -38,7 +38,7 @@ public class JobScheduler {
 
         if (!parallelJobExternalDataQueries.isEmpty()) {
             Preconditions.checkArgument(externalData != null,
-                    "Argument \"externalData\" must not be null since there are %d external data queries.", parallelJobExternalDataQueries.size());
+                    "Argument \"externalData\" must not be null since there are %s external data queries.", parallelJobExternalDataQueries.size());
             for (String key : parallelJobExternalDataQueries.keySet()) {
                 Preconditions.checkArgument(externalData.containsKey(key),
                         "Missing the entry \"%s\" from \"externalData\".", key);

@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -54,6 +55,7 @@ public class Slot {
     /**
      * @param divisor 0 for vertex data; 1 or more for instancing data
      */
+    @CanIgnoreReturnValue
     @NonNull
     public Slot setDivisor(int divisor) {
         Preconditions.checkArgument(divisor >= 0, "Divisor cannot be less than 0.");
@@ -62,6 +64,7 @@ public class Slot {
         return this;
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public Slot setInterpretationType(@NonNull InterpretationType type) {
         Preconditions.checkNotNull(type);
@@ -74,6 +77,7 @@ public class Slot {
      * This is only for {@link InterpretationType#TO_FLOAT_KIND}.
      * Especially for <code>byte -> float: ([0, 255] -> [0.0, 1.0])</code>.
      */
+    @CanIgnoreReturnValue
     @NonNull
     public Slot setNormalize(boolean flag) {
         normalize = flag;

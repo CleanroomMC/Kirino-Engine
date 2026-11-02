@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.gl.vao.attribute;
 
+import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
@@ -29,6 +30,7 @@ public class AttributeLayout {
         return strideStack.descendingIterator().next();
     }
 
+    @CanIgnoreReturnValue
     @NonNull
     public AttributeLayout push(@NonNull Stride stride) {
         Preconditions.checkNotNull(stride);
