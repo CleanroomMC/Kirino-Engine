@@ -22,11 +22,34 @@ public final class ShaderReflection {
     private final ShaderType stage;
     private final ShaderSemantics semantics;
 
+    private final ImmutableList<Uniform> atomicCounters;
+    private final ImmutableList<Uniform> subroutineUniforms;
+    private final ImmutableList<Variable> sharedVariables;
+    private final ImmutableList<SubroutineType> subroutineTypes;
+
     public ShaderReflection(@NonNull ShaderMeta shaderMeta) {
         Preconditions.checkNotNull(shaderMeta);
 
         stage = shaderMeta.shaderType;
         semantics = new ShaderSemantics(shaderMeta);
+
+        atomicCounters = uniforms()
+                .stream()
+                .filter(value -> value.storageType() == StorageType.ATOMIC_COUNTER)
+                .collect(ImmutableList.toImmutableList());
+        subroutineUniforms = uniforms()
+                .stream()
+                .filter(value -> value.storageType() == StorageType.SUBROUTINE_UNIFORM)
+                .collect(ImmutableList.toImmutableList());
+        sharedVariables = variables()
+                .stream()
+                .filter(value -> value.storageType() == StorageType.SHARED)
+                .collect(ImmutableList.toImmutableList());
+        subroutineTypes = types().types().values()
+                .stream()
+                .filter(SubroutineType.class::isInstance)
+                .map(SubroutineType.class::cast)
+                .collect(ImmutableList.toImmutableList());
     }
 
     @NonNull
@@ -53,18 +76,12 @@ public final class ShaderReflection {
 
     @NonNull
     public ImmutableList<Uniform> atomicCounters() {
-        return uniforms()
-                .stream()
-                .filter(value -> value.storageType() == StorageType.ATOMIC_COUNTER)
-                .collect(ImmutableList.toImmutableList());
+        return atomicCounters;
     }
 
     @NonNull
     public ImmutableList<Uniform> subroutineUniforms() {
-        return uniforms()
-                .stream()
-                .filter(value -> value.storageType() == StorageType.SUBROUTINE_UNIFORM)
-                .collect(ImmutableList.toImmutableList());
+        return subroutineUniforms;
     }
 
     @NonNull
@@ -153,10 +170,7 @@ public final class ShaderReflection {
 
     @NonNull
     public ImmutableList<Variable> sharedVariables() {
-        return variables()
-                .stream()
-                .filter(value -> value.storageType() == StorageType.SHARED)
-                .collect(ImmutableList.toImmutableList());
+        return sharedVariables;
     }
 
     @NonNull
@@ -183,11 +197,7 @@ public final class ShaderReflection {
 
     @NonNull
     public ImmutableList<SubroutineType> subroutineTypes() {
-        return types().types().values()
-                .stream()
-                .filter(SubroutineType.class::isInstance)
-                .map(SubroutineType.class::cast)
-                .collect(ImmutableList.toImmutableList());
+        return subroutineTypes;
     }
 
     @NonNull
