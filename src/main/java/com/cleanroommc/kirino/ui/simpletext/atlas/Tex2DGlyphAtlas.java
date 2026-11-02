@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ui.simpletext.atlas;
 
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -21,7 +20,7 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
     @Override
     public void close() {
         for (int i = 0; i < getPageCount(); i++) {
-            GLResourceManager.disposeEarly(getPage(i).texture);
+            getPage(i).texture.disposeManually();
         }
     }
 
@@ -30,7 +29,7 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
         Preconditions.checkNotNull(page);
 
         page.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
-        page.clearTexImage(0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, null);
+        page.highlevel().clearLevel(0);
         page.setCommonParams(FilterMode.LINEAR, FilterMode.LINEAR, WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE);
     }
 
@@ -43,16 +42,19 @@ public class Tex2DGlyphAtlas extends AbstractPagedAtlas<Texture2DAccessor, SDFBi
         Preconditions.checkArgument(slot.getHeight() == bitmap.height(),
                 "Slot height=%s must match bitmap height=%s.", slot.getHeight(), bitmap.height());
 
+        // potential stall; doesn't matter anyway
+        int previousUnpackAlignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT);
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        slot.getPage().texSubImage2D(
+        try {
+            slot.getPage().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
                 slot.getWidth(),
                 slot.getHeight(),
-                TextureFormat.R8_UNORM.format,
-                TextureFormat.R8_UNORM.type,
                 bitmap.byteBuffer());
-        GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
+        } finally {
+            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+        }
     }
 }

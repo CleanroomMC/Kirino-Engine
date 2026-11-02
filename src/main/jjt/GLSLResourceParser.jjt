@@ -1,0 +1,977 @@
+/*
+ * Resource-focused GLSL grammar for JJTree / JavaCC 7.
+ *
+ * This is a subset derived from the declaration, qualifier,
+ * type, array and struct rules in CleanroomMC/KSML-Compiler's GLSL grammar.
+ * It accepts a complete shader source and builds nodes only for
+ * resource declarations.
+ *
+ * The upstream GLSL grammar is distributed under the MIT License:
+ *
+ * Copyright (c) 2022 Mustafa Said Ağca
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+options {
+    STATIC = false;
+    UNICODE_INPUT = true;
+
+    MULTI = true;
+    VISITOR = true;
+    TRACK_TOKENS = true;
+    NODE_DEFAULT_VOID = true;
+    VISITOR_DATA_TYPE = "Void";
+    VISITOR_RETURN_TYPE = "Void";
+}
+
+PARSER_BEGIN(GLSLResourceParser)
+
+package com.cleanroommc.kirino.gl.shader.parser;
+
+public class GLSLResourceParser {
+
+    public record LayoutQualifierValue(String name, String expression) {
+    }
+
+    private record ResourcePrefix(int storageKind, int firstTokenAfterQualifiers) {
+    }
+
+    private boolean isGlobalLayoutDeclarationAhead() {
+        int i = 1;
+        boolean hasLayout = false;
+        boolean hasStorage = false;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return false;
+                }
+                hasLayout = true;
+            } else if (isGlobalLayoutStorageKind(kind) && !hasStorage) {
+                hasStorage = true;
+                i++;
+            } else {
+                return hasLayout && hasStorage && kind == SEMICOLON;
+            }
+        }
+    }
+
+    private boolean isInterfaceBlockAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null || !isInterfaceBlockStorageKind(prefix.storageKind)) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        return getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE;
+    }
+
+    private boolean isUniformDeclarationAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null || prefix.storageKind != UNIFORM) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        if (getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE) {
+            return false;
+        }
+
+        return getToken(i).kind == IDENTIFIER || getToken(i).kind == STRUCT;
+    }
+
+    private boolean isInputOutputDeclarationAhead() {
+        ResourcePrefix prefix = scanResourcePrefix();
+        if (prefix == null || !isInputOutputStorageKind(prefix.storageKind)) {
+            return false;
+        }
+
+        int i = prefix.firstTokenAfterQualifiers;
+        if (getToken(i).kind == IDENTIFIER && getToken(i + 1).kind == LEFT_BRACE) {
+            return false;
+        }
+
+        return getToken(i).kind == IDENTIFIER || getToken(i).kind == STRUCT;
+    }
+
+    private boolean isStructDeclarationAhead() {
+        int i = 1;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return false;
+                }
+            } else if (isSimpleQualifierKind(kind)) {
+                i++;
+            } else {
+                break;
+            }
+        }
+        if (getToken(i).kind != STRUCT) {
+            return false;
+        }
+
+        i++;
+        if (getToken(i).kind == IDENTIFIER) {
+            i++;
+        }
+        return getToken(i).kind == LEFT_BRACE;
+    }
+
+    private boolean isSubroutineDeclarationAhead(boolean function) {
+        int end = tokenAfterDeclarationQualifiers();
+        if (end < 0) {
+            return false;
+        }
+        boolean subroutine = false;
+        boolean compatibleTypes = false;
+        for (int i = 1; i < end; i++) {
+            int kind = getToken(i).kind;
+            if (kind == UNIFORM) {
+                return false;
+            }
+            if (kind == SUBROUTINE) {
+                subroutine = true;
+                compatibleTypes = getToken(i + 1).kind == LEFT_PAREN;
+            }
+        }
+        return subroutine && compatibleTypes == function;
+    }
+
+    private boolean isQualifierDeclarationAhead() {
+        int i = tokenAfterDeclarationQualifiers();
+        if (i <= 1) {
+            return false;
+        }
+        return getToken(i).kind == SEMICOLON
+                || getToken(i).kind == IDENTIFIER
+                && (getToken(i + 1).kind == SEMICOLON || getToken(i + 1).kind == COMMA);
+    }
+
+    private boolean isVariableDeclarationAhead() {
+        int i = tokenAfterDeclarationQualifiers();
+        if (i < 0 || getToken(i).kind != IDENTIFIER) {
+            return false;
+        }
+        i++;
+        while (getToken(i).kind == LEFT_BRACKET) {
+            int depth = 1;
+            i++;
+            while (depth > 0) {
+                int kind = getToken(i++).kind;
+                if (kind == EOF) {
+                    return false;
+                }
+                if (kind == LEFT_BRACKET) {
+                    depth++;
+                } else if (kind == RIGHT_BRACKET) {
+                    depth--;
+                }
+            }
+        }
+        if (getToken(i).kind != IDENTIFIER) {
+            return false;
+        }
+        int next = getToken(i + 1).kind;
+        return next == EQUAL || next == LEFT_BRACKET || next == COMMA || next == SEMICOLON || next == EOF;
+    }
+
+    private ResourcePrefix scanResourcePrefix() {
+        int i = 1;
+        int storageKind = -1;
+        boolean consumedQualifier = false;
+
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return null;
+                }
+                consumedQualifier = true;
+                continue;
+            }
+
+            if (kind == SUBROUTINE) {
+                i = getToken(i + 1).kind == LEFT_PAREN ? tokenAfterLayoutQualifier(i) : i + 1;
+                if (i < 0) {
+                    return null;
+                }
+                consumedQualifier = true;
+                continue;
+            }
+
+            if (!isSimpleQualifierKind(kind)) {
+                break;
+            }
+
+            if (isStorageKind(kind)) {
+                if (storageKind != -1) {
+                    return null;
+                }
+                storageKind = kind;
+            }
+            consumedQualifier = true;
+            i++;
+        }
+
+        if (!consumedQualifier || storageKind == -1) {
+            return null;
+        }
+        return new ResourcePrefix(storageKind, i);
+    }
+
+    private static boolean isStorageKind(int kind) {
+        return kind == UNIFORM || kind == BUFFER || isInputOutputStorageKind(kind);
+    }
+
+    private static boolean isGlobalLayoutStorageKind(int kind) {
+        return kind == UNIFORM || kind == BUFFER || kind == IN || kind == OUT;
+    }
+
+    private static boolean isInterfaceBlockStorageKind(int kind) {
+        return isGlobalLayoutStorageKind(kind);
+    }
+
+    private static boolean isInputOutputStorageKind(int kind) {
+        return kind == IN || kind == OUT || kind == ATTRIBUTE || kind == VARYING;
+    }
+
+    private static boolean isSimpleQualifierKind(int kind) {
+        switch (kind) {
+            case CONST:
+            case IN:
+            case OUT:
+            case INOUT:
+            case CENTROID:
+            case PATCH:
+            case SAMPLE:
+            case UNIFORM:
+            case BUFFER:
+            case SHARED:
+            case COHERENT:
+            case VOLATILE:
+            case RESTRICT:
+            case READONLY:
+            case WRITEONLY:
+            case ATTRIBUTE:
+            case VARYING:
+            case SMOOTH:
+            case FLAT:
+            case NOPERSPECTIVE:
+            case INVARIANT:
+            case PRECISE:
+            case HIGHP:
+            case MEDIUMP:
+            case LOWP:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private int tokenAfterLayoutQualifier(int layoutIndex) {
+        int i = layoutIndex + 1;
+        if (getToken(i).kind != LEFT_PAREN) {
+            return -1;
+        }
+
+        int depth = 1;
+        i++;
+        while (depth > 0) {
+            int kind = getToken(i).kind;
+            if (kind == EOF) {
+                return -1;
+            }
+            if (kind == LEFT_PAREN) {
+                depth++;
+            } else if (kind == RIGHT_PAREN) {
+                depth--;
+            }
+            i++;
+        }
+        return i;
+    }
+
+    private int tokenAfterDeclarationQualifiers() {
+        int i = 1;
+        while (true) {
+            int kind = getToken(i).kind;
+            if (kind == LAYOUT || kind == SUBROUTINE && getToken(i + 1).kind == LEFT_PAREN) {
+                i = tokenAfterLayoutQualifier(i);
+                if (i < 0) {
+                    return -1;
+                }
+            } else if (kind == SUBROUTINE || isSimpleQualifierKind(kind)) {
+                i++;
+            } else {
+                return i;
+            }
+        }
+    }
+
+    private String consumeExpressionUntil(int firstStopKind, int secondStopKind) throws ParseException {
+        StringBuilder result = new StringBuilder();
+        int parenDepth = 0;
+        int bracketDepth = 0;
+        int braceDepth = 0;
+        Token previous = null;
+
+        while (true) {
+            Token next = getToken(1);
+            int kind = next.kind;
+
+            if (kind == EOF) {
+                throw new ParseException("Unexpected end of input inside expression.");
+            }
+            if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0
+                    && (kind == firstStopKind || kind == secondStopKind)) {
+                break;
+            }
+
+            Token consumed = getNextToken();
+            appendNormalizedToken(result, consumed, previous);
+            previous = consumed;
+
+            if (kind == LEFT_PAREN) {
+                parenDepth++;
+            } else if (kind == RIGHT_PAREN) {
+                if (parenDepth == 0) {
+                    throw new ParseException("Unbalanced ')' inside expression.");
+                }
+                parenDepth--;
+            } else if (kind == LEFT_BRACKET) {
+                bracketDepth++;
+            } else if (kind == RIGHT_BRACKET) {
+                if (bracketDepth == 0) {
+                    throw new ParseException("Unbalanced ']' inside expression.");
+                }
+                bracketDepth--;
+            } else if (kind == LEFT_BRACE) {
+                braceDepth++;
+            } else if (kind == RIGHT_BRACE) {
+                if (braceDepth == 0) {
+                    throw new ParseException("Unbalanced '}' inside expression.");
+                }
+                braceDepth--;
+            }
+        }
+
+        if (result.isEmpty()) {
+            throw new ParseException("Expected an expression.");
+        }
+        return result.toString();
+    }
+
+    private static void appendNormalizedToken(StringBuilder result, Token token, Token previous) {
+        String image = token.image;
+        if (!result.isEmpty() && !image.isEmpty()) {
+            char last = result.charAt(result.length() - 1);
+            char first = image.charAt(0);
+            boolean separated = previous != null && (previous.endLine != token.beginLine
+                    || previous.endColumn + 1 != token.beginColumn);
+            if (isWordCharacter(last) && isWordCharacter(first)
+                    || separated && ("++ -- << >> && || ^^ == != <= >= += -= *= /= %= &= |= ^= /* //")
+                            .contains("" + last + first)) {
+                result.append(' ');
+            }
+        }
+        result.append(image);
+    }
+
+    private static boolean isWordCharacter(char c) {
+        return Character.isLetterOrDigit(c) || c == '_';
+    }
+
+    private boolean skipExternalDeclaration(int firstKind) {
+        int parenDepth = 0;
+        int bracketDepth = 0;
+        int braceDepth = 0;
+        boolean sawTopLevelBrace = false;
+        int kind = firstKind;
+
+        while (true) {
+            if (kind == LEFT_PAREN) {
+                parenDepth++;
+            } else if (kind == RIGHT_PAREN) {
+                if (parenDepth > 0) {
+                    parenDepth--;
+                }
+            } else if (kind == LEFT_BRACKET) {
+                bracketDepth++;
+            } else if (kind == RIGHT_BRACKET) {
+                if (bracketDepth > 0) {
+                    bracketDepth--;
+                }
+            } else if (kind == LEFT_BRACE) {
+                if (parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                    sawTopLevelBrace = true;
+                }
+                braceDepth++;
+            } else if (kind == RIGHT_BRACE) {
+                if (braceDepth > 0) {
+                    braceDepth--;
+                }
+                if (sawTopLevelBrace && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                    if (getToken(1).kind == SEMICOLON) {
+                        getNextToken();
+                    }
+                    return true;
+                }
+            } else if (kind == SEMICOLON && parenDepth == 0 && bracketDepth == 0 && braceDepth == 0) {
+                return true;
+            }
+
+            kind = getToken(1).kind;
+            if (kind == EOF) {
+                return false;
+            }
+            getNextToken();
+        }
+    }
+}
+
+PARSER_END(GLSLResourceParser)
+
+SKIP :
+{
+    < WHITE_SPACE: (" " | "\t" | "\r" | "\n")+ >
+|   < LINE_COMMENT:
+        "//" (~["\r", "\n"])* ("\r\n" | "\n" | "\r")?
+    >
+|   < BLOCK_COMMENT:
+        "/*" ( ~["*"] | "*" ~["/"] )* "*/"
+    >
+|   < PREPROCESSOR_DIRECTIVE:
+        "#"
+        ( "\\" ("\r\n" | "\n" | "\r") | ~["\r", "\n"] )*
+        ("\r\n" | "\n" | "\r")?
+    >
+}
+
+TOKEN :
+{
+    < LAYOUT: "layout" >
+|   < STRUCT: "struct" >
+|   < UNIFORM: "uniform" >
+|   < BUFFER: "buffer" >
+|   < CONST: "const" >
+|   < INOUT: "inout" >
+|   < IN: "in" >
+|   < OUT: "out" >
+|   < CENTROID: "centroid" >
+|   < PATCH: "patch" >
+|   < SAMPLE: "sample" >
+|   < SHARED: "shared" >
+|   < COHERENT: "coherent" >
+|   < VOLATILE: "volatile" >
+|   < RESTRICT: "restrict" >
+|   < READONLY: "readonly" >
+|   < WRITEONLY: "writeonly" >
+|   < ATTRIBUTE: "attribute" >
+|   < VARYING: "varying" >
+|   < SMOOTH: "smooth" >
+|   < FLAT: "flat" >
+|   < NOPERSPECTIVE: "noperspective" >
+|   < INVARIANT: "invariant" >
+|   < PRECISE: "precise" >
+|   < HIGHP: "highp" >
+|   < MEDIUMP: "mediump" >
+|   < LOWP: "lowp" >
+|   < TRUE: "true" >
+|   < FALSE: "false" >
+|   < PRECISION: "precision" >
+|   < SUBROUTINE: "subroutine" >
+}
+
+TOKEN :
+{
+    < NUMBER:
+          "0" ["x", "X"] (["0"-"9", "a"-"f", "A"-"F"])+ (["u", "U"])?
+        | (
+              (["0"-"9"])+ ("." (["0"-"9"])*)?
+            | "." (["0"-"9"])+
+          )
+          (["e", "E"] (["+", "-"])? (["0"-"9"])+)?
+          ( ["f", "F", "u", "U"] | ["l", "L"] ["f", "F"] )?
+    >
+|   < IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "0"-"9", "_"])* >
+}
+
+TOKEN :
+{
+    < LEFT_PAREN: "(" >
+|   < RIGHT_PAREN: ")" >
+|   < LEFT_BRACKET: "[" >
+|   < RIGHT_BRACKET: "]" >
+|   < LEFT_BRACE: "{" >
+|   < RIGHT_BRACE: "}" >
+|   < COMMA: "," >
+|   < SEMICOLON: ";" >
+|   < EQUAL: "=" >
+|   < OTHER: ~[] >
+}
+
+ASTTranslationUnit TranslationUnit() #TranslationUnit :
+{}
+{
+    (
+        LOOKAHEAD({ isGlobalLayoutDeclarationAhead() })
+        GlobalLayoutDeclaration()
+    |
+        LOOKAHEAD({ isInterfaceBlockAhead() })
+        InterfaceBlockDeclaration()
+    |
+        LOOKAHEAD({ isUniformDeclarationAhead() })
+        UniformDeclaration()
+    |
+        LOOKAHEAD({ isInputOutputDeclarationAhead() })
+        InputOutputDeclaration()
+    |
+        LOOKAHEAD({ isStructDeclarationAhead() })
+        StructDeclaration()
+    |
+        LOOKAHEAD(1) PrecisionDeclaration()
+    |
+        LOOKAHEAD({ isSubroutineDeclarationAhead(true) })
+        SubroutineFunctionDeclaration()
+    |
+        LOOKAHEAD({ isSubroutineDeclarationAhead(false) })
+        SubroutineTypeDeclaration()
+    |
+        LOOKAHEAD({ isQualifierDeclarationAhead() })
+        QualifierDeclaration()
+    |
+        LOOKAHEAD({ isVariableDeclarationAhead() })
+        VariableDeclaration()
+    |
+        SkipExternalDeclaration()
+    )*
+    <EOF>
+    { return jjtThis; }
+}
+
+void GlobalLayoutDeclaration() #GlobalLayoutDeclaration :
+{}
+{
+    ( LayoutQualifier() | GlobalLayoutStorageQualifier() )+
+    <SEMICOLON>
+}
+
+void GlobalLayoutStorageQualifier() #StorageQualifier :
+{ Token qualifier; }
+{
+    ( qualifier = <UNIFORM> | qualifier = <BUFFER> | qualifier = <IN> | qualifier = <OUT> )
+    { jjtThis.jjtSetValue(qualifier.image); }
+}
+
+void InterfaceBlockDeclaration() #InterfaceBlockDeclaration :
+{}
+{
+    ( Qualifier() )+
+    BlockName()
+    <LEFT_BRACE>
+    ( MemberDeclaration() )*
+    <RIGHT_BRACE>
+    [ InstanceDeclarator() ]
+    <SEMICOLON>
+}
+
+void UniformDeclaration() #UniformDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    UniformDeclaratorList()
+    <SEMICOLON>
+}
+
+void UniformDeclaratorList() #DeclaratorList :
+{}
+{
+    [ Declarator() ( <COMMA> Declarator() )* ]
+}
+
+void InputOutputDeclaration() #InputOutputDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    DeclaratorList()
+    <SEMICOLON>
+}
+
+void StructDeclaration() #StructDeclaration :
+{}
+{
+    ( Qualifier() )*
+    StructSpecifier()
+    [ ArraySpecifier() ]
+    [ DeclaratorList() ]
+    <SEMICOLON>
+}
+
+void StructSpecifier() #StructSpecifier :
+{}
+{
+    <STRUCT>
+    [ StructName() ]
+    <LEFT_BRACE>
+    ( MemberDeclaration() )+
+    <RIGHT_BRACE>
+}
+
+void MemberDeclaration() #MemberDeclaration :
+{}
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    MemberDeclaratorList()
+    <SEMICOLON>
+}
+
+void TypeSpecifier() #TypeSpecifier :
+{ Token type = null; }
+{
+    (
+        type = <IDENTIFIER>
+        { jjtThis.jjtSetValue(type.image); }
+    |
+        StructSpecifier()
+        { jjtThis.jjtSetValue("struct"); }
+    )
+    [ ArraySpecifier() ]
+}
+
+void Qualifier() #void :
+{}
+{
+    LayoutQualifier()
+|
+    SubroutineQualifier()
+|
+    StorageQualifier()
+|
+    SimpleQualifier()
+}
+
+void LayoutQualifier() #LayoutQualifier :
+{}
+{
+    <LAYOUT>
+    <LEFT_PAREN>
+    LayoutQualifierItem()
+    ( <COMMA> LayoutQualifierItem() )*
+    <RIGHT_PAREN>
+}
+
+void LayoutQualifierItem() #LayoutQualifierItem :
+{ Token name; String expression = null; }
+{
+    ( name = <IDENTIFIER> | name = <SHARED> )
+    [
+        <EQUAL>
+        { expression = consumeExpressionUntil(COMMA, RIGHT_PAREN); }
+    ]
+    {
+        jjtThis.jjtSetValue(new LayoutQualifierValue(name.image, expression));
+    }
+}
+
+void StorageQualifier() #StorageQualifier :
+{ Token qualifier; }
+{
+    ( qualifier = <UNIFORM> | qualifier = <BUFFER> )
+    { jjtThis.jjtSetValue(qualifier.image); }
+}
+
+void SimpleQualifier() #Qualifier :
+{ Token qualifier; }
+{
+    (
+        qualifier = <CONST>
+    |   qualifier = <IN>
+    |   qualifier = <OUT>
+    |   qualifier = <INOUT>
+    |   qualifier = <CENTROID>
+    |   qualifier = <PATCH>
+    |   qualifier = <SAMPLE>
+    |   qualifier = <SHARED>
+    |   qualifier = <COHERENT>
+    |   qualifier = <VOLATILE>
+    |   qualifier = <RESTRICT>
+    |   qualifier = <READONLY>
+    |   qualifier = <WRITEONLY>
+    |   qualifier = <ATTRIBUTE>
+    |   qualifier = <VARYING>
+    |   qualifier = <SMOOTH>
+    |   qualifier = <FLAT>
+    |   qualifier = <NOPERSPECTIVE>
+    |   qualifier = <INVARIANT>
+    |   qualifier = <PRECISE>
+    |   qualifier = <HIGHP>
+    |   qualifier = <MEDIUMP>
+    |   qualifier = <LOWP>
+    )
+    { jjtThis.jjtSetValue(qualifier.image); }
+}
+
+void DeclaratorList() #DeclaratorList :
+{}
+{
+    Declarator()
+    ( <COMMA> Declarator() )*
+}
+
+void Declarator() #Declarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+    [ Initializer() ]
+}
+
+void MemberDeclaratorList() #DeclaratorList :
+{}
+{
+    MemberDeclarator()
+    ( <COMMA> MemberDeclarator() )*
+}
+
+void MemberDeclarator() #Declarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+}
+
+void InstanceDeclarator() #InstanceDeclarator :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+    [ ArraySpecifier() ]
+}
+
+void ArraySpecifier() #ArraySpecifier :
+{}
+{
+    ( ArrayDimension() )+
+}
+
+void ArrayDimension() #ArrayDimension :
+{ String expression = null; }
+{
+    <LEFT_BRACKET>
+    {
+        if (getToken(1).kind != RIGHT_BRACKET) {
+            expression = consumeExpressionUntil(RIGHT_BRACKET, -1);
+        }
+    }
+    <RIGHT_BRACKET>
+    { jjtThis.jjtSetValue(expression); }
+}
+
+void Initializer() #Initializer :
+{ String expression; }
+{
+    <EQUAL>
+    { expression = consumeExpressionUntil(COMMA, SEMICOLON); }
+    { jjtThis.jjtSetValue(expression); }
+}
+
+void BlockName() #BlockName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void StructName() #StructName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void VariableDeclaration() #VariableDeclaration :
+{}
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    DeclaratorList()
+    <SEMICOLON>
+}
+
+void QualifierDeclaration() #QualifierDeclaration :
+{}
+{
+    ( Qualifier() )+
+    [ MemberDeclaratorList() ]
+    <SEMICOLON>
+}
+
+void PrecisionDeclaration() #PrecisionDeclaration :
+{ Token precision; }
+{
+    <PRECISION>
+    ( precision = <HIGHP> | precision = <MEDIUMP> | precision = <LOWP> )
+    { jjtThis.jjtSetValue(precision.image); }
+    TypeSpecifier()
+    <SEMICOLON>
+}
+
+void SubroutineTypeDeclaration() #SubroutineTypeDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    FunctionName()
+    <LEFT_PAREN> ParameterList() <RIGHT_PAREN>
+    <SEMICOLON>
+}
+
+void SubroutineFunctionDeclaration() #SubroutineFunctionDeclaration :
+{}
+{
+    ( Qualifier() )+
+    TypeSpecifier()
+    FunctionName()
+    <LEFT_PAREN> ParameterList() <RIGHT_PAREN>
+    (
+        <LEFT_BRACE>
+        {
+            if (!skipExternalDeclaration(LEFT_BRACE)) {
+                throw new ParseException("Unterminated subroutine function body.");
+            }
+            jjtThis.jjtSetLastToken(getToken(0));
+            jjtThis.jjtSetValue(Boolean.TRUE);
+        }
+    |
+        <SEMICOLON>
+        { jjtThis.jjtSetValue(Boolean.FALSE); }
+    )
+}
+
+void ParameterList() #void :
+{}
+{
+    [
+        LOOKAHEAD({ getToken(1).kind == IDENTIFIER && getToken(1).image.equals("void")
+                && getToken(2).kind == RIGHT_PAREN })
+        <IDENTIFIER>
+    |
+        Parameter() ( <COMMA> Parameter() )*
+    ]
+}
+
+void Parameter() #Parameter :
+{ Token name = null; }
+{
+    ( Qualifier() )*
+    TypeSpecifier()
+    [ name = <IDENTIFIER> [ ArraySpecifier() ] ]
+    { if (name != null) { jjtThis.jjtSetValue(name.image); } }
+}
+
+void FunctionName() #FunctionName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void SubroutineQualifier() #Qualifier :
+{}
+{
+    <SUBROUTINE>
+    [ <LEFT_PAREN> SubroutineTypeName() ( <COMMA> SubroutineTypeName() )* <RIGHT_PAREN> ]
+    { jjtThis.jjtSetValue("subroutine"); }
+}
+
+void SubroutineTypeName() #SubroutineTypeName :
+{ Token name; }
+{
+    name = <IDENTIFIER>
+    { jjtThis.jjtSetValue(name.image); }
+}
+
+void SkipExternalDeclaration() #void :
+{ Token first; }
+{
+    first = AnyToken()
+    { skipExternalDeclaration(first.kind); }
+}
+
+Token AnyToken() #void :
+{ Token token; }
+{
+    (
+        token = <LAYOUT>
+    |   token = <STRUCT>
+    |   token = <PRECISION>
+    |   token = <SUBROUTINE>
+    |   token = <UNIFORM>
+    |   token = <BUFFER>
+    |   token = <CONST>
+    |   token = <INOUT>
+    |   token = <IN>
+    |   token = <OUT>
+    |   token = <CENTROID>
+    |   token = <PATCH>
+    |   token = <SAMPLE>
+    |   token = <SHARED>
+    |   token = <COHERENT>
+    |   token = <VOLATILE>
+    |   token = <RESTRICT>
+    |   token = <READONLY>
+    |   token = <WRITEONLY>
+    |   token = <ATTRIBUTE>
+    |   token = <VARYING>
+    |   token = <SMOOTH>
+    |   token = <FLAT>
+    |   token = <NOPERSPECTIVE>
+    |   token = <INVARIANT>
+    |   token = <PRECISE>
+    |   token = <HIGHP>
+    |   token = <MEDIUMP>
+    |   token = <LOWP>
+    |   token = <TRUE>
+    |   token = <FALSE>
+    |   token = <NUMBER>
+    |   token = <IDENTIFIER>
+    |   token = <LEFT_PAREN>
+    |   token = <RIGHT_PAREN>
+    |   token = <LEFT_BRACKET>
+    |   token = <RIGHT_BRACKET>
+    |   token = <LEFT_BRACE>
+    |   token = <RIGHT_BRACE>
+    |   token = <COMMA>
+    |   token = <SEMICOLON>
+    |   token = <EQUAL>
+    |   token = <OTHER>
+    )
+    { return token; }
+}

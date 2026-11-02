@@ -1,0 +1,584 @@
+package com.cleanroommc.kirino.gl.texture.accessor;
+
+import com.cleanroommc.kirino.gl.texture.GLTexture;
+import com.cleanroommc.kirino.gl.texture.TextureType;
+import com.cleanroommc.kirino.gl.texture.meta.TextureFormat;
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.lwjgl.opengl.GL12;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL42;
+import org.lwjgl.opengl.GL45;
+
+import java.nio.ByteBuffer;
+
+/**
+ * <p>Note: (<i>This is not derived from the GL spec but a stricter enforcement</i>)
+ * <b>Mutable texture storage allocation is not supported in DSA mode.</b></p>
+ *
+ * <p>Available raw GL operations:</p>
+ * <ul>
+ *     <li><code>texStorage3D</code></li>
+ *     <li><code>texImage3D</code></li>
+ *     <li><code>texSubImage3D</code></li>
+ *     <li><code>compressedTexImage3D</code></li>
+ *     <li><code>compressedTexSubImage3D</code></li>
+ *     <li><code>copyTexSubImage3D</code></li>
+ * </ul>
+ */
+public class TextureCubemapArrayAccessor extends TextureAccessorExt implements TextureAccessorHighlevel {
+
+    public final GLTexture texture;
+
+    public TextureCubemapArrayAccessor(boolean dsa, @NonNull GLTexture texture) {
+        super(dsa);
+        Preconditions.checkNotNull(texture);
+        Preconditions.checkState(texture.type == TextureType.CUBEMAP_ARRAY,
+                "Texture type must be CUBEMAP_ARRAY.");
+
+        this.texture = texture;
+    }
+
+    @Override
+    public int textureID() {
+        return texture.textureID;
+    }
+
+    @Override
+    public int target() {
+        return type().glValue;
+    }
+
+    @Override
+    public int bindingTarget() {
+        return type().bindingTarget();
+    }
+
+    @NonNull
+    @Override
+    public TextureType type() {
+        return TextureType.CUBEMAP_ARRAY;
+    }
+
+    @Override
+    public void texStorage3D(
+            int levels,
+            int internalFormat,
+            int width,
+            int height,
+            int depthOrLayers) {
+
+        if (dsa) {
+            GL45.glTextureStorage3D(textureID(), levels, internalFormat, width, height, depthOrLayers);
+        } else {
+            GL42.glTexStorage3D(target(), levels, internalFormat, width, height, depthOrLayers);
+        }
+    }
+
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
+    @Override
+    public void texImage3D(
+            int level,
+            int internalFormat,
+            int width,
+            int height,
+            int depthOrLayers,
+            int border,
+            int format,
+            int type,
+            @Nullable ByteBuffer data) {
+
+        Preconditions.checkState(!dsa, "DSA \"texImage3D\" is not implemented.");
+
+        GL12.glTexImage3D(target(), level, internalFormat, width, height, depthOrLayers, border, format, type, data);
+    }
+
+    @Override
+    public void texSubImage3D(
+            int level,
+            int xOffset,
+            int yOffset,
+            int zOffset,
+            int width,
+            int height,
+            int depthOrLayers,
+            int format,
+            int type,
+            @NonNull ByteBuffer data) {
+
+        Preconditions.checkNotNull(data);
+
+        if (dsa) {
+            GL45.glTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, type, data);
+        } else {
+            GL12.glTexSubImage3D(target(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, type, data);
+        }
+    }
+
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
+    @Override
+    public void compressedTexImage3D(
+            int level,
+            int internalFormat,
+            int width,
+            int height,
+            int depthOrLayers,
+            int border,
+            @Nullable ByteBuffer data) {
+
+        Preconditions.checkState(!dsa, "DSA \"compressedTexImage3D\" is not implemented.");
+
+        GL13.glCompressedTexImage3D(target(), level, internalFormat, width, height, depthOrLayers, border, data);
+    }
+
+    @Override
+    public void compressedTexSubImage3D(
+            int level,
+            int xOffset,
+            int yOffset,
+            int zOffset,
+            int width,
+            int height,
+            int depthOrLayers,
+            int format,
+            @NonNull ByteBuffer data) {
+
+        Preconditions.checkNotNull(data);
+
+        if (dsa) {
+            GL45.glCompressedTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, data);
+        } else {
+            GL13.glCompressedTexSubImage3D(target(), level, xOffset, yOffset, zOffset, width, height, depthOrLayers, format, data);
+        }
+    }
+
+    /**
+     * It copies a two-dimensional framebuffer region into one array layer.
+     *
+     * <p><b>Source</b>: <code>GL_READ_FRAMEBUFFER</code> + <code>GL_READ_BUFFER</code></p>
+     *
+     * @param zOffset The destination array layer
+     */
+    @Override
+    public void copyTexSubImage3D(
+            int level,
+            int xOffset,
+            int yOffset,
+            int zOffset,
+            int x,
+            int y,
+            int width,
+            int height) {
+
+        if (dsa) {
+            GL45.glCopyTextureSubImage3D(textureID(), level, xOffset, yOffset, zOffset, x, y, width, height);
+        } else {
+            GL12.glCopyTexSubImage3D(target(), level, xOffset, yOffset, zOffset, x, y, width, height);
+        }
+    }
+
+    private static final class HighlevelOperatorImpl implements HighlevelOperator {
+
+        private final TextureCubemapArrayAccessor accessor;
+
+        private HighlevelOperatorImpl(TextureCubemapArrayAccessor accessor) {
+            this.accessor = Preconditions.checkNotNull(accessor);
+        }
+
+        //<editor-fold desc="convenient allocation overloads">
+        @Override
+        public void resizeAndAllocEmpty(int width, int height, int depthOrLayers) {
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                allocEmpty(width, height, depthOrLayers, true, TextureFormat.RGBA8_UNORM);
+            } else {
+                allocEmpty(width, height, depthOrLayers, true, format);
+            }
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void resizeAndAllocEmpty(int width, int height, int depthOrLayers, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(format);
+
+            allocEmpty(width, height, depthOrLayers, true, format);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull ByteBuffer byteBuffer) {
+            Preconditions.checkNotNull(byteBuffer);
+
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                alloc(width, height, depthOrLayers, true, byteBuffer, TextureFormat.RGBA8_UNORM);
+            } else {
+                alloc(width, height, depthOrLayers, true, byteBuffer, format);
+            }
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull ByteBuffer byteBuffer, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(byteBuffer);
+            Preconditions.checkNotNull(format);
+
+            alloc(width, height, depthOrLayers, true, byteBuffer, format);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void alloc(boolean mutable, @NonNull ByteBuffer byteBuffer) {
+            Preconditions.checkNotNull(byteBuffer);
+
+            alloc(mutable, byteBuffer, TextureFormat.RGBA8_UNORM);
+        }
+
+        @Override
+        public void alloc(boolean mutable, @NonNull ByteBuffer byteBuffer, @NonNull TextureFormat format) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, byteBuffer, format);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull ByteBuffer byteBuffer,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(byteBuffer);
+            Preconditions.checkNotNull(format);
+            checkDimensions(width, height);
+
+            if (mutable) {
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers * 6, 0, format.format, format.type, byteBuffer);
+            } else {
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers * 6);
+                accessor.texSubImage3D(0, 0, 0, 0, width, height, depthOrLayers * 6, format.format, format.type, byteBuffer);
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+
+        @Override
+        public void allocEmpty(boolean mutable) {
+            allocEmpty(mutable, TextureFormat.RGBA8_UNORM);
+        }
+
+        @Override
+        public void allocEmpty(boolean mutable, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(format);
+            checkDimensions(width, height);
+
+            if (mutable) {
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers * 6, 0, format.format, format.type, null);
+            } else {
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers * 6);
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+        //</editor-fold>
+
+        //<editor-fold desc="canonical allocation methods">
+        @Override
+        public void resizeAndAllocEmpty(int width, int height, int depthOrLayers, @NonNull StorageOptions options, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(format);
+
+            allocEmpty(width, height, depthOrLayers, options, format);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+
+            alloc(width, height, depthOrLayers, options, data, format, generateMipmaps);
+
+            MethodHolder.setExtentX(accessor.texture, width);
+            MethodHolder.setExtentY(accessor.texture, height);
+            MethodHolder.setLayers(accessor.texture, depthOrLayers);
+        }
+
+        @Override
+        public void alloc(@NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, data, format, generateMipmaps);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format,
+                boolean generateMipmaps) {
+
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            checkDimensions(width, height);
+
+            int layers = depthOrLayers * 6;
+            int levels = options.levels();
+
+            Preconditions.checkState(width > 0);
+            Preconditions.checkState(height > 0);
+            Preconditions.checkState(layers > 0);
+            Preconditions.checkState(levels > 0);
+
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
+            Preconditions.checkState(levels <= maxMipmapCount,
+                    "Too many mipmap levels. Input=%s; Expected Max=%s",
+                    levels, maxMipmapCount);
+
+            setMipRange(levels);
+
+            if (options.mutable()) {
+                if (generateMipmaps) {
+                    accessor.texImage3D(0, format.internalFormat, width, height, layers, 0, format.format, format.type, data);
+                } else {
+                    for (int level = 0; level < levels; level++) {
+                        accessor.texImage3D(level, format.internalFormat, mipExtent(width, level), mipExtent(height, level), layers, 0, format.format, format.type, level == 0 ? data : null);
+                    }
+                }
+            } else {
+                accessor.texStorage3D(levels, format.internalFormat, width, height, layers);
+                accessor.texSubImage3D(0, 0, 0, 0, width, height, layers, format.format, format.type, data);
+            }
+
+            if (generateMipmaps && levels > 1) {
+                accessor.genMipmap();
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+
+        @Override
+        public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(options);
+            Preconditions.checkNotNull(format);
+            checkDimensions(width, height);
+
+            int layers = depthOrLayers * 6;
+            int levels = options.levels();
+
+            Preconditions.checkState(width > 0);
+            Preconditions.checkState(height > 0);
+            Preconditions.checkState(layers > 0);
+            Preconditions.checkState(levels > 0);
+
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
+            Preconditions.checkState(levels <= maxMipmapCount,
+                    "Too many mipmap levels. Input=%s; Expected Max=%s",
+                    levels, maxMipmapCount);
+
+            setMipRange(levels);
+
+            if (options.mutable()) {
+                for (int level = 0; level < levels; level++) {
+                    accessor.texImage3D(level, format.internalFormat, mipExtent(width, level), mipExtent(height, level), layers, 0, format.format, format.type, null);
+                }
+            } else {
+                accessor.texStorage3D(levels, format.internalFormat, width, height, layers);
+            }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
+        }
+        //</editor-fold>
+
+        @Override
+        public void uploadLevel(int level, @NonNull ByteBuffer data) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            uploadLevel(level, data, format);
+        }
+
+        @Override
+        public void uploadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.texSubImage3D(level, 0, 0, 0, mipExtent(accessor.texture.extentX(), level), mipExtent(accessor.texture.extentY(), level), faceLayerCount(), format.format, format.type, data);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            uploadSubImage(level, xOffset, yOffset, zOffset, width, height, depthOrLayers, data, format);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.texSubImage3D(
+                    level,
+                    xOffset,
+                    yOffset,
+                    zOffset,
+                    width,
+                    height,
+                    depthOrLayers,
+                    format.format,
+                    format.type,
+                    data);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data) {
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            clearLevel(level, data, format);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.clearTexImage(level, format.format, format.type, data);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            downloadLevel(level, data, format);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.getTexImage(level, format.format, format.type, data);
+        }
+
+        @Override
+        public void generateMipmaps() {
+            accessor.genMipmap();
+        }
+
+        @Override
+        public void setMipRange(int levels) {
+            accessor.texParamI(GL12.GL_TEXTURE_BASE_LEVEL, 0);
+            accessor.texParamI(GL12.GL_TEXTURE_MAX_LEVEL, levels - 1);
+        }
+
+        private int faceLayerCount() {
+            return accessor.texture.layers() * 6;
+        }
+
+        private void checkDimensions(int width, int height) {
+            Preconditions.checkState(width == height,
+                    "Cubemap array width=%s must match height=%s.", width, height);
+        }
+
+        private static int mipExtent(int baseExtent, int level) {
+            return Math.max(1, baseExtent >> level);
+        }
+    }
+
+    private HighlevelOperatorImpl highlevelOperator = null;
+
+    @NonNull
+    @Override
+    public HighlevelOperator highlevel() {
+        if (highlevelOperator == null) {
+            highlevelOperator = new HighlevelOperatorImpl(this);
+        }
+        return highlevelOperator;
+    }
+}

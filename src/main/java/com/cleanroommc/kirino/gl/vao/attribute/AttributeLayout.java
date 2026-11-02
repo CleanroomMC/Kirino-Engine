@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.gl.vao.attribute;
 
 import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.gl.buffer.view.VBOView;
+import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;
@@ -31,7 +32,9 @@ public class AttributeLayout {
 
     @CanIgnoreReturnValue
     @NonNull
-    public AttributeLayout push(Stride stride) {
+    public AttributeLayout push(@NonNull Stride stride) {
+        Preconditions.checkNotNull(stride);
+
         strideStack.push(stride);
         return this;
     }
@@ -45,6 +48,7 @@ public class AttributeLayout {
         return strideStack.pop();
     }
 
+    @NonNull
     public String getDebugReport() {
         StringBuilder builder = new StringBuilder();
         builder.append("\n=====Attribute Layout Debug Report=====\n");
@@ -94,15 +98,20 @@ public class AttributeLayout {
     }
 
     /**
+     * <p>Note: This is the target-bound path. Non-DSA only.</p>
      * <p>Prerequisites include:</p>
      * <ul>
      *     <li>Number of VBOs must match the number of strides</li>
-     *     <li>Every {@link VBOView} must be unique (have an unique {@link VBOView#bufferID})</li>
      * </ul>
      *
      * @param vbos The VBOs
      */
-    public void upload(VBOView... vbos) {
+    public void upload(@NonNull VBOView @NonNull ... vbos) {
+        Preconditions.checkNotNull(vbos);
+        for (VBOView vbo : vbos) {
+            Preconditions.checkNotNull(vbo);
+        }
+
         int attributeIndex = 0;
         int strideIndex = 0;
         Iterator<Stride> strideIter = strideStack.descendingIterator();
@@ -136,6 +145,68 @@ public class AttributeLayout {
                 if (slot.getDivisor() != 0) {
                     GL33.glVertexAttribDivisor(attributeIndex, slot.getDivisor());
                 }
+
+                attributeIndex++;
+                usedSlotSize += slot.getSize();
+            }
+            strideIndex++;
+        }
+    }
+
+    /**
+     * <p>Note: This is the DSA path. DSA only.</p>
+     * <p>Prerequisites include:</p>
+     * <ul>
+     *     <li>Number of VBOs must match the number of strides</li>
+     * </ul>
+     *
+     * @param vaoID The VAO to modify
+     * @param vbos The VBOs
+     */
+    public void upload(int vaoID, @NonNull VBOView @NonNull ... vbos) {
+        Preconditions.checkNotNull(vbos);
+        for (VBOView vbo : vbos) {
+            Preconditions.checkNotNull(vbo);
+        }
+
+        int attributeIndex = 0;
+        int strideIndex = 0;
+        Iterator<Stride> strideIter = strideStack.descendingIterator();
+        while (strideIter.hasNext()) {
+            Stride stride = strideIter.next();
+
+            int usedSlotSize = 0;
+            Iterator<Slot> slotIter = stride.slotStack.descendingIterator();
+            while (slotIter.hasNext()) {
+                Slot slot = slotIter.next();
+
+                GL45.glVertexArrayVertexBuffer(
+                        vaoID,
+                        attributeIndex,
+                        vbos[strideIndex].bufferID,
+                        usedSlotSize,
+                        stride.getSize());
+
+                if (slot.getInterpretationType() == InterpretationType.TO_FLOAT_KIND) {
+                    GL45.glVertexArrayAttribFormat(
+                            vaoID,
+                            attributeIndex,
+                            slot.getCount(),
+                            slot.getType().glValue,
+                            slot.isNormalize(),
+                            0);
+                } else if (slot.getInterpretationType() == InterpretationType.TO_INT_KIND) {
+                    GL45.glVertexArrayAttribIFormat(
+                            vaoID,
+                            attributeIndex,
+                            slot.getCount(),
+                            slot.getType().glValue,
+                            0);
+                }
+
+                GL45.glVertexArrayAttribBinding(vaoID, attributeIndex, attributeIndex);
+                GL45.glEnableVertexArrayAttrib(vaoID, attributeIndex);
+                GL45.glVertexArrayBindingDivisor(vaoID, attributeIndex, slot.getDivisor());
 
                 attributeIndex++;
                 usedSlotSize += slot.getSize();

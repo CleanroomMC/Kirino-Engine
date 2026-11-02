@@ -27,15 +27,17 @@ public class Tex1DTest {
                     true,
                     BufferUtils.createByteBuffer(4).putInt(123).flip(),
                     TextureFormat.R32UI);
+            assertEquals(TextureFormat.R32UI, texture1DAccessor.texture.currentFormat());
 
             ByteBuffer result = BufferUtils.createByteBuffer(4);
-            texture1DAccessor.getTexImage(
-                    0,
-                    TextureFormat.R32UI.format,
-                    TextureFormat.R32UI.type,
-                    result);
+            texture1DAccessor.highlevel().downloadLevel(0, result);
 
             assertEquals(123, result.getInt(0));
+
+            texture1DAccessor.highlevel().clearLevel(0);
+            texture1DAccessor.highlevel().downloadLevel(0, result);
+
+            assertEquals(0, result.getInt(0));
         }).join();
     }
 
@@ -50,15 +52,17 @@ public class Tex1DTest {
                     false,
                     BufferUtils.createByteBuffer(4).putInt(123).flip(),
                     TextureFormat.R32UI);
+            assertEquals(TextureFormat.R32UI, texture1DAccessor.texture.currentFormat());
 
             ByteBuffer result = BufferUtils.createByteBuffer(4);
-            texture1DAccessor.getTexImage(
-                    0,
-                    TextureFormat.R32UI.format,
-                    TextureFormat.R32UI.type,
-                    result);
+            texture1DAccessor.highlevel().downloadLevel(0, result);
 
             assertEquals(123, result.getInt(0));
+
+            texture1DAccessor.highlevel().clearLevel(0);
+            texture1DAccessor.highlevel().downloadLevel(0, result);
+
+            assertEquals(0, result.getInt(0));
         }).join();
     }
 }

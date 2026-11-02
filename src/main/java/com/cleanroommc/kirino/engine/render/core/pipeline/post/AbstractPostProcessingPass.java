@@ -10,7 +10,7 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.engine.semantic.KnowledgeRuntime;
-import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment;
+import com.cleanroommc.kirino.gl.framebuffer.ColorAttachment2D;
 import com.cleanroommc.kirino.gl.framebuffer.Framebuffer;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
@@ -68,7 +68,7 @@ public abstract class AbstractPostProcessingPass extends Subpass {
             @NonNull ShaderProgram shaderProgram) {
 
         Framebuffer framebuffer = (Framebuffer) payload;
-        ColorAttachment colorAttachment = (ColorAttachment) framebuffer.getColorAttachment(0);
+        ColorAttachment2D colorAttachment = (ColorAttachment2D) framebuffer.getColorAttachment(0);
 
         int screenTexture = GL20.glGetUniformLocation(shaderProgram.getProgramID(), "screenTexture");
 

@@ -1,8 +1,6 @@
 package com.cleanroommc.kirino.engine.render.core.shader;
 
-import com.cleanroommc.kirino.gl.shader.Shader;
-import com.cleanroommc.kirino.gl.shader.ShaderProgram;
-import com.cleanroommc.kirino.gl.shader.ShaderType;
+import com.cleanroommc.kirino.gl.shader.*;
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -17,16 +15,31 @@ import java.util.*;
 public class ImmediateShaderAccess {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino ImmediateShaderAccess");
+    private static final DefaultShaderAnalyzer ANALYZER = new DefaultShaderAnalyzer();
 
+    /**
+     * <p>Note: Shader will be analyzed altogether in this call.
+     * It uses the default analyzer {@link DefaultShaderAnalyzer}.</p>
+     */
     @NonNull
     public Shader makeShader(@NonNull ResourceLocation rl) {
+        return makeShader(rl, ANALYZER);
+    }
+
+    /**
+     * <p>Note: Shader will be analyzed altogether in this call.</p>
+     */
+    @NonNull
+    public Shader makeShader(@NonNull ResourceLocation rl, @NonNull ShaderAnalyzer analyzer) {
         Preconditions.checkNotNull(rl);
+        Preconditions.checkNotNull(analyzer);
 
         String rawRl = rl.toString();
         int lastDot = rawRl.lastIndexOf('.');
         if (lastDot == -1) {
             throw new IllegalStateException("Invalid Shader ResourceLocation " + rawRl + ". Can't parse the shader type.");
         }
+
         String suffix = rawRl.substring(lastDot + 1);
         ShaderType shaderType = ShaderType.parse(suffix);
         if (shaderType == null) {
@@ -40,7 +53,10 @@ public class ImmediateShaderAccess {
                 rawRl,
                 shaderSource);
 
-        return MethodHolder.initShader(shaderSource, rawRl, shaderType);
+        Shader result = MethodHolder.initShader(shaderSource, rawRl, shaderType);
+        result.analyze(analyzer);
+
+        return result;
     }
 
     @NonNull
@@ -55,7 +71,6 @@ public class ImmediateShaderAccess {
 
     public void submitToGL(@NonNull Shader @NonNull ... shaders) {
         Preconditions.checkNotNull(shaders);
-
         for (Shader shader : shaders) {
             Preconditions.checkNotNull(shader);
 

@@ -6,56 +6,124 @@ import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * <p>A buffer storage consists of several pages (every page is an individual coherent-persistently-mapped buffer).</p>
- * <p>Every page should be huge in size, and a new page will be allocated when this buffer storage is full.
+ * <p>A buffer storage consists of multiple pages (every page is an individual coherent-persistently-mapped buffer).</p>
+ * <p>Every page is supposed to be huge in size, and a new page will be allocated when this buffer storage is full.
  * Every page will be split into slots dynamically, and slots can be freed to upload new data.</p>
+ *
+ * <p>Note: This class is not thread-safe. Allocation and release must happen on the thread that owns
+ * the OpenGL context.</p>
+ *
+ * <p>The storage should be closed explicitly when no longer used. Its GL buffers are also disposed
+ * automatically at shutdown (don't worry about GL resource lifetime). Pages and slots must not be used after closing the storage.</p>
  */
-public class BufferStorage<T extends BufferView> {
+public class BufferStorage<T extends BufferView> implements AutoCloseable {
+
+    /**
+     * <p>Note: Must be called on the main thread that owns the GL context.</p>
+     */
+    @Override
+    public void close() {
+        for (T page : pages) {
+            page.buffer.disposeManually();
+        }
+    }
+
     private final int pageSize;
+    private final boolean dsa;
+    private final boolean validatePageViewMode;
 
     private final List<T> pages = new ArrayList<>();
     private final List<PageMeta> metas = new ArrayList<>();
-    private final Supplier<T> constructor;
+    private final Supplier<T> pageFactory;
 
     private final Deque<Integer> pagesWithSpace = new ArrayDeque<>();
 
     // key: slot id
-    private final ConcurrentHashMap<Long, Consumer<SlotHandle<T>>> releaseListeners = new ConcurrentHashMap<>();
+    private final Map<Long, SlotHandle<T>> activeSlots = new HashMap<>();
 
     private long nextSlotId = 1L;
-    private int pageCount = 0;
 
-    public BufferStorage(Supplier<T> constructor, int pageSize) {
-        this.pageSize = pageSize;
-        this.constructor = constructor;
+    /**
+     * Creates a buffer storage using the legacy target-bound allocation path.
+     */
+    public BufferStorage(Supplier<T> pageFactory, int pageSize) {
+        this(pageFactory, pageSize, false, false);
     }
 
     /**
-     * It needs to be called on the main thread that has the GL context. It won't change GL buffer binding.
+     * Creates a buffer storage using either legacy target-bound or DSA operations.
+     *
+     * <p>When <code>dsa</code> is true, <code>pageFactory</code> must create DSA-enabled views backed
+     * by instantiated buffers (DSA-created or bound once).</p>
      */
-    public synchronized void allocPage() {
-        T view = constructor.get();
-        int currentBufferID = view.fetchCurrentBoundBufferID();
-        view.bind();
-        view.allocPersistent(pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        view.mapPersistent(0, pageSize, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-        view.bind(currentBufferID);
+    public BufferStorage(Supplier<T> pageFactory, int pageSize, boolean dsa) {
+        this(pageFactory, pageSize, dsa, true);
+    }
 
+    private BufferStorage(
+            Supplier<T> pageFactory,
+            int pageSize,
+            boolean dsa,
+            boolean validatePageViewMode) {
+
+        Preconditions.checkNotNull(pageFactory);
+        Preconditions.checkArgument(pageSize > 0,
+                "Argument \"pageSize\" must be positive.");
+
+        this.pageSize = pageSize;
+        this.dsa = dsa;
+        this.validatePageViewMode = validatePageViewMode;
+        this.pageFactory = pageFactory;
+    }
+
+    /**
+     * It needs to be called on the main thread that owns the GL context.
+     *
+     * <p>Note: It'll ensure that GL buffer binding remains the same.</p>
+     */
+    private void allocPage() {
+        T view = pageFactory.get();
+        Preconditions.checkNotNull(view);
+        if (validatePageViewMode) {
+            Preconditions.checkState(view.isDsaView() == dsa,
+                    "The page BufferView DSA mode must match its BufferStorage.");
+        }
+
+        if (dsa) {
+            allocPageStorage(view);
+        } else {
+            int currentBufferID = view.fetchCurrentBoundBufferID();
+            view.bind();
+            allocPageStorage(view);
+            view.bind(currentBufferID);
+        }
+
+        int pageIndex = pages.size();
         pages.add(view);
         metas.add(new PageMeta(pageSize));
-        pagesWithSpace.addLast(pageCount);
-        pageCount++;
+        pagesWithSpace.addLast(pageIndex);
+    }
+
+    private void allocPageStorage(T view) {
+        view.allocPersistent(
+                pageSize,
+                MapBufferAccessBit.WRITE_BIT,
+                MapBufferAccessBit.MAP_PERSISTENT_BIT,
+                MapBufferAccessBit.MAP_COHERENT_BIT);
+        view.mapPersistent(
+                0,
+                pageSize,
+                MapBufferAccessBit.WRITE_BIT,
+                MapBufferAccessBit.MAP_PERSISTENT_BIT,
+                MapBufferAccessBit.MAP_COHERENT_BIT);
     }
 
     /**
-     * Allocate a slot with the given size in bytes.
-     * <br>
-     * Thread-safety is guaranteed.
+     * Allocates a slot with the given size in bytes.
      *
      * @param size The size by bytes
      * @return A slot handle
@@ -64,64 +132,80 @@ public class BufferStorage<T extends BufferView> {
     public SlotHandle<T> allocate(int size) {
         Preconditions.checkArgument(size > 0,
                 "Argument \"size\" must be positive.");
+        Preconditions.checkArgument(size <= pageSize,
+                "Argument \"size\"=%s must be smaller than or equal to the page size=%s.", size, pageSize);
 
-        synchronized (this) {
-            Integer pageIndex = findPageWithSpace(size);
-            if (pageIndex == null) {
-                allocPage();
-                pageIndex = pageCount - 1;
-            }
-
-            PageMeta meta = metas.get(pageIndex);
-            SlotRegion region = meta.allocate(size);
-            if (!meta.hasFreeSpace()) {
-                pagesWithSpace.remove(pageIndex);
-            }
-
-            final long slotId = nextSlotId++;
-            return new SlotHandle<>(slotId, pageIndex, region.offset, region.length, pages.get(pageIndex), this);
+        Integer pageIndex = findPageWithSpace(size);
+        if (pageIndex == null) {
+            allocPage();
+            pageIndex = pages.size() - 1;
         }
+
+        PageMeta meta = metas.get(pageIndex);
+        SlotRegion region = meta.allocate(size);
+        if (!meta.hasFreeSpace()) {
+            pagesWithSpace.remove(pageIndex);
+        }
+
+        long slotId = nextSlotId++;
+        SlotHandle<T> slot = new SlotHandle<>(
+                slotId,
+                pageIndex,
+                region.offset,
+                region.length,
+                pages.get(pageIndex),
+                this);
+        activeSlots.put(slotId, slot);
+        return slot;
     }
 
     protected void releaseSlot(@NonNull SlotHandle<T> slot) {
         Preconditions.checkNotNull(slot);
+        Preconditions.checkArgument(slot.owner == this,
+                "Argument \"slot\" is owned by another BufferStorage.");
+        Preconditions.checkState(activeSlots.remove(slot.slotId) == slot,
+                "SlotHandle (id=%s) is not an active slot of this BufferStorage.", slot.slotId);
 
-        synchronized (this) {
-            int pageIndex = slot.pageIndex;
-            Preconditions.checkElementIndex(pageIndex, metas.size());
+        int pageIndex = slot.pageIndex;
+        Preconditions.checkElementIndex(pageIndex, metas.size());
 
-            PageMeta meta = metas.get(pageIndex);
-            meta.free(slot.offset, slot.size);
+        PageMeta meta = metas.get(pageIndex);
+        boolean hadFreeSpace = meta.hasFreeSpace();
 
-            if (meta.hasFreeSpace() && !pagesWithSpace.contains(pageIndex)) {
-                pagesWithSpace.addLast(pageIndex);
-            }
+        meta.free(slot.offset, slot.size);
+
+        if (!hadFreeSpace && meta.hasFreeSpace()) {
+            pagesWithSpace.addLast(pageIndex);
         }
 
-        Consumer<SlotHandle<T>> listener = releaseListeners.remove(slot.slotId);
+        Consumer<SlotHandle<T>> listener = slot.releaseCallback;
+        slot.releaseCallback = null;
         if (listener != null) {
             listener.accept(slot);
         }
     }
 
-    public synchronized T getPage(int index) {
+    @NonNull
+    public T getPage(int index) {
         Preconditions.checkElementIndex(index, pages.size());
 
         return pages.get(index);
     }
 
-    public synchronized int getPageCount() {
-        return pageCount;
+    public int getPageCount() {
+        return pages.size();
     }
 
     public int getPageSize() {
         return pageSize;
     }
 
+    public boolean isDsa() {
+        return dsa;
+    }
+
     private Integer findPageWithSpace(int size) {
-        Iterator<Integer> iter = pagesWithSpace.iterator();
-        while (iter.hasNext()) {
-            int index = iter.next();
+        for (int index : pagesWithSpace) {
             PageMeta meta = metas.get(index);
             if (meta.maxFree >= size) {
                 return index;
@@ -130,22 +214,39 @@ public class BufferStorage<T extends BufferView> {
         return null;
     }
 
-    protected void registerReleaseListener(long slotId, Consumer<SlotHandle<T>> listener) {
-        releaseListeners.put(slotId, listener);
+    /**
+     * Registers the callback directly on an active slot.
+     */
+    void registerReleaseListener(long slotId, Consumer<SlotHandle<T>> listener) {
+        Preconditions.checkNotNull(listener);
+
+        SlotHandle<T> slot = activeSlots.get(slotId);
+        Preconditions.checkState(slot != null,
+                "SlotHandle (id=%s) must be active when modifying the callback.", slotId);
+
+        slot.releaseCallback = listener;
     }
 
-    protected void unregisterReleaseListener(long slotId) {
-        releaseListeners.remove(slotId);
+    /**
+     * Removes the callback from an active slot.
+     */
+    void unregisterReleaseListener(long slotId) {
+        SlotHandle<T> slot = activeSlots.get(slotId);
+        if (slot != null) {
+            slot.releaseCallback = null;
+        }
     }
 
     public static class SlotHandle<T extends BufferView> {
+
         private final long slotId;
         private final int pageIndex;
         private final int offset;
         private final int size;
         private final T view;
         private final BufferStorage<T> owner;
-        private volatile boolean released = false;
+        private Consumer<SlotHandle<T>> releaseCallback;
+        private boolean released = false;
 
         SlotHandle(long slotId, int pageIndex, int offset, int size, T view, BufferStorage<T> owner) {
             this.slotId = slotId;
@@ -172,17 +273,26 @@ public class BufferStorage<T extends BufferView> {
             return size;
         }
 
+        @NonNull
         public T getView() {
             return view;
         }
 
-        public void setReleaseCallback(Consumer<SlotHandle<T>> callback) {
+        public void setReleaseCallback(@NonNull Consumer<SlotHandle<T>> callback) {
+            Preconditions.checkState(!released,
+                    "SlotHandle (id=%s) must be unreleased when modifying the callback.", slotId);
+            Preconditions.checkNotNull(callback);
+
             owner.registerReleaseListener(slotId, callback);
         }
 
-        /**
-         * Thread-safety is guaranteed.
-         */
+        public void removeReleaseCallback() {
+            Preconditions.checkState(!released,
+                    "SlotHandle (id=%s) must be unreleased when modifying the callback.", slotId);
+
+            owner.unregisterReleaseListener(slotId);
+        }
+
         public void release() {
             if (released) {
                 return;
@@ -191,25 +301,28 @@ public class BufferStorage<T extends BufferView> {
             released = true;
             owner.releaseSlot(this);
         }
+
+        public boolean isReleased() {
+            return released;
+        }
     }
 
     /**
      * It manages the free ranges of a page.
      */
     private static class PageMeta {
+
         // key: offset
         // value: length
         private final TreeMap<Integer, Integer> freeRanges = new TreeMap<>();
         private int maxFree = 0;
-        private final int capacity;
 
         PageMeta(int capacity) {
-            this.capacity = capacity;
             freeRanges.put(0, capacity);
             maxFree = capacity;
         }
 
-        synchronized SlotRegion allocate(int size) {
+        SlotRegion allocate(int size) {
             Map.Entry<Integer, Integer> candidate = null;
             for (Map.Entry<Integer, Integer> entry : freeRanges.entrySet()) {
                 if (entry.getValue() >= size) {
@@ -236,7 +349,7 @@ public class BufferStorage<T extends BufferView> {
             return new SlotRegion(offset, size);
         }
 
-        synchronized void free(int offset, int length) {
+        void free(int offset, int length) {
             Preconditions.checkArgument(offset >= 0,
                     "Argument \"offset\" must be greater than or equal to zero.");
             Preconditions.checkArgument(length >= 0,
@@ -275,11 +388,11 @@ public class BufferStorage<T extends BufferView> {
             recalcMaxFree();
         }
 
-        synchronized boolean hasFreeSpace() {
+        boolean hasFreeSpace() {
             return !freeRanges.isEmpty();
         }
 
-        synchronized void recalcMaxFree() {
+        private void recalcMaxFree() {
             int max = 0;
             for (int length : freeRanges.values()) {
                 if (length > max) {

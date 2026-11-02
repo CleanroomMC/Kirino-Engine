@@ -14,6 +14,9 @@ import org.lwjgl.opengl.GL45;
 import java.nio.ByteBuffer;
 
 /**
+ * <p>Note: (<i>This is not derived from the GL spec but a stricter enforcement</i>)
+ * <b>Mutable texture storage allocation is not supported in DSA mode.</b></p>
+ *
  * <p>Available raw GL operations:</p>
  * <ul>
  *     <li><code>texStorage3D</code></li>
@@ -73,6 +76,9 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void texImage3D(
             int level,
@@ -112,6 +118,9 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
         }
     }
 
+    /**
+     * <p>Note: Non-DSA only.</p>
+     */
     @Override
     public void compressedTexImage3D(
             int level,
@@ -184,41 +193,43 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
         //<editor-fold desc="convenient allocation overloads">
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers) {
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                allocEmpty(width, height, depthOrLayers, true, TextureFormat.RGBA8_UNORM);
+            } else {
+                allocEmpty(width, height, depthOrLayers, true, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
-            if (format == null) {
-                allocEmpty(true);
-            } else {
-                allocEmpty(true, format);
-            }
         }
 
         @Override
         public void resizeAndAllocEmpty(int width, int height, int depthOrLayers, @NonNull TextureFormat format) {
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, true, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-
-            allocEmpty(true, format);
         }
 
         @Override
         public void resizeAndAlloc(int width, int height, int depthOrLayers, @NonNull ByteBuffer byteBuffer) {
             Preconditions.checkNotNull(byteBuffer);
 
+            TextureFormat format = accessor.texture.currentFormat();
+            if (format == null) {
+                alloc(width, height, depthOrLayers, true, byteBuffer, TextureFormat.RGBA8_UNORM);
+            } else {
+                alloc(width, height, depthOrLayers, true, byteBuffer, format);
+            }
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
-            if (format == null) {
-                alloc(true, byteBuffer);
-            } else {
-                alloc(true, byteBuffer, format);
-            }
         }
 
         @Override
@@ -226,11 +237,11 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, true, byteBuffer, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-
-            alloc(true, byteBuffer, format);
         }
 
         @Override
@@ -242,17 +253,28 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
 
         @Override
         public void alloc(boolean mutable, @NonNull ByteBuffer byteBuffer, @NonNull TextureFormat format) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, byteBuffer, format);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull ByteBuffer byteBuffer,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(byteBuffer);
             Preconditions.checkNotNull(format);
 
-            MethodHolder.setCurrentFormat(accessor.texture, format);
-
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), 0, format.format, format.type, byteBuffer);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers, 0, format.format, format.type, byteBuffer);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers());
-                accessor.texSubImage3D(0, 0, 0, 0, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), format.format, format.type, byteBuffer);
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers);
+                accessor.texSubImage3D(0, 0, 0, 0, width, height, depthOrLayers, format.format, format.type, byteBuffer);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
 
         @Override
@@ -262,15 +284,25 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
 
         @Override
         public void allocEmpty(boolean mutable, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), mutable, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                boolean mutable,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(format);
 
-            MethodHolder.setCurrentFormat(accessor.texture, format);
-
             if (mutable) {
-                accessor.texImage3D(0, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), 0, format.format, format.type, null);
+                accessor.texImage3D(0, format.internalFormat, width, height, depthOrLayers, 0, format.format, format.type, null);
             } else {
-                accessor.texStorage3D(1, format.internalFormat, accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers());
+                accessor.texStorage3D(1, format.internalFormat, width, height, depthOrLayers);
             }
+
+            MethodHolder.setCurrentFormat(accessor.texture, format);
         }
         //</editor-fold>
 
@@ -280,10 +312,11 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
+            allocEmpty(width, height, depthOrLayers, options, format);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            allocEmpty(options, format);
         }
 
         @Override
@@ -292,21 +325,32 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
 
+            alloc(width, height, depthOrLayers, options, data, format, generateMipmaps);
+
             MethodHolder.setExtentX(accessor.texture, width);
             MethodHolder.setExtentY(accessor.texture, height);
             MethodHolder.setLayers(accessor.texture, depthOrLayers);
-            alloc(options, data, format, generateMipmaps);
         }
 
         @Override
         public void alloc(@NonNull StorageOptions options, @NonNull ByteBuffer data, @NonNull TextureFormat format, boolean generateMipmaps) {
+            alloc(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, data, format, generateMipmaps);
+        }
+
+        private void alloc(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format,
+                boolean generateMipmaps) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(data);
             Preconditions.checkNotNull(format);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int layers = accessor.texture.layers();
+            int layers = depthOrLayers;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -314,7 +358,7 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkState(layers > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);
@@ -343,12 +387,20 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
 
         @Override
         public void allocEmpty(@NonNull StorageOptions options, @NonNull TextureFormat format) {
+            allocEmpty(accessor.texture.extentX(), accessor.texture.extentY(), accessor.texture.layers(), options, format);
+        }
+
+        private void allocEmpty(
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull StorageOptions options,
+                @NonNull TextureFormat format) {
+
             Preconditions.checkNotNull(options);
             Preconditions.checkNotNull(format);
 
-            int width = accessor.texture.extentX();
-            int height = accessor.texture.extentY();
-            int layers = accessor.texture.layers();
+            int layers = depthOrLayers;
             int levels = options.levels();
 
             Preconditions.checkState(width > 0);
@@ -356,7 +408,7 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkState(layers > 0);
             Preconditions.checkState(levels > 0);
 
-            int maxMipmapCount = accessor.texture.maxMipmapLevelCount();
+            int maxMipmapCount = Integer.SIZE - Integer.numberOfLeadingZeros(Math.max(width, height));
             Preconditions.checkState(levels <= maxMipmapCount,
                     "Too many mipmap levels. Input=%s; Expected Max=%s",
                     levels, maxMipmapCount);
@@ -380,7 +432,7 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkNotNull(data);
             Preconditions.checkArgument(level >= 0);
 
-            TextureFormat format = MethodHolder.getCurrentFormat(accessor.texture);
+            TextureFormat format = accessor.texture.currentFormat();
 
             Preconditions.checkState(format != null,
                     "Texture format has not been specified.");
@@ -395,6 +447,99 @@ public class Texture2DArrayAccessor extends TextureAccessorExt implements Textur
             Preconditions.checkArgument(level >= 0);
 
             accessor.texSubImage3D(level, 0, 0, 0, mipExtent(accessor.texture.extentX(), level), mipExtent(accessor.texture.extentY(), level), accessor.texture.layers(), format.format, format.type, data);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            uploadSubImage(level, xOffset, yOffset, zOffset, width, height, depthOrLayers, data, format);
+        }
+
+        @Override
+        public void uploadSubImage(
+                int level,
+                int xOffset,
+                int yOffset,
+                int zOffset,
+                int width,
+                int height,
+                int depthOrLayers,
+                @NonNull ByteBuffer data,
+                @NonNull TextureFormat format) {
+
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.texSubImage3D(
+                    level,
+                    xOffset,
+                    yOffset,
+                    zOffset,
+                    width,
+                    height,
+                    depthOrLayers,
+                    format.format,
+                    format.type,
+                    data);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data) {
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            clearLevel(level, data, format);
+        }
+
+        @Override
+        public void clearLevel(int level, @Nullable ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.clearTexImage(level, format.format, format.type, data);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkArgument(level >= 0);
+
+            TextureFormat format = accessor.texture.currentFormat();
+
+            Preconditions.checkState(format != null,
+                    "Texture format has not been specified.");
+
+            downloadLevel(level, data, format);
+        }
+
+        @Override
+        public void downloadLevel(int level, @NonNull ByteBuffer data, @NonNull TextureFormat format) {
+            Preconditions.checkNotNull(data);
+            Preconditions.checkNotNull(format);
+            Preconditions.checkArgument(level >= 0);
+
+            accessor.getTexImage(level, format.format, format.type, data);
         }
 
         @Override

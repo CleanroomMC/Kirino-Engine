@@ -7,7 +7,6 @@ import com.cleanroommc.kirino.gl.shader.ShaderAnalyzer;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.shader.ShaderType;
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -107,9 +106,9 @@ public class ShaderRegistry {
         }
     }
 
-    public void analyze(GLSLRegistry glslRegistry, ShaderAnalyzer analyzer) {
+    public void analyze(ShaderAnalyzer analyzer) {
         for (Shader shader : shaders.values()) {
-            shader.analyze(glslRegistry, analyzer);
+            shader.analyze(analyzer);
         }
     }
 

@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer;
 
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
@@ -87,7 +86,7 @@ public class MeshletInputDoubleBuffer {
 
         ssbo0.bind();
         ssbo0.unmapPersistent();
-        GLResourceManager.disposeEarly(ssbo0.buffer);
+        ssbo0.buffer.disposeManually();
 
         ssbo0 = new SSBOView(new GLBuffer());
 
@@ -108,7 +107,7 @@ public class MeshletInputDoubleBuffer {
 
         ssbo1.bind();
         ssbo1.unmapPersistent();
-        GLResourceManager.disposeEarly(ssbo1.buffer);
+        ssbo1.buffer.disposeManually();
 
         ssbo1 = new SSBOView(new GLBuffer());
 

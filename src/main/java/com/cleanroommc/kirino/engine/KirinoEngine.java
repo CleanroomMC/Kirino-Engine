@@ -16,8 +16,7 @@ import com.cleanroommc.kirino.engine.world.event.ModuleInstallerRegistrationEven
 import com.cleanroommc.kirino.engine.world.type.Graphics;
 import com.cleanroommc.kirino.engine.world.type.Headless;
 import com.cleanroommc.kirino.engine.process.analysis.view.AnalyticalWorldViewImpl;
-import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
+import com.cleanroommc.kirino.gl.shader.DefaultShaderAnalyzer;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
@@ -112,7 +111,6 @@ public class KirinoEngine {
                 mcIntegrationBundle);
 
         shaderIntrospection = new ShaderIntrospection(
-                new GLSLRegistry(),
                 new DefaultShaderAnalyzer());
 
         renderStructure = new RenderStructure(

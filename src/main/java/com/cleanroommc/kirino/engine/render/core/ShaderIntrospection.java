@@ -1,18 +1,18 @@
 package com.cleanroommc.kirino.engine.render.core;
 
-import com.cleanroommc.kirino.gl.shader.analysis.DefaultShaderAnalyzer;
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
+import com.cleanroommc.kirino.gl.shader.DefaultShaderAnalyzer;
+import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 
 public final class ShaderIntrospection {
 
-    public final GLSLRegistry glslRegistry;
     public final DefaultShaderAnalyzer defaultShaderAnalyzer;
 
     public ShaderIntrospection(
-            GLSLRegistry glslRegistry,
-            DefaultShaderAnalyzer defaultShaderAnalyzer) {
+            @NonNull DefaultShaderAnalyzer defaultShaderAnalyzer) {
 
-        this.glslRegistry = glslRegistry;
+        Preconditions.checkNotNull(defaultShaderAnalyzer);
+
         this.defaultShaderAnalyzer = defaultShaderAnalyzer;
     }
 }

@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.gl.vao.attribute;
 
 import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.google.common.base.Preconditions;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
@@ -14,6 +15,7 @@ public class Slot {
     private InterpretationType interpretationType = InterpretationType.TO_FLOAT_KIND;
     private boolean normalize = false;
 
+    @NonNull
     public Type getType() {
         return type;
     }
@@ -30,6 +32,7 @@ public class Slot {
         return divisor;
     }
 
+    @NonNull
     public InterpretationType getInterpretationType() {
         return interpretationType;
     }
@@ -38,17 +41,22 @@ public class Slot {
         return normalize;
     }
 
-    public Slot(Type type, int count) {
-        Preconditions.checkArgument(!(count <= 0 || count > 4), "Component count cannot no greater than 0 or greater than 4.");
+    public Slot(@NonNull Type type, int count) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkArgument(!(count <= 0 || count > 4),
+                "Component count=%s cannot be no greater than 0 or greater than 4.",
+                count);
 
         this.type = type;
         this.count = count;
         this.size = type.length * count;
     }
 
-    // 0 for vertex data
-    // 1 or more for instancing data
+    /**
+     * @param divisor 0 for vertex data; 1 or more for instancing data
+     */
     @CanIgnoreReturnValue
+    @NonNull
     public Slot setDivisor(int divisor) {
         Preconditions.checkArgument(divisor >= 0, "Divisor cannot be less than 0.");
 
@@ -57,14 +65,20 @@ public class Slot {
     }
 
     @CanIgnoreReturnValue
-    public Slot setInterpretationType(InterpretationType type) {
+    @NonNull
+    public Slot setInterpretationType(@NonNull InterpretationType type) {
+        Preconditions.checkNotNull(type);
+
         interpretationType = type;
         return this;
     }
 
-    // only for InterpretationType.TO_FLOAT_KIND
-    // especially for byte -> float ([0, 255] -> [0.0, 1.0])
+    /**
+     * This is only for {@link InterpretationType#TO_FLOAT_KIND}.
+     * Especially for <code>byte -> float: ([0, 255] -> [0.0, 1.0])</code>.
+     */
     @CanIgnoreReturnValue
+    @NonNull
     public Slot setNormalize(boolean flag) {
         normalize = flag;
         return this;

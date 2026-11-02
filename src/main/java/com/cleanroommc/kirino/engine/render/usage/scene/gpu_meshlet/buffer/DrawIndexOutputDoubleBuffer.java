@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer;
 
-import com.cleanroommc.kirino.gl.GLResourceManager;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
@@ -96,7 +95,7 @@ public class DrawIndexOutputDoubleBuffer {
 
         indexSsbo0.bind();
         indexSsbo0.unmapPersistent();
-        GLResourceManager.disposeEarly(indexSsbo0.buffer);
+        indexSsbo0.buffer.disposeManually();
 
         indexSsbo0 = new SSBOView(new GLBuffer());
 
@@ -117,7 +116,7 @@ public class DrawIndexOutputDoubleBuffer {
 
         indexSsbo1.bind();
         indexSsbo1.unmapPersistent();
-        GLResourceManager.disposeEarly(indexSsbo1.buffer);
+        indexSsbo1.buffer.disposeManually();
 
         indexSsbo1 = new SSBOView(new GLBuffer());
 

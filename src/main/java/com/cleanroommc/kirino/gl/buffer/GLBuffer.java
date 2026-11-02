@@ -3,20 +3,47 @@ package com.cleanroommc.kirino.gl.buffer;
 import com.cleanroommc.kirino.gl.GLDisposable;
 import com.cleanroommc.kirino.gl.GLResourceManager;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL45;
 
+/**
+ * An owned OpenGL buffer object.
+ *
+ * <p>Buffers have no intrinsic target. A target only selects how OpenGL interprets a buffer for a
+ * particular operation; binding a buffer does not permanently assign that target to the object.</p>
+ *
+ * <p>Legacy creation with {@code glGenBuffers} reserves a buffer name but does not instantiate the
+ * object until its first bind. DSA creation with {@code glCreateBuffers} creates the object
+ * immediately. Once instantiated, either buffer can be used through both target-bound and DSA entry points.</p>
+ */
 public class GLBuffer extends GLDisposable {
+
     public final int bufferID;
 
+    private GLBuffer(int bufferID) {
+        this.bufferID = bufferID;
+        GLResourceManager.addDisposable(this);
+    }
+
+    private static int createBuffer(boolean dsa) {
+        if (dsa) {
+            return GL45.glCreateBuffers();
+        } else {
+            return GL15.glGenBuffers();
+        }
+    }
+
     /**
-     * <p>Notice: buffers do not have an intrinsic or fixed type in either OpenGL or our abstraction layer.
-     * In OpenGL, a buffer object is merely interpreted according to the binding
-     * target it is associated with after a <code>bind</code> call using buffer view classes.
-     * However, buffers still don't gain a fixed type after <code>bind</code> but you should respect
-     * its first binding target type in most cases.</p>
+     * Creates a legacy buffer name with {@code glGenBuffers}.
      */
     public GLBuffer() {
-        bufferID = GL15.glGenBuffers();
-        GLResourceManager.addDisposable(this);
+        this(createBuffer(false));
+    }
+
+    /**
+     * Creates a buffer using either legacy or DSA creation.
+     */
+    public GLBuffer(boolean dsa) {
+        this(createBuffer(dsa));
     }
 
     @Override

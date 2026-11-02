@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ui.simpletext.atlas;
 
-import com.cleanroommc.kirino.gl.GLResourceManager;
+import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DArrayAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -10,7 +10,6 @@ import com.cleanroommc.kirino.ui.simpletext.sdf.SDFBitmap;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtlas.LayerPage, SDFBitmap> {
@@ -19,7 +18,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
 
     @Override
     public void close() {
-        GLResourceManager.disposeEarly(storage.texture.texture);
+        storage.texture.texture.disposeManually();
     }
 
     public static final class LayerPage {
@@ -68,8 +67,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
 
             this.pageWidth = pageWidth;
             this.pageHeight = pageHeight;
-            // todo: move to gl device info
-            maxLayerCount = GL11.glGetInteger(GL30.GL_MAX_ARRAY_TEXTURE_LAYERS);
+            maxLayerCount = KirinoClientCore.GL_DEVICE_INFO.getMaxArrayTextureLayers();
 
             Preconditions.checkArgument(initialLayerCapacity <= maxLayerCount,
                     "Initial layer capacity=%s exceeds maximum=%s.",
@@ -142,7 +140,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
             texture = newTexture;
             layerCapacity = newCapacity;
 
-            GLResourceManager.disposeEarly(oldTexture.texture);
+            oldTexture.texture.disposeManually();
         }
 
         @NonNull
@@ -153,7 +151,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                     layers));
 
             result.highlevel().allocEmpty(false, TextureFormat.R8_UNORM);
-            result.clearTexImage(0, TextureFormat.R8_UNORM.format, TextureFormat.R8_UNORM.type, null);
+            result.highlevel().clearLevel(0);
             result.setCommonParams(FilterMode.LINEAR, FilterMode.LINEAR, WrapMode.CLAMP_TO_EDGE, WrapMode.CLAMP_TO_EDGE);
 
             return result;
@@ -203,8 +201,11 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
         Preconditions.checkState(page.getLayer() == slot.getPageIndex(),
                 "Layer=%s must match page index=%s.", page.getLayer(), slot.getPageIndex());
 
+        // potential stall; doesn't matter anyway
+        int previousUnpackAlignment = GL11.glGetInteger(GL11.GL_UNPACK_ALIGNMENT);
         GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
-        page.getTexture().texSubImage3D(
+        try {
+            page.getTexture().highlevel().uploadSubImage(
                 0,
                 slot.getX(),
                 slot.getY(),
@@ -212,9 +213,9 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
                 slot.getWidth(),
                 slot.getHeight(),
                 1,
-                TextureFormat.R8_UNORM.format,
-                TextureFormat.R8_UNORM.type,
                 bitmap.byteBuffer());
-        GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 4);
+        } finally {
+            GL11.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+        }
     }
 }

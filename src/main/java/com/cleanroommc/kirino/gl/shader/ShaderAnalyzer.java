@@ -1,7 +1,12 @@
 package com.cleanroommc.kirino.gl.shader;
 
-import com.cleanroommc.kirino.gl.shader.schema.GLSLRegistry;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 public interface ShaderAnalyzer {
-    ShaderMeta analyze(GLSLRegistry glslRegistry, String shaderSource);
+
+    /**
+     * @implNote The result must be deterministic
+     */
+    @Nullable ShaderMeta analyze(@NonNull String shaderSource, @NonNull ShaderType shaderType);
 }

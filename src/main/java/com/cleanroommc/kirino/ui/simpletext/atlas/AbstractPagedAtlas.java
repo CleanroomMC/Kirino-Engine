@@ -305,7 +305,12 @@ public abstract class AbstractPagedAtlas<TPage, TBitmap extends ST_Bitmap> imple
                 pages.get(pageIndex),
                 this);
 
-        uploadSection(slot, bitmap);
+        try {
+            uploadSection(slot, bitmap);
+        } catch (RuntimeException | Error exception) {
+            slot.release();
+            throw exception;
+        }
 
         return slot;
     }
