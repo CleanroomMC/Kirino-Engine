@@ -7,11 +7,17 @@ import com.cleanroommc.kirino.gl.shader.reflect.ProgramReflection;
 import com.cleanroommc.kirino.gl.shader.reflect.ShaderReflection;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.joml.*;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.*;
+import org.lwjgl.system.MemoryStack;
 
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.Optional;
 
 public class ShaderProgram extends GLDisposable {
@@ -27,8 +33,9 @@ public class ShaderProgram extends GLDisposable {
         return programID;
     }
 
-    //<editor-fold desc="reflection & convenient paths">
+    //<editor-fold desc="reflection">
     private ProgramReflection reflection = null;
+    private final EnumMap<ShaderType, Optional<ShaderReflection>> shaderReflectionCache = new EnumMap<>(ShaderType.class);
 
     @NonNull
     public ProgramReflection refl() {
@@ -37,6 +44,32 @@ public class ShaderProgram extends GLDisposable {
         }
 
         return reflection;
+    }
+
+    @NonNull
+    public Shader shader(@NonNull ShaderType stage) {
+        Preconditions.checkNotNull(stage);
+
+        return switch (stage) {
+            case VERTEX -> vert();
+            case FRAGMENT -> frag();
+            case GEOMETRY -> geom();
+            case TESS_CONTROL -> tesc();
+            case TESS_EVALUATION -> tese();
+            case COMPUTE -> comp();
+        };
+    }
+
+    @NonNull
+    public Optional<ShaderReflection> shaderRefl(@NonNull ShaderType stage) {
+        Preconditions.checkNotNull(stage);
+
+        Optional<ShaderReflection> result = shaderReflectionCache.get(stage);
+        if (result == null) {
+            result = shader(stage).getShaderMeta().map(ShaderMeta::refl);
+            shaderReflectionCache.put(stage, result);
+        }
+        return result;
     }
 
     private int vertIndexCache = -1;
@@ -59,7 +92,7 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> vertRefl() {
-        return vert().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.VERTEX);
     }
 
     private int fragIndexCache = -1;
@@ -82,7 +115,7 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> fragRefl() {
-        return frag().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.FRAGMENT);
     }
 
     private int geomIndexCache = -1;
@@ -105,7 +138,7 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> geomRefl() {
-        return geom().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.GEOMETRY);
     }
 
     private int tescIndexCache = -1;
@@ -128,7 +161,7 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> tescRefl() {
-        return tesc().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.TESS_CONTROL);
     }
 
     private int teseIndexCache = -1;
@@ -151,7 +184,7 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> teseRefl() {
-        return tese().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.TESS_EVALUATION);
     }
 
     private int compIndexCache = -1;
@@ -174,13 +207,294 @@ public class ShaderProgram extends GLDisposable {
 
     @NonNull
     public Optional<ShaderReflection> compRefl() {
-        return comp().getShaderMeta().map(ShaderMeta::refl);
+        return shaderRefl(ShaderType.COMPUTE);
+    }
+    //</editor-fold>
+
+    //<editor-fold desc="convenient paths">
+    private static final int UNQUERIED = Integer.MIN_VALUE;
+    private final Object2IntOpenHashMap<String> uniformLocations = new Object2IntOpenHashMap<>();
+    private final Object2IntOpenHashMap<String> uniformBlockIndices = new Object2IntOpenHashMap<>();
+    private final Object2IntOpenHashMap<String> storageBlockIndices = new Object2IntOpenHashMap<>();
+    private final Int2IntOpenHashMap uniformBlockBindings = new Int2IntOpenHashMap();
+    private final Int2IntOpenHashMap storageBlockBindings = new Int2IntOpenHashMap();
+
+    public void clearQueryCaches() {
+        uniformLocations.clear();
+        uniformBlockIndices.clear();
+        storageBlockIndices.clear();
+        uniformBlockBindings.clear();
+        storageBlockBindings.clear();
+    }
+
+    public int uniformLocation(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
+        int location = uniformLocations.getInt(name);
+        if (location == UNQUERIED) {
+            location = GL20.glGetUniformLocation(programID, name);
+            uniformLocations.put(name, location);
+        }
+        return location;
+    }
+
+    public int uniformBlockIndex(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
+        int index = uniformBlockIndices.getInt(name);
+        if (index == UNQUERIED) {
+            index = GL31.glGetUniformBlockIndex(programID, name);
+            uniformBlockIndices.put(name, index);
+        }
+        return index;
+    }
+
+    public int storageBlockIndex(@NonNull String name) {
+        Preconditions.checkNotNull(name);
+
+        int index = storageBlockIndices.getInt(name);
+        if (index == UNQUERIED) {
+            index = GL43.glGetProgramResourceIndex(programID, GL43.GL_SHADER_STORAGE_BLOCK, name);
+            storageBlockIndices.put(name, index);
+        }
+        return index;
+    }
+
+    public int uniformBlockBinding(@NonNull String name) {
+        int index = uniformBlockIndex(name);
+        Preconditions.checkArgument(index != GL31.GL_INVALID_INDEX,
+                "Uniform block \"%s\" is not active.", name);
+
+        int binding = uniformBlockBindings.get(index);
+        if (binding == UNQUERIED) {
+            binding = GL31.glGetActiveUniformBlocki(programID, index, GL31.GL_UNIFORM_BLOCK_BINDING);
+            uniformBlockBindings.put(index, binding);
+        }
+        return binding;
+    }
+
+    public int storageBlockBinding(@NonNull String name) {
+        int index = storageBlockIndex(name);
+        Preconditions.checkArgument(index != GL31.GL_INVALID_INDEX,
+                "Storage block \"%s\" is not active.", name);
+
+        int binding = storageBlockBindings.get(index);
+        if (binding == UNQUERIED) {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                IntBuffer value = stack.mallocInt(1);
+                GL43.glGetProgramResourceiv(programID, GL43.GL_SHADER_STORAGE_BLOCK, index, stack.ints(GL43.GL_BUFFER_BINDING), null, value);
+                binding = value.get(0);
+            }
+            storageBlockBindings.put(index, binding);
+        }
+        return binding;
+    }
+
+    public void setUniformBlockBinding(@NonNull String name, int binding) {
+        Preconditions.checkArgument(binding >= 0, "Binding must not be negative.");
+        int index = uniformBlockIndex(name);
+        Preconditions.checkArgument(index != GL31.GL_INVALID_INDEX,
+                "Uniform block \"%s\" is not active.", name);
+
+        GL31.glUniformBlockBinding(programID, index, binding);
+        uniformBlockBindings.put(index, binding);
+    }
+
+    public void setStorageBlockBinding(@NonNull String name, int binding) {
+        Preconditions.checkArgument(binding >= 0, "Binding must not be negative.");
+        int index = storageBlockIndex(name);
+        Preconditions.checkArgument(index != GL31.GL_INVALID_INDEX,
+                "Storage block \"%s\" is not active.", name);
+
+        GL43.glShaderStorageBlockBinding(programID, index, binding);
+        storageBlockBindings.put(index, binding);
+    }
+
+    public void bindUniformBase(@NonNull String name, int bufferID) {
+        GL30.glBindBufferBase(GL31.GL_UNIFORM_BUFFER, uniformBlockBinding(name), bufferID);
+    }
+
+    public void bindUniformRange(@NonNull String name, int bufferID, long offset, long size) {
+        GL30.glBindBufferRange(GL31.GL_UNIFORM_BUFFER, uniformBlockBinding(name), bufferID, offset, size);
+    }
+
+    public void bindStorageBase(@NonNull String name, int bufferID) {
+        GL30.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, storageBlockBinding(name), bufferID);
+    }
+
+    public void bindStorageRange(@NonNull String name, int bufferID, long offset, long size) {
+        GL30.glBindBufferRange(GL43.GL_SHADER_STORAGE_BUFFER, storageBlockBinding(name), bufferID, offset, size);
+    }
+
+    public void uniform1b(@NonNull String name, boolean value) {
+        GL41.glProgramUniform1i(programID, uniformLocation(name), value ? 1 : 0);
+    }
+
+    public void uniform1i(@NonNull String name, int value) {
+        GL41.glProgramUniform1i(programID, uniformLocation(name), value);
+    }
+
+    public void uniform2i(@NonNull String name, int x, int y) {
+        GL41.glProgramUniform2i(programID, uniformLocation(name), x, y);
+    }
+
+    public void uniform3i(@NonNull String name, int x, int y, int z) {
+        GL41.glProgramUniform3i(programID, uniformLocation(name), x, y, z);
+    }
+
+    public void uniform4i(@NonNull String name, int x, int y, int z, int w) {
+        GL41.glProgramUniform4i(programID, uniformLocation(name), x, y, z, w);
+    }
+
+    public void uniform1ui(@NonNull String name, int value) {
+        GL41.glProgramUniform1ui(programID, uniformLocation(name), value);
+    }
+
+    public void uniform2ui(@NonNull String name, int x, int y) {
+        GL41.glProgramUniform2ui(programID, uniformLocation(name), x, y);
+    }
+
+    public void uniform3ui(@NonNull String name, int x, int y, int z) {
+        GL41.glProgramUniform3ui(programID, uniformLocation(name), x, y, z);
+    }
+
+    public void uniform4ui(@NonNull String name, int x, int y, int z, int w) {
+        GL41.glProgramUniform4ui(programID, uniformLocation(name), x, y, z, w);
+    }
+
+    public void uniform1f(@NonNull String name, float value) {
+        GL41.glProgramUniform1f(programID, uniformLocation(name), value);
+    }
+
+    public void uniform2f(@NonNull String name, float x, float y) {
+        GL41.glProgramUniform2f(programID, uniformLocation(name), x, y);
+    }
+
+    public void uniform3f(@NonNull String name, float x, float y, float z) {
+        GL41.glProgramUniform3f(programID, uniformLocation(name), x, y, z);
+    }
+
+    public void uniform4f(@NonNull String name, float x, float y, float z, float w) {
+        GL41.glProgramUniform4f(programID, uniformLocation(name), x, y, z, w);
+    }
+
+    public void uniform1iv(@NonNull String name, @NonNull IntBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform1iv(programID, uniformLocation(name), values);
+    }
+
+    public void uniform1uiv(@NonNull String name, @NonNull IntBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform1uiv(programID, uniformLocation(name), values);
+    }
+
+    public void uniform1fv(@NonNull String name, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform1fv(programID, uniformLocation(name), values);
+    }
+
+    public void uniform2fv(@NonNull String name, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform2fv(programID, uniformLocation(name), values);
+    }
+
+    public void uniform3fv(@NonNull String name, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform3fv(programID, uniformLocation(name), values);
+    }
+
+    public void uniform4fv(@NonNull String name, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniform4fv(programID, uniformLocation(name), values);
+    }
+
+    public void uniformMatrix2f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), transpose, values);
+    }
+
+    public void uniformMatrix2f(@NonNull String name, @NonNull Matrix2fc value) {
+        Preconditions.checkNotNull(value);
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(4)));
+        }
+    }
+
+    public void uniformMatrix3f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), transpose, values);
+    }
+
+    public void uniformMatrix3f(@NonNull String name, @NonNull Matrix3fc value) {
+        Preconditions.checkNotNull(value);
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(9)));
+        }
+    }
+
+    public void uniformMatrix3x2f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), transpose, values);
+    }
+
+    public void uniformMatrix3x2f(@NonNull String name, @NonNull Matrix3x2fc value) {
+        Preconditions.checkNotNull(value);
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(6)));
+        }
+    }
+
+    public void uniformMatrix4f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), transpose, values);
+    }
+
+    public void uniformMatrix4f(@NonNull String name, @NonNull Matrix4fc value) {
+        Preconditions.checkNotNull(value);
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(16)));
+        }
+    }
+
+    public void uniformMatrix4x3f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
+        Preconditions.checkNotNull(values);
+
+        GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), transpose, values);
+    }
+
+    public void uniformMatrix4x3f(@NonNull String name, @NonNull Matrix4x3fc value) {
+        Preconditions.checkNotNull(value);
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(12)));
+        }
     }
     //</editor-fold>
 
     @ReflectiveInvocation
     private ShaderProgram(@NonNull Shader @NonNull ... shaders) {
         Preconditions.checkNotNull(shaders);
+
+        uniformLocations.defaultReturnValue(UNQUERIED);
+        uniformBlockIndices.defaultReturnValue(UNQUERIED);
+        storageBlockIndices.defaultReturnValue(UNQUERIED);
+        uniformBlockBindings.defaultReturnValue(UNQUERIED);
+        storageBlockBindings.defaultReturnValue(UNQUERIED);
+
         for (Shader shader : shaders) {
             Preconditions.checkNotNull(shader);
             Preconditions.checkState(shader.isValid(), "Shader must be valid.");
