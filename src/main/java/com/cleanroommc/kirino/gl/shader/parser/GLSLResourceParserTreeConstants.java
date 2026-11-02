@@ -8,16 +8,16 @@ public interface GLSLResourceParserTreeConstants
   public int JJTSTORAGEQUALIFIER = 2;
   public int JJTINTERFACEBLOCKDECLARATION = 3;
   public int JJTUNIFORMDECLARATION = 4;
-  public int JJTINPUTOUTPUTDECLARATION = 5;
-  public int JJTSTRUCTDECLARATION = 6;
-  public int JJTSTRUCTSPECIFIER = 7;
-  public int JJTMEMBERDECLARATION = 8;
-  public int JJTTYPESPECIFIER = 9;
-  public int JJTVOID = 10;
-  public int JJTLAYOUTQUALIFIER = 11;
-  public int JJTLAYOUTQUALIFIERITEM = 12;
-  public int JJTQUALIFIER = 13;
-  public int JJTDECLARATORLIST = 14;
+  public int JJTDECLARATORLIST = 5;
+  public int JJTINPUTOUTPUTDECLARATION = 6;
+  public int JJTSTRUCTDECLARATION = 7;
+  public int JJTSTRUCTSPECIFIER = 8;
+  public int JJTMEMBERDECLARATION = 9;
+  public int JJTTYPESPECIFIER = 10;
+  public int JJTVOID = 11;
+  public int JJTLAYOUTQUALIFIER = 12;
+  public int JJTLAYOUTQUALIFIERITEM = 13;
+  public int JJTQUALIFIER = 14;
   public int JJTDECLARATOR = 15;
   public int JJTINSTANCEDECLARATOR = 16;
   public int JJTARRAYSPECIFIER = 17;
@@ -41,6 +41,7 @@ public interface GLSLResourceParserTreeConstants
     "StorageQualifier",
     "InterfaceBlockDeclaration",
     "UniformDeclaration",
+    "DeclaratorList",
     "InputOutputDeclaration",
     "StructDeclaration",
     "StructSpecifier",
@@ -50,7 +51,6 @@ public interface GLSLResourceParserTreeConstants
     "LayoutQualifier",
     "LayoutQualifierItem",
     "Qualifier",
-    "DeclaratorList",
     "Declarator",
     "InstanceDeclarator",
     "ArraySpecifier",
@@ -68,4 +68,4 @@ public interface GLSLResourceParserTreeConstants
     "SubroutineTypeName",
   };
 }
-/* JavaCC - OriginalChecksum=7a60d56c6c336c0e8582336db7605455 (do not edit this line) */
+/* JavaCC - OriginalChecksum=7640015560e3e9dddf7fcb2e4b157467 (do not edit this line) */

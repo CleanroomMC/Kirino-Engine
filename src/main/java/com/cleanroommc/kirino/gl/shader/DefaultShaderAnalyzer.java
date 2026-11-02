@@ -332,12 +332,12 @@ public final class DefaultShaderAnalyzer implements ShaderAnalyzer {
 
             String storage = storage(node);
             return new ShaderMeta.InputOutputDeclaration(
-                storage,
-                type(requireDirectChild(node, ASTTypeSpecifier.class)),
-                layouts(node),
-                qualifiers(node, storage),
-                declarators(requireDirectChild(node, ASTDeclaratorList.class)),
-                span(node));
+                    storage,
+                    type(requireDirectChild(node, ASTTypeSpecifier.class)),
+                    layouts(node),
+                    qualifiers(node, storage),
+                    declarators(requireDirectChild(node, ASTDeclaratorList.class)),
+                    span(node));
         }
 
         private static ShaderMeta.@NonNull VariableDeclaration variableDeclaration(@NonNull ASTVariableDeclaration node) {

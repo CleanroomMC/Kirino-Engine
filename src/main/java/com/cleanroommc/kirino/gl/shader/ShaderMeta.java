@@ -345,8 +345,6 @@ public final class ShaderMeta {
     /**
      * e.g.
      * <pre>{@code
-     * subroutine vec4 Shade(vec3 normal);
-     *
      * subroutine(Shade) vec4 shadeNormal(vec3 normal) {
      *     return vec4(normal, 1.0);
      * }

@@ -9,6 +9,7 @@ public interface GLSLResourceParserVisitor
   public Void visit(ASTStorageQualifier node, Void data);
   public Void visit(ASTInterfaceBlockDeclaration node, Void data);
   public Void visit(ASTUniformDeclaration node, Void data);
+  public Void visit(ASTDeclaratorList node, Void data);
   public Void visit(ASTInputOutputDeclaration node, Void data);
   public Void visit(ASTStructDeclaration node, Void data);
   public Void visit(ASTStructSpecifier node, Void data);
@@ -17,7 +18,6 @@ public interface GLSLResourceParserVisitor
   public Void visit(ASTLayoutQualifier node, Void data);
   public Void visit(ASTLayoutQualifierItem node, Void data);
   public Void visit(ASTQualifier node, Void data);
-  public Void visit(ASTDeclaratorList node, Void data);
   public Void visit(ASTDeclarator node, Void data);
   public Void visit(ASTInstanceDeclarator node, Void data);
   public Void visit(ASTArraySpecifier node, Void data);
@@ -34,4 +34,4 @@ public interface GLSLResourceParserVisitor
   public Void visit(ASTFunctionName node, Void data);
   public Void visit(ASTSubroutineTypeName node, Void data);
 }
-/* JavaCC - OriginalChecksum=74e97f8ae9a861dc3590299273b3a6ca (do not edit this line) */
+/* JavaCC - OriginalChecksum=4358892e1c40cd0ef14c8e2f84a127d4 (do not edit this line) */

@@ -335,6 +335,7 @@ public class GLSLResourceParser {
         int parenDepth = 0;
         int bracketDepth = 0;
         int braceDepth = 0;
+        Token previous = null;
 
         while (true) {
             Token next = getToken(1);
@@ -349,7 +350,8 @@ public class GLSLResourceParser {
             }
 
             Token consumed = getNextToken();
-            appendNormalizedToken(result, consumed.image);
+            appendNormalizedToken(result, consumed, previous);
+            previous = consumed;
 
             if (kind == LEFT_PAREN) {
                 parenDepth++;
@@ -381,12 +383,18 @@ public class GLSLResourceParser {
         return result.toString();
     }
 
-    private static void appendNormalizedToken(StringBuilder result, String image) {
-        if (!result.isEmpty()
-                && isWordCharacter(result.charAt(result.length() - 1))
-                && !image.isEmpty()
-                && isWordCharacter(image.charAt(0))) {
-            result.append(' ');
+    private static void appendNormalizedToken(StringBuilder result, Token token, Token previous) {
+        String image = token.image;
+        if (!result.isEmpty() && !image.isEmpty()) {
+            char last = result.charAt(result.length() - 1);
+            char first = image.charAt(0);
+            boolean separated = previous != null && (previous.endLine != token.beginLine
+                    || previous.endColumn + 1 != token.beginColumn);
+            if (isWordCharacter(last) && isWordCharacter(first)
+                    || separated && ("++ -- << >> && || ^^ == != <= >= += -= *= /= %= &= |= ^= /* //")
+                            .contains("" + last + first)) {
+                result.append(' ');
+            }
         }
         result.append(image);
     }
@@ -594,8 +602,14 @@ void UniformDeclaration() #UniformDeclaration :
 {
     ( Qualifier() )+
     TypeSpecifier()
-    DeclaratorList()
+    UniformDeclaratorList()
     <SEMICOLON>
+}
+
+void UniformDeclaratorList() #DeclaratorList :
+{}
+{
+    [ Declarator() ( <COMMA> Declarator() )* ]
 }
 
 void InputOutputDeclaration() #InputOutputDeclaration :
