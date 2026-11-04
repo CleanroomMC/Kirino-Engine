@@ -27,10 +27,17 @@ public final class McTtfFontManager {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino McTTF Font Manager");
 
+    /**
+     * To be injected by the owner before use.
+     *
+     * <p>When null, no instance name is added to log messages.</p>
+     */
+    public @Nullable String loggerName;
+
     private final Path cacheDirectory;
 
     private final FreeTypeManager freeTypeManager;
-    private final AssetSource resourceManagerAssetSource;
+    private final @Nullable AssetSource resourceManagerAssetSource;
     private final AssetSource resourcePackAssetSource;
     private AssetSource assetSource;
 
@@ -42,6 +49,13 @@ public final class McTtfFontManager {
     private boolean destroyed;
 
     public McTtfFontManager(
+            @NonNull IResourcePack resourcePack,
+            @NonNull FreeTypeManager freeTypeManager) {
+
+        this(null, resourcePack, freeTypeManager, defaultCacheDirectory());
+    }
+
+    public McTtfFontManager(
             @NonNull IResourceManager resourceManager,
             @NonNull IResourcePack resourcePack,
             @NonNull FreeTypeManager freeTypeManager) {
@@ -50,21 +64,20 @@ public final class McTtfFontManager {
     }
 
     public McTtfFontManager(
-            @NonNull IResourceManager resourceManager,
+            @Nullable IResourceManager resourceManager,
             @NonNull IResourcePack resourcePack,
             @NonNull FreeTypeManager freeTypeManager,
             @NonNull Path cacheDirectory) {
 
-        Preconditions.checkNotNull(resourceManager);
         Preconditions.checkNotNull(resourcePack);
         Preconditions.checkNotNull(freeTypeManager);
         Preconditions.checkNotNull(cacheDirectory);
 
         this.freeTypeManager = freeTypeManager;
         this.cacheDirectory = cacheDirectory;
-        resourceManagerAssetSource = new McResourceManagerAssetSource(resourceManager);
+        resourceManagerAssetSource = resourceManager == null ? null : new McResourceManagerAssetSource(resourceManager);
         resourcePackAssetSource = new McResourcePackAssetSource(resourcePack);
-        assetSource = resourceManagerAssetSource;
+        assetSource = resourceManagerAssetSource != null ? resourceManagerAssetSource : resourcePackAssetSource;
     }
 
     @NonNull
@@ -75,16 +88,11 @@ public final class McTtfFontManager {
                 .resolve("mcttf_fonts");
     }
 
-    /**
-     * <p>Note: {@link #resourceManagerAssetSource} is the default asset source.</p>
-     */
     public void enableResourceManagerAssetSource() {
-        assetSource = resourceManagerAssetSource;
+        assetSource = Preconditions.checkNotNull(resourceManagerAssetSource,
+                "No resource manager was supplied to this font manager.");
     }
 
-    /**
-     * <p>Note: {@link #resourceManagerAssetSource} is the default asset source.</p>
-     */
     public void enableResourcePackAssetSource() {
         assetSource = resourcePackAssetSource;
     }
@@ -136,7 +144,11 @@ public final class McTtfFontManager {
             loaded = loadOrGenerate(key);
         } catch (Throwable e) {
             String msg = "Failed to load Minecraft font: " + fontName +  " / " + familyName + " / " + style;
-            LOGGER.error(msg, e);
+            if (loggerName == null) {
+                LOGGER.error(msg, e);
+            } else {
+                LOGGER.error("[{}] {}", loggerName, msg, e);
+            }
             return null;
         }
 
@@ -311,13 +323,25 @@ public final class McTtfFontManager {
             byte[] bytes = Files.readAllBytes(path);
 
             if (looksLikeSfnt(bytes)) {
-                LOGGER.info("Loaded Minecraft font from cache: {}", path);
+                if (loggerName == null) {
+                    LOGGER.info("Loaded Minecraft font from cache: {}", path);
+                } else {
+                    LOGGER.info("[{}] Loaded Minecraft font from cache: {}", loggerName, path);
+                }
                 return bytes;
             }
 
-            LOGGER.warn("Ignoring invalid Minecraft font cache entry: {}", path);
+            if (loggerName == null) {
+                LOGGER.warn("Ignoring invalid Minecraft font cache entry: {}", path);
+            } else {
+                LOGGER.warn("[{}] Ignoring invalid Minecraft font cache entry: {}", loggerName, path);
+            }
         } catch (IOException e) {
-            LOGGER.warn("Failed to read Minecraft font cache entry: {}", path, e);
+            if (loggerName == null) {
+                LOGGER.warn("Failed to read Minecraft font cache entry: {}", path, e);
+            } else {
+                LOGGER.warn("[{}] Failed to read Minecraft font cache entry: {}", loggerName, path, e);
+            }
         }
 
         return null;
@@ -351,9 +375,17 @@ public final class McTtfFontManager {
                         StandardCopyOption.REPLACE_EXISTING);
             }
 
-            LOGGER.info("Cached generated Minecraft font: {}", path);
+            if (loggerName == null) {
+                LOGGER.info("Cached generated Minecraft font: {}", path);
+            } else {
+                LOGGER.info("[{}] Cached generated Minecraft font: {}", loggerName, path);
+            }
         } catch (IOException e) {
-            LOGGER.warn("Failed to write Minecraft font cache entry: {}", path, e);
+            if (loggerName == null) {
+                LOGGER.warn("Failed to write Minecraft font cache entry: {}", path, e);
+            } else {
+                LOGGER.warn("[{}] Failed to write Minecraft font cache entry: {}", loggerName, path, e);
+            }
         } finally {
             if (temporary != null) {
                 try {

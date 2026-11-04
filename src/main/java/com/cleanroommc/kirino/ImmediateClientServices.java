@@ -268,12 +268,14 @@ public final class ImmediateClientServices {
 
         shaderAccess = new ImmediateShaderAccess();
         freeTypeManager = MethodHolder.newFreeTypeManager();
+        freeTypeManager.loggerName = "immediate_client_services";
         freeTypeManager.init();
 
         mcFontManager = new McTtfFontManager(
                 Minecraft.getMinecraft().getResourceManager(),
                 Minecraft.getMinecraft().defaultResourcePack,
                 freeTypeManager);
+        mcFontManager.loggerName = "immediate_client_services";
 
         if (KirinoClientCore.GL_DEVICE_INFO.isVersionAtLeast(3, 0)) {
             AttributeLayout dummyLayout = new AttributeLayout();
@@ -308,11 +310,15 @@ public final class ImmediateClientServices {
                                 : freeTypeManager.load(FALLBACK_TEXT_FONT, 0, cfg.pixelSize());
                         return new FreeTypeFontHandle(face);
                     },
-                    (context) -> new DefaultTextRenderer(
-                            context,
-                            new Tex2DArrayGlyphAtlas(1024, 1024),
-                            context.getShaderAccess(),
-                            1024),
+                    (context) -> {
+                        DefaultTextRenderer renderer = new DefaultTextRenderer(
+                                context,
+                                new Tex2DArrayGlyphAtlas(1024, 1024),
+                                context.getShaderAccess(),
+                                1024);
+                        renderer.loggerName = "immediate_client_services_text";
+                        return renderer;
+                    },
                     (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize()),
                     shaderAccess,
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
@@ -435,11 +441,15 @@ public final class ImmediateClientServices {
 
         textRuntimeVanilla = new SimpleTextRuntime(
                 (rl, cfg) -> new FreeTypeFontHandle(face),
-                (context) -> new DefaultTextRenderer(
-                        context,
-                        new Tex2DArrayGlyphAtlas(1024, 1024),
-                        context.getShaderAccess(),
-                        1024),
+                (context) -> {
+                    DefaultTextRenderer renderer = new DefaultTextRenderer(
+                            context,
+                            new Tex2DArrayGlyphAtlas(1024, 1024),
+                            context.getShaderAccess(),
+                            1024);
+                    renderer.loggerName = "immediate_client_services_text_vanilla";
+                    return renderer;
+                },
                 // McTTF fonts are LINE_HEIGHT_PIXELS Minecraft pixels per em
                 (context) -> new DefaultTextProducer(context, context.getConfig().pixelSize(), GlyphBuilder.LINE_HEIGHT_PIXELS),
                 shaderAccess,

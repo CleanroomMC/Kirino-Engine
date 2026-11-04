@@ -16,13 +16,22 @@ public class SimpleGuiRuntime implements AutoCloseable {
     private final GuiRenderer renderer;
 
     public SimpleGuiRuntime(@NonNull ImmediateShaderAccess shaderAccess, @NonNull VAO dummyVao) {
+        this(shaderAccess, dummyVao, 0, 0);
+    }
+
+    public SimpleGuiRuntime(
+            @NonNull ImmediateShaderAccess shaderAccess,
+            @NonNull VAO dummyVao,
+            float viewportWidth,
+            float viewportHeight) {
+
         Preconditions.checkNotNull(shaderAccess);
         Preconditions.checkNotNull(dummyVao);
 
         arena = new TransientArena(128);
         stream = new GuiCommandStream(128);
         compiler = new GuiCompiler(arena);
-        renderer = new GuiRenderer(shaderAccess, dummyVao, arena);
+        renderer = new GuiRenderer(shaderAccess, dummyVao, arena, viewportWidth, viewportHeight);
     }
 
     private boolean batch = false;

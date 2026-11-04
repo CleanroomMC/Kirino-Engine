@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ui.simpletext.atlas;
 
-import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.gl.texture.GLTexture;
 import com.cleanroommc.kirino.gl.texture.accessor.Texture2DArrayAccessor;
 import com.cleanroommc.kirino.gl.texture.meta.FilterMode;
@@ -10,6 +9,7 @@ import com.cleanroommc.kirino.ui.simpletext.sdf.SDFBitmap;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL43;
 
 public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtlas.LayerPage, SDFBitmap> {
@@ -67,7 +67,7 @@ public class Tex2DArrayGlyphAtlas extends AbstractPagedAtlas<Tex2DArrayGlyphAtla
 
             this.pageWidth = pageWidth;
             this.pageHeight = pageHeight;
-            maxLayerCount = KirinoClientCore.GL_DEVICE_INFO.getMaxArrayTextureLayers();
+            maxLayerCount = GL11.glGetInteger(GL30.GL_MAX_ARRAY_TEXTURE_LAYERS);
 
             Preconditions.checkArgument(initialLayerCapacity <= maxLayerCount,
                     "Initial layer capacity=%s exceeds maximum=%s.",

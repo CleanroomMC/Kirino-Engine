@@ -32,6 +32,9 @@ public class GuiRenderer implements AutoCloseable {
     private final ShaderProgram program;
     private final VAO dummyVao;
 
+    private final float viewportWidth;
+    private final float viewportHeight;
+
     // stride=8
     // vec2 pos
     private final TransientArena arena;
@@ -79,7 +82,17 @@ public class GuiRenderer implements AutoCloseable {
     private ByteBuffer idbWorkspace = null;
     private final IDBView idb;
 
-    GuiRenderer(ImmediateShaderAccess shaderAccess, VAO dummyVao, TransientArena arena) {
+    GuiRenderer(
+            ImmediateShaderAccess shaderAccess,
+            VAO dummyVao, TransientArena arena,
+            float viewportWidth,
+            float viewportHeight) {
+
+        Preconditions.checkArgument((viewportWidth == 0 && viewportHeight == 0)
+                || (Float.isFinite(viewportWidth) && viewportWidth > 0 && Float.isFinite(viewportHeight) && viewportHeight > 0));
+
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
         this.dummyVao = dummyVao;
         this.arena = arena;
 
@@ -599,9 +612,13 @@ public class GuiRenderer implements AutoCloseable {
         int scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
         int useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
 
-        ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-        float screenWidth = (float) resolution.getScaledWidth_double();
-        float screenHeight = (float) resolution.getScaledHeight_double();
+        float screenWidth = viewportWidth;
+        float screenHeight = viewportHeight;
+        if (screenWidth == 0) {
+            ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
+            screenWidth = (float) resolution.getScaledWidth_double();
+            screenHeight = (float) resolution.getScaledHeight_double();
+        }
 
         GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
         GL20.glUniform1i(useDepthLoc, 0);

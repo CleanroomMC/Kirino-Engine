@@ -47,6 +47,13 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino SimpleText DefaultTextRenderer");
 
+    /**
+     * To be injected by the owner before use.
+     *
+     * <p>When null, no instance name is added to log messages.</p>
+     */
+    public @Nullable String loggerName;
+
     private static final int INSTANCE_STRIDE = 48;
     private static final int ATLAS_TEXTURE_UNIT_INDEX = 6;
     private static final int ATLAS_TEXTURE_UNIT = GL13.GL_TEXTURE0 + ATLAS_TEXTURE_UNIT_INDEX;
@@ -120,7 +127,22 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private final int scaledResLoc;
     private final int tickLoc;
 
+    private final float viewportWidth;
+    private final float viewportHeight;
+
     private boolean closed;
+
+    /**
+     * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float)
+     */
+    public DefaultTextRenderer(
+            @NonNull SimpleTextRuntime context,
+            @NonNull Tex2DArrayGlyphAtlas glyphAtlas,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            int maxResidentGlyphs) {
+
+        this(context, glyphAtlas, shaderAccess, maxResidentGlyphs, 0, 0);
+    }
 
     /**
      * It allocates worker pool for itself. Must call {@link #close()} in the end.
@@ -131,7 +153,15 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
             @NonNull SimpleTextRuntime context,
             @NonNull Tex2DArrayGlyphAtlas glyphAtlas,
             @NonNull ImmediateShaderAccess shaderAccess,
-            int maxResidentGlyphs) {
+            int maxResidentGlyphs,
+            float viewportWidth,
+            float viewportHeight) {
+
+        Preconditions.checkArgument((viewportWidth == 0 && viewportHeight == 0)
+                || (Float.isFinite(viewportWidth) && viewportWidth > 0 && Float.isFinite(viewportHeight) && viewportHeight > 0));
+
+        this.viewportWidth = viewportWidth;
+        this.viewportHeight = viewportHeight;
 
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(glyphAtlas);
@@ -229,10 +259,18 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         }
 
         if (throwable == null) {
-            LOGGER.warn("{} Glyph index={}", message, glyphIndex);
+            if (loggerName == null) {
+                LOGGER.warn("{} Glyph index={}", message, glyphIndex);
+            } else {
+                LOGGER.warn("[{}] {} Glyph index={}", loggerName, message, glyphIndex);
+            }
         } else {
             final String out = message + " Glyph index=" + glyphIndex;
-            LOGGER.warn(out, throwable);
+            if (loggerName == null) {
+                LOGGER.warn(out, throwable);
+            } else {
+                LOGGER.warn("[{}] {}", loggerName, out, throwable);
+            }
         }
     }
 
@@ -250,7 +288,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         return outputWidth <= glyphAtlas.getPageWidth() && outputHeight <= glyphAtlas.getPageHeight();
     }
 
-    private static void safeClose(@Nullable ST_Bitmap bitmap) {
+    private void safeClose(@Nullable ST_Bitmap bitmap) {
         if (bitmap == null) {
             return;
         }
@@ -258,7 +296,11 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         try {
             bitmap.close();
         } catch (Throwable t) {
-            LOGGER.error("Failed to close SimpleText bitmap.", t);
+            if (loggerName == null) {
+                LOGGER.error("Failed to close SimpleText bitmap.", t);
+            } else {
+                LOGGER.error("[{}] Failed to close SimpleText bitmap.", loggerName, t);
+            }
         }
     }
     //</editor-fold>
@@ -504,10 +546,13 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private void draw(int instanceCount) {
         Preconditions.checkArgument(instanceCount > 0);
 
-        ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-
-        float screenWidth = (float) resolution.getScaledWidth_double();
-        float screenHeight = (float) resolution.getScaledHeight_double();
+        float screenWidth = viewportWidth;
+        float screenHeight = viewportHeight;
+        if (screenWidth == 0) {
+            ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
+            screenWidth = (float) resolution.getScaledWidth_double();
+            screenHeight = (float) resolution.getScaledHeight_double();
+        }
 
         program.use();
         GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);

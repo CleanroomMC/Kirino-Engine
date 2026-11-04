@@ -11,11 +11,22 @@ import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
 import java.util.*;
+import java.util.function.Function;
 
 public class ImmediateShaderAccess {
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino ImmediateShaderAccess");
     private static final DefaultShaderAnalyzer ANALYZER = new DefaultShaderAnalyzer();
+
+    private final Function<ResourceLocation, String> sourceLoader;
+
+    public ImmediateShaderAccess() {
+        this(rl -> MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+    }
+
+    public ImmediateShaderAccess(@NonNull Function<ResourceLocation, String> sourceLoader) {
+        this.sourceLoader = Preconditions.checkNotNull(sourceLoader);
+    }
 
     /**
      * <p>Note: Shader will be analyzed altogether in this call.
@@ -46,7 +57,7 @@ public class ImmediateShaderAccess {
             throw new IllegalStateException("Invalid Shader ResourceLocation " + rawRl + ". Can't parse the shader type.");
         }
 
-        String shaderSource = MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N);
+        String shaderSource = sourceLoader.apply(rl);
 
         LOGGER.debug("{} Shader \"{}\" assembled:\n{}",
                 shaderType.toString(),

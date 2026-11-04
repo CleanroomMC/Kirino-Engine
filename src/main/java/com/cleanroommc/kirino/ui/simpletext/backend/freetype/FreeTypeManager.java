@@ -6,6 +6,7 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.PointerBuffer;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -29,6 +30,13 @@ public final class FreeTypeManager {
     }
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino FreeTypeManager");
+
+    /**
+     * To be injected by the owner before use.
+     *
+     * <p>When null, no instance name is added to log messages.</p>
+     */
+    public @Nullable String loggerName;
 
     public static final int DEFAULT_PIXEL_SIZE = 32;
 
@@ -76,11 +84,20 @@ public final class FreeTypeManager {
             IntBuffer patch = stack.mallocInt(1);
 
             FreeType.FT_Library_Version(library, major, minor, patch);
-            LOGGER.info("Loaded FreeType {}.{}.{} Lib Pointer: 0x{}",
-                    major.get(0),
-                    minor.get(0),
-                    patch.get(0),
-                    Long.toHexString(library));
+            if (loggerName == null) {
+                LOGGER.info("Loaded FreeType {}.{}.{} Lib Pointer: 0x{}",
+                        major.get(0),
+                        minor.get(0),
+                        patch.get(0),
+                        Long.toHexString(library));
+            } else {
+                LOGGER.info("[{}] Loaded FreeType {}.{}.{} Lib Pointer: 0x{}",
+                        loggerName,
+                        major.get(0),
+                        minor.get(0),
+                        patch.get(0),
+                        Long.toHexString(library));
+            }
 
             initialized = true;
         }
@@ -249,7 +266,11 @@ public final class FreeTypeManager {
         initialized = false;
         destroyed = true;
 
-        LOGGER.info("Destroyed FreeType Lib 0x{}.", Long.toHexString(lib));
+        if (loggerName == null) {
+            LOGGER.info("Destroyed FreeType Lib 0x{}.", Long.toHexString(lib));
+        } else {
+            LOGGER.info("[{}] Destroyed FreeType Lib 0x{}.", loggerName, Long.toHexString(lib));
+        }
     }
 
     @NonNull

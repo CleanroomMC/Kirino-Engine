@@ -10,57 +10,102 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
-/**
- * It activates itself (<code>active = true</code>) and registers the shutdown hook when the class is loaded.
- *
- * <p>Note: As a common user, you don't need to access this class 99% of times.</p>
- */
 public final class GLResourceManager {
 
     private GLResourceManager() {
     }
 
     private static final Logger LOGGER = LogManager.getLogger("Kirino GLResourceManager");
+    private static final ThreadLocal<ResourceScope> CURRENT_SCOPE = new ThreadLocal<>();
 
+    public static final class ResourceScope implements AutoCloseable {
+
+        private final PriorityQueue<GLDisposable> resources = new PriorityQueue<>();
+
+        private ResourceScope() {
+        }
+
+        @Override
+        public void close() {
+            Preconditions.checkState(CURRENT_SCOPE.get() == this,
+                    "Close on the owning GL thread.");
+
+            try {
+                while (!resources.isEmpty()) {
+                    GLDisposable resource = resources.poll();
+                    try {
+                        resource.dispose();
+                    } catch (Throwable t) {
+                        String str = String.format("Failed to dispose OpenGL resource \"%s\".", resource.getName());
+                        LOGGER.error(str, t);
+                    }
+                }
+            } finally {
+                CURRENT_SCOPE.remove();
+            }
+        }
+    }
+
+    /**
+     * It only guards the main thread resource tracking.
+     * Independent scopes don't have such a concept.
+     */
     private static boolean active;
 
     static {
         active = true;
-        ShutdownManager.register(GLResourceManager::disposeAll);
-    }
+        ShutdownManager.register(() -> {
+            if (!active) {
+                return;
+            }
 
-    /**
-     * It's always active before the program ends.
-     * It's simply a safety guard. No need to check it before operations.
-     */
-    public static boolean isActive() {
-        return active;
+            active = false;
+            disposeAll();
+        });
     }
 
     private static final PriorityQueue<GLDisposable> disposables = new PriorityQueue<>();
 
     /**
+     * Tracks resources for an independent GL context on another thread.
+     */
+    public static ResourceScope openScope() {
+        Preconditions.checkState(CURRENT_SCOPE.get() == null,
+                "GL resource scopes cannot be nested.");
+
+        ResourceScope scope = new ResourceScope();
+        CURRENT_SCOPE.set(scope);
+        return scope;
+    }
+
+    private static PriorityQueue<GLDisposable> resources() {
+        ResourceScope scope = CURRENT_SCOPE.get();
+        return scope == null ? disposables : scope.resources;
+    }
+
+    /**
      * Call this method to keep track of GL resources.
-     * The GL resource will only be added to the tracking queue when <code>{@link #isActive()} == true</code>.
+     *
+     * <p>Note: The main thread queue only accepts resources when <code>{@link #active} == true</code>.</p>
      */
     public static void addDisposable(@NonNull GLDisposable disposable) {
-        if (!active) {
+        if (CURRENT_SCOPE.get() == null && !active) {
             return;
         }
 
         Preconditions.checkNotNull(disposable);
 
-        disposables.add(disposable);
+        resources().add(disposable);
     }
 
     /**
      * Remove the tracked GL resource from the queue and dispose it manually.
      *
-     * <p>Only runs when <code>{@link #isActive()} == true</code>.</p>
+     * <p>Note: For the main thread queue, only runs when <code>{@link #active} == true</code>.</p>
      * <p>Note: The resource remains removed if its disposal fails.</p>
      */
     static void disposeEarly(@NonNull GLDisposable disposable) {
-        if (!active) {
+        if (CURRENT_SCOPE.get() == null && !active) {
             return;
         }
 
@@ -68,7 +113,7 @@ public final class GLResourceManager {
 
         String resourceName = disposable.getName();
 
-        if (disposables.remove(disposable)) {
+        if (resources().remove(disposable)) {
             LOGGER.debug("Early disposing {}", resourceName);
             try {
                 disposable.dispose();
@@ -83,17 +128,11 @@ public final class GLResourceManager {
     }
 
     /**
-     * Turn off the service and dispose all tracked GL resources.
-     *
-     * <p>Only runs when <code>{@link #isActive()} == true</code>.</p>
+     * Dispose all GL resources tracked in the main thread queue.
      */
     private static void disposeAll() {
-        if (!active) {
-            return;
-        }
-
-        active = false;
         LOGGER.debug("Starts disposing OpenGL resources.");
+
         try {
             List<RuntimeException> failures = new ArrayList<>();
 
