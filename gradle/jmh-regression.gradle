@@ -46,7 +46,7 @@ abstract class JmhCompare extends DefaultTask {
                 'ExceptionInInitializerError in the log above. Nothing was saved.')
         }
 
-        List<Map> results = raw.collect { condense(it as Map) }
+        List<Map> results = raw.collectMany { metrics(it as Map) }
         String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern('yyyyMMdd-HHmmss'))
         File root = resultsDir.get().asFile
         String tagName = tag.get()
@@ -133,6 +133,30 @@ abstract class JmhCompare extends DefaultTask {
         ]
     }
 
+    static List<Map> metrics(Map raw) {
+        Map primary = condense(raw)
+        List<Map> entries = [primary]
+        (raw.secondaryMetrics ?: [:]).each { name, value ->
+            if (name in ['gc.alloc.rate.norm', 'gc.alloc.rate', 'gc.count', 'gc.time']) {
+                Map metric = value as Map
+                double score = toDouble(metric.score)
+                double error = toDouble(metric.scoreError)
+                if (Double.isFinite(score)) {
+                    entries.add(primary + [
+                        key: "${primary.key}|${name}".toString(),
+                        metric: name,
+                        mode: 'avgt',
+                        score: score,
+                        error: Double.isFinite(error) ? error : null,
+                        unit: metric.scoreUnit,
+                        informational: name != 'gc.alloc.rate.norm'
+                    ])
+                }
+            }
+        }
+        return entries
+    }
+
     static double toDouble(Object value) {
         if (value instanceof Number) {
             return ((Number) value).doubleValue()
@@ -145,14 +169,18 @@ abstract class JmhCompare extends DefaultTask {
         List entries = parsed instanceof Map ? (parsed.results as List) : (parsed as List)
         Map byKey = [:]
         entries.each { e ->
-            Map entry = (e.containsKey('primaryMetric') ? condense(e as Map) : e) as Map
-            byKey[entry.key] = entry
+            List<Map> entriesForResult = e.containsKey('primaryMetric') ? metrics(e as Map) : [e as Map]
+            entriesForResult.each { entry -> byKey[entry.key] = entry }
         }
         return byKey
     }
 
     static Map judge(Map cur, Map base, String baseName, double thresholdPercent) {
         Map row = [cur: cur, base: base, baseName: baseName, delta: null, verdict: 'NEW']
+        if (cur.informational) {
+            row.verdict = 'INFO'
+            return row
+        }
         if (base == null) {
             return row
         }
@@ -163,7 +191,7 @@ abstract class JmhCompare extends DefaultTask {
         double c = cur.score as double
         double b = base.score as double
         if (b == 0d) {
-            row.verdict = 'SAME'
+            row.verdict = c == 0d ? 'SAME' : 'ZERO BASELINE'
             return row
         }
         double cErr = (cur.error ?: 0d) as double
@@ -187,7 +215,8 @@ abstract class JmhCompare extends DefaultTask {
     static String displayName(Map entry) {
         List<String> parts = (entry.benchmark as String).split('\\.').toList()
         String shortName = parts.size() > 1 ? parts[-2..-1].join('.') : parts[0]
-        return entry.params ? "${shortName} [${entry.params}]" : shortName
+        String name = entry.params ? "${shortName} [${entry.params}]" : shortName
+        return entry.metric ? "${name} / ${entry.metric}" : name
     }
 
     static String num(Map entry) {
@@ -202,7 +231,7 @@ abstract class JmhCompare extends DefaultTask {
     }
 
     static String render(List<Map> rows, Map meta, double thresholdPercent) {
-        Map<String, Integer> order = [REGRESSION: 0, 'UNIT CHANGED': 1, NEW: 2, IMPROVEMENT: 3, SAME: 4]
+        Map<String, Integer> order = [REGRESSION: 0, 'UNIT CHANGED': 1, NEW: 2, 'ZERO BASELINE': 2, IMPROVEMENT: 3, SAME: 4, INFO: 5]
         List<Map> sorted = rows.sort(false) { a, b -> order[a.verdict] <=> order[b.verdict] ?: displayName(a.cur) <=> displayName(b.cur) }
         StringBuilder sb = new StringBuilder()
         sb << "# JMH report ${meta.timestamp} (${meta.tag})\n\n"
@@ -216,7 +245,9 @@ abstract class JmhCompare extends DefaultTask {
             String change = row.delta == null ? '-' : String.format(Locale.ROOT, '%+.1f%%', row.delta as double)
             sb << "| ${displayName(row.cur)} | ${num(row.base)} | ${num(row.cur)} | ${change} | ${row.verdict} | ${row.baseName ?: '-'} |\n"
         }
-        sb << "\nChange is positive when the benchmark got slower (or its throughput dropped).\n"
+        sb << "\nPositive change means slower execution, lower throughput or more bytes allocated per operation.\n"
+        sb << "Allocation per operation is compared using the same threshold as timing. Allocation rate, GC count and GC time are informational.\n"
+        sb << "GC metrics may include invocation setup allocations. They do not measure retained heap or prove a memory leak.\n"
         return sb.toString()
     }
 
@@ -227,7 +258,7 @@ abstract class JmhCompare extends DefaultTask {
             String change = row.delta == null ? '' : String.format(Locale.ROOT, ' (%+.1f%%)', row.delta as double)
             logger.lifecycle(String.format('%-12s %s: %s -> %s%s', row.verdict, displayName(row.cur), num(row.base), num(row.cur), change))
         }
-        logger.lifecycle("JMH: ${rows.size()} benchmarks, ${counts['REGRESSION']} regressions, ${counts['IMPROVEMENT']} improvements, " +
+        logger.lifecycle("JMH: ${rows.size()} metric rows, ${counts['REGRESSION']} regressions, ${counts['IMPROVEMENT']} improvements, " +
             "${counts['SAME']} unchanged, ${counts['NEW']} new (threshold ${thresholdPercent}%)")
         logger.lifecycle("Report: ${reportFile}")
     }
@@ -256,7 +287,12 @@ def extraArgs = providers.gradleProperty('jmh.args').getOrElse('')
 def quickArgs = quick ? '-f 1 -wi 1 -i 2 -w 1 -r 1' : ''
 def resultsPath = providers.gradleProperty('jmh.resultsDir').getOrElse('benchmark-results')
 def currentJson = layout.buildDirectory.file('jmh-regression/current.json')
-def allArgs = [quickArgs, extraArgs].findAll { !it.isEmpty() }.join(' ')
+def gcEnabled = providers.gradleProperty('jmh.gc').map { it.toBoolean() }.getOrElse(true)
+def extraTokens = extraArgs.tokenize()
+def hasGcProfiler = extraTokens.any { it == 'gc' || it.startsWith('gc:') ||
+    it == 'org.openjdk.jmh.profile.GCProfiler' || it.startsWith('org.openjdk.jmh.profile.GCProfiler:') }
+def gcArgs = gcEnabled && !hasGcProfiler ? '-prof gc' : ''
+def allArgs = [quickArgs, gcArgs, extraArgs].findAll { !it.isEmpty() }.join(' ')
 
 // Use the existing benchmark task to keep the same classpath and Java toolchain.
 def existingBenchmark = tasks.findByName('benchmark')
