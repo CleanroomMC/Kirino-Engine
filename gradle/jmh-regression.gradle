@@ -1,0 +1,311 @@
+// JMH history and comparison tasks. Usage: gradle/README.md.
+
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+@UntrackedTask(because = 'It writes into a user-visible history directory and must run every time')
+abstract class JmhCompare extends DefaultTask {
+    @InputFile
+    abstract RegularFileProperty getCurrent()
+
+    @Internal
+    abstract DirectoryProperty getResultsDir()
+
+    @Input
+    abstract Property<String> getTag()
+
+    @Input
+    abstract Property<String> getRunArgs()
+
+    @Input
+    abstract Property<Double> getThreshold()
+
+    @Input
+    abstract Property<String> getBaselineFile()
+
+    @Input
+    abstract Property<Boolean> getFailOnRegression()
+
+    @Input
+    abstract Property<String> getJavaVersion()
+
+    @Input
+    abstract Property<String> getGitDir()
+
+    @TaskAction
+    void compare() {
+        JsonSlurper slurper = new JsonSlurper()
+        List raw = slurper.parse(current.get().asFile) as List
+        if (raw.isEmpty()) {
+            throw new GradleException('JMH produced no results. A failed fork still exits with 0, look for ' +
+                'ExceptionInInitializerError in the log above. Nothing was saved.')
+        }
+
+        List<Map> results = raw.collect { condense(it as Map) }
+        String stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern('yyyyMMdd-HHmmss'))
+        File root = resultsDir.get().asFile
+        String tagName = tag.get()
+        File historyDir = new File(root, "history/${tagName}")
+        File rawDir = new File(root, "raw/${tagName}")
+        File reportDir = new File(root, "reports/${tagName}")
+        [historyDir, rawDir, reportDir].each { it.mkdirs() }
+
+        // Find baselines before saving, otherwise this run could match itself.
+        Map<String, Map> baselines = [:]
+        Map<String, String> baselineStamp = [:]
+        String explicit = baselineFile.get()
+        if (explicit) {
+            File file = new File(explicit)
+            if (!file.isFile()) {
+                throw new GradleException("jmh.baseline file does not exist: ${file}")
+            }
+            Map entries = load(slurper, file)
+            results.each { r ->
+                if (entries.containsKey(r.key)) {
+                    baselines[r.key] = entries[r.key]
+                    baselineStamp[r.key] = file.name
+                }
+            }
+        } else {
+            File[] older = historyDir.listFiles({ File f -> f.name.endsWith('.json') } as FileFilter) ?: new File[0]
+            List<File> newestFirst = older.toList().sort { it.name }.reverse()
+            for (File file : newestFirst) {
+                if (baselines.size() == results.size()) {
+                    break
+                }
+                Map entries = load(slurper, file)
+                results.each { r ->
+                    if (!baselines.containsKey(r.key) && entries.containsKey(r.key)) {
+                        baselines[r.key] = entries[r.key]
+                        baselineStamp[r.key] = file.name - '.json'
+                    }
+                }
+            }
+        }
+
+        Map meta = [
+            timestamp: stamp,
+            tag      : tagName,
+            args     : runArgs.get(),
+            jdk      : javaVersion.get(),
+            gitCommit: git('rev-parse', '--short', 'HEAD'),
+            gitDirty : !(git('status', '--porcelain') ?: '').isEmpty(),
+            os       : System.getProperty('os.name'),
+            cpus     : Runtime.runtime.availableProcessors()
+        ]
+        new File(historyDir, "${stamp}.json").text = JsonOutput.prettyPrint(JsonOutput.toJson([meta: meta, results: results]))
+        Files.copy(current.get().asFile.toPath(), new File(rawDir, "${stamp}.json").toPath(), StandardCopyOption.REPLACE_EXISTING)
+
+        List<Map> rows = results.collect { r -> judge(r, baselines[r.key], baselineStamp[r.key], threshold.get()) }
+        String report = render(rows, meta, threshold.get())
+        new File(reportDir, "${stamp}.md").text = report
+        new File(reportDir, 'latest.md').text = report
+
+        logSummary(rows, new File(reportDir, "${stamp}.md"), threshold.get())
+
+        int regressions = rows.count { it.verdict == 'REGRESSION' } as int
+        if (regressions > 0 && failOnRegression.get()) {
+            throw new GradleException("${regressions} JMH regression(s) found, see ${new File(reportDir, stamp + '.md')}")
+        }
+    }
+
+    static Map condense(Map r) {
+        Map metric = r.primaryMetric as Map
+        double score = toDouble(metric.score)
+        double error = toDouble(metric.scoreError)
+        Map params = (r.params ?: [:]) as Map
+        String paramText = params.keySet().sort().collect { "${it}=${params[it]}" }.join(',')
+        return [
+            key      : "${r.benchmark}|${r.mode}|${r.threads}|${paramText}".toString(),
+            benchmark: r.benchmark,
+            mode     : r.mode,
+            threads  : r.threads,
+            params   : paramText,
+            score    : score,
+            // Missing confidence intervals are NaN in JMH, which JSON cannot represent.
+            error    : Double.isNaN(error) ? null : error,
+            unit     : metric.scoreUnit
+        ]
+    }
+
+    static double toDouble(Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue()
+        }
+        return value == null ? Double.NaN : Double.parseDouble(value.toString())
+    }
+
+    static Map load(JsonSlurper slurper, File file) {
+        Object parsed = slurper.parse(file)
+        List entries = parsed instanceof Map ? (parsed.results as List) : (parsed as List)
+        Map byKey = [:]
+        entries.each { e ->
+            Map entry = (e.containsKey('primaryMetric') ? condense(e as Map) : e) as Map
+            byKey[entry.key] = entry
+        }
+        return byKey
+    }
+
+    static Map judge(Map cur, Map base, String baseName, double thresholdPercent) {
+        Map row = [cur: cur, base: base, baseName: baseName, delta: null, verdict: 'NEW']
+        if (base == null) {
+            return row
+        }
+        if (cur.unit != base.unit) {
+            row.verdict = 'UNIT CHANGED'
+            return row
+        }
+        double c = cur.score as double
+        double b = base.score as double
+        if (b == 0d) {
+            row.verdict = 'SAME'
+            return row
+        }
+        double cErr = (cur.error ?: 0d) as double
+        double bErr = (base.error ?: 0d) as double
+        boolean lowerIsBetter = cur.mode != 'thrpt'
+        // A positive delta means regression for both time and throughput.
+        double delta = (lowerIsBetter ? (c - b) / b : (b - c) / b) * 100d
+        boolean worseBeyondNoise = lowerIsBetter ? (c - cErr > b + bErr) : (c + cErr < b - bErr)
+        boolean betterBeyondNoise = lowerIsBetter ? (c + cErr < b - bErr) : (c - cErr > b + bErr)
+        row.delta = delta
+        if (delta > thresholdPercent && worseBeyondNoise) {
+            row.verdict = 'REGRESSION'
+        } else if (delta < -thresholdPercent && betterBeyondNoise) {
+            row.verdict = 'IMPROVEMENT'
+        } else {
+            row.verdict = 'SAME'
+        }
+        return row
+    }
+
+    static String displayName(Map entry) {
+        List<String> parts = (entry.benchmark as String).split('\\.').toList()
+        String shortName = parts.size() > 1 ? parts[-2..-1].join('.') : parts[0]
+        return entry.params ? "${shortName} [${entry.params}]" : shortName
+    }
+
+    static String num(Map entry) {
+        if (entry == null) {
+            return '-'
+        }
+        String text = String.format(Locale.ROOT, '%.3f', entry.score as double)
+        if (entry.error != null) {
+            text += String.format(Locale.ROOT, ' ± %.3f', entry.error as double)
+        }
+        return "${text} ${entry.unit}"
+    }
+
+    static String render(List<Map> rows, Map meta, double thresholdPercent) {
+        Map<String, Integer> order = [REGRESSION: 0, 'UNIT CHANGED': 1, NEW: 2, IMPROVEMENT: 3, SAME: 4]
+        List<Map> sorted = rows.sort(false) { a, b -> order[a.verdict] <=> order[b.verdict] ?: displayName(a.cur) <=> displayName(b.cur) }
+        StringBuilder sb = new StringBuilder()
+        sb << "# JMH report ${meta.timestamp} (${meta.tag})\n\n"
+        sb << "- JDK: ${meta.jdk}, ${meta.os}, ${meta.cpus} CPUs\n"
+        sb << "- Commit: ${meta.gitCommit ?: 'unknown'}${meta.gitDirty ? ' (dirty working tree)' : ''}\n"
+        sb << "- Arguments: ${meta.args ?: '(none)'}\n"
+        sb << "- Threshold: ${thresholdPercent}% outside the confidence intervals\n\n"
+        sb << "| Benchmark | Baseline | Current | Change | Verdict | Baseline run |\n"
+        sb << "| --- | ---: | ---: | ---: | --- | --- |\n"
+        sorted.each { row ->
+            String change = row.delta == null ? '-' : String.format(Locale.ROOT, '%+.1f%%', row.delta as double)
+            sb << "| ${displayName(row.cur)} | ${num(row.base)} | ${num(row.cur)} | ${change} | ${row.verdict} | ${row.baseName ?: '-'} |\n"
+        }
+        sb << "\nChange is positive when the benchmark got slower (or its throughput dropped).\n"
+        return sb.toString()
+    }
+
+    void logSummary(List<Map> rows, File reportFile, double thresholdPercent) {
+        Map<String, Integer> counts = [:].withDefault { 0 }
+        rows.each { counts[it.verdict as String]++ }
+        rows.findAll { it.verdict in ['REGRESSION', 'IMPROVEMENT', 'UNIT CHANGED'] }.sort { displayName(it.cur) }.each { row ->
+            String change = row.delta == null ? '' : String.format(Locale.ROOT, ' (%+.1f%%)', row.delta as double)
+            logger.lifecycle(String.format('%-12s %s: %s -> %s%s', row.verdict, displayName(row.cur), num(row.base), num(row.cur), change))
+        }
+        logger.lifecycle("JMH: ${rows.size()} benchmarks, ${counts['REGRESSION']} regressions, ${counts['IMPROVEMENT']} improvements, " +
+            "${counts['SAME']} unchanged, ${counts['NEW']} new (threshold ${thresholdPercent}%)")
+        logger.lifecycle("Report: ${reportFile}")
+    }
+
+    String git(String... args) {
+        try {
+            List<String> command = ['git'] + args.toList()
+            Process process = new ProcessBuilder(command).directory(new File(gitDir.get())).redirectErrorStream(true).start()
+            String out = process.inputStream.text.trim()
+            return process.waitFor() == 0 ? out : null
+        } catch (Exception ignored) {
+            return null
+        }
+    }
+}
+
+def hasBenchmarkSourceSet = project.extensions.findByName('sourceSets')?.findByName('benchmark') != null
+if (!hasBenchmarkSourceSet) {
+    throw new GradleException("jmh-regression.gradle needs a 'benchmark' source set with JMH on its classpath")
+}
+
+def quick = providers.gradleProperty('jmh.quick').isPresent()
+def tagName = providers.gradleProperty('jmh.tag').getOrElse(quick ? 'quick' : 'full')
+def includeRegex = providers.gradleProperty('jmh.include').getOrElse('')
+def extraArgs = providers.gradleProperty('jmh.args').getOrElse('')
+def quickArgs = quick ? '-f 1 -wi 1 -i 2 -w 1 -r 1' : ''
+def resultsPath = providers.gradleProperty('jmh.resultsDir').getOrElse('benchmark-results')
+def currentJson = layout.buildDirectory.file('jmh-regression/current.json')
+def allArgs = [quickArgs, extraArgs].findAll { !it.isEmpty() }.join(' ')
+
+// Use the existing benchmark task to keep the same classpath and Java toolchain.
+def existingBenchmark = tasks.findByName('benchmark')
+def benchmarkClasspath = existingBenchmark instanceof JavaExec ? existingBenchmark.classpath : sourceSets.benchmark.runtimeClasspath
+def benchmarkLauncher = existingBenchmark instanceof JavaExec ? existingBenchmark.javaLauncher : null
+
+def jmhRun = tasks.register('jmhRun', JavaExec) {
+    group = 'benchmark'
+    description = 'Runs the JMH suite and writes build/jmh-regression/current.json (no history, no comparison)'
+    dependsOn tasks.named('benchmarkClasses')
+    classpath = benchmarkClasspath
+    mainClass = 'org.openjdk.jmh.Main'
+    if (benchmarkLauncher != null) {
+        javaLauncher = benchmarkLauncher
+    }
+    def jmhArgs = []
+    if (!includeRegex.isEmpty()) {
+        jmhArgs << includeRegex
+    }
+    jmhArgs.addAll(['-rf', 'json', '-rff', currentJson.get().asFile.absolutePath])
+    if (!allArgs.isEmpty()) {
+        jmhArgs.addAll(allArgs.tokenize())
+    }
+    args = jmhArgs
+    doNotTrackState('A benchmark run is never up to date')
+    def stale = currentJson.get().asFile
+    doFirst {
+        stale.parentFile.mkdirs()
+        stale.delete()
+    }
+}
+
+def jmhCompare = tasks.register('jmhCompare', JmhCompare) {
+    group = 'benchmark'
+    description = 'Saves the last jmhRun output into benchmark-results/ and compares it with the previous runs'
+    dependsOn jmhRun
+    current = currentJson
+    resultsDir = objects.directoryProperty().fileValue(file(resultsPath))
+    tag = tagName
+    runArgs = ((includeRegex.isEmpty() ? '' : includeRegex + ' ') + allArgs).trim()
+    threshold = providers.gradleProperty('jmh.threshold').map { it.toDouble() }.orElse(5.0d)
+    baselineFile = providers.gradleProperty('jmh.baseline').orElse('')
+    failOnRegression = providers.gradleProperty('jmh.failOnRegression').map { it.toBoolean() }.orElse(false)
+    javaVersion = (benchmarkLauncher != null ? benchmarkLauncher.map { it.metadata.jvmVersion } : providers.provider { 'unknown' }).orElse('unknown')
+    gitDir = layout.projectDirectory.asFile.absolutePath
+}
+
+tasks.register('jmhRegression') {
+    group = 'benchmark'
+    description = 'Runs all JMH benchmarks, saves the results and reports regressions/improvements against the previous run'
+    dependsOn jmhCompare
+}
