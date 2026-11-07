@@ -1,9 +1,8 @@
 package com.cleanroommc.kirino.ecs.storage;
 
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.component.ComponentDescFlattened;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FlattenedField;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -97,7 +96,7 @@ public final class HeapPool extends ArchetypeDataPool{
         int doubleArrCount = 0;
         int booleanArrCount = 0;
         for (Class<? extends CleanComponent> clazz : components) {
-            ComponentDescFlattened descFlattened = componentRegistry.getComponentDescFlattened(componentRegistry.getComponentName(clazz));
+            SchemaLayout layout = componentRegistry.getLayout(clazz);
 
             int byteArrFrom = byteArrCount;
             int shortArrFrom = shortArrCount;
@@ -108,32 +107,31 @@ public final class HeapPool extends ArchetypeDataPool{
             int booleanArrFrom = booleanArrCount;
             List<FlattenedScalarType> order = new ArrayList<>();
 
-            for (FlattenedField flattenedField : descFlattened.fields) {
-                for (FlattenedScalarType flattenedScalarType : flattenedField.scalarTypes) {
-                    if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                        bytePool.add(new byte[initSize]);
-                        byteArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                        shortPool.add(new short[initSize]);
-                        shortArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                        intPool.add(new int[initSize]);
-                        intArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                        longPool.add(new long[initSize]);
-                        longArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                        floatPool.add(new float[initSize]);
-                        floatArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                        doublePool.add(new double[initSize]);
-                        doubleArrCount++;
-                    } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                        booleanPool.add(new boolean[initSize]);
-                        booleanArrCount++;
-                    }
-                    order.add(flattenedScalarType);
+            for (SchemaLayout.Column column : layout.columns()) {
+                FlattenedScalarType flattenedScalarType = column.type();
+                if (flattenedScalarType == FlattenedScalarType.BYTE) {
+                    bytePool.add(new byte[initSize]);
+                    byteArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
+                    shortPool.add(new short[initSize]);
+                    shortArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.INT) {
+                    intPool.add(new int[initSize]);
+                    intArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.LONG) {
+                    longPool.add(new long[initSize]);
+                    longArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
+                    floatPool.add(new float[initSize]);
+                    floatArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
+                    doublePool.add(new double[initSize]);
+                    doubleArrCount++;
+                } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
+                    booleanPool.add(new boolean[initSize]);
+                    booleanArrCount++;
                 }
+                order.add(flattenedScalarType);
             }
 
             int byteArrTo = byteArrCount;
@@ -348,58 +346,29 @@ public final class HeapPool extends ArchetypeDataPool{
     @NonNull
     @Override
     public PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain) {
-        int ordinal = componentRegistry.getFieldOrdinal(componentRegistry.getComponentName(component), fieldAccessChain);
-        ComDataLocation location = componentDataLocations.get(component);
+        return getArray(component, componentRegistry.getLayout(component).resolve(fieldAccessChain));
+    }
 
-        int index = 0;
-        int byteArrIndex = location.byteArrFrom;
-        int shortArrIndex = location.shortArrFrom;
-        int intArrIndex = location.intArrFrom;
-        int longArrIndex = location.longArrFrom;
-        int floatArrIndex = location.floatArrFrom;
-        int doubleArrIndex = location.doubleArrFrom;
-        int booleanArrIndex = location.booleanArrFrom;
-        for (FlattenedScalarType flattenedScalarType : location.order) {
-            if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(bytePool.get(byteArrIndex));
-                }
-                byteArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(shortPool.get(shortArrIndex));
-                }
-                shortArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(intPool.get(intArrIndex));
-                }
-                intArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(longPool.get(longArrIndex));
-                }
-                longArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(floatPool.get(floatArrIndex));
-                }
-                floatArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(doublePool.get(doubleArrIndex));
-                }
-                doubleArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                if (index == ordinal) {
-                    return new HeapPrimitiveArray(booleanPool.get(booleanArrIndex));
-                }
-                booleanArrIndex++;
-            }
-            index++;
+    @Override
+    public PrimitiveArray getArray(Class<? extends CleanComponent> component, SchemaLayout.Column column) {
+        SchemaLayout layout = componentRegistry.getLayout(component);
+        if (column.ordinal() >= layout.unitCount() || layout.columns().get(column.ordinal()) != column) {
+            throw new IllegalArgumentException("Column doesn't belong to component " + component.getName());
         }
-
-        throw new IllegalArgumentException("Unable to find such array.");
+        ComDataLocation location = componentDataLocations.get(component);
+        if (location == null) {
+            throw new IllegalArgumentException("Component isn't stored in this archetype: " + component.getName());
+        }
+        int index = column.typeIndex();
+        return switch (column.type()) {
+            case BYTE -> new HeapPrimitiveArray(bytePool.get(location.byteArrFrom + index));
+            case SHORT -> new HeapPrimitiveArray(shortPool.get(location.shortArrFrom + index));
+            case INT -> new HeapPrimitiveArray(intPool.get(location.intArrFrom + index));
+            case LONG -> new HeapPrimitiveArray(longPool.get(location.longArrFrom + index));
+            case FLOAT -> new HeapPrimitiveArray(floatPool.get(location.floatArrFrom + index));
+            case DOUBLE -> new HeapPrimitiveArray(doublePool.get(location.doubleArrFrom + index));
+            case BOOL -> new HeapPrimitiveArray(booleanPool.get(location.booleanArrFrom + index));
+        };
     }
 
     @NonNull

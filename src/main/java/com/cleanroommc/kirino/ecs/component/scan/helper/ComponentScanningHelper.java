@@ -1,5 +1,7 @@
 package com.cleanroommc.kirino.ecs.component.scan.helper;
 
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature;
 import com.cleanroommc.kirino.ecs.component.scan.ComponentRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
@@ -8,6 +10,10 @@ import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.FieldInfo;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
@@ -23,8 +29,8 @@ public final class ComponentScanningHelper {
     private ComponentScanningHelper() {
     }
 
-    private static List<FieldInfo> getValidFields(ClassInfo componentClassInfo, FieldRegistry fieldRegistry) {
-        List<FieldInfo> fields = new ArrayList<>();
+    private static ObjectArrayList<FieldInfo> getValidFields(ClassInfo componentClassInfo, FieldRegistry fieldRegistry) {
+        ObjectArrayList<FieldInfo> fields = new ObjectArrayList<>();
 
         for (FieldInfo field : componentClassInfo.getFieldInfo()) {
             String fieldClassName = field.getTypeDescriptor().toString();
@@ -38,17 +44,21 @@ public final class ComponentScanningHelper {
         return fields;
     }
 
-    private static List<ComponentRegisterPlan> generatePlans(Map<String, List<FieldInfo>> components, FieldRegistry fieldRegistry) {
-        List<ComponentRegisterPlan> plans = new ArrayList<>();
+    private static List<ComponentRegisterPlan> generatePlans(
+        Map<String, ObjectArrayList<FieldInfo>> components,
+        FieldRegistry fieldRegistry
+    ) {
+        List<ComponentRegisterPlan> plans = new ObjectArrayList<>();
 
-        Map<String, Integer> componentNameDuplicates = new HashMap<>();
-        Map<String, String> componentNames = new HashMap<>();
+        Object2IntOpenHashMap<String> componentNameDuplicates   = new Object2IntOpenHashMap<>();
+        Object2ObjectOpenHashMap<String, String> componentNames = new Object2ObjectOpenHashMap<>();
 
-        for (Map.Entry<String, List<FieldInfo>> entry : components.entrySet()) {
+        for (Map.Entry<String, ObjectArrayList<FieldInfo>> entry : components.entrySet()) {
             String componentName = ClassScanUtils.getClassSimpleName(entry.getKey());
+
             int duplicate = 0;
             if (componentNameDuplicates.containsKey(componentName)) {
-                duplicate = componentNameDuplicates.get(componentName);
+                duplicate = componentNameDuplicates.getInt(componentName);
                 componentNameDuplicates.put(componentName, duplicate + 1);
             } else {
                 componentNameDuplicates.put(componentName, 1);
@@ -59,7 +69,7 @@ public final class ComponentScanningHelper {
             componentNames.put(entry.getKey(), componentName);
         }
 
-        for (Map.Entry<String, List<FieldInfo>> entry : components.entrySet()) {
+        for (Map.Entry<String, ObjectArrayList<FieldInfo>> entry : components.entrySet()) {
             String componentClass = entry.getKey();
             String componentName = componentNames.get(entry.getKey());
             MemberLayout memberLayout = new MemberLayout(entry.getValue().stream().map(FieldInfo::getName).toList());
@@ -78,28 +88,34 @@ public final class ComponentScanningHelper {
     /**
      * Retrieve a list of component register plans.
      *
-     * @param event The component scanning event
+     * @param event         The component scanning event
      * @param fieldRegistry The field registry
      * @return A list of component register plans
      */
     @NonNull
     public static List<@NonNull ComponentRegisterPlan> scanComponentClasses(
-            @NonNull ComponentScanningEvent event,
-            @NonNull FieldRegistry fieldRegistry) {
+        @NonNull ComponentScanningEvent event,
+        @NonNull FieldRegistry fieldRegistry) {
 
         Preconditions.checkNotNull(event);
         Preconditions.checkNotNull(fieldRegistry);
 
+        // Чёткое указание класса, так как если он поменяет путь будут ошибка которую не сразу можно обнаружить
+        String componentSignatureName = CleanComponentSignature.class.getName();
+        String cleanComponentName     = CleanComponent.class.getName();
+
         List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
-                scanPackageNames,
-                "com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature");
+            scanPackageNames,
+            componentSignatureName);
 
-        Map<String, List<FieldInfo>> components = new TreeMap<>();
+        Map<String, ObjectArrayList<FieldInfo>> components = new Object2ObjectAVLTreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
-            if (entry.getValue().implementsInterface("com.cleanroommc.kirino.ecs.component.CleanComponent")) {
-                components.put(entry.getKey(), getValidFields(entry.getValue(), fieldRegistry));
+            if(!entry.getValue().implementsInterface(cleanComponentName)) {
+                continue;
             }
+
+            components.put(entry.getKey(), getValidFields(entry.getValue(), fieldRegistry));
         }
 
         return generatePlans(components, fieldRegistry);

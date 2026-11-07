@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.ecs.component.scan.helper;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
+import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
 import java.util.List;
 import java.util.Map;
@@ -24,15 +25,18 @@ final class ClassScanUtils {
     }
 
     static Map<String, ClassInfo> scan(List<String> packages, String annotation) {
-        Map<String, ClassInfo> allClassInfos = new TreeMap<>();
-        if (!packages.isEmpty()) {
-            try (ScanResult scanResult = new ClassGraph()
-                    .enableAllInfo()
-                    .acceptPackages(packages.toArray(new String[0]))
-                    .scan()) {
-                for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(annotation)) {
-                    allClassInfos.put(classInfo.getName(), classInfo);
-                }
+        final Map<String, ClassInfo> allClassInfos = new Object2ObjectAVLTreeMap<>();
+
+        if (packages.isEmpty()) {
+            return allClassInfos;
+        }
+
+        try (ScanResult scanResult = new ClassGraph()
+            .enableAllInfo()
+            .acceptPackages(packages.toArray(new String[0]))
+            .scan()) {
+            for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(annotation)) {
+                allClassInfos.put(classInfo.getName(), classInfo);
             }
         }
         return allClassInfos;

@@ -1,26 +1,23 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field.struct;
 
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
-import com.cleanroommc.kirino.ecs.component.schema.reflect.AccessHandlePool;
+import com.cleanroommc.kirino.ecs.component.schema.reflect.ObjectCodec;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaCompiler;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
+import it.unimi.dsi.fastutil.objects.*;
+import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
 public class StructRegistry {
-    private final BiMap<String, Class<?>> structTypeNameClassMapping = HashBiMap.create();
-    private final Map<String, StructDef> structDefMap = new HashMap<>();
-    private final Map<String, Integer> structUnitCountMap = new HashMap<>();
-    private final Map<String, MemberLayout> classMemberLayoutMap = new HashMap<>();
+
+    private final Map<Class<?>, Data> structDataByClass = new Reference2ObjectOpenHashMap<>();
+
+    private final Map<String, Data> structData = new Object2ObjectOpenHashMap<>();
 
     private boolean lockRegistry = false;
 
@@ -28,309 +25,258 @@ public class StructRegistry {
      * This method is the entry point to register struct types.
      * <code>memberLayout.fieldNames</code> must match <code>structDef.fields</code> one by one.
      *
-     * @param name The registry name of the struct
-     * @param clazz The corresponding class of the struct
+     * @param name         The registry name of the struct
+     * @param clazz        The corresponding class of the struct
      * @param memberLayout The metadata of the struct class
-     * @param structDef The actual struct type layout
+     * @param structDef    The actual struct type layout
      */
-    public void registerStructType(
-            @NonNull String name,
-            @NonNull Class<?> clazz,
-            @NonNull MemberLayout memberLayout,
-            @NonNull StructDef structDef) {
+    public synchronized void registerStructType(
+        @NonNull String name,
+        @NonNull Class<?> clazz,
+        @NonNull MemberLayout memberLayout,
+        @NonNull StructDef structDef) {
 
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
         Preconditions.checkNotNull(name);
-        Preconditions.checkState(!structTypeNameClassMapping.containsKey(name),
-                "Struct \"%s\" is already registered.", name);
+        Preconditions.checkState(!structData.containsKey(name),
+            "Struct \"%s\" is already registered.", name);
         Preconditions.checkNotNull(clazz);
         Preconditions.checkNotNull(memberLayout);
         Preconditions.checkNotNull(structDef);
+        Preconditions.checkArgument(!structDataByClass.containsKey(clazz),
+            "Struct class %s is already registered.", clazz.getName());
 
-        structTypeNameClassMapping.put(name, clazz);
-        structDefMap.put(name, structDef);
-        classMemberLayoutMap.put(name, memberLayout);
+        final Data registryData = new Data(name, clazz, structDef, memberLayout, -1);
+
+        structData.put(name, registryData);
+        structDataByClass.put(clazz, registryData);
     }
 
     /**
      * Register calls are no longer allowed after the lock call.
      */
-    public void lock() {
+    public synchronized void lock() {
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
-
+        Map<Data, ObjectCodec> prepared = new Reference2ObjectOpenHashMap<>();
+        ObjectCodec.Factory factory = new ObjectCodec.Factory();
+        for (Data data : structData.values()) {
+            prepared.put(data, factory.prepare(getLayout(data.name)));
+        }
+        prepared.forEach((data, codec) -> {
+            data.codec = codec;
+            data.unit = data.layout.unitCount();
+        });
         lockRegistry = true;
     }
 
-    //<editor-fold desc="getters & queries">
-    @NonNull
-    public ImmutableMap<String, StructDef> getStructDefMap() {
-        return ImmutableMap.copyOf(structDefMap);
+    @NotNull
+    public ImmutableMap<String, Data> getStructDataMap() {
+        return ImmutableMap.copyOf(structData);
     }
 
     public boolean structTypeExists(@NonNull Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
 
-        // BiMap itself has an inverse cache
-        return structTypeNameClassMapping.inverse().containsKey(clazz);
+        return structDataByClass.containsKey(clazz);
     }
 
     public boolean structTypeExists(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return structTypeNameClassMapping.containsKey(name);
+        return structData.containsKey(name);
     }
 
     @Nullable
     public MemberLayout getClassMemberLayout(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return classMemberLayoutMap.get(name);
+        Data data = structData.get(name);
+        if (data == null) {
+            return null;
+        }
+
+        return data.memberLayout;
     }
 
     @Nullable
     public String getStructTypeName(@NonNull Class<?> clazz) {
         Preconditions.checkNotNull(clazz);
 
-        // BiMap itself has an inverse cache
-        return structTypeNameClassMapping.inverse().get(clazz);
+        Data data = structDataByClass.get(clazz);
+        return data == null ? null : data.name;
     }
 
     @Nullable
     public Class<?> getStructClass(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return structTypeNameClassMapping.get(name);
+        Data data = structData.get(name);
+        return data == null ? null : data.structClass;
     }
 
     @Nullable
     public StructDef getStructDef(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return structDefMap.get(name);
+        Data data = structData.get(name);
+        if (data == null) {
+            return null;
+        }
+
+        return data.structDef;
     }
     //</editor-fold>
 
     @SuppressWarnings("DataFlowIssue")
     public int flattenedUnitCount(@NonNull String name) {
         Preconditions.checkNotNull(name);
-        Preconditions.checkArgument(structTypeExists(name),
-                "Struct type %s doesn't exist.", name);
+        final Data registryData = structData.get(name);
+        Preconditions.checkArgument(registryData != null,
+            "Struct type %s doesn't exist.", name);
 
-        Integer fetched = structUnitCountMap.get(name);
-        if (fetched != null) {
-            return fetched;
-        }
-
-        int unitCount = 0;
-        for (FieldDef fieldDef : getStructDef(name).fields) {
-            if (fieldDef.fieldKind == FieldKind.SCALAR) {
-                unitCount += FlattenedScalarType.flattenedUnitCount(fieldDef.scalarType);
-            } else if (fieldDef.fieldKind == FieldKind.STRUCT) {
-                unitCount += flattenedUnitCount(fieldDef.structTypeName);
-            }
-        }
-
-        structUnitCountMap.put(name, unitCount);
-        return unitCount;
+        return flattenedUnitCount(registryData);
     }
 
-    private static String formatFieldAccessChain(String... fieldAccessChain) {
-        return fieldAccessChain.length == 0 ? "\"\"" : "\"." + String.join(".", fieldAccessChain) + "\"";
+    private int flattenedUnitCount(Data registryData) {
+        int count = registryData.unit;
+        if (count == -1) {
+            count = getLayout(registryData.name).unitCount();
+            registryData.unit = count;
+        }
+        return count;
+    }
+
+    public SchemaLayout getLayout(String name) {
+        Data data = structData.get(Objects.requireNonNull(name));
+        Preconditions.checkArgument(data != null, "Struct type %s doesn't exist.", name);
+        SchemaLayout layout = data.layout;
+        return layout == null ? prepareLayout(name) : layout;
+    }
+
+    private synchronized SchemaLayout prepareLayout(String name) {
+        Map<String, SchemaLayout> compiled = new Object2ObjectLinkedOpenHashMap<>();
+        SchemaLayout layout = compileLayout(name, compiled, new ObjectLinkedOpenHashSet<>());
+        compiled.forEach((key, value) -> {
+            Data data = structData.get(key);
+            data.unit = value.unitCount();
+            data.layout = value;
+        });
+        return layout;
+    }
+
+    private SchemaLayout compileLayout(String name, Map<String, SchemaLayout> compiled, Set<String> visiting) {
+        Data data = structData.get(name);
+        Preconditions.checkArgument(data != null, "Struct type %s doesn't exist.", name);
+        if (data.layout != null) {
+            return data.layout;
+        }
+        if (compiled.containsKey(name)) {
+            return compiled.get(name);
+        }
+        if (!visiting.add(name)) {
+            throw new IllegalArgumentException("Cyclic struct definition: " + String.join(" -> ", visiting) + " -> " + name);
+        }
+        SchemaLayout layout = SchemaCompiler.compile(name, data.structClass, data.structDef.fields, data.memberLayout,
+            nested -> compileLayout(nested, compiled, visiting));
+        visiting.remove(name);
+        compiled.put(name, layout);
+        return layout;
+    }
+
+    private ObjectCodec codec(Data data) {
+        ObjectCodec codec = data.codec;
+        return codec == null ? prepareCodec(data) : codec;
+    }
+
+    private synchronized ObjectCodec prepareCodec(Data data) {
+        if (data.codec == null) {
+            data.codec = new ObjectCodec(getLayout(data.name));
+        }
+        return data.codec;
     }
 
     /**
-     * @param name Struct name must be valid
+     * @param name             Struct name must be valid
      * @param fieldAccessChain The field access chain must be valid
      */
-    @SuppressWarnings("DataFlowIssue")
     public int getFieldOrdinal(@NonNull String name, @NonNull String @NonNull ... fieldAccessChain) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(fieldAccessChain);
-        for (String field : fieldAccessChain) {
-            Preconditions.checkNotNull(field);
-        }
-        Preconditions.checkArgument(structTypeExists(name),
-                "Struct type %s doesn't exist.", name);
-        if (fieldAccessChain.length == 0) {
-            throw new IllegalArgumentException(String.format(
-                "The given \"fieldAccessChain\"=%s must not be empty.", formatFieldAccessChain(fieldAccessChain)));
-        }
-
-        MemberLayout memberLayout = getClassMemberLayout(name);
-        int index = 0;
-        boolean match = false;
-        while (!match && index < memberLayout.fieldNames.size()) {
-            if (memberLayout.fieldNames.get(index).equals(fieldAccessChain[0])) {
-                match = true;
-            } else {
-                index++;
-            }
-        }
-
-        if (!match) {
-            throw new IllegalArgumentException(String.format(
-                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.", name, formatFieldAccessChain(fieldAccessChain)));
-        }
-
-        StructDef structDef = getStructDef(name);
-
-        int ordinal = 0;
-        for (int i = 0; i < index; i++) {
-            if (structDef.fields.get(i).fieldKind == FieldKind.SCALAR) {
-                ordinal += FlattenedScalarType.flattenedUnitCount(structDef.fields.get(i).scalarType);
-            } else {
-                ordinal += flattenedUnitCount(structDef.fields.get(i).structTypeName);
-            }
-        }
-
-        FieldDef fieldDef = structDef.fields.get(index);
-        // scalar field
-        if (fieldDef.fieldKind == FieldKind.SCALAR) {
-            // non flattenable: early escape
-            if (fieldDef.scalarType.isSingular()) {
-                if (fieldAccessChain.length == 1) {
-                    return ordinal;
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain), name));
-                }
-            // flattenable
-            } else {
-                if (fieldAccessChain.length == 1) {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain), name));
-                } else if (fieldAccessChain.length == 2) {
-                    int ordinalOffset = fieldDef.scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
-                    if (ordinalOffset == -1) {
-                        StringBuilder errorMsg = new StringBuilder();
-                        errorMsg.append(String.format("The given \"fieldAccessChain\"=%s is invalid (for component \"%s\").",
-                                formatFieldAccessChain(fieldAccessChain),
-                                name));
-                        errorMsg.append(String.format(" Failed to query the ordinal offset of \"%s\" in the scalar type \"%s\".",
-                                fieldAccessChain[1],
-                                fieldDef.scalarType));
-                        if (Arrays.stream(fieldDef.scalarType.fieldNames).noneMatch((str -> str.equals(fieldAccessChain[1])))) {
-                            errorMsg.append(String.format(" The scalar type \"%s\" doesn't contain field \"%s\".",
-                                    fieldDef.scalarType,
-                                    fieldAccessChain[1]));
-                        }
-                        throw new IllegalArgumentException(errorMsg.toString());
-                    }
-                    return ordinal + ordinalOffset;
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain),
-                            name));
-                }
-            }
-        // struct field
-        } else {
-            if (fieldAccessChain.length == 1) {
-                throw new IllegalArgumentException(String.format(
-                        "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
-                        formatFieldAccessChain(fieldAccessChain),
-                        name));
-            }
-            String[] newFieldAccessChain = new String[fieldAccessChain.length - 1];
-            System.arraycopy(fieldAccessChain, 1, newFieldAccessChain, 0, newFieldAccessChain.length);
-            return ordinal + getFieldOrdinal(structDef.fields.get(index).structTypeName, newFieldAccessChain);
-        }
+        return getLayout(name).resolve(fieldAccessChain).ordinal();
     }
 
     // -----Struct Construction-----
-
-    private final AccessHandlePool structAccessHandlePool = new AccessHandlePool();
 
     /**
      * @param name Struct name is not necessarily valid
      * @param args Arguments must match the flattened struct one-by-one
      */
     @Nullable
-    @SuppressWarnings("DataFlowIssue")
     public Object newStruct(@NonNull String name, @NonNull Object @NonNull ... args) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(args);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(args);
         for (Object arg : args) {
-            Preconditions.checkNotNull(arg);
+            Objects.requireNonNull(arg);
         }
-
-        if (!structTypeExists(name)) {
-            return null;
-        }
-
-        StructDef structDef = getStructDef(name);
-        Class<?> structClass = getStructClass(name);
-        MemberLayout memberLayout = getClassMemberLayout(name);
-
-        if (!structAccessHandlePool.classRegistered(structClass)) {
-            structAccessHandlePool.register(structClass, memberLayout);
-        }
-
-        Object output = structAccessHandlePool.newClass(structClass);
-
-        int index = 0;
-        for (int i = 0; i < structDef.fields.size(); i++) {
-            FieldDef fieldDef = structDef.fields.get(i);
-            String fieldName = memberLayout.fieldNames.get(i);
-
-            Object value = null;
-            int unitCount = 0;
-            if (fieldDef.fieldKind == FieldKind.SCALAR) {
-                unitCount = FlattenedScalarType.flattenedUnitCount(fieldDef.scalarType);
-                value = ScalarConstructor.newScalar(fieldDef.scalarType, Arrays.copyOfRange(args, index, index + unitCount));
-            } else if (fieldDef.fieldKind == FieldKind.STRUCT) {
-                unitCount = flattenedUnitCount(fieldDef.structTypeName);
-                value = newStruct(fieldDef.structTypeName, Arrays.copyOfRange(args, index, index + unitCount));
-            }
-            index += unitCount;
-
-            structAccessHandlePool.setFieldValue(structClass, output, fieldName, value);
-        }
-
-        return output;
+        Data data = structData.get(name);
+        return data == null ? null : codec(data).create(args);
     }
 
     // -----Struct Deconstruction-----
 
-    @SuppressWarnings("DataFlowIssue")
     public @NonNull Object @NonNull [] flattenStruct(@NonNull Object structInstance) {
-        Preconditions.checkNotNull(structInstance);
-        if (!structTypeExists(structInstance.getClass())) {
-            throw new IllegalArgumentException("Struct class " + structInstance.getClass().getName() + " isn't registered.");
+        Data data = structDataByClass.get(Objects.requireNonNull(structInstance).getClass());
+        if (data == null) {
+            throw new IllegalArgumentException("Struct class isn't registered: " + structInstance.getClass().getName());
+        }
+        return codec(data).flatten(structInstance);
+    }
+
+    public static class Data {
+        private final String name;
+        private final Class<?> structClass;
+        private final StructDef structDef;
+        private final MemberLayout memberLayout;
+        private volatile int unit;
+        private volatile SchemaLayout layout;
+        private volatile ObjectCodec codec;
+
+        public Data(String name, Class<?> structClass, StructDef structDef, MemberLayout memberLayout, int unit) {
+            this.name = name;
+            this.structClass = structClass;
+            this.structDef = structDef;
+            this.memberLayout = memberLayout;
+            this.unit = unit;
         }
 
-        String name = getStructTypeName(structInstance.getClass());
-
-        StructDef structDef = getStructDef(name);
-        MemberLayout memberLayout = getClassMemberLayout(name);
-
-        if (!structAccessHandlePool.classRegistered(structInstance.getClass())) {
-            structAccessHandlePool.register(structInstance.getClass(), memberLayout);
+        public String getName() {
+            return name;
         }
 
-        Object[] args = new Object[flattenedUnitCount(name)];
-
-        int index = 0;
-        for (int i = 0; i < structDef.fields.size(); i++) {
-            FieldDef fieldDef = structDef.fields.get(i);
-            String fieldName = memberLayout.fieldNames.get(i);
-
-            int unitCount = 0;
-            Object[] _args = null;
-            if (fieldDef.fieldKind == FieldKind.SCALAR) {
-                unitCount = FlattenedScalarType.flattenedUnitCount(fieldDef.scalarType);
-                _args = ScalarDeconstructor.flattenScalar(fieldDef.scalarType, structAccessHandlePool.getFieldValue(structInstance.getClass(), structInstance, fieldName));
-            } else if (fieldDef.fieldKind == FieldKind.STRUCT) {
-                unitCount = flattenedUnitCount(fieldDef.structTypeName);
-                _args = flattenStruct(structAccessHandlePool.getFieldValue(structInstance.getClass(), structInstance, fieldName));
-            }
-            System.arraycopy(_args, 0, args, index, unitCount);
-            index += unitCount;
+        public Class<?> getStructClass() {
+            return structClass;
         }
 
-        return args;
+        public int getUnit() {
+            return unit;
+        }
+
+        public MemberLayout getMemberLayout() {
+            return memberLayout;
+        }
+
+        public StructDef getStructDef() {
+            return structDef;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 31 * structDef.hashCode();
+            hash = 31 * hash + memberLayout.hashCode();
+            hash = 31 * hash + unit;
+            return hash;
+        }
+
+        public final Data copy() {
+            return new Data(name, structClass, structDef, memberLayout, unit);
+        }
     }
 }

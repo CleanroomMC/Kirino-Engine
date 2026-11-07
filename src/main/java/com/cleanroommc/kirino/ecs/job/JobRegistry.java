@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.ecs.job;
 
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
 import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
@@ -19,6 +20,7 @@ public class JobRegistry {
     private final Map<Class<? extends ParallelJob>, Map<JobDataQuery, JobDataInjector>> parallelJobDataQueryMap = new HashMap<>();
     private final Map<Class<? extends ParallelJob>, Map<String, JobDataInjector>> parallelJobExternalDataQueryMap = new HashMap<>();
     private final Map<Class<? extends ParallelJob>, JobInstantiator> parallelJobInstantiatorMap = new HashMap<>();
+    private final Map<Class<? extends ParallelJob>, Map<JobDataQuery, SchemaLayout.Column>> parallelJobColumns = new HashMap<>();
 
     private final ComponentRegistry componentRegistry;
 
@@ -83,10 +85,11 @@ public class JobRegistry {
             throw new RuntimeException("Parallel job class \"" + clazz.getName() + "\" is missing a default constructor with no parameters.", e);
         }
 
-        parallelJobInstantiatorMap.computeIfAbsent(clazz, this::genParallelJobInstantiator);
-
-        Map<JobDataQuery, JobDataInjector> dataQueryMap = parallelJobDataQueryMap.computeIfAbsent(clazz, k -> new HashMap<>());
-        Map<String, JobDataInjector> externalDataQueryMap = parallelJobExternalDataQueryMap.computeIfAbsent(clazz, k -> new HashMap<>());
+        // TODO: Rework THIS
+        JobInstantiator instantiator = genParallelJobInstantiator(clazz);
+        Map<JobDataQuery, JobDataInjector> dataQueryMap = new HashMap<>();
+        Map<String, JobDataInjector> externalDataQueryMap = new HashMap<>();
+        Map<JobDataQuery, SchemaLayout.Column> columns = new HashMap<>();
 
         String exceptionText = "Parallel job class \"" + clazz.getName() + "\" contains invalid annotation entries.";
 
@@ -110,7 +113,7 @@ public class JobRegistry {
                 }
                 String componentName = componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class));
                 try {
-                    componentRegistry.getFieldOrdinal(componentName, jobDataQuery.fieldAccessChain());
+                    columns.put(jobDataQuery, componentRegistry.getLayout(componentName).resolve(jobDataQuery.fieldAccessChain()));
                 } catch (Throwable e) {
                     throw new RuntimeException(exceptionText, new IllegalStateException("JobDataQuery#fieldAccessChain() is invalid.", e));
                 }
@@ -124,11 +127,20 @@ public class JobRegistry {
                 externalDataQueryMap.put(field.getName(), jobDataInjector);
             }
         }
+        parallelJobColumns.put(clazz, Map.copyOf(columns));
+        parallelJobDataQueryMap.put(clazz, Map.copyOf(dataQueryMap));
+        parallelJobExternalDataQueryMap.put(clazz, Map.copyOf(externalDataQueryMap));
+        parallelJobInstantiatorMap.put(clazz, instantiator);
     }
 
     @Nullable
     public Map<JobDataQuery, JobDataInjector> getParallelJobDataQueries(Class<? extends ParallelJob> clazz) {
         return parallelJobDataQueryMap.get(clazz);
+    }
+
+    public SchemaLayout.Column getParallelJobColumn(Class<? extends ParallelJob> clazz, JobDataQuery query) {
+        Map<JobDataQuery, SchemaLayout.Column> columns = parallelJobColumns.get(clazz);
+        return columns == null ? null : columns.get(query);
     }
 
     @Nullable

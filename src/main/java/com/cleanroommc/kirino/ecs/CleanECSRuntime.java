@@ -13,7 +13,6 @@ import com.cleanroommc.kirino.ecs.component.scan.helper.StructScanningHelper;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.ParallelJob;
@@ -26,7 +25,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
-import org.joml.*;
 
 import java.lang.invoke.MethodHandle;
 import java.util.ArrayList;
@@ -103,9 +101,9 @@ public class CleanECSRuntime {
         structRegistry.lock();
         fieldRegistry.lock();
 
-        logger.debug("Struct defs are as follows:{}", structRegistry.getStructDefMap().isEmpty() ? " (Empty)" : "");
-        for (Map.Entry<String, StructDef> entry : structRegistry.getStructDefMap().entrySet()) {
-            logger.debug("  - {}: {}", entry.getKey(), entry.getValue().toString(structRegistry));
+        logger.debug("Struct defs are as follows:{}", structRegistry.getStructDataMap().isEmpty() ? " (Empty)" : "");
+        for (Map.Entry<String, StructRegistry.Data> entry : structRegistry.getStructDataMap().entrySet()) {
+            logger.debug("  - {}: {}", entry.getKey(), entry.getValue().getStructDef().toString(structRegistry));
         }
 
         componentRegistry = new ComponentRegistry(fieldRegistry);
@@ -138,11 +136,13 @@ public class CleanECSRuntime {
 
         componentRegistry.lock();
 
-        logger.debug("Component descs are as follows:{}", componentRegistry.getComponentDescMap().isEmpty() ? " (Empty)" : "");
-        ImmutableMap<String, ComponentDescFlattened> componentDescFlattenedMap = componentRegistry.getComponentDescFlattenedMap();
-        for (Map.Entry<String, ComponentDesc> entry : componentRegistry.getComponentDescMap().entrySet()) {
-            ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(entry.getKey());
-            logger.debug("  - {}: {}", entry.getKey(), entry.getValue().toString(structRegistry));
+        logger.debug("Component descs are as follows:{}", componentRegistry.getComponentDataMap().isEmpty() ? " (Empty)" : "");
+
+        for (Map.Entry<String, ComponentRegistry.Data> entry : componentRegistry.getComponentDataMap().entrySet()) {
+            ComponentRegistry.Data data = entry.getValue();
+
+            ComponentDescFlattened componentDescFlattened = data.componentDescFlattened;
+            logger.debug("  - {}: {}", entry.getKey(), data.componentDesc.toString(structRegistry));
             logger.debug("  - {}: {}", entry.getKey(), componentDescFlattened.toString());
         }
 

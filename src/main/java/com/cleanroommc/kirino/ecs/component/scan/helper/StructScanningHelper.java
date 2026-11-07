@@ -41,31 +41,6 @@ public final class StructScanningHelper {
         return fields;
     }
 
-    // todo: stricter algorithm - not allowing one's subclasses to be included in the fields
-    private static void removeSelfReference(Set<String> dirtyStructs, Map<String, List<FieldInfo>> structs, String structClass, List<String> prevStructClasses, List<FieldInfo> fields) {
-        if (dirtyStructs.contains(structClass)) {
-            return;
-        }
-        dirtyStructs.add(structClass);
-
-        List<FieldInfo> fieldsToRemove = new ArrayList<>();
-
-        for (FieldInfo field : fields) {
-            String fieldClassName = field.getTypeDescriptor().toString();
-            if (prevStructClasses.contains(fieldClassName)) {
-                fieldsToRemove.add(field);
-                continue;
-            }
-            if (structs.containsKey(fieldClassName)) {
-                List<String> classes = new ArrayList<>(prevStructClasses);
-                classes.add(fieldClassName);
-                removeSelfReference(dirtyStructs, structs, fieldClassName, classes, structs.get(fieldClassName));
-            }
-        }
-
-        fields.removeAll(fieldsToRemove);
-    }
-
     private static List<StructRegisterPlan> generatePlans(Map<String, List<FieldInfo>> structs, FieldRegistry fieldRegistry) {
         List<StructRegisterPlan> plans = new ArrayList<>();
 
@@ -131,11 +106,6 @@ public final class StructScanningHelper {
         Map<String, List<FieldInfo>> structs = new TreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
             structs.put(entry.getKey(), getValidFields(allClassInfos, entry.getValue(), fieldRegistry));
-        }
-
-        Set<String> dirtyStructs = new HashSet<>();
-        for (Map.Entry<String, List<FieldInfo>> entry : structs.entrySet()) {
-            removeSelfReference(dirtyStructs, structs, entry.getKey(), Collections.singletonList(entry.getKey()), entry.getValue());
         }
 
         return generatePlans(structs, fieldRegistry);

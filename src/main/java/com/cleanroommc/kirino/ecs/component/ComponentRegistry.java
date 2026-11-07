@@ -1,14 +1,15 @@
 package com.cleanroommc.kirino.ecs.component;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
-import com.cleanroommc.kirino.ecs.component.schema.reflect.AccessHandlePool;
+import com.cleanroommc.kirino.ecs.component.schema.reflect.ObjectCodec;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaCompiler;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -21,10 +22,8 @@ public class ComponentRegistry {
         this.fieldRegistry = fieldRegistry;
     }
 
-    private final BiMap<String, Class<? extends CleanComponent>> comNameClassMapping = HashBiMap.create();
-    private final Map<String, ComponentDesc> componentDescMap = new HashMap<>();
-    private final Map<String, ComponentDescFlattened> componentDescFlattenedMap = new HashMap<>();
-    private final Map<String, MemberLayout> classMemberLayoutMap = new HashMap<>();
+    private final Map<Class<?>, Data> componentDataByClass = new Reference2ObjectOpenHashMap<>();
+    private final Map<String, Data> componentData = new Object2ObjectOpenHashMap<>();
 
     private boolean lockRegistry = false;
 
@@ -37,7 +36,7 @@ public class ComponentRegistry {
      * @param memberLayout The metadata of the component class
      * @param fieldTypeNames The field registry names of the component
      */
-    public void registerComponent(
+    public synchronized void registerComponent(
             @NonNull String name,
             @NonNull Class<? extends CleanComponent> clazz,
             @NonNull MemberLayout memberLayout,
@@ -45,7 +44,7 @@ public class ComponentRegistry {
 
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
         Preconditions.checkNotNull(name);
-        Preconditions.checkState(!comNameClassMapping.containsKey(name),
+        Preconditions.checkState(!componentData.containsKey(name),
                 "Component \"%s\" is already registered.", name);
         Preconditions.checkNotNull(clazz);
         Preconditions.checkNotNull(memberLayout);
@@ -54,9 +53,7 @@ public class ComponentRegistry {
             Preconditions.checkNotNull(fieldType);
         }
 
-        comNameClassMapping.put(name, clazz);
-        classMemberLayoutMap.put(name, memberLayout);
-
+        Preconditions.checkArgument(!componentDataByClass.containsKey(clazz), "Component class %s is already registered.", clazz.getName());
         List<FieldDef> fields = new ArrayList<>();
         for (String fieldTypeName : fieldTypeNames) {
             FieldDef field = fieldRegistry.getFieldDef(fieldTypeName);
@@ -67,95 +64,104 @@ public class ComponentRegistry {
         }
 
         ComponentDesc componentDesc = new ComponentDesc(name, fields, fieldTypeNames);
-        componentDescMap.put(name, componentDesc);
-        componentDescFlattenedMap.put(name, new ComponentDescFlattened(componentDesc, fieldRegistry));
+        Data data = new Data(name, clazz, componentDesc, new ComponentDescFlattened(componentDesc, fieldRegistry), memberLayout,
+            SchemaCompiler.compile(name, clazz, fields, memberLayout, fieldRegistry.structRegistry::getLayout));
+        componentDataByClass.put(clazz, data);
+        componentData.put(name, data);
     }
 
     /**
      * Register calls are no longer allowed after the lock call.
      */
-    public void lock() {
+    public synchronized void lock() {
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
-
+        Map<Data, ObjectCodec> prepared = new IdentityHashMap<>();
+        ObjectCodec.Factory factory = new ObjectCodec.Factory();
+        for (Data data : componentData.values()) {
+            prepared.put(data, factory.prepare(data.layout));
+        }
+        prepared.forEach((data, codec) -> data.codec = codec);
         lockRegistry = true;
     }
 
     //<editor-fold desc="getters & queries">
     @NonNull
-    public ImmutableMap<String, ComponentDesc> getComponentDescMap() {
-        return ImmutableMap.copyOf(componentDescMap);
-    }
-
-    @NonNull
-    public ImmutableMap<String, ComponentDescFlattened> getComponentDescFlattenedMap() {
-        return ImmutableMap.copyOf(componentDescFlattenedMap);
+    public ImmutableMap<String, Data> getComponentDataMap() {
+        return ImmutableMap.copyOf(componentData);
     }
 
     public boolean componentExists(@NonNull Class<? extends CleanComponent> clazz) {
         Preconditions.checkNotNull(clazz);
 
-        // BiMap itself has an inverse cache
-        return comNameClassMapping.inverse().containsKey(clazz);
+        return componentDataByClass.containsKey(clazz);
     }
 
     public boolean componentExists(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return comNameClassMapping.containsKey(name);
+        return componentData.containsKey(name);
     }
 
     @Nullable
     public MemberLayout getClassMemberLayout(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return classMemberLayoutMap.get(name);
+        Data data = componentData.get(name);
+        if(data == null) {
+            return null;
+        }
+
+        return data.memberLayout;
     }
 
     @Nullable
     public String getComponentName(@NonNull Class<? extends CleanComponent> clazz) {
         Preconditions.checkNotNull(clazz);
 
-        // BiMap itself has an inverse cache
-        return comNameClassMapping.inverse().get(clazz);
+        Data data = componentDataByClass.get(clazz);
+        if(data == null) {
+            return null;
+        }
+
+        return data.name;
     }
 
     @Nullable
     public Class<? extends CleanComponent> getComponentClass(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return comNameClassMapping.get(name);
+        Data data = componentData.get(name);
+        if(data == null) {
+            return null;
+        }
+
+        return data.componentClass;
     }
 
     @Nullable
     public ComponentDesc getComponentDesc(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return componentDescMap.get(name);
+        Data data = componentData.get(name);
+        if(data == null) {
+            return null;
+        }
+
+        return data.componentDesc;
     }
 
     @Nullable
     public ComponentDescFlattened getComponentDescFlattened(@NonNull String name) {
         Preconditions.checkNotNull(name);
 
-        return componentDescFlattenedMap.get(name);
+        Data data = componentData.get(name);
+        if(data == null) {
+            return null;
+        }
+
+        return data.componentDescFlattened;
     }
     //</editor-fold>
-
-    private static String formatFieldAccessChain(String... fieldAccessChain) {
-        if (fieldAccessChain.length == 0) {
-            return "\"\"";
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("\".");
-        for (int i = 0; i < fieldAccessChain.length; i++) {
-            builder.append(fieldAccessChain[i]);
-            if (i != fieldAccessChain.length - 1) {
-                builder.append(".");
-            }
-        }
-        builder.append("\"");
-        return builder.toString();
-    }
 
     /**
      * @param name Component name must be valid
@@ -163,99 +169,34 @@ public class ComponentRegistry {
      */
     @SuppressWarnings("DataFlowIssue")
     public int getFieldOrdinal(@NonNull String name, @NonNull String @NonNull ... fieldAccessChain) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(fieldAccessChain);
-        for (String field : fieldAccessChain) {
-            Preconditions.checkNotNull(field);
-        }
-        ComponentDesc componentDesc = componentDescMap.get(name);
-        Preconditions.checkArgument(componentDesc != null,
-                "Component type %s doesn't exist.", name);
-        if (fieldAccessChain.length == 0) {
-            throw new IllegalArgumentException(String.format(
-                "The given \"fieldAccessChain\"=%s must not be empty.", formatFieldAccessChain(fieldAccessChain)));
-        }
+        return getLayout(name).resolve(fieldAccessChain).ordinal();
+    }
 
-        MemberLayout memberLayout = classMemberLayoutMap.get(name);
-        int index = 0;
-        boolean match = false;
-        while (!match && index < memberLayout.fieldNames.size()) {
-            if (memberLayout.fieldNames.get(index).equals(fieldAccessChain[0])) {
-                match = true;
-            } else {
-                index++;
-            }
-        }
+    public SchemaLayout getLayout(String name) {
+        Data data = componentData.get(Objects.requireNonNull(name));
+        Preconditions.checkArgument(data != null, "Component type %s doesn't exist.", name);
+        return data.layout;
+    }
 
-        if (!match) {
-            throw new IllegalArgumentException(String.format(
-                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.", name, formatFieldAccessChain(fieldAccessChain)));
-        }
+    public SchemaLayout getLayout(Class<? extends CleanComponent> clazz) {
+        Data data = componentDataByClass.get(Objects.requireNonNull(clazz));
+        Preconditions.checkArgument(data != null, "Component class %s isn't registered.", clazz);
+        return data.layout;
+    }
 
-        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
-        int ordinal = 0;
-        for (int i = 0; i < index; i++) {
-            ordinal += componentDescFlattened.fields.get(i).getUnitCount();
-        }
+    private ObjectCodec codec(Data data) {
+        ObjectCodec codec = data.codec;
+        return codec == null ? prepareCodec(data) : codec;
+    }
 
-        FieldDef fieldDef = componentDesc.fields.get(index);
-        // scalar field
-        if (fieldDef.fieldKind == FieldKind.SCALAR) {
-            // non flattenable: early escape
-            if (fieldDef.scalarType.isSingular()) {
-                if (fieldAccessChain.length == 1) {
-                    return ordinal;
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain), name));
-                }
-            // flattenable
-            } else {
-                if (fieldAccessChain.length == 1) {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain), name));
-                } else if (fieldAccessChain.length == 2) {
-                    int ordinalOffset = fieldDef.scalarType.ordinalOffsetOfField(fieldAccessChain[1]);
-                    if (ordinalOffset == -1) {
-                        StringBuilder errorMsg = new StringBuilder();
-                        errorMsg.append(String.format("The given \"fieldAccessChain\"=%s is invalid (for component \"%s\").",
-                                formatFieldAccessChain(fieldAccessChain),
-                                name));
-                        errorMsg.append(String.format(" Failed to query the ordinal offset of \"%s\" in the scalar type \"%s\".",
-                                fieldAccessChain[1],
-                                fieldDef.scalarType));
-                        if (Arrays.stream(fieldDef.scalarType.fieldNames).noneMatch((str -> str.equals(fieldAccessChain[1])))) {
-                            errorMsg.append(String.format(" The scalar type \"%s\" doesn't contain field \"%s\".",
-                                    fieldDef.scalarType,
-                                    fieldAccessChain[1]));
-                        }
-                        throw new IllegalArgumentException(errorMsg.toString());
-                    }
-                    return ordinal + ordinalOffset;
-                } else {
-                    throw new IllegalArgumentException(String.format(
-                            "The given \"fieldAccessChain\"=%s provides redundant terms after the deepest field (for component \"%s\").",
-                            formatFieldAccessChain(fieldAccessChain), name));
-                }
-            }
-        // struct field
-        } else {
-            if (fieldAccessChain.length == 1) {
-                throw new IllegalArgumentException(String.format(
-                        "The given \"fieldAccessChain\"=%s can't reach the deepest field (for component \"%s\").",
-                        formatFieldAccessChain(fieldAccessChain), name));
-            }
-            String[] newFieldAccessChain = new String[fieldAccessChain.length - 1];
-            System.arraycopy(fieldAccessChain, 1, newFieldAccessChain, 0, newFieldAccessChain.length);
-            return ordinal + fieldRegistry.structRegistry.getFieldOrdinal(fieldDef.structTypeName, newFieldAccessChain);
+    private synchronized ObjectCodec prepareCodec(Data data) {
+        if (data.codec == null) {
+            data.codec = new ObjectCodec(data.layout);
         }
+        return data.codec;
     }
 
     // -----Component Construction-----
-
-    private final AccessHandlePool componentAccessHandlePool = new AccessHandlePool();
 
     /**
      * @param name Component name is not necessarily valid
@@ -264,73 +205,43 @@ public class ComponentRegistry {
     @Nullable
     @SuppressWarnings("DataFlowIssue")
     public CleanComponent newComponent(@NonNull String name, @NonNull Object @NonNull ... args) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(args);
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(args);
         for (Object arg : args) {
-            Preconditions.checkNotNull(arg);
+            Objects.requireNonNull(arg);
         }
-
-        ComponentDesc componentDesc = componentDescMap.get(name);
-        if (componentDesc == null) {
-            return null;
-        }
-
-        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
-        Class<? extends CleanComponent> componentClass = comNameClassMapping.get(name);
-        MemberLayout memberLayout = classMemberLayoutMap.get(name);
-
-        if (!componentAccessHandlePool.classRegistered(componentClass)) {
-            componentAccessHandlePool.register(componentClass, memberLayout);
-        }
-
-        Object output = componentAccessHandlePool.newClass(componentClass);
-
-        int index = 0;
-        for (int i = 0; i < componentDesc.fields.size(); i++) {
-            String fieldTypeName = componentDesc.fieldTypeNames.get(i);
-            String fieldName = memberLayout.fieldNames.get(i);
-
-            int unitCount = componentDescFlattened.fields.get(i).getUnitCount();
-            Object value = fieldRegistry.newField(fieldTypeName, Arrays.copyOfRange(args, index, index + unitCount));
-            index += unitCount;
-
-            componentAccessHandlePool.setFieldValue(componentClass, output, fieldName, value);
-        }
-
-        return (CleanComponent) output;
+        Data data = componentData.get(name);
+        return data == null ? null : (CleanComponent) codec(data).create(args);
     }
 
     // -----Component Deconstruction-----
 
     @SuppressWarnings("DataFlowIssue")
     public @NonNull Object @NonNull [] flattenComponent(@NonNull CleanComponent component) {
-        Preconditions.checkNotNull(component);
-        String name = comNameClassMapping.inverse().get(component.getClass());
-        if (name == null) {
-            throw new IllegalArgumentException("Component class " + component.getClass().getName() + " isn't registered.");
+        Data data = componentDataByClass.get(Objects.requireNonNull(component).getClass());
+        if (data == null) {
+            throw new IllegalArgumentException("Component class isn't registered: " + component.getClass().getName());
         }
+        return codec(data).flatten(component);
+    }
 
-        ComponentDesc componentDesc = componentDescMap.get(name);
+    public static class Data {
 
-        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
-        MemberLayout memberLayout = classMemberLayoutMap.get(name);
+        public final String name;
+        public final Class<? extends CleanComponent> componentClass;
+        public final ComponentDesc componentDesc;
+        public final ComponentDescFlattened  componentDescFlattened;
+        public final MemberLayout memberLayout;
+        public final SchemaLayout layout;
+        private volatile ObjectCodec codec;
 
-        if (!componentAccessHandlePool.classRegistered(component.getClass())) {
-            componentAccessHandlePool.register(component.getClass(), memberLayout);
+        public Data(String name, Class<? extends CleanComponent> componentClass, ComponentDesc componentDesc, ComponentDescFlattened componentDescFlattened, MemberLayout memberLayout, SchemaLayout layout) {
+            this.name = name;
+            this.componentClass = componentClass;
+            this.componentDesc = componentDesc;
+            this.componentDescFlattened = componentDescFlattened;
+            this.memberLayout = memberLayout;
+            this.layout = layout;
         }
-
-        Object[] args = new Object[componentDescFlattened.getUnitCount()];
-
-        int index = 0;
-        for (int i = 0; i < componentDesc.fields.size(); i++) {
-            String fieldName = memberLayout.fieldNames.get(i);
-
-            int unitCount = componentDescFlattened.fields.get(i).getUnitCount();
-            Object[] _args = fieldRegistry.flattenField(componentAccessHandlePool.getFieldValue(component.getClass(), component, fieldName));
-            System.arraycopy(_args, 0, args, index, unitCount);
-            index += unitCount;
-        }
-
-        return args;
     }
 }

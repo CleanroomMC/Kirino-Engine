@@ -30,15 +30,27 @@ public final class FieldDef {
     public String toString(@NonNull StructRegistry structRegistry) {
         Preconditions.checkNotNull(structRegistry);
 
-        if (fieldKind == FieldKind.SCALAR) {
-            return "FieldDef{ scalarType=" + scalarType + " }";
-        } else if (fieldKind == FieldKind.STRUCT) {
-            StructDef structDef = structRegistry.getStructDef(structTypeName);
-            if (structDef == null) {
-                throw new IllegalStateException("Struct type " + structTypeName + " doesn't exist.");
+        switch (fieldKind) {
+            case SCALAR -> {
+                return "FieldDef{ scalarType=" + scalarType + " }";
             }
-            return "FieldDef{ structType=(" + structTypeName + ")" + structDef.toString(structRegistry) + " }";
+            case STRUCT -> {
+                StructDef structDef = structRegistry.getStructDef(structTypeName);
+                if (structDef == null) {
+                    throw new IllegalStateException("Struct type " + structTypeName + " doesn't exist.");
+                }
+                return "FieldDef{ structType=(" + structTypeName + ")" + structDef.toString(structRegistry) + " }";
+            }
+            case null, default -> {
+                return "";
+            }
         }
-        return "";
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 31 + fieldKind.hashCode();
+        hash = 31 * hash + (scalarType == null ? 0 : scalarType.hashCode());
+        return 31 * hash + (structTypeName == null ? 0 : structTypeName.hashCode());
     }
 }

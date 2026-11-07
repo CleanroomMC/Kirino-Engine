@@ -7,10 +7,10 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegist
 import com.cleanroommc.kirino.utils.PrimitiveTypeUtils;
 import com.cleanroommc.kirino.utils.collections.Object2ObjectBiMap;
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class FieldRegistry {
@@ -21,7 +21,7 @@ public class FieldRegistry {
     }
 
     private final Object2ObjectBiMap<String, Class<?>> fieldTypeNameClassMapping = new Object2ObjectBiMap<>();
-    private final Map<String, FieldDef> fieldDefMap = new HashMap<>();
+    private final Map<String, FieldDef> fieldDefMap = new Object2ObjectOpenHashMap<>();
 
     private boolean lockRegistry = false;
 
@@ -56,6 +56,14 @@ public class FieldRegistry {
     public void lock() {
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
 
+        for (Map.Entry<String, FieldDef> entry : fieldDefMap.entrySet()) {
+            FieldDef definition = entry.getValue();
+            Class<?> expected = definition.fieldKind == FieldKind.SCALAR ? definition.scalarType.clazz
+                : structRegistry.getLayout(definition.structTypeName).javaClass();
+            Class<?> actual = fieldTypeNameClassMapping.get(entry.getKey());
+            Preconditions.checkArgument(actual == expected,
+                "Field type %s has an incompatible Java class.", entry.getKey());
+        }
         fieldTypeNameClassMapping.lock();
         lockRegistry = true;
     }

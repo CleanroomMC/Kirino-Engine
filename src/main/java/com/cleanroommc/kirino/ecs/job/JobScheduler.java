@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.ecs.job;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.entity.EntityQuery;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
@@ -182,7 +183,10 @@ public class JobScheduler {
 
         // data injection
         for (Map.Entry<JobDataQuery, JobDataInjector> entry : parallelJobDataQueries.entrySet()) {
-            PrimitiveArray array = archetype.getArray(entry.getKey().componentClass().asSubclass(CleanComponent.class), entry.getKey().fieldAccessChain());
+            SchemaLayout.Column column = jobRegistry.getParallelJobColumn(job.getClass(), entry.getKey());
+            Class<? extends CleanComponent> component = entry.getKey().componentClass().asSubclass(CleanComponent.class);
+            PrimitiveArray array = column == null ? archetype.getArray(component, entry.getKey().fieldAccessChain())
+                : archetype.getArray(component, column);
             entry.getValue().inject(job, array);
         }
         if (externalData != null) {

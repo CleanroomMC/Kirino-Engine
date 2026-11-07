@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.ecs.storage;
 
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
+import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
 import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
 
@@ -117,6 +118,10 @@ public abstract class ArchetypeDataPool {
      */
     @NonNull
     public abstract PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain);
+
+    public PrimitiveArray getArray(Class<? extends CleanComponent> component, SchemaLayout.Column column) {
+        return getArray(component, column.path().toArray(String[]::new));
+    }
 
     @NonNull
     public abstract ArrayRange getArrayRange();
