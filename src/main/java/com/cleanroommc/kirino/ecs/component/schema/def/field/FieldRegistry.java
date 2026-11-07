@@ -1,12 +1,12 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field;
 
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import com.cleanroommc.kirino.utils.PrimitiveTypeUtils;
+import com.cleanroommc.kirino.utils.collections.Object2ObjectBiMap;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -20,7 +20,7 @@ public class FieldRegistry {
         this.structRegistry = structRegistry;
     }
 
-    private final BiMap<String, Class<?>> fieldTypeNameClassMapping = HashBiMap.create();
+    private final Object2ObjectBiMap<String, Class<?>> fieldTypeNameClassMapping = new Object2ObjectBiMap<>();
     private final Map<String, FieldDef> fieldDefMap = new HashMap<>();
 
     private boolean lockRegistry = false;
@@ -46,6 +46,8 @@ public class FieldRegistry {
 
         fieldTypeNameClassMapping.put(name, clazz);
         fieldDefMap.put(name, fieldDef);
+
+        KirinoCommonCore.LOGGER.info("Registered field {} of type {} ", name, clazz.getSimpleName());
     }
 
     /**
@@ -54,6 +56,7 @@ public class FieldRegistry {
     public void lock() {
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
 
+        fieldTypeNameClassMapping.lock();
         lockRegistry = true;
     }
 
