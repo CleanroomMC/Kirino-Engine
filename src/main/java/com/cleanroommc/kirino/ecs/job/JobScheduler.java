@@ -37,8 +37,10 @@ public class JobScheduler {
         }
 
         if (!parallelJobExternalDataQueries.isEmpty()) {
-            Preconditions.checkArgument(externalData != null,
-                    "Argument \"externalData\" must not be null since there are %s external data queries.", parallelJobExternalDataQueries.size());
+            if (externalData == null) {
+                throw new IllegalArgumentException("Argument \"externalData\" must not be null since there are "
+                    + parallelJobExternalDataQueries.size() + " external data queries.");
+            }
             for (String key : parallelJobExternalDataQueries.keySet()) {
                 Preconditions.checkArgument(externalData.containsKey(key),
                         "Missing the entry \"%s\" from \"externalData\".", key);
@@ -64,9 +66,10 @@ public class JobScheduler {
                 }
 
                 int jobWorkload = job.estimateWorkload(i);
-                Preconditions.checkState(jobWorkload >= 1,
-                        "The estimated workload at index=%s must be greater than or equal to 1. (Parallel job class: %s)",
-                        i, clazz.getName());
+                if (jobWorkload < 1) {
+                    throw new IllegalStateException("The estimated workload at index=" + i
+                        + " must be greater than or equal to 1. (Parallel job class: " + clazz.getName() + ")");
+                }
 
                 workload += jobWorkload;
             }
@@ -87,9 +90,8 @@ public class JobScheduler {
                     }
 
                     Optional<Integer> entityID = archetype.getEntityID(i);
-                    Preconditions.checkState(entityID.isPresent());
 
-                    job.execute(entityManager, i, entityID.get(), threadOrdinal);
+                    job.execute(entityManager, i, entityID.orElseThrow(IllegalStateException::new), threadOrdinal);
                 }
                 threadOrdinal++;
             } else {
@@ -118,9 +120,8 @@ public class JobScheduler {
                                 }
 
                                 Optional<Integer> entityID = archetype.getEntityID(j);
-                                Preconditions.checkState(entityID.isPresent());
 
-                                jobPerThread.execute(entityManager, j, entityID.get(), finalThreadOrdinal);
+                                jobPerThread.execute(entityManager, j, entityID.orElseThrow(IllegalStateException::new), finalThreadOrdinal);
                             }
                         }, executor));
 
@@ -151,9 +152,8 @@ public class JobScheduler {
                             }
 
                             Optional<Integer> entityID = archetype.getEntityID(j);
-                            Preconditions.checkState(entityID.isPresent());
 
-                            jobPerThread.execute(entityManager, j, entityID.get(), finalThreadOrdinal);
+                            jobPerThread.execute(entityManager, j, entityID.orElseThrow(IllegalStateException::new), finalThreadOrdinal);
                         }
                     }, executor));
 

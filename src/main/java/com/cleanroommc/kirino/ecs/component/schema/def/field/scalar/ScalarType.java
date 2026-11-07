@@ -28,8 +28,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Byte,
-                    "Expected a java.lang.Byte. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Byte)) {
+                throw new IllegalArgumentException("Expected a java.lang.Byte. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -48,8 +50,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Short,
-                    "Expected a java.lang.Short. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Short)) {
+                throw new IllegalArgumentException("Expected a java.lang.Short. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -68,8 +72,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Integer,
-                    "Expected a java.lang.Integer. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Integer)) {
+                throw new IllegalArgumentException("Expected a java.lang.Integer. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -88,8 +94,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Long,
-                    "Expected a java.lang.Long. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Long)) {
+                throw new IllegalArgumentException("Expected a java.lang.Long. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -108,8 +116,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Float,
-                    "Expected a java.lang.Float. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Float)) {
+                throw new IllegalArgumentException("Expected a java.lang.Float. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -128,8 +138,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Double,
-                    "Expected a java.lang.Double. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Double)) {
+                throw new IllegalArgumentException("Expected a java.lang.Double. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -148,8 +160,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Boolean,
-                    "Expected a java.lang.Boolean. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Boolean)) {
+                throw new IllegalArgumentException("Expected a java.lang.Boolean. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             return new Object[]{scalarInstance};
         }
@@ -171,8 +185,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Vector2f,
-                    "Expected a org.joml.Vector2f. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Vector2f)) {
+                throw new IllegalArgumentException("Expected a org.joml.Vector2f. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             Object[] flat = new Object[2];
             Vector2f obj = (Vector2f) scalarInstance;
@@ -199,8 +215,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Vector3f,
-                    "Expected a org.joml.Vector3f. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Vector3f)) {
+                throw new IllegalArgumentException("Expected a org.joml.Vector3f. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             Object[] flat = new Object[3];
             Vector3f obj = (Vector3f) scalarInstance;
@@ -229,8 +247,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Vector4f,
-                    "Expected a org.joml.Vector4f. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Vector4f)) {
+                throw new IllegalArgumentException("Expected a org.joml.Vector4f. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             Object[] flat = new Object[4];
             Vector4f obj = (Vector4f) scalarInstance;
@@ -271,8 +291,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Matrix3f,
-                    "Expected a org.joml.Matrix3f. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Matrix3f)) {
+                throw new IllegalArgumentException("Expected a org.joml.Matrix3f. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             Object[] flat = new Object[9];
             Matrix3f matrix3f = (Matrix3f) scalarInstance;
@@ -322,8 +344,10 @@ public enum ScalarType implements Scalar {
 
         @Override
         public @NonNull Object @NonNull [] flattenScalar(@NonNull Object scalarInstance) {
-            Preconditions.checkArgument(scalarInstance instanceof Matrix4f,
-                    "Expected a org.joml.Matrix4f. Got %s instead.", scalarInstance.getClass().getName());
+            if (!(scalarInstance instanceof Matrix4f)) {
+                throw new IllegalArgumentException("Expected a org.joml.Matrix4f. Got "
+                    + scalarInstance.getClass().getName() + " instead.");
+            }
 
             Object[] flat = new Object[16];
             Matrix4f matrix4f = (Matrix4f) scalarInstance;
@@ -386,8 +410,6 @@ public enum ScalarType implements Scalar {
         if (index < 0) {
             return -1;
         }
-
-        Preconditions.checkElementIndex(index, ordinals.length);
 
         return ordinals[index];
     }

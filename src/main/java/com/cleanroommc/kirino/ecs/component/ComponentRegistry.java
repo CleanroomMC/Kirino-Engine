@@ -168,13 +168,15 @@ public class ComponentRegistry {
         for (String field : fieldAccessChain) {
             Preconditions.checkNotNull(field);
         }
-        Preconditions.checkArgument(componentExists(name),
+        ComponentDesc componentDesc = componentDescMap.get(name);
+        Preconditions.checkArgument(componentDesc != null,
                 "Component type %s doesn't exist.", name);
-        Preconditions.checkArgument(fieldAccessChain.length != 0,
-                "The given \"fieldAccessChain\"=%s must not be empty.",
-                formatFieldAccessChain(fieldAccessChain));
+        if (fieldAccessChain.length == 0) {
+            throw new IllegalArgumentException(String.format(
+                "The given \"fieldAccessChain\"=%s must not be empty.", formatFieldAccessChain(fieldAccessChain)));
+        }
 
-        MemberLayout memberLayout = getClassMemberLayout(name);
+        MemberLayout memberLayout = classMemberLayoutMap.get(name);
         int index = 0;
         boolean match = false;
         while (!match && index < memberLayout.fieldNames.size()) {
@@ -185,17 +187,17 @@ public class ComponentRegistry {
             }
         }
 
-        Preconditions.checkArgument(match,
-                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.",
-                name, formatFieldAccessChain(fieldAccessChain));
+        if (!match) {
+            throw new IllegalArgumentException(String.format(
+                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.", name, formatFieldAccessChain(fieldAccessChain)));
+        }
 
-        ComponentDescFlattened componentDescFlattened = getComponentDescFlattened(name);
+        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
         int ordinal = 0;
         for (int i = 0; i < index; i++) {
             ordinal += componentDescFlattened.fields.get(i).getUnitCount();
         }
 
-        ComponentDesc componentDesc = getComponentDesc(name);
         FieldDef fieldDef = componentDesc.fields.get(index);
         // scalar field
         if (fieldDef.fieldKind == FieldKind.SCALAR) {
@@ -268,14 +270,14 @@ public class ComponentRegistry {
             Preconditions.checkNotNull(arg);
         }
 
-        if (!componentExists(name)) {
+        ComponentDesc componentDesc = componentDescMap.get(name);
+        if (componentDesc == null) {
             return null;
         }
 
-        ComponentDesc componentDesc = getComponentDesc(name);
-        ComponentDescFlattened componentDescFlattened = getComponentDescFlattened(name);
-        Class<? extends CleanComponent> componentClass = getComponentClass(name);
-        MemberLayout memberLayout = getClassMemberLayout(name);
+        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
+        Class<? extends CleanComponent> componentClass = comNameClassMapping.get(name);
+        MemberLayout memberLayout = classMemberLayoutMap.get(name);
 
         if (!componentAccessHandlePool.classRegistered(componentClass)) {
             componentAccessHandlePool.register(componentClass, memberLayout);
@@ -303,14 +305,15 @@ public class ComponentRegistry {
     @SuppressWarnings("DataFlowIssue")
     public @NonNull Object @NonNull [] flattenComponent(@NonNull CleanComponent component) {
         Preconditions.checkNotNull(component);
-        Preconditions.checkArgument(componentExists(component.getClass()),
-                "Component class %s isn't registered.", component.getClass().getName());
+        String name = comNameClassMapping.inverse().get(component.getClass());
+        if (name == null) {
+            throw new IllegalArgumentException("Component class " + component.getClass().getName() + " isn't registered.");
+        }
 
-        String name = getComponentName(component.getClass());
+        ComponentDesc componentDesc = componentDescMap.get(name);
 
-        ComponentDesc componentDesc = getComponentDesc(name);
-        ComponentDescFlattened componentDescFlattened = getComponentDescFlattened(name);
-        MemberLayout memberLayout = getClassMemberLayout(name);
+        ComponentDescFlattened componentDescFlattened = componentDescFlattenedMap.get(name);
+        MemberLayout memberLayout = classMemberLayoutMap.get(name);
 
         if (!componentAccessHandlePool.classRegistered(component.getClass())) {
             componentAccessHandlePool.register(component.getClass(), memberLayout);

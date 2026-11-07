@@ -350,14 +350,10 @@ public class EntityManager {
     }
 
     protected int getLatestGeneration(int entityID) {
-        Preconditions.checkElementIndex(entityID, entityGenerations.size());
-
         return entityGenerations.get(entityID);
     }
 
     protected List<Class<? extends CleanComponent>> getComponentTypes(int entityID) {
-        Preconditions.checkElementIndex(entityID, entityGenerations.size());
-
         return entityComponents.get(entityID);
     }
 }

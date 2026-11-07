@@ -151,11 +151,11 @@ public class FieldRegistry {
             Preconditions.checkNotNull(arg);
         }
 
-        if (!fieldTypeExists(name)) {
+        FieldDef fieldDef = fieldDefMap.get(name);
+        if (fieldDef == null) {
             return null;
         }
 
-        FieldDef fieldDef = getFieldDef(name);
         if (fieldDef.fieldKind == FieldKind.SCALAR) {
             return ScalarConstructor.newScalar(fieldDef.scalarType, args);
         } else if (fieldDef.fieldKind == FieldKind.STRUCT) {
@@ -178,11 +178,12 @@ public class FieldRegistry {
             fieldClass = PrimitiveTypeUtils.toPrimitive(fieldInstance.getClass());
         }
 
-        Preconditions.checkArgument(fieldTypeExists(fieldClass),
-                "Field class %s isn't registered.", fieldInstance.getClass().getName());
+        String name = fieldTypeNameClassMapping.inverse().get(fieldClass);
+        if (name == null) {
+            throw new IllegalArgumentException("Field class " + fieldInstance.getClass().getName() + " isn't registered.");
+        }
 
-        String name = getFieldTypeName(fieldClass);
-        FieldDef fieldDef = getFieldDef(name);
+        FieldDef fieldDef = fieldDefMap.get(name);
         if (fieldDef.fieldKind == FieldKind.SCALAR) {
             return ScalarDeconstructor.flattenScalar(fieldDef.scalarType, fieldInstance);
         } else if (fieldDef.fieldKind == FieldKind.STRUCT) {

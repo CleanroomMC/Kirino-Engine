@@ -1,6 +1,5 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 
-import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Arrays;
@@ -18,8 +17,6 @@ public enum FlattenedScalarType {
 
     @NonNull
     public static List<@NonNull FlattenedScalarType> flatten(@NonNull ScalarType scalarType) {
-        Preconditions.checkNotNull(scalarType);
-
         return switch (scalarType) {
             case BYTE -> Collections.singletonList(BYTE);
             case SHORT -> Collections.singletonList(SHORT);
@@ -37,8 +34,6 @@ public enum FlattenedScalarType {
     }
 
     public static int flattenedUnitCount(@NonNull ScalarType scalarType) {
-        Preconditions.checkNotNull(scalarType);
-
         return switch (scalarType) {
             case BYTE -> 1;
             case SHORT -> 1;

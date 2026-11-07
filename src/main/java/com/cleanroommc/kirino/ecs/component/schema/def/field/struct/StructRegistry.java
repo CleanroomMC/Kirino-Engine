@@ -135,19 +135,7 @@ public class StructRegistry {
     }
 
     private static String formatFieldAccessChain(String... fieldAccessChain) {
-        if (fieldAccessChain.length == 0) {
-            return "\"\"";
-        }
-        StringBuilder builder = new StringBuilder();
-        builder.append("\".");
-        for (int i = 0; i < fieldAccessChain.length; i++) {
-            builder.append(fieldAccessChain[i]);
-            if (i != fieldAccessChain.length - 1) {
-                builder.append(".");
-            }
-        }
-        builder.append("\"");
-        return builder.toString();
+        return fieldAccessChain.length == 0 ? "\"\"" : "\"." + String.join(".", fieldAccessChain) + "\"";
     }
 
     /**
@@ -163,9 +151,10 @@ public class StructRegistry {
         }
         Preconditions.checkArgument(structTypeExists(name),
                 "Struct type %s doesn't exist.", name);
-        Preconditions.checkArgument(fieldAccessChain.length != 0,
-                "The given \"fieldAccessChain\"=%s must not be empty.",
-                formatFieldAccessChain(fieldAccessChain));
+        if (fieldAccessChain.length == 0) {
+            throw new IllegalArgumentException(String.format(
+                "The given \"fieldAccessChain\"=%s must not be empty.", formatFieldAccessChain(fieldAccessChain)));
+        }
 
         MemberLayout memberLayout = getClassMemberLayout(name);
         int index = 0;
@@ -178,9 +167,10 @@ public class StructRegistry {
             }
         }
 
-        Preconditions.checkArgument(match,
-                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.",
-                name, formatFieldAccessChain(fieldAccessChain));
+        if (!match) {
+            throw new IllegalArgumentException(String.format(
+                "Can't find a field (from component \"%s\") that matches the \"fieldAccessChain\"=%s.", name, formatFieldAccessChain(fieldAccessChain)));
+        }
 
         StructDef structDef = getStructDef(name);
 
@@ -308,8 +298,9 @@ public class StructRegistry {
     @SuppressWarnings("DataFlowIssue")
     public @NonNull Object @NonNull [] flattenStruct(@NonNull Object structInstance) {
         Preconditions.checkNotNull(structInstance);
-        Preconditions.checkArgument(structTypeExists(structInstance.getClass()),
-                "Struct class %s isn't registered.", structInstance.getClass().getName());
+        if (!structTypeExists(structInstance.getClass())) {
+            throw new IllegalArgumentException("Struct class " + structInstance.getClass().getName() + " isn't registered.");
+        }
 
         String name = getStructTypeName(structInstance.getClass());
 
