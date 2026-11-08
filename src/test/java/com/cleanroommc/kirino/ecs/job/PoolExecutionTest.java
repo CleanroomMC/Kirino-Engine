@@ -31,13 +31,16 @@ class PoolExecutionTest {
         List<Runnable> pending = new ArrayList<>();
         var handle = fixture.scheduler.executeParallelJob(fixture.entities, Job.class, null, pending::add);
         assertTrue(handle.async()); assertEquals(2, pending.size());
-        assertThrows(IllegalStateException.class, () -> fixture.pool.addEntity(3, List.of(new Value())));
+        assertThrows(IllegalStateException.class, () -> fixture.pool.addEntity(3, new CleanComponent[]{new Value()}));
         assertThrows(IllegalStateException.class, () -> fixture.pool.removeEntity(1));
         assertTrue(handle.future().cancel(false));
+        assertThrows(IllegalStateException.class, fixture.entities::flush);
         pending.getFirst().run();
+        assertThrows(IllegalStateException.class, fixture.entities::flush);
         assertThrows(IllegalStateException.class, () -> fixture.pool.removeEntity(1));
         pending.getLast().run();
-        fixture.pool.addEntity(3, List.of(new Value()));
+        fixture.entities.flush();
+        fixture.pool.addEntity(3, new CleanComponent[]{new Value()});
         assertEquals(1f, fixture.column.getFloat(0), 0f);
         assertEquals(1f, fixture.column.getFloat(1), 0f);
         assertSame(fixture.column, fixture.pool.getArray(Value.class, "value"));
@@ -119,7 +122,7 @@ class PoolExecutionTest {
         ComponentRegistry registry = new ComponentRegistry(fields);
         registry.registerComponent("value", Value.class, new MemberLayout("value"), "float"); registry.lock();
         HeapPool pool = new HeapPool(registry, List.of(Value.class), 1, 2, 1);
-        pool.addEntity(1, List.of(new Value())); pool.addEntity(2, List.of(new Value()));
+        pool.addEntity(1, new CleanComponent[]{new Value()}); pool.addEntity(2, new CleanComponent[]{new Value()});
         EntityManager entities = new EntityManager(registry) {
             @Override public List<ArchetypeDataPool> startQuery(EntityQuery query) { return List.of(pool); }
         };

@@ -237,7 +237,7 @@ public final class BoxedHeapPool extends ArchetypeDataPool{
     }
 
     @Override
-    public void addEntity(int entityID, List<CleanComponent> components) {
+    public void addEntity(int entityID, CleanComponent[] components) {
         int index;
         if (freeIndexes.isEmpty()) {
             if (indexCounter >= currentSize) {
@@ -258,7 +258,7 @@ public final class BoxedHeapPool extends ArchetypeDataPool{
         entityDataIndexes.put(entityID, index);
 
         for (Class<? extends CleanComponent> clazz : this.components) {
-            CleanComponent component = Objects.requireNonNull(components.stream().filter(c -> c.getClass().equals(clazz)).findFirst().orElse(null));
+            CleanComponent component = Objects.requireNonNull(Arrays.stream(components).filter(c -> c.getClass().equals(clazz)).findFirst().orElse(null));
 
             Object[] args = componentRegistry.flattenComponent(component);
             ComDataLocation location = componentDataLocations.get(clazz);

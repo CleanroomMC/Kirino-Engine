@@ -3,8 +3,6 @@ package com.cleanroommc.kirino.ecs.entity;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import org.jspecify.annotations.NonNull;
 
-import java.util.Objects;
-
 public class CleanEntityHandle {
     private final EntityManager entityManager;
     public final int index;
@@ -22,7 +20,11 @@ public class CleanEntityHandle {
      * @return Whether this entity handle is valid
      */
     public boolean valid() {
-        return generation == entityManager.getLatestGeneration(index);
+        return entityManager.isValid(index, generation);
+    }
+
+    public boolean isAlive() {
+        return entityManager.isAlive(index, generation);
     }
 
     /**
@@ -34,17 +36,10 @@ public class CleanEntityHandle {
      * Thread safety is guaranteed.
      *
      * @return Whether you successfully executed the method
-     *
      * @see EntityManager#flush()
      */
     public boolean tryDestroy() {
-        if (!valid()) {
-            return false;
-        }
-
-        entityManager.destroyEntity(index);
-
-        return true;
+        return entityManager.tryDestroy(index, generation);
     }
 
     /**
@@ -63,24 +58,10 @@ public class CleanEntityHandle {
      *
      * @param component The component
      * @return Whether you successfully executed the method
-     *
      * @see EntityManager#flush()
      */
     public boolean trySetComponent(@NonNull CleanComponent component) {
-        if (!valid()) {
-            return false;
-        }
-        if (!entityManager.getComponentTypes(index).contains(component.getClass())) {
-            return false;
-        }
-
-        synchronized (entityManager.commandBuffer) {
-            EntityCommand command = new EntityCommand(index, EntityCommand.Type.SET_COM);
-            command.componentToSet = component;
-            entityManager.commandBuffer.add(command);
-        }
-
-        return true;
+        return entityManager.trySetComponent(index, generation, component);
     }
 
     /**
@@ -98,21 +79,10 @@ public class CleanEntityHandle {
      *
      * @param component The component
      * @return Whether you successfully executed the method
-     *
      * @see EntityManager#flush()
      */
     public boolean tryAddComponent(@NonNull CleanComponent component) {
-        if (!valid()) {
-            return false;
-        }
-
-        synchronized (entityManager.commandBuffer) {
-            EntityCommand command = new EntityCommand(index, EntityCommand.Type.ADD_COM);
-            command.componentToAdd = component;
-            entityManager.commandBuffer.add(command);
-        }
-
-        return true;
+        return entityManager.tryAddComponent(index, generation, component);
     }
 
     /**
@@ -125,24 +95,10 @@ public class CleanEntityHandle {
      *
      * @param component The component type
      * @return Whether you successfully executed the method
-     *
      * @see EntityManager#flush()
      */
     public boolean tryRemoveComponent(@NonNull Class<? extends CleanComponent> component) {
-        if (!valid()) {
-            return false;
-        }
-        if (!entityManager.getComponentTypes(index).contains(component)) {
-            return false;
-        }
-
-        synchronized (entityManager.commandBuffer) {
-            EntityCommand command = new EntityCommand(index, EntityCommand.Type.REMOVE_COM);
-            command.componentToRemove = component;
-            entityManager.commandBuffer.add(command);
-        }
-
-        return true;
+        return entityManager.tryRemoveComponent(index, generation, component);
     }
 
     @Override
@@ -154,11 +110,13 @@ public class CleanEntityHandle {
             return false;
         }
 
-        return index == that.index && generation == that.generation && Objects.equals(entityManager, that.entityManager);
+        return index == that.index && generation == that.generation && entityManager == that.entityManager;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(entityManager, index, generation);
+        int hash = System.identityHashCode(entityManager);
+        hash = 31 * hash + index;
+        return 31 * hash + generation;
     }
 }

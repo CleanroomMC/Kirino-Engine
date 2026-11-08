@@ -138,7 +138,7 @@ class EcsValidationTest {
         }
         ComponentRegistry components = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
         HeapPool pool = new HeapPool(components, List.of(), 1, 1, 1);
-        pool.addEntity(42, List.of());
+        pool.addEntity(42, new CleanComponent[0]);
         EntityManager entities = new EntityManager(components) {
             @Override
             public List<ArchetypeDataPool> startQuery(EntityQuery query) {
@@ -184,7 +184,15 @@ class EcsValidationTest {
     }
     public static class MissingComponent implements CleanComponent {}
     private static class ExposedEntityManager extends EntityManager {
-        ExposedEntityManager() { super(null); }
+        ExposedEntityManager() {
+            super(emptyComponentRegistry());
+        }
+        private static ComponentRegistry emptyComponentRegistry() {
+            ComponentRegistry registry = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
+            registry.registerComponent("missing", MissingComponent.class, new MemberLayout());
+            registry.lock();
+            return registry;
+        }
         int generation(int id) { return getLatestGeneration(id); }
         List<Class<? extends CleanComponent>> types(int id) { return getComponentTypes(id); }
     }

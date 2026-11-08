@@ -2,25 +2,26 @@ package com.cleanroommc.kirino.ecs.component.schema.meta;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
-import com.google.common.collect.ImmutableList;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 public final class SchemaLayout {
     private final String name;
     private final Class<?> javaClass;
-    private final ImmutableList<Member> members;
-    private final ImmutableList<Column> columns;
+    private final ImmutableObjectArrayList<Member> members;
+    private final ImmutableObjectArrayList<Column> columns;
     private final ImmutableMap<String, PathNode> paths;
 
-    SchemaLayout(String name, Class<?> javaClass, ImmutableList<Member> members,
-                 ImmutableList<Column> columns, Map<String, PathNode> paths) {
+    SchemaLayout(String name, Class<?> javaClass, List<Member> members,
+                 List<Column> columns, Map<String, PathNode> paths) {
         this.name = name;
         this.javaClass = javaClass;
-        this.members = members;
-        this.columns = columns;
+        this.members = ImmutableObjectArrayList.copyOf(members, Member[]::new);
+        this.columns = ImmutableObjectArrayList.copyOf(columns, Column[]::new);
         this.paths = ImmutableMap.copyOf(paths);
     }
 
@@ -32,11 +33,11 @@ public final class SchemaLayout {
         return javaClass;
     }
 
-    public ImmutableList<Member> members() {
+    public ImmutableObjectArrayList<Member> members() {
         return members;
     }
 
-    public ImmutableList<Column> columns() {
+    public ImmutableObjectArrayList<Column> columns() {
         return columns;
     }
 
@@ -70,7 +71,7 @@ public final class SchemaLayout {
     public record Member(String name, FieldDef definition, int firstOrdinal, int unitCount, SchemaLayout nested) {
     }
 
-    public record Column(ImmutableList<String> path, FlattenedScalarType type, int ordinal, int typeIndex) {
+    public record Column(ImmutableObjectArrayList<String> path, FlattenedScalarType type, int ordinal, int typeIndex) {
         public Column {
             Objects.requireNonNull(path);
             Objects.requireNonNull(type);

@@ -262,14 +262,14 @@ class PreparedSchemaTest {
         HeapPool pool = new HeapPool(components, List.of(OtherComponent.class, TestComponent.class), 1, 2, 1);
         TestComponent test = component(7);
         OtherComponent other = new OtherComponent(); other.value = 30f;
-        pool.addEntity(10, List.of(other, test));
+        pool.addEntity(10, new CleanComponent[]{other, test});
         SchemaLayout layout = components.getLayout(TestComponent.class);
         assertEquals(17, pool.getArray(TestComponent.class, layout.resolve("leaf", "count")).getInt(0));
         assertEquals(4f, pool.getArray(TestComponent.class, layout.resolve("mass")).getFloat(0), 0f);
         pool.getArray(TestComponent.class, layout.resolve("position", "y")).setFloat(0, 99f);
         assertEquals(99f, pool.getArray(TestComponent.class, "position", "y").getFloat(0), 0f);
         assertEquals(30f, pool.getArray(OtherComponent.class, "value").getFloat(0), 0f);
-        pool.addEntity(11, List.of(other, component(8)));
+        pool.addEntity(11, new CleanComponent[]{other, component(8)});
         assertTrue(pool.getCurrentSize() > 1);
         assertEquals(8, pool.getArray(TestComponent.class, layout.resolve("id")).getInt(1));
         TestComponent roundTrip = (TestComponent) pool.getComponent(10, TestComponent.class);
@@ -291,7 +291,7 @@ class PreparedSchemaTest {
         SchemaLayout.Column column = jobs.getParallelJobColumn(TestJob.class, query);
         assertSame(components.getLayout(TestComponent.class).resolve("leaf", "count"), column);
         HeapPool pool = new HeapPool(components, List.of(TestComponent.class), 1, 1, 1);
-        pool.addEntity(4, List.of(component(7)));
+        pool.addEntity(4, new CleanComponent[]{component(7)});
         TestJob job = (TestJob) jobs.getParallelJobInstantiator(TestJob.class).instantiate();
         jobs.getParallelJobDataQueries(TestJob.class).get(query).inject(job, pool.getArray(TestComponent.class, column));
         assertEquals(17, job.counts.getInt(0));

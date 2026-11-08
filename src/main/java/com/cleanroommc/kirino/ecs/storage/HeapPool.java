@@ -62,17 +62,20 @@ public final class HeapPool extends ArchetypeDataPool {
     }
 
     @Override
-    public synchronized void addEntity(int entityID, List<CleanComponent> components) {
+    public synchronized void addEntity(int entityID, CleanComponent[] components) {
         requireStructuralAccess();
         Objects.requireNonNull(components);
         if (entityRows.containsKey(entityID)) {
             throw new IllegalArgumentException("Entity already exists: " + entityID);
         }
-        if (components.size() != bindings.length) {
+
+        int componentSize = components.length;
+        if (componentSize != bindings.length) {
             throw new IllegalArgumentException("Component count doesn't match archetype");
         }
         try {
-            for (CleanComponent component : components) {
+            for (int i = 0; i < componentSize; i++) {
+                CleanComponent component = components[i];
                 Objects.requireNonNull(component);
                 ColumnBinding binding = binding(component.getClass());
                 int index = binding.componentIndex;
@@ -88,7 +91,9 @@ public final class HeapPool extends ArchetypeDataPool {
                 resize(Math.addExact(currentSize, growStep));
             }
             for (int i = 0; i < bindings.length; i++) {
-                bindings[i].codec.write(insertionValues[i], bindings[i], row);
+                ColumnBinding binding = bindings[i];
+
+                binding.codec.write(insertionValues[i], binding, row);
             }
             entityRows.put(entityID, row);
             rowEntities.put(row, entityID);
@@ -197,7 +202,7 @@ public final class HeapPool extends ArchetypeDataPool {
         StringBuilder output = new StringBuilder("\n=====HeapPool Snapshot=====\n");
         for (ColumnBinding binding : bindings) {
             output.append("Component: ").append(binding.layout.name()).append('\n');
-            for (SchemaLayout.Column column : binding.layout.columns()) {
+            for (SchemaLayout.Column column : binding.layout.columns().elements()) {
                 output.append(String.join(".", column.path())).append(": [");
                 PrimitiveArray array = binding.columns[column.ordinal()];
                 for (int row = 0; row < Math.min(currentSize, 10); row++) {

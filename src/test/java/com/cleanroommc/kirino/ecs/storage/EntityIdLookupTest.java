@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ecs.storage;
 
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,7 @@ class EntityIdLookupTest {
         HeapPool pool = pool();
         int[] ids = {0, -1, Integer.MIN_VALUE, Integer.MAX_VALUE, 1000};
         for (int i = 0; i < ids.length; i++) {
-            pool.addEntity(ids[i], List.of());
+            pool.addEntity(ids[i], new CleanComponent[0]);
             assertEquals(ids[i], pool.getEntityID(i));
         }
         assertThrows(IllegalStateException.class, () -> pool.getEntityID(-1));
@@ -27,11 +28,11 @@ class EntityIdLookupTest {
     void getEntityID_removedAndReusedRows_preservesAbsenceAndNewId() {
         HeapPool pool = pool();
         assertThrows(IllegalStateException.class, () -> pool.getEntityID(0));
-        pool.addEntity(1000, List.of()); pool.addEntity(2000, List.of());
+        pool.addEntity(1000, new CleanComponent[0]); pool.addEntity(2000, new CleanComponent[0]);
         pool.removeEntity(1000);
         assertThrows(IllegalStateException.class, () -> pool.getEntityID(0));
         assertEquals(2000, pool.getEntityID(1));
-        pool.addEntity(3000, List.of());
+        pool.addEntity(3000, new CleanComponent[0]);
         assertEquals(3000, pool.getEntityID(0));
         pool.removeEntity(2000);
         assertThrows(IllegalStateException.class, () -> pool.getEntityID(1));

@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.storage;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
-import com.google.common.collect.ImmutableList;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
  * @see #shrinkStep
  */
 public abstract class ArchetypeDataPool {
-    public final ImmutableList<Class<? extends CleanComponent>> components;
+    public final ImmutableObjectArrayList<Class<? extends CleanComponent>> components;
 
     protected int currentSize;
     public final int initSize;
@@ -45,9 +45,11 @@ public abstract class ArchetypeDataPool {
      * @param growStep          The size to grow when the pool is full
      * @param shrinkStep        The threshold to judge when the pool is too large; Also the size to shrink
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
         this.componentRegistry = componentRegistry;
-        this.components = ImmutableList.copyOf(components);
+        this.components = ImmutableObjectArrayList.copyOf(components,
+            size -> (Class<? extends CleanComponent>[]) new Class[size]);
         this.initSize = initSize;
         this.growStep = growStep;
         this.shrinkStep = shrinkStep;
@@ -98,7 +100,7 @@ public abstract class ArchetypeDataPool {
      * @param entityID   The id of the entity
      * @param components The components
      */
-    public abstract void addEntity(int entityID, List<CleanComponent> components);
+    public abstract void addEntity(int entityID, CleanComponent[] components);
 
     /**
      * <p>Prerequisites include:</p>
@@ -125,7 +127,7 @@ public abstract class ArchetypeDataPool {
     public abstract PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain);
 
     public PrimitiveArray getArray(Class<? extends CleanComponent> component, SchemaLayout.Column column) {
-        return getArray(component, column.path().toArray(String[]::new));
+        return getArray(component, column.path().elements());
     }
 
     @NonNull

@@ -17,15 +17,17 @@ final class ColumnBinding implements PrimitiveValues {
         this.codec = codec;
         this.componentIndex = componentIndex;
         this.columns = new HeapPrimitiveArray[layout.unitCount()];
+
+        SchemaLayout.Column[] elements = layout.columns().elements();
         for (int i = 0; i < columns.length; i++) {
-            PrimitiveArrayType type = PrimitiveArrayType.valueOf(layout.columns().get(i).type().name());
+            PrimitiveArrayType type = PrimitiveArrayType.valueOf(elements[i].type().name());
             columns[i] = new HeapPrimitiveArray(type, length);
         }
     }
 
     PrimitiveArray column(SchemaLayout.Column column) {
         Objects.requireNonNull(column);
-        if (column.ordinal() >= columns.length || layout.columns().get(column.ordinal()) != column) {
+        if (column.ordinal() >= columns.length || layout.columns().elements()[column.ordinal()] != column) {
             throw new IllegalArgumentException("Column doesn't belong to " + layout.name());
         }
         return columns[column.ordinal()];

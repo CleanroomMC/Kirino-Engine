@@ -49,16 +49,10 @@ public class JobScheduler {
 
         EntityQuery query = entityManager.newQuery();
         ((ParallelJob) instantiator.instantiate()).query(query);
-        List<ArchetypeDataPool> archetypes = entityManager.startQuery(query);
-
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-
-        List<ArchetypeDataPool> acquired = new ArrayList<>(archetypes.size());
+        EntityManager.ExecutionScope execution = entityManager.beginExecution(query);
+        ArchetypeDataPool[] archetypes = execution.pools().elements();
         try {
-            for (ArchetypeDataPool archetype : archetypes) {
-                archetype.beginExecution();
-                acquired.add(archetype);
-            }
             int threadOrdinal = 0;
             for (ArchetypeDataPool archetype : archetypes) {
                 ParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
@@ -162,27 +156,25 @@ public class JobScheduler {
                 }
             }
 
-            return new ExecutionHandle(finishExecution(futures, acquired), threadOrdinal, !futures.isEmpty());
+            return new ExecutionHandle(finishExecution(futures, execution), threadOrdinal, !futures.isEmpty());
         } catch (RuntimeException | Error failure) {
-            finishExecution(futures, acquired);
+            finishExecution(futures, execution);
             throw failure;
         }
     }
 
     private static CompletableFuture<Void> finishExecution(List<CompletableFuture<Void>> futures,
-                                                           List<ArchetypeDataPool> acquired) {
+                                                           EntityManager.ExecutionScope execution) {
         CompletableFuture<Void> result = new CompletableFuture<>();
         CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).whenComplete((unused, failure) -> {
             Throwable resultFailure = failure;
-            for (int i = acquired.size() - 1; i >= 0; i--) {
-                try {
-                    acquired.get(i).endExecution();
-                } catch (RuntimeException | Error releaseFailure) {
-                    if (resultFailure == null) {
-                        resultFailure = releaseFailure;
-                    } else if (resultFailure != releaseFailure) {
-                        resultFailure.addSuppressed(releaseFailure);
-                    }
+            try {
+                execution.close();
+            } catch (RuntimeException | Error releaseFailure) {
+                if (resultFailure == null) {
+                    resultFailure = releaseFailure;
+                } else if (resultFailure != releaseFailure) {
+                    resultFailure.addSuppressed(releaseFailure);
                 }
             }
             if (resultFailure == null) {

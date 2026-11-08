@@ -47,7 +47,7 @@ public class DirectStorageBenchmark {
         value.position = new Vector3f(1.5f, 2.5f, 3.5f);
         value.child = new Child(); value.child.seed = 1000000L; value.child.flag = true;
         value.matrix = new Matrix4f().translation(4, 5, 6);
-        direct.addEntity(1000, List.of(value)); boxed.addEntity(1000, List.of(value));
+        direct.addEntity(1000, new CleanComponent[]{value}); boxed.addEntity(1000, new CleanComponent[]{value});
         directID = direct.getArray(Value.class, "id"); boxedID = boxed.getArray(Value.class, "id");
         if (!Arrays.equals(registry.flattenComponent(direct.getComponent(1000, Value.class)),
             registry.flattenComponent(boxed.getComponent(1000, Value.class)))) {

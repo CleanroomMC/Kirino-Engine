@@ -182,7 +182,7 @@ public class LegacyStructRegistry {
         }
 
         StructDef structDef = registryData.structDef;
-        ImmutableList<FieldDef> fields = structDef.fields;
+        List<FieldDef> fields = structDef.fields;
 
         int ordinal = 0;
         for (int i = 0; i < index; i++) {

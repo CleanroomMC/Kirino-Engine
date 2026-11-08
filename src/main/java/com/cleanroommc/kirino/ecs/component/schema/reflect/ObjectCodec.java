@@ -19,9 +19,12 @@ public final class ObjectCodec {
 
     private ObjectCodec(SchemaLayout layout, Factory factory) {
         this.layout = Objects.requireNonNull(layout);
-        this.members = layout.members().toArray(SchemaLayout.Member[]::new);
-        this.access = AccessHandlePool.prepare(layout.javaClass(),
-            new MemberLayout(layout.members().stream().map(SchemaLayout.Member::name).toList()));
+        this.members = layout.members().elements();
+        String[] fieldNames = new String[members.length];
+        for (int i = 0; i < members.length; i++) {
+            fieldNames[i] = members[i].name();
+        }
+        this.access = AccessHandlePool.prepare(layout.javaClass(), new MemberLayout(fieldNames));
         nested = new ObjectCodec[members.length];
         references = new boolean[members.length];
         for (int i = 0; i < members.length; i++) {
@@ -54,10 +57,11 @@ public final class ObjectCodec {
         if (values.length != layout.unitCount()) {
             throw new IllegalArgumentException("Expected " + layout.unitCount() + " values for " + layout.name() + ", got " + values.length);
         }
+        SchemaLayout.Column[] columns = layout.columns().elements();
         for (int i = 0; i < values.length; i++) {
             Object value = Objects.requireNonNull(values[i]);
-            if (!layout.columns().get(i).type().boxedClass.isInstance(value)) {
-                throw new IllegalArgumentException("Invalid value for " + layout.name() + "." + String.join(".", layout.columns().get(i).path()));
+            if (!columns[i].type().boxedClass.isInstance(value)) {
+                throw new IllegalArgumentException("Invalid value for " + layout.name() + "." + String.join(".", columns[i].path().elements()));
             }
         }
         return read(new ArrayValues(values), 0);

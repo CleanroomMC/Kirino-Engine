@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.struct;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
  * The opposite concept is a scalar ({@link ScalarType}).
  */
 public final class StructDef {
-    public final ImmutableList<FieldDef> fields;
+    public final ImmutableObjectArrayList<FieldDef> fields;
 
     public StructDef(@NonNull List<@NonNull FieldDef> fields) {
         Preconditions.checkNotNull(fields);
@@ -20,7 +20,7 @@ public final class StructDef {
             Preconditions.checkNotNull(field);
         }
 
-        this.fields = ImmutableList.copyOf(fields);
+        this.fields = ImmutableObjectArrayList.copyOf(fields, FieldDef[]::new);
     }
 
     public StructDef(@NonNull FieldDef @NonNull ... fields) {
@@ -29,7 +29,7 @@ public final class StructDef {
             Preconditions.checkNotNull(field);
         }
 
-        this.fields = ImmutableList.copyOf(fields);
+        this.fields = ImmutableObjectArrayList.copyOf(fields);
     }
 
     public String toString(@NonNull StructRegistry structRegistry) {
@@ -37,9 +37,10 @@ public final class StructDef {
 
         StringBuilder builder = new StringBuilder();
         builder.append("StructDef{ ");
-        for (int i = 0; i < fields.size(); i++) {
-            FieldDef field = fields.get(i);
-            if (i == fields.size() - 1) {
+        FieldDef[] definitions = fields.elements();
+        for (int i = 0; i < definitions.length; i++) {
+            FieldDef field = definitions[i];
+            if (i == definitions.length - 1) {
                 builder.append(field.toString(structRegistry));
             } else {
                 builder.append(field.toString(structRegistry)).append(", ");

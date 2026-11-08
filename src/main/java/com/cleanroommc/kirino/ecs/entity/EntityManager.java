@@ -9,95 +9,61 @@ import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeKey;
 import com.cleanroommc.kirino.ecs.storage.HeapPool;
-import com.cleanroommc.kirino.ecs.world.CleanWorld;
-import com.google.common.base.Preconditions;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public class EntityManager {
-    private final ComponentRegistry componentRegistry;
-
-    public EntityManager(ComponentRegistry componentRegistry) {
-        this.componentRegistry = componentRegistry;
+    private enum State {
+        FREE, RESERVED, ALIVE, PENDING_DESTROY, RETIRED
     }
 
-    /**
-     * Every entity's component info.
-     *
-     * <hr>
-     * <p><code>entityComponents</code>,
-     * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>{@link #entityGenerations}</code>,
-     * <code>{@link #entityDestroyCallbacks}</code>, and
-     * <code>{@link #entityCreateCallbacks}</code>
-     * share the same length. index is the identifier of an entity.</p>
-     */
-    private final List<List<Class<? extends CleanComponent>>> entityComponents = new ArrayList<>();
+    private static final class Slot {
+        int generation;
+        State state = State.FREE;
+        Archetype committed;
+        Archetype projected;
+        EntityCreateCallback createCallback;
+        EntityDestroyCallback destroyCallback;
+    }
 
-    /**
-     * Every entity's archetype info.
-     *
-     * <hr>
-     * <p><code>{@link #entityComponents}</code>,
-     * <code>entityArchetypeLocations</code>,
-     * <code>{@link #entityGenerations}</code>,
-     * <code>{@link #entityDestroyCallbacks}</code>, and
-     * <code>{@link #entityCreateCallbacks}</code>
-     * share the same length. index is the identifier of an entity.</p>
-     */
-    private final List<ArchetypeKey> entityArchetypeLocations = new ArrayList<>();
+    private static final class Archetype {
+        final ArchetypeKey key;
+        final ImmutableObjectArrayList<Class<? extends CleanComponent>> components;
+        ArchetypeDataPool pool;
 
-    /**
-     * Every entity's generation info.
-     *
-     * <hr>
-     * <p><code>{@link #entityComponents}</code>,
-     * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>entityGenerations</code>,
-     * <code>{@link #entityDestroyCallbacks}</code>, and
-     * <code>{@link #entityCreateCallbacks}</code>
-     * share the same length. index is the identifier of an entity.</p>
-     */
-    private final List<Integer> entityGenerations = new ArrayList<>();
+        @SuppressWarnings({"unchecked", "rawtypes"})
+        Archetype(ArchetypeKey key, List<Class<? extends CleanComponent>> components) {
+            this.key = key;
+            this.components = ImmutableObjectArrayList.copyOf(components,
+                size -> (Class<? extends CleanComponent>[]) new Class[size]);
+        }
+    }
 
-    /**
-     * Every entity's destroy callback.
-     *
-     * <hr>
-     * <p><code>{@link #entityComponents}</code>,
-     * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>{@link #entityGenerations}</code>,
-     * <code>entityDestroyCallbacks</code>, and
-     * <code>{@link #entityCreateCallbacks}</code>
-     * share the same length. index is the identifier of an entity.</p>
-     */
-    private final List<@Nullable EntityDestroyCallback> entityDestroyCallbacks = new ArrayList<>();
-
-    /**
-     * Every entity's create callback.
-     *
-     * <hr>
-     * <p><code>{@link #entityComponents}</code>,
-     * <code>{@link #entityArchetypeLocations}</code>,
-     * <code>{@link #entityGenerations}</code>,
-     * <code>{@link #entityDestroyCallbacks}</code>, and
-     * <code>entityCreateCallbacks</code>
-     * share the same length. index is the identifier of an entity.</p>
-     */
-    private final List<@Nullable EntityCreateCallback> entityCreateCallbacks = new ArrayList<>();
-
-    private final EntityDestroyContext destroyContext = new EntityDestroyContext();
+    private final ComponentRegistry componentRegistry;
+    private final Map<ArchetypeKey, Archetype> archetypes = new Object2ObjectOpenHashMap<>();
+    private final ObjectArrayList<EntityCommand> commands = new ObjectArrayList<>();
+    private final IntArrayList freeSlots = new IntArrayList();
     private final EntityCreateContext createContext = new EntityCreateContext();
+    private final EntityDestroyContext destroyContext = new EntityDestroyContext();
+    private Slot[] slots = new Slot[16];
+    private int slotCount;
+    private int executions;
+    private boolean flushing;
+    private Throwable failure;
 
-    private final List<Integer> freeIndexes = new ArrayList<>();
-    private int indexCounter = 0;
-
-    private final Map<ArchetypeKey, ArchetypeDataPool> archetypes = new HashMap<>();
-
-    protected final List<EntityCommand> commandBuffer = new ArrayList<>();
+    public EntityManager(ComponentRegistry componentRegistry) {
+        this.componentRegistry = Objects.requireNonNull(componentRegistry);
+    }
 
     @NonNull
     public EntityQuery newQuery() {
@@ -105,255 +71,388 @@ public class EntityManager {
     }
 
     @NonNull
-    public List<@NonNull ArchetypeDataPool> startQuery(@NonNull EntityQuery query) {
-        Preconditions.checkNotNull(query);
-
+    public synchronized List<@NonNull ArchetypeDataPool> startQuery(@NonNull EntityQuery query) {
+        requireAvailable();
+        Objects.requireNonNull(query);
         List<ArchetypeDataPool> result = new ArrayList<>();
-        for (Map.Entry<ArchetypeKey, ArchetypeDataPool> entry : archetypes.entrySet()) {
-            boolean mustHave = true;
+        for (Archetype archetype : archetypes.values()) {
+            if (archetype.pool == null) {
+                continue;
+            }
+            boolean matches = true;
             for (Class<? extends CleanComponent> component : query.mustHave) {
-                if (!entry.getKey().contains(component)) {
-                    mustHave = false;
+                if (!archetype.key.contains(component)) {
+                    matches = false;
                     break;
                 }
             }
-            if (!mustHave) {
+            if (!matches) {
                 continue;
             }
-            boolean mustNotHave = true;
             for (Class<? extends CleanComponent> component : query.mustNotHave) {
-                if (entry.getKey().contains(component)) {
-                    mustNotHave = false;
+                if (archetype.key.contains(component)) {
+                    matches = false;
                     break;
                 }
             }
-            if (!mustNotHave) {
-                continue;
+            if (matches) {
+                result.add(archetype.pool);
             }
-            result.add(entry.getValue());
         }
-
         return result;
     }
 
-    /**
-     * Consume all buffered commands.
-     * </br></br>
-     * Thread safety is guaranteed, but never call it during job or system execution.
-     * The only place to call it is the end of {@link CleanWorld#update()}.
-     */
-    public synchronized void flush() {
-        synchronized (commandBuffer) {
-            for (EntityCommand command : commandBuffer) {
-                switch (command.type) {
-                    case CREATE -> {
-                        List<Class<? extends CleanComponent>> components = entityComponents.get(command.index);
-                        ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
-                        ArchetypeDataPool pool = archetypes.computeIfAbsent(archetypeKey, k -> new HeapPool(componentRegistry, components, 100, 50, 50));
-                        EntityCreateCallback createCallback = entityCreateCallbacks.get(command.index);
-                        if (createCallback != null) {
-                            createContext.setInternal(components, command.newComponents);
-                            createCallback.beforeCreate(createContext);
-                        }
-                        pool.addEntity(command.index, command.newComponents);
-                    }
-                    case DESTROY -> {
-                        ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
-                        ArchetypeDataPool pool = archetypes.get(archetypeKey);
-                        EntityDestroyCallback destroyCallback = entityDestroyCallbacks.get(command.index);
-                        if (destroyCallback != null) {
-                            destroyContext.setInternal(command.index, entityComponents.get(command.index), pool);
-                            destroyCallback.beforeDestroy(destroyContext);
-                        }
-                        pool.removeEntity(command.index);
-                        freeIndexes.add(command.index);
-                    }
-                    case SET_COM -> {
-                        ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
-                        ArchetypeDataPool pool = archetypes.get(archetypeKey);
-                        pool.setComponent(command.index, command.componentToSet);
-                    }
-                    case ADD_COM -> {
-                        List<Class<? extends CleanComponent>> components = entityComponents.get(command.index);
-                        ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
-                        ArchetypeDataPool oldPool = archetypes.get(archetypeKey);
-
-                        List<CleanComponent> newComponents = new ArrayList<>();
-                        for (Class<? extends CleanComponent> component: components) {
-                            newComponents.add(oldPool.getComponent(command.index, component));
-                        }
-                        newComponents.add(command.componentToAdd);
-
-                        // update component info
-                        components.add(command.componentToAdd.getClass());
-                        // update archetype key
-                        archetypeKey = new ArchetypeKey(components);
-                        entityArchetypeLocations.set(command.index, archetypeKey);
-
-                        ArchetypeDataPool newPool = archetypes.computeIfAbsent(archetypeKey, k -> new HeapPool(componentRegistry, components, 100, 50, 50));
-                        oldPool.removeEntity(command.index);
-                        newPool.addEntity(command.index, newComponents);
-                    }
-                    case REMOVE_COM -> {
-                        List<Class<? extends CleanComponent>> components = entityComponents.get(command.index);
-                        ArchetypeKey archetypeKey = entityArchetypeLocations.get(command.index);
-                        ArchetypeDataPool oldPool = archetypes.get(archetypeKey);
-
-                        List<CleanComponent> newComponents = new ArrayList<>();
-                        for (Class<? extends CleanComponent> component: components) {
-                            newComponents.add(oldPool.getComponent(command.index, component));
-                        }
-                        newComponents.removeIf(c -> c.getClass().equals(command.componentToRemove));
-
-                        // update component info
-                        components.removeIf(c -> c.equals(command.componentToRemove));
-                        // update archetype key
-                        archetypeKey = new ArchetypeKey(components);
-                        entityArchetypeLocations.set(command.index, archetypeKey);
-
-                        ArchetypeDataPool newPool = archetypes.computeIfAbsent(archetypeKey, k -> new HeapPool(componentRegistry, components, 100, 50, 50));
-                        oldPool.removeEntity(command.index);
-                        newPool.addEntity(command.index, newComponents);
+    public final synchronized ExecutionScope beginExecution(EntityQuery query) {
+        requireAvailable();
+        ExecutionScope scope = new ExecutionScope(ImmutableObjectArrayList.copyOf(startQuery(query), ArchetypeDataPool[]::new));
+        int acquired = 0;
+        try {
+            for (ArchetypeDataPool pool : scope.pools.elements()) {
+                pool.beginExecution();
+                acquired++;
+            }
+        } catch (RuntimeException | Error exception) {
+            for (int i = acquired - 1; i >= 0; i--) {
+                try {
+                    scope.pools.elements()[i].endExecution();
+                } catch (RuntimeException | Error releaseFailure) {
+                    failure = exception;
+                    if (releaseFailure != exception) {
+                        exception.addSuppressed(releaseFailure);
                     }
                 }
             }
-            commandBuffer.clear();
+            throw exception;
+        }
+        executions++;
+        return scope;
+    }
+
+    public final class ExecutionScope implements AutoCloseable {
+        private final ImmutableObjectArrayList<ArchetypeDataPool> pools;
+        private boolean closed;
+
+        private ExecutionScope(ImmutableObjectArrayList<ArchetypeDataPool> pools) {
+            this.pools = pools;
+        }
+
+        public ImmutableObjectArrayList<ArchetypeDataPool> pools() {
+            return pools;
+        }
+
+        @Override
+        public void close() {
+            synchronized (EntityManager.this) {
+                if (closed) {
+                    return;
+                }
+                closed = true;
+                Throwable releaseFailure = null;
+                for (int i = pools.size() - 1; i >= 0; i--) {
+                    try {
+                        pools.elements()[i].endExecution();
+                    } catch (RuntimeException | Error exception) {
+                        if (releaseFailure == null) {
+                            releaseFailure = exception;
+                        } else if (releaseFailure != exception) {
+                            releaseFailure.addSuppressed(exception);
+                        }
+                    }
+                }
+                executions--;
+                if (releaseFailure != null) {
+                    failure = releaseFailure;
+                    if (releaseFailure instanceof Error error) {
+                        throw error;
+                    }
+                    throw (RuntimeException) releaseFailure;
+                }
+            }
         }
     }
 
-    /**
-     * <p>Prerequisites include:</p>
-     * <ul>
-     *     <li>All component types are valid and registered in the component registry</li>
-     *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
-     * </ul>
-     * </br>
-     * This method will allocate an entity handle and generate a command for all side effects.
-     * Buffered commands will be consumed at {@link #flush()}.
-     * </br></br>
-     * Thread safety is guaranteed.
-     *
-     * @see #flush()
-     *
-     * @param components The component types this entity has
-     * @return An entity handle
-     */
+    public synchronized void flush() {
+        requireAvailable();
+        if (executions != 0) {
+            throw new IllegalStateException("Cannot flush while jobs use this entity manager");
+        }
+
+        int size = commands.size();
+
+        if (size == 0) {
+            return;
+        }
+        flushing = true;
+        try {
+            Object[] objElements = commands.elements();
+            for (int i = 0; i < size; i++) {
+                EntityCommand command = (EntityCommand) objElements[i];
+                Slot slot = slot(command.index());
+                if (slot.generation != command.generation()
+                    || slot.state == State.FREE || slot.state == State.RETIRED) {
+                    throw new IllegalStateException("Expired entity command at index=" + command.index());
+                }
+                switch (command.type()) {
+                    case CREATE -> create(slot, command);
+                    case DESTROY -> destroy(slot, command.index());
+                    case SET_COM -> slot.committed.pool.setComponent(command.index(), command.component());
+                    case ADD_COM, REMOVE_COM -> migrate(slot, command);
+                }
+            }
+        } catch (RuntimeException | Error exception) {
+            failure = exception;
+            throw exception;
+        } finally {
+            commands.clear();
+            createContext.setInternal(List.of(), List.of());
+            destroyContext.clearInternal();
+            flushing = false;
+        }
+    }
+
+    private void create(Slot slot, EntityCommand command) {
+        Archetype target = archetypes.get(command.target());
+        ArchetypeDataPool pool = pool(target);
+        if (slot.createCallback != null) {
+            createContext.setInternal(target.components, command.components());
+            try {
+                slot.createCallback.beforeCreate(createContext);
+            } finally {
+                createContext.setInternal(List.of(), List.of());
+            }
+        }
+        pool.addEntity(command.index(), command.components().elements());
+        slot.committed = target;
+        if (slot.state == State.RESERVED) {
+            slot.state = State.ALIVE;
+        }
+        slot.createCallback = null;
+    }
+
+    private void destroy(Slot slot, int index) {
+        Archetype old = slot.committed;
+        if (slot.destroyCallback != null) {
+            destroyContext.setInternal(index, old.components, old.pool);
+            try {
+                slot.destroyCallback.beforeDestroy(destroyContext);
+            } finally {
+                destroyContext.clearInternal();
+            }
+        }
+        old.pool.removeEntity(index);
+        slot.committed = null;
+        slot.projected = null;
+        slot.createCallback = null;
+        slot.destroyCallback = null;
+        if (slot.generation == Integer.MAX_VALUE) {
+            slot.state = State.RETIRED;
+        } else {
+            slot.generation++;
+            slot.state = State.FREE;
+            freeSlots.add(index);
+        }
+    }
+
+    private void migrate(Slot slot, EntityCommand command) {
+        Archetype old = slot.committed;
+        Archetype target = archetypes.get(command.target());
+        CleanComponent[] values = new CleanComponent[target.components.size()];
+        Class<? extends CleanComponent>[] elements = target.components.elements();
+
+        for (int i = 0; i < elements.length; i++) {
+            Class<? extends CleanComponent> component = elements[i];
+            values[i] = component == command.componentType() && command.type() == EntityCommand.Type.ADD_COM
+                ? command.component() : old.pool.getComponent(command.index(), component);
+        }
+
+        pool(target).addEntity(command.index(), values);
+        old.pool.removeEntity(command.index());
+        slot.committed = target;
+    }
+
     @NonNull
     public CleanEntityHandle createEntity(@NonNull CleanComponent @NonNull ... components) {
         return createEntity(null, null, components);
     }
 
-    /**
-     * <p>Prerequisites include:</p>
-     * <ul>
-     *     <li>All component types are valid and registered in the component registry</li>
-     *     <li>Stop modifying <code>components</code> from now on as the action is deferred</li>
-     * </ul>
-     * </br>
-     * This method will allocate an entity handle and generate a command for all side effects.
-     * Buffered commands will be consumed at {@link #flush()}, and the destroy/create callback will be executed during {@link #flush()}.
-     * </br></br>
-     * Thread safety is guaranteed.
-     *
-     * @see #flush()
-     *
-     * @param destroyCallback The entity destroy callback
-     * @param createCallback The entity create callback
-     * @param components The component types this entity has
-     * @return An entity handle
-     */
     @NonNull
-    public synchronized CleanEntityHandle createEntity(@Nullable EntityDestroyCallback destroyCallback, @Nullable EntityCreateCallback createCallback, @NonNull CleanComponent @NonNull ... components) {
-        Preconditions.checkNotNull(components);
-        for (CleanComponent component : components) {
-            Preconditions.checkNotNull(component);
+    public synchronized CleanEntityHandle createEntity(@Nullable EntityDestroyCallback destroyCallback,
+                                                       @Nullable EntityCreateCallback createCallback, @NonNull CleanComponent @NonNull ... components) {
+        requireAvailable();
+        Objects.requireNonNull(components);
+        ImmutableObjectArrayList<CleanComponent> values = ImmutableObjectArrayList.copyOf(components);
+        List<Class<? extends CleanComponent>> types = new ArrayList<>(values.size());
+        for (CleanComponent value : values.elements()) {
+            validate(value);
+            types.add(value.getClass());
         }
-
+        Archetype target = archetype(types);
         int index;
-        if (freeIndexes.isEmpty()) {
-            index = indexCounter++;
+        Slot slot;
+        if (freeSlots.isEmpty()) {
+            index = slotCount;
+            if (index == slots.length) {
+                slots = Arrays.copyOf(slots, Math.multiplyExact(slots.length, 2));
+            }
+            slot = new Slot();
         } else {
-            index = freeIndexes.removeLast();
+            index = freeSlots.getInt(freeSlots.size() - 1);
+            slot = slots[index];
         }
-
-        // update component info
-        List<Class<? extends CleanComponent>> comTypes = Arrays.stream(components).map(CleanComponent::getClass).collect(Collectors.toList());
-        if (index > entityComponents.size() - 1) {
-            entityComponents.add(comTypes);
+        CleanEntityHandle handle = new CleanEntityHandle(this, index, slot.generation);
+        commands.add(new EntityCommand(index, slot.generation, EntityCommand.Type.CREATE,
+            values, null, null, target.key));
+        if (index == slotCount) {
+            slots[slotCount++] = slot;
         } else {
-            entityComponents.set(index, comTypes);
+            freeSlots.removeInt(freeSlots.size() - 1);
         }
-
-        // update archetype key
-        ArchetypeKey archetypeKey = new ArchetypeKey(comTypes);
-        if (index > entityArchetypeLocations.size() - 1) {
-            entityArchetypeLocations.add(archetypeKey);
-        } else {
-            entityArchetypeLocations.set(index, archetypeKey);
-        }
-
-        // fetch generation
-        int generation = 0;
-        if (index > entityGenerations.size() - 1) {
-            entityGenerations.add(generation);
-        } else {
-            generation = entityGenerations.get(index);
-        }
-
-        // update destroy callback
-        if (index > entityDestroyCallbacks.size() - 1) {
-            entityDestroyCallbacks.add(destroyCallback);
-        } else {
-            entityDestroyCallbacks.set(index, destroyCallback);
-        }
-
-        // update create callback
-        if (index > entityCreateCallbacks.size() - 1) {
-            entityCreateCallbacks.add(createCallback);
-        } else {
-            entityCreateCallbacks.set(index, createCallback);
-        }
-
-        synchronized (commandBuffer) {
-            EntityCommand command = new EntityCommand(index, EntityCommand.Type.CREATE);
-            command.newComponents = Arrays.asList(components);
-            commandBuffer.add(command);
-        }
-
-        return new CleanEntityHandle(this, index, generation);
+        slot.state = State.RESERVED;
+        slot.projected = target;
+        slot.createCallback = createCallback;
+        slot.destroyCallback = destroyCallback;
+        return handle;
     }
 
-    /**
-     * <p>Prerequisites include:</p>
-     * <ul>
-     *     <li><code>entityID</code> must be valid</li>
-     * </ul>
-     * </br>
-     * This method will destroy an entity and generate a command for all side effects.
-     * Buffered commands will be consumed at {@link #flush()}, and the destroy callback will be executed during {@link #flush()}.
-     * </br></br>
-     * Thread safety is guaranteed.
-     *
-     * @see #flush()
-     * @param entityID The index of the entity
-     */
     public synchronized void destroyEntity(int entityID) {
-        Preconditions.checkElementIndex(entityID, entityGenerations.size());
-
-        // update generation
-        entityGenerations.set(entityID, entityGenerations.get(entityID) + 1);
-
-        synchronized (commandBuffer) {
-            EntityCommand command = new EntityCommand(entityID, EntityCommand.Type.DESTROY);
-            commandBuffer.add(command);
+        requireAvailable();
+        Slot slot = slot(entityID);
+        if (!acceptsCommands(slot, slot.generation)) {
+            throw new IllegalStateException("Entity isn't available: " + entityID);
         }
+        enqueueDestroy(entityID, slot);
     }
 
-    protected int getLatestGeneration(int entityID) {
-        return entityGenerations.get(entityID);
+    synchronized boolean tryDestroy(int index, int generation) {
+        requireAvailable();
+        Slot slot = slot(index);
+        if (!acceptsCommands(slot, generation)) {
+            return false;
+        }
+        enqueueDestroy(index, slot);
+        return true;
     }
 
-    protected List<Class<? extends CleanComponent>> getComponentTypes(int entityID) {
-        return entityComponents.get(entityID);
+    private void enqueueDestroy(int index, Slot slot) {
+        commands.add(new EntityCommand(index, slot.generation, EntityCommand.Type.DESTROY,
+            null, null, null, null));
+        slot.state = State.PENDING_DESTROY;
+    }
+
+    synchronized boolean trySetComponent(int index, int generation, CleanComponent component) {
+        requireAvailable();
+        Slot slot = slot(index);
+        if (!acceptsCommands(slot, generation)) {
+            return false;
+        }
+        Objects.requireNonNull(component);
+        if (!slot.projected.key.contains(component.getClass())) {
+            return false;
+        }
+        validate(component);
+        commands.add(new EntityCommand(index, generation, EntityCommand.Type.SET_COM,
+            null, component, component.getClass(), null));
+        return true;
+    }
+
+    synchronized boolean tryAddComponent(int index, int generation, CleanComponent component) {
+        requireAvailable();
+        Slot slot = slot(index);
+        if (!acceptsCommands(slot, generation)) {
+            return false;
+        }
+        Objects.requireNonNull(component);
+        if (slot.projected.key.contains(component.getClass())) {
+            return false;
+        }
+        validate(component);
+        List<Class<? extends CleanComponent>> types = new ArrayList<>(slot.projected.components);
+        types.add(component.getClass());
+        Archetype target = archetype(types);
+        commands.add(new EntityCommand(index, generation, EntityCommand.Type.ADD_COM,
+            null, component, component.getClass(), target.key));
+        slot.projected = target;
+        return true;
+    }
+
+    synchronized boolean tryRemoveComponent(int index, int generation, Class<? extends CleanComponent> component) {
+        requireAvailable();
+        Slot slot = slot(index);
+        if (!acceptsCommands(slot, generation)) {
+            return false;
+        }
+        Objects.requireNonNull(component);
+        if (!slot.projected.key.contains(component)) {
+            return false;
+        }
+        List<Class<? extends CleanComponent>> types = new ArrayList<>(slot.projected.components);
+        types.removeIf(type -> type == component);
+        Archetype target = archetype(types);
+        commands.add(new EntityCommand(index, generation, EntityCommand.Type.REMOVE_COM,
+            null, null, component, target.key));
+        slot.projected = target;
+        return true;
+    }
+
+    synchronized boolean isValid(int index, int generation) {
+        return failure == null && index >= 0 && index < slotCount && acceptsCommands(slots[index], generation);
+    }
+
+    public synchronized boolean isAlive(int index, int generation) {
+        return failure == null && index >= 0 && index < slotCount
+            && slots[index].generation == generation && slots[index].state == State.ALIVE;
+    }
+
+    protected synchronized int getLatestGeneration(int entityID) {
+        return slot(entityID).generation;
+    }
+
+    protected synchronized List<Class<? extends CleanComponent>> getComponentTypes(int entityID) {
+        Slot slot = slot(entityID);
+        return slot.projected == null ? List.of() : slot.projected.components;
+    }
+
+    protected ArchetypeDataPool createPool(List<Class<? extends CleanComponent>> components) {
+        return new HeapPool(componentRegistry, components, 100, 50, 50);
+    }
+
+    private ArchetypeDataPool pool(Archetype archetype) {
+        if (archetype.pool == null) {
+            archetype.pool = Objects.requireNonNull(createPool(archetype.components));
+        }
+        return archetype.pool;
+    }
+
+    private Archetype archetype(List<Class<? extends CleanComponent>> components) {
+        ArchetypeKey key = new ArchetypeKey(components);
+        Archetype archetype = archetypes.get(key);
+        if (archetype == null) {
+            archetype = new Archetype(key, components);
+            archetypes.put(key, archetype);
+        }
+        return archetype;
+    }
+
+    private void validate(CleanComponent component) {
+        Objects.requireNonNull(component);
+        componentRegistry.getCodec(component.getClass()).validate(component);
+    }
+
+    private Slot slot(int index) {
+        Objects.checkIndex(index, slotCount);
+        return slots[index];
+    }
+
+    private static boolean acceptsCommands(Slot slot, int generation) {
+        return slot.generation == generation && (slot.state == State.RESERVED || slot.state == State.ALIVE);
+    }
+
+    private void requireAvailable() {
+        if (failure != null) {
+            throw new IllegalStateException("Entity manager failed during commit or execution release", failure);
+        }
+        if (flushing) {
+            throw new IllegalStateException("Entity manager cannot be accessed from lifecycle callbacks");
+        }
     }
 }

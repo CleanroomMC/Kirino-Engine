@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.google.common.collect.ImmutableList;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -28,8 +28,9 @@ public final class SchemaCompiler {
         List<SchemaLayout.Column> columns = new ObjectArrayList<>();
         Map<String, MutableNode> paths = new Object2ObjectOpenHashMap<>();
         int[] counts = new int[FlattenedScalarType.values().length];
+        String[] fieldNames = memberLayout.fieldNames.elements();
         for (int i = 0; i < definitions.size(); i++) {
-            String fieldName = memberLayout.fieldNames.get(i);
+            String fieldName = fieldNames[i];
             if (paths.putIfAbsent(fieldName, new MutableNode()) != null) {
                 throw new IllegalArgumentException("Duplicate field " + fieldName + " in " + name);
             }
@@ -37,22 +38,26 @@ public final class SchemaCompiler {
             SchemaLayout nested = definition.fieldKind == FieldKind.STRUCT ? structs.apply(definition.structTypeName) : null;
             int first = columns.size();
             if (nested != null) {
-                for (SchemaLayout.Column column : nested.columns()) {
-                    addColumn(ImmutableList.<String>builder().add(fieldName).addAll(column.path()).build(),
+                for (SchemaLayout.Column column : nested.columns().elements()) {
+                    String[] nestedPath = column.path().elements();
+                    String[] path = new String[nestedPath.length + 1];
+                    path[0] = fieldName;
+                    System.arraycopy(nestedPath, 0, path, 1, nestedPath.length);
+                    addColumn(ImmutableObjectArrayList.copyOf(path),
                         column.type(), columns, counts, paths);
                 }
             } else if (definition.fieldKind == FieldKind.SCALAR) {
                 ScalarType scalar = definition.scalarType;
-                List<FlattenedScalarType> types = FlattenedScalarType.flatten(scalar);
+                FlattenedScalarType[] types = scalar.flattenedTypes.elements();
                 if (scalar.isSingular()) {
-                    addColumn(ImmutableList.of(fieldName), types.getFirst(), columns, counts, paths);
+                    addColumn(ImmutableObjectArrayList.of(fieldName), types[0], columns, counts, paths);
                 } else {
-                    String[] fieldsByOrdinal = new String[types.size()];
+                    String[] fieldsByOrdinal = new String[types.length];
                     for (String field : scalar.fieldNames) {
                         fieldsByOrdinal[scalar.ordinalOffsetOfField(field)] = field;
                     }
                     for (int j = 0; j < fieldsByOrdinal.length; j++) {
-                        addColumn(ImmutableList.of(fieldName, fieldsByOrdinal[j]), types.get(j), columns, counts, paths);
+                        addColumn(ImmutableObjectArrayList.of(fieldName, fieldsByOrdinal[j]), types[j], columns, counts, paths);
                     }
                 }
             } else {
@@ -60,16 +65,16 @@ public final class SchemaCompiler {
             }
             members.add(new SchemaLayout.Member(fieldName, definition, first, columns.size() - first, nested));
         }
-        return new SchemaLayout(name, javaClass, ImmutableList.copyOf(members), ImmutableList.copyOf(columns), freeze(paths));
+        return new SchemaLayout(name, javaClass, members, columns, freeze(paths));
     }
 
-    private static void addColumn(ImmutableList<String> path, FlattenedScalarType type,
+    private static void addColumn(ImmutableObjectArrayList<String> path, FlattenedScalarType type,
                                   List<SchemaLayout.Column> columns, int[] counts, Map<String, MutableNode> paths) {
         SchemaLayout.Column column = new SchemaLayout.Column(path, type, columns.size(), counts[type.ordinal()]++);
         columns.add(column);
         MutableNode node = null;
         Map<String, MutableNode> children = paths;
-        for (String segment : path) {
+        for (String segment : path.elements()) {
             node = children.computeIfAbsent(segment, key -> new MutableNode());
             children = node.children;
         }

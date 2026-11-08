@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 
 import com.cleanroommc.kirino.ecs.component.schema.codec.ArrayValues;
 import com.cleanroommc.kirino.ecs.component.schema.codec.ScalarCodec;
+import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
 import org.joml.*;
 import java.lang.invoke.MethodType;
 import java.util.*;
@@ -24,7 +25,7 @@ public enum ScalarType {
     public final String[] fieldNames;
     public final FlattenedScalarType primitiveType;
     public final int unitCount;
-    public final List<FlattenedScalarType> flattenedTypes;
+    public final ImmutableObjectArrayList<FlattenedScalarType> flattenedTypes;
     private final Class<?> boxedClass;
     private final String[] sortedNames;
     private final int[] ordinals;
@@ -34,7 +35,9 @@ public enum ScalarType {
         this.boxedClass = MethodType.methodType(clazz).wrap().returnType();
         this.primitiveType = primitiveType;
         this.unitCount = unitCount;
-        this.flattenedTypes = Collections.nCopies(unitCount, primitiveType);
+        FlattenedScalarType[] types = new FlattenedScalarType[unitCount];
+        Arrays.fill(types, primitiveType);
+        this.flattenedTypes = ImmutableObjectArrayList.copyOf(types);
         sortedNames = fields.clone();
         Arrays.sort(sortedNames);
         ordinals = new int[fields.length];

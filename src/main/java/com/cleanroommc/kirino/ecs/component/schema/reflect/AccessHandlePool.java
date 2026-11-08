@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.ecs.component.schema.reflect;
 
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
@@ -30,30 +29,31 @@ public class AccessHandlePool {
             }
             MethodHandle constructor = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
                 .findConstructor(clazz, MethodType.methodType(void.class));
-            ImmutableList.Builder<MethodHandle> getters = ImmutableList.builder();
-            ImmutableList.Builder<MethodHandle> primitiveGetters = ImmutableList.builder();
-            ImmutableList.Builder<MethodHandle> primitiveSetters = ImmutableList.builder();
-            ImmutableList.Builder<MethodHandle> setters = ImmutableList.builder();
-            ImmutableList.Builder<Class<?>> types = ImmutableList.builder();
+            String[] fieldNames = memberLayout.fieldNames.elements();
+            MethodHandle[] getters = new MethodHandle[fieldNames.length];
+            MethodHandle[] primitiveGetters = new MethodHandle[fieldNames.length];
+            MethodHandle[] primitiveSetters = new MethodHandle[fieldNames.length];
+            MethodHandle[] setters = new MethodHandle[fieldNames.length];
+            Class<?>[] types = new Class<?>[fieldNames.length];
             ImmutableMap.Builder<String, Integer> indexes = ImmutableMap.builder();
-            for (int i = 0; i < memberLayout.fieldNames.size(); i++) {
-                String name = memberLayout.fieldNames.get(i);
+            for (int i = 0; i < fieldNames.length; i++) {
+                String name = fieldNames[i];
                 Field javaField = findField(clazz, name);
                 VarHandle field = MethodHandles.privateLookupIn(javaField.getDeclaringClass(), MethodHandles.lookup())
                     .unreflectVarHandle(javaField);
                 if (field.coordinateTypes().size() != 1 || !field.isAccessModeSupported(VarHandle.AccessMode.SET)) {
                     throw new IllegalArgumentException("Field must be a mutable instance field: " + clazz.getName() + "." + name);
                 }
-                getters.add(field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(Object.class, Object.class)));
-                setters.add(field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, Object.class)));
+                getters[i] = field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(Object.class, Object.class));
+                setters[i] = field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, Object.class));
                 Class<?> primitive = MethodType.methodType(field.varType()).unwrap().returnType();
-                primitiveGetters.add(field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(primitive, Object.class)));
-                primitiveSetters.add(field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, primitive)));
-                types.add(field.varType());
+                primitiveGetters[i] = field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(primitive, Object.class));
+                primitiveSetters[i] = field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, primitive));
+                types[i] = field.varType();
                 indexes.put(name, i);
             }
-            return new Access(clazz, constructor.asType(MethodType.methodType(Object.class)), getters.build(),
-                setters.build(), types.build(), indexes.buildOrThrow(), primitiveGetters.build(), primitiveSetters.build());
+            return new Access(clazz, constructor.asType(MethodType.methodType(Object.class)), getters,
+                setters, types, indexes.buildOrThrow(), primitiveGetters, primitiveSetters);
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException("Cannot prepare fields of " + clazz.getName(), e);
         }
@@ -99,15 +99,16 @@ public class AccessHandlePool {
         private final MethodHandle[] primitiveSetters;
         private final Class<?> javaClass;
         private final MethodHandle constructor;
-        private final ImmutableList<MethodHandle> getters;
-        private final ImmutableList<MethodHandle> setters;
-        private final ImmutableList<Class<?>> types;
+        private final MethodHandle[] getters;
+        private final MethodHandle[] setters;
+        private final Class<?>[] types;
         private final ImmutableMap<String, Integer> indexes;
 
-        private Access(Class<?> javaClass, MethodHandle constructor, ImmutableList<MethodHandle> getters,
-                       ImmutableList<MethodHandle> setters, ImmutableList<Class<?>> types, ImmutableMap<String, Integer> indexes, ImmutableList<MethodHandle> primitiveGetters, ImmutableList<MethodHandle> primitiveSetters) {
-            this.primitiveGetters = primitiveGetters.toArray(MethodHandle[]::new);
-            this.primitiveSetters = primitiveSetters.toArray(MethodHandle[]::new);
+        private Access(Class<?> javaClass, MethodHandle constructor, MethodHandle[] getters,
+                       MethodHandle[] setters, Class<?>[] types, ImmutableMap<String, Integer> indexes,
+                       MethodHandle[] primitiveGetters, MethodHandle[] primitiveSetters) {
+            this.primitiveGetters = primitiveGetters;
+            this.primitiveSetters = primitiveSetters;
             this.javaClass = javaClass;
             this.constructor = constructor;
             this.getters = getters;
@@ -117,7 +118,7 @@ public class AccessHandlePool {
         }
 
         public Class<?> fieldType(int index) {
-            return types.get(index);
+            return types[index];
         }
 
         public Object newInstance() {
@@ -138,7 +139,7 @@ public class AccessHandlePool {
 
         public Object get(Object target, int index) {
             try {
-                return (Object) getters.get(index).invokeExact(target);
+                return (Object) getters[index].invokeExact(target);
             } catch (Throwable e) {
                 throw failure("read field " + index, e);
             }
@@ -146,7 +147,7 @@ public class AccessHandlePool {
 
         public void set(Object target, int index, Object value) {
             try {
-                setters.get(index).invokeExact(target, value);
+                setters[index].invokeExact(target, value);
             } catch (Throwable e) {
                 throw failure("write field " + index, e);
             }

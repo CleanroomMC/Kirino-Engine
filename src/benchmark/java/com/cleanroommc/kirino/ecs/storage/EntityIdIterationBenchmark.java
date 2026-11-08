@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.ecs.storage;
 
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
+import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
 import com.cleanroommc.kirino.ecs.entity.EntityManager;
@@ -45,7 +46,7 @@ public class EntityIdIterationBenchmark {
         job = new RecordingJob(output);
         for (int row = 0; row < rowCount; row++) {
             int id = entityId(row);
-            pool.addEntity(id, List.of());
+            pool.addEntity(id, new CleanComponent[0]);
             rows.put(row, id);
         }
         if (removedPercent == 25) {

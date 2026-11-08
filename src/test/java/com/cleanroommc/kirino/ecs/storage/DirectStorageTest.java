@@ -20,9 +20,9 @@ class DirectStorageTest {
         PrimitiveArray[] columns = registry.getLayout(All.class).columns().stream()
             .map(column -> pool.getArray(All.class, column)).toArray(PrimitiveArray[]::new);
         Object[] first = values(1);
-        pool.addEntity(1000, List.of(registry.newComponent("all", first)));
-        pool.addEntity(1001, List.of(registry.newComponent("all", values(2))));
-        pool.addEntity(1002, List.of(registry.newComponent("all", values(3))));
+        pool.addEntity(1000, new CleanComponent[]{registry.newComponent("all", first)});
+        pool.addEntity(1001, new CleanComponent[]{registry.newComponent("all", values(2))});
+        pool.addEntity(1002, new CleanComponent[]{registry.newComponent("all", values(3))});
         assertEquals(3, columns[0].length());
         for (int i = 0; i < columns.length; i++) {
             assertSame(columns[i], pool.getArray(All.class, registry.getLayout(All.class).columns().get(i)));
@@ -35,7 +35,7 @@ class DirectStorageTest {
         assertThrows(IndexOutOfBoundsException.class, () -> columns[2].getInt(2));
         pool.removeEntity(1001);
         assertEquals(1, columns[0].length());
-        pool.addEntity(2000, List.of(registry.newComponent("all", values(4))));
+        pool.addEntity(2000, new CleanComponent[]{registry.newComponent("all", values(4))});
         assertEquals(3, columns[0].length());
         assertEquals(1004, columns[2].getInt(1));
         assertEquals(99, columns[2].getInt(0));
@@ -51,7 +51,7 @@ class DirectStorageTest {
         for (int i = 0; i < 2; i++) {
             Object[] input = values(i + 1);
             CleanComponent value = registry.newComponent("all", input);
-            pool.addEntity(1000 + i, List.of(value));
+            pool.addEntity(1000 + i, new CleanComponent[]{value});
             CleanComponent output = pool.getComponent(1000 + i, All.class);
             assertArrayEquals(input, registry.flattenComponent(output));
             All original = (All) value;
@@ -85,7 +85,7 @@ class DirectStorageTest {
         HeapPool pool = new HeapPool(registry, List.of(Pair.class, Other.class), 1, 1, 1);
         Pair pair = (Pair) registry.newComponent("pair", 1000, 1f, 2f, 3f, 2000, 4f, 5f, 6f);
         Other other = new Other(); other.value = 99;
-        pool.addEntity(1, List.of(other, pair));
+        pool.addEntity(1, new CleanComponent[]{other, pair});
         Pair output = (Pair) pool.getComponent(1, Pair.class);
         assertNotSame(output.a, output.b);
         assertEquals(1000, output.a.id); assertEquals(2000, output.b.id);
@@ -94,11 +94,11 @@ class DirectStorageTest {
         pair.b = null;
         assertThrows(IllegalArgumentException.class, () -> pool.setComponent(1, pair));
         assertArrayEquals(before, registry.flattenComponent(pool.getComponent(1, Pair.class)));
-        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(2, List.of(other, pair)));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(2, new CleanComponent[]{other, pair}));
         assertFalse(pool.containsEntity(2));
         assertEquals(1, pool.getArrayRange().end);
         pair.b = new Child(); pair.b.position = new Vector3f();
-        pool.addEntity(2, List.of(pair, other));
+        pool.addEntity(2, new CleanComponent[]{pair, other});
         assertEquals(2, pool.getArrayRange().end);
     }
 
@@ -106,29 +106,73 @@ class DirectStorageTest {
     void rowLifecycle_holesAndTrailingRemovals_preserveAllLiveRows() {
         ComponentRegistry registry = registry();
         HeapPool pool = new HeapPool(registry, List.of(All.class), 0, 2, 1);
-        for (int i = 0; i < 6; i++) { pool.addEntity(i, List.of(registry.newComponent("all", values(i)))); }
+        for (int i = 0; i < 6; i++) { pool.addEntity(i, new CleanComponent[]{registry.newComponent("all", values(i))}); }
         pool.removeEntity(1); pool.removeEntity(3); pool.removeEntity(5); pool.removeEntity(4);
         assertEquals(3, pool.getArrayRange().end);
         assertEquals(Set.of(1), pool.getArrayRange().deprecatedIndexes);
         assertTrue(pool.getCurrentSize() >= 3);
         assertEquals(1002, ((All) pool.getComponent(2, All.class)).i);
-        pool.addEntity(9, List.of(registry.newComponent("all", values(9))));
+        pool.addEntity(9, new CleanComponent[]{registry.newComponent("all", values(9))});
         assertEquals(9, pool.getEntityID(1));
         assertTrue(pool.getArrayRange().deprecatedIndexes.isEmpty());
         assertThrows(IllegalArgumentException.class, () -> pool.removeEntity(3));
         assertThrows(IllegalArgumentException.class, () -> pool.getComponent(3, All.class));
-        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(9, List.of(registry.newComponent("all", values(1)))));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(9, new CleanComponent[]{registry.newComponent("all", values(1))}));
     }
 
     @Test
     void invalidInsertion_preservesEntityAndRowState() {
         ComponentRegistry registry = registry();
         HeapPool pool = new HeapPool(registry, List.of(All.class), 1, 1, 1);
-        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, List.of()));
-        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, List.of(new Other())));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, new CleanComponent[0]));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, new CleanComponent[]{new Other()}));
         assertFalse(pool.containsEntity(1));
-        pool.addEntity(1, List.of(registry.newComponent("all", values(1))));
+        pool.addEntity(1, new CleanComponent[]{registry.newComponent("all", values(1))});
         assertEquals(0, pool.getArrayRange().start);
+        assertEquals(1, pool.getArrayRange().end);
+    }
+
+    @Test
+    void arrayInsertion_reusedPayload_doesNotRetainOrModifyInput() {
+        ComponentRegistry registry = registry();
+        HeapPool pool = new HeapPool(registry, List.of(All.class), 2, 2, 1);
+        All first = (All) registry.newComponent("all", values(1));
+        All second = (All) registry.newComponent("all", values(2));
+        CleanComponent[] payload = {first};
+        pool.addEntity(1, payload);
+        assertSame(first, payload[0]);
+        payload[0] = second;
+        pool.addEntity(2, payload);
+        first.i = -1;
+        first.v3.x = -2;
+        second.i = -3;
+        Arrays.fill(payload, null);
+        assertArrayEquals(values(1), registry.flattenComponent(pool.getComponent(1, All.class)));
+        assertArrayEquals(values(2), registry.flattenComponent(pool.getComponent(2, All.class)));
+    }
+
+    @Test
+    void arrayInsertion_nullAndDuplicatePayloads_preserveRowsAndClearScratchState() {
+        FieldRegistry fields = new FieldRegistry(new StructRegistry());
+        fields.registerFieldType("float", float.class, new FieldDef(ScalarType.FLOAT));
+        fields.registerFieldType("int", int.class, new FieldDef(ScalarType.INT));
+        fields.lock();
+        ComponentRegistry registry = new ComponentRegistry(fields);
+        registry.registerComponent("other", Other.class, new MemberLayout("value"), "float");
+        registry.registerComponent("boxed", Boxed.class, new MemberLayout("value"), "int");
+        registry.lock();
+        HeapPool pool = new HeapPool(registry, List.of(Other.class, Boxed.class), 1, 1, 1);
+        Other other = new Other(); other.value = 7;
+        Boxed boxed = new Boxed(); boxed.value = 1000;
+        assertThrows(NullPointerException.class, () -> pool.addEntity(1, null));
+        assertThrows(NullPointerException.class, () -> pool.addEntity(1, new CleanComponent[]{other, null}));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, new CleanComponent[]{other, other}));
+        assertThrows(IllegalArgumentException.class, () -> pool.addEntity(1, new CleanComponent[]{other}));
+        assertEquals(0, pool.getArrayRange().end);
+        assertFalse(pool.containsEntity(1));
+        pool.addEntity(1, new CleanComponent[]{boxed, other});
+        assertEquals(1000, ((Boxed) pool.getComponent(1, Boxed.class)).value);
+        assertEquals(7f, ((Other) pool.getComponent(1, Other.class)).value, 0f);
         assertEquals(1, pool.getArrayRange().end);
     }
 
@@ -140,7 +184,7 @@ class DirectStorageTest {
         registry.registerComponent("boxed", Boxed.class, new MemberLayout("value"), "int"); registry.lock();
         HeapPool pool = new HeapPool(registry, List.of(Boxed.class), 1, 1, 1);
         Boxed boxed = new Boxed(); boxed.value = 1000;
-        pool.addEntity(1, List.of(boxed));
+        pool.addEntity(1, new CleanComponent[]{boxed});
         assertEquals(1000, ((Boxed) pool.getComponent(1, Boxed.class)).value);
         boxed.value = null;
         assertThrows(IllegalArgumentException.class, () -> pool.setComponent(1, boxed));

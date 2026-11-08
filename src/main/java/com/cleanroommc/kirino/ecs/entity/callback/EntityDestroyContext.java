@@ -24,6 +24,12 @@ public class EntityDestroyContext {
         this.archetype = archetype;
     }
 
+    public void clearInternal() {
+        entityID = -1;
+        components = List.of();
+        archetype = null;
+    }
+
     @NonNull
     public CleanComponent getComponent(Class<? extends CleanComponent> component) {
         Preconditions.checkArgument(components.contains(component),
