@@ -1,7 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
 import com.cleanroommc.kirino.ecs.component.ComponentDesc;
-import com.cleanroommc.kirino.ecs.component.ComponentDescFlattened;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.scan.ComponentRegisterPlan;
@@ -141,9 +140,8 @@ public class CleanECSRuntime {
         for (Map.Entry<String, ComponentRegistry.Data> entry : componentRegistry.getComponentDataMap().entrySet()) {
             ComponentRegistry.Data data = entry.getValue();
 
-            ComponentDescFlattened componentDescFlattened = data.componentDescFlattened;
             logger.debug("  - {}: {}", entry.getKey(), data.componentDesc.toString(structRegistry));
-            logger.debug("  - {}: {}", entry.getKey(), componentDescFlattened.toString());
+            logger.debug("  - {}: {}", entry.getKey(), data.layout.columns());
         }
 
         entityManager = new EntityManager(componentRegistry);

@@ -94,12 +94,12 @@ class EcsValidationTest {
         assertEquals(types.length, values.length);
         for (int i = 0; i < types.length; i++) {
             ScalarType type = types[i];
-            Object value = ScalarConstructor.newScalar(type, values[i]);
+            Object value = type.newScalar(values[i]);
             assertNotNull(value, type.name());
-            assertArrayEquals(values[i], ScalarDeconstructor.flattenScalar(type, value), type.name());
+            assertArrayEquals(values[i], type.flattenScalar(value), type.name());
             assertEquals(values[i].length, FlattenedScalarType.flattenedUnitCount(type));
             assertEquals(values[i].length, FlattenedScalarType.flatten(type).size());
-            assertThrows(IllegalArgumentException.class, () -> ScalarDeconstructor.flattenScalar(type, "wrong"));
+            assertThrows(IllegalArgumentException.class, () -> type.flattenScalar("wrong"));
             assertEquals(-1, type.ordinalOffsetOfField("missing"));
             assertThrows(NullPointerException.class, () -> type.ordinalOffsetOfField(null));
         }

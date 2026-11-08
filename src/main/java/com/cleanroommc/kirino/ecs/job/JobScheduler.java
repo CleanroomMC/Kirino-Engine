@@ -15,7 +15,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -44,7 +43,7 @@ public class JobScheduler {
             }
             for (String key : parallelJobExternalDataQueries.keySet()) {
                 Preconditions.checkArgument(externalData.containsKey(key),
-                        "Missing the entry \"%s\" from \"externalData\".", key);
+                    "Missing the entry \"%s\" from \"externalData\".", key);
             }
         }
 
@@ -54,130 +53,153 @@ public class JobScheduler {
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        int threadOrdinal = 0;
-        for (ArchetypeDataPool archetype : archetypes) {
-            ParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
-
-            ArrayRange arrayRange = archetype.getArrayRange();
-
-            int workload = 0;
-            for (int i = arrayRange.start; i < arrayRange.end; i++) {
-                if (arrayRange.deprecatedIndexes.contains(i)) {
-                    continue;
-                }
-
-                int jobWorkload = job.estimateWorkload(i);
-                if (jobWorkload < 1) {
-                    throw new IllegalStateException("The estimated workload at index=" + i
-                        + " must be greater than or equal to 1. (Parallel job class: " + clazz.getName() + ")");
-                }
-
-                workload += jobWorkload;
+        List<ArchetypeDataPool> acquired = new ArrayList<>(archetypes.size());
+        try {
+            for (ArchetypeDataPool archetype : archetypes) {
+                archetype.beginExecution();
+                acquired.add(archetype);
             }
+            int threadOrdinal = 0;
+            for (ArchetypeDataPool archetype : archetypes) {
+                ParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
-            // future count
-            int targetWorkloadPerThread = KirinoConfig.NEEDS_RESTART.targetWorkloadPerThread;
-            int futureCount = Math.ceilDivExact(workload, targetWorkloadPerThread);
-            if (futureCount > Runtime.getRuntime().availableProcessors()) {
-                futureCount = Runtime.getRuntime().availableProcessors();
-                targetWorkloadPerThread = workload / futureCount;
-            }
+                ArrayRange arrayRange = archetype.getArrayRange();
 
-            if (futureCount <= 1) {
-                // run synchronously
+                int workload = 0;
                 for (int i = arrayRange.start; i < arrayRange.end; i++) {
                     if (arrayRange.deprecatedIndexes.contains(i)) {
                         continue;
                     }
 
-                    Optional<Integer> entityID = archetype.getEntityID(i);
-
-                    job.execute(entityManager, i, entityID.orElseThrow(IllegalStateException::new), threadOrdinal);
-                }
-                threadOrdinal++;
-            } else {
-                // run asynchronously
-                int accumulated = 0;
-                int startIndex = arrayRange.start;
-
-                for (int i = arrayRange.start; i < arrayRange.end; i++) {
-                    if (arrayRange.deprecatedIndexes.contains(i)) {
-                        continue;
+                    int jobWorkload = job.estimateWorkload(i);
+                    if (jobWorkload < 1) {
+                        throw new IllegalStateException("The estimated workload at index=" + i
+                            + " must be greater than or equal to 1. (Parallel job class: " + clazz.getName() + ")");
                     }
 
-                    accumulated += job.estimateWorkload(i);
+                    workload += jobWorkload;
+                }
 
-                    if (accumulated >= targetWorkloadPerThread) {
-                        final int endIndexExclusive = i + 1;
+                // future count
+                int targetWorkloadPerThread = KirinoConfig.NEEDS_RESTART.targetWorkloadPerThread;
+                int futureCount = Math.ceilDivExact(workload, targetWorkloadPerThread);
+                if (futureCount > Runtime.getRuntime().availableProcessors()) {
+                    futureCount = Runtime.getRuntime().availableProcessors();
+                    targetWorkloadPerThread = workload / futureCount;
+                }
+
+                if (futureCount <= 1) {
+                    // run synchronously
+                    for (int i = arrayRange.start; i < arrayRange.end; i++) {
+                        if (arrayRange.deprecatedIndexes.contains(i)) {
+                            continue;
+                        }
+
+                        job.execute(entityManager, i, archetype.getEntityID(i), threadOrdinal);
+                    }
+                    threadOrdinal++;
+                } else {
+                    // run asynchronously
+                    int accumulated = 0;
+                    int startIndex = arrayRange.start;
+
+                    for (int i = arrayRange.start; i < arrayRange.end; i++) {
+                        if (arrayRange.deprecatedIndexes.contains(i)) {
+                            continue;
+                        }
+
+                        accumulated += job.estimateWorkload(i);
+
+                        if (accumulated >= targetWorkloadPerThread) {
+                            final int endIndexExclusive = i + 1;
+                            final int finalThreadOrdinal = threadOrdinal;
+                            final int finalStartIndex = startIndex;
+
+                            final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
+
+                            futures.add(CompletableFuture.runAsync(() -> {
+                                for (int j = finalStartIndex; j < endIndexExclusive; j++) {
+                                    if (arrayRange.deprecatedIndexes.contains(j)) {
+                                        continue;
+                                    }
+
+                                    jobPerThread.execute(entityManager, j, archetype.getEntityID(j), finalThreadOrdinal);
+                                }
+                            }, executor));
+
+                            threadOrdinal++;
+                            startIndex = endIndexExclusive;
+                            accumulated = 0;
+                        }
+                    }
+
+                    boolean hasRemainingWork = false;
+                    for (int j = startIndex; j < arrayRange.end; j++) {
+                        if (!arrayRange.deprecatedIndexes.contains(j)) {
+                            hasRemainingWork = true;
+                            break;
+                        }
+                    }
+
+                    if (hasRemainingWork) {
                         final int finalThreadOrdinal = threadOrdinal;
                         final int finalStartIndex = startIndex;
 
                         final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
                         futures.add(CompletableFuture.runAsync(() -> {
-                            for (int j = finalStartIndex; j < endIndexExclusive; j++) {
+                            for (int j = finalStartIndex; j < arrayRange.end; j++) {
                                 if (arrayRange.deprecatedIndexes.contains(j)) {
                                     continue;
                                 }
 
-                                Optional<Integer> entityID = archetype.getEntityID(j);
-
-                                jobPerThread.execute(entityManager, j, entityID.orElseThrow(IllegalStateException::new), finalThreadOrdinal);
+                                jobPerThread.execute(entityManager, j, archetype.getEntityID(j), finalThreadOrdinal);
                             }
                         }, executor));
 
                         threadOrdinal++;
-                        startIndex = endIndexExclusive;
-                        accumulated = 0;
                     }
-                }
-
-                boolean hasRemainingWork = false;
-                for (int j = startIndex; j < arrayRange.end; j++) {
-                    if (!arrayRange.deprecatedIndexes.contains(j)) {
-                        hasRemainingWork = true;
-                        break;
-                    }
-                }
-
-                if (hasRemainingWork) {
-                    final int finalThreadOrdinal = threadOrdinal;
-                    final int finalStartIndex = startIndex;
-
-                    final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
-
-                    futures.add(CompletableFuture.runAsync(() -> {
-                        for (int j = finalStartIndex; j < arrayRange.end; j++) {
-                            if (arrayRange.deprecatedIndexes.contains(j)) {
-                                continue;
-                            }
-
-                            Optional<Integer> entityID = archetype.getEntityID(j);
-
-                            jobPerThread.execute(entityManager, j, entityID.orElseThrow(IllegalStateException::new), finalThreadOrdinal);
-                        }
-                    }, executor));
-
-                    threadOrdinal++;
                 }
             }
-        }
 
-        if (futures.isEmpty()) {
-            return new ExecutionHandle(CompletableFuture.completedFuture(null), threadOrdinal, false);
-        } else if (futures.size() == 1) {
-            return new ExecutionHandle(futures.getFirst(), threadOrdinal, true);
-        } else {
-            return new ExecutionHandle(CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])), threadOrdinal, true);
+            return new ExecutionHandle(finishExecution(futures, acquired), threadOrdinal, !futures.isEmpty());
+        } catch (RuntimeException | Error failure) {
+            finishExecution(futures, acquired);
+            throw failure;
         }
     }
 
+    private static CompletableFuture<Void> finishExecution(List<CompletableFuture<Void>> futures,
+                                                           List<ArchetypeDataPool> acquired) {
+        CompletableFuture<Void> result = new CompletableFuture<>();
+        CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).whenComplete((unused, failure) -> {
+            Throwable resultFailure = failure;
+            for (int i = acquired.size() - 1; i >= 0; i--) {
+                try {
+                    acquired.get(i).endExecution();
+                } catch (RuntimeException | Error releaseFailure) {
+                    if (resultFailure == null) {
+                        resultFailure = releaseFailure;
+                    } else if (resultFailure != releaseFailure) {
+                        resultFailure.addSuppressed(releaseFailure);
+                    }
+                }
+            }
+            if (resultFailure == null) {
+                result.complete(null);
+            } else {
+                result.completeExceptionally(resultFailure);
+            }
+        });
+        return result;
+    }
+
     private ParallelJob newParallelJob(
-            JobInstantiator instantiator,
-            Map<JobDataQuery, JobDataInjector> parallelJobDataQueries,
-            Map<String, JobDataInjector> parallelJobExternalDataQueries,
-            ArchetypeDataPool archetype,
-            @Nullable Map<String, Object> externalData) {
+        JobInstantiator instantiator,
+        Map<JobDataQuery, JobDataInjector> parallelJobDataQueries,
+        Map<String, JobDataInjector> parallelJobExternalDataQueries,
+        ArchetypeDataPool archetype,
+        @Nullable Map<String, Object> externalData) {
 
         ParallelJob job = (ParallelJob) instantiator.instantiate();
 

@@ -3,8 +3,6 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.struct;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarConstructor;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarDeconstructor;
 import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import com.cleanroommc.kirino.ecs.component.schema.reflect.LegacyAccessHandlePool;
 import com.google.common.base.Preconditions;
@@ -294,7 +292,7 @@ public class LegacyStructRegistry {
             switch (fieldDef.fieldKind) {
                 case SCALAR -> {
                     unitCount = FlattenedScalarType.flattenedUnitCount(fieldDef.scalarType);
-                    value = ScalarConstructor.newScalar(fieldDef.scalarType, Arrays.copyOfRange(args, index, index + unitCount));
+                    value = fieldDef.scalarType.newScalar(Arrays.copyOfRange(args, index, index + unitCount));
                 }
                 case STRUCT -> {
                     unitCount = flattenedUnitCount(fieldDef.structTypeName);
@@ -338,7 +336,7 @@ public class LegacyStructRegistry {
             switch (fieldDef.fieldKind) {
                 case SCALAR -> {
                     unitCount = FlattenedScalarType.flattenedUnitCount(fieldDef.scalarType);
-                    _args = ScalarDeconstructor.flattenScalar(fieldDef.scalarType, structLegacyAccessHandlePool.getFieldValue(structClass, structInstance, fieldName));
+                    _args = fieldDef.scalarType.flattenScalar(structLegacyAccessHandlePool.getFieldValue(structClass, structInstance, fieldName));
                 }
                 case STRUCT -> {
                     unitCount = flattenedUnitCount(fieldDef.structTypeName);

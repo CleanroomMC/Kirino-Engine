@@ -7,7 +7,6 @@ import com.google.common.collect.ImmutableList;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Besides the abstract methods, a pool must implement grow and shrink mechanism.
@@ -41,10 +40,10 @@ public abstract class ArchetypeDataPool {
      * </ul>
      *
      * @param componentRegistry The component registry
-     * @param components The component types for this archetype
-     * @param initSize The number entities this pool can contain initially
-     * @param growStep The size to grow when the pool is full
-     * @param shrinkStep The threshold to judge when the pool is too large; Also the size to shrink
+     * @param components        The component types for this archetype
+     * @param initSize          The number entities this pool can contain initially
+     * @param growStep          The size to grow when the pool is full
+     * @param shrinkStep        The threshold to judge when the pool is too large; Also the size to shrink
      */
     public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
         this.componentRegistry = componentRegistry;
@@ -57,6 +56,12 @@ public abstract class ArchetypeDataPool {
 
     public abstract boolean containsEntity(int entityID);
 
+    public void beginExecution() {
+    }
+
+    public void endExecution() {
+    }
+
     /**
      * <p>Prerequisites include:</p>
      * <ul>
@@ -64,7 +69,7 @@ public abstract class ArchetypeDataPool {
      *     <li><code>component</code> is in {@link ArchetypeDataPool#components}</li>
      * </ul>
      *
-     * @param entityID The id of the entity
+     * @param entityID  The id of the entity
      * @param component The component class
      * @return The instantiated component
      */
@@ -78,7 +83,7 @@ public abstract class ArchetypeDataPool {
      *     <li>The class of <code>component</code> is in {@link ArchetypeDataPool#components}</li>
      * </ul>
      *
-     * @param entityID The id of the entity
+     * @param entityID  The id of the entity
      * @param component The component
      */
     public abstract void setComponent(int entityID, CleanComponent component);
@@ -90,7 +95,7 @@ public abstract class ArchetypeDataPool {
      *     <li>Classes of <code>components</code> must correspond to and form a bijection with {@link ArchetypeDataPool#components}</li>
      * </ul>
      *
-     * @param entityID The id of the entity
+     * @param entityID   The id of the entity
      * @param components The components
      */
     public abstract void addEntity(int entityID, List<CleanComponent> components);
@@ -112,7 +117,7 @@ public abstract class ArchetypeDataPool {
      *     <li><code>fieldAccessChain</code> points to a valid field</li>
      * </ul>
      *
-     * @param component The component class
+     * @param component        The component class
      * @param fieldAccessChain A list of field names to identify a field
      * @return An array of field values
      */
@@ -126,8 +131,7 @@ public abstract class ArchetypeDataPool {
     @NonNull
     public abstract ArrayRange getArrayRange();
 
-    @NonNull
-    public abstract Optional<Integer> getEntityID(int index);
+    public abstract int getEntityID(int index);
 
     public abstract String getSnapshot();
 }

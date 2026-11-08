@@ -64,7 +64,7 @@ public class ComponentRegistry {
         }
 
         ComponentDesc componentDesc = new ComponentDesc(name, fields, fieldTypeNames);
-        Data data = new Data(name, clazz, componentDesc, new ComponentDescFlattened(componentDesc, fieldRegistry), memberLayout,
+        Data data = new Data(name, clazz, componentDesc, memberLayout,
             SchemaCompiler.compile(name, clazz, fields, memberLayout, fieldRegistry.structRegistry::getLayout));
         componentDataByClass.put(clazz, data);
         componentData.put(name, data);
@@ -150,17 +150,6 @@ public class ComponentRegistry {
         return data.componentDesc;
     }
 
-    @Nullable
-    public ComponentDescFlattened getComponentDescFlattened(@NonNull String name) {
-        Preconditions.checkNotNull(name);
-
-        Data data = componentData.get(name);
-        if(data == null) {
-            return null;
-        }
-
-        return data.componentDescFlattened;
-    }
     //</editor-fold>
 
     /**
@@ -182,6 +171,12 @@ public class ComponentRegistry {
         Data data = componentDataByClass.get(Objects.requireNonNull(clazz));
         Preconditions.checkArgument(data != null, "Component class %s isn't registered.", clazz);
         return data.layout;
+    }
+
+    public ObjectCodec getCodec(Class<? extends CleanComponent> component) {
+        Data data = componentDataByClass.get(Objects.requireNonNull(component));
+        Preconditions.checkArgument(data != null, "Component class %s isn't registered.", component);
+        return codec(data);
     }
 
     private ObjectCodec codec(Data data) {
@@ -230,16 +225,14 @@ public class ComponentRegistry {
         public final String name;
         public final Class<? extends CleanComponent> componentClass;
         public final ComponentDesc componentDesc;
-        public final ComponentDescFlattened  componentDescFlattened;
         public final MemberLayout memberLayout;
         public final SchemaLayout layout;
         private volatile ObjectCodec codec;
 
-        public Data(String name, Class<? extends CleanComponent> componentClass, ComponentDesc componentDesc, ComponentDescFlattened componentDescFlattened, MemberLayout memberLayout, SchemaLayout layout) {
+        public Data(String name, Class<? extends CleanComponent> componentClass, ComponentDesc componentDesc, MemberLayout memberLayout, SchemaLayout layout) {
             this.name = name;
             this.componentClass = componentClass;
             this.componentDesc = componentDesc;
-            this.componentDescFlattened = componentDescFlattened;
             this.memberLayout = memberLayout;
             this.layout = layout;
         }

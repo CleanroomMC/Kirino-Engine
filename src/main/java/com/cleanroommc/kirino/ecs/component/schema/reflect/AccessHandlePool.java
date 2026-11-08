@@ -31,6 +31,8 @@ public class AccessHandlePool {
             MethodHandle constructor = MethodHandles.privateLookupIn(clazz, MethodHandles.lookup())
                 .findConstructor(clazz, MethodType.methodType(void.class));
             ImmutableList.Builder<MethodHandle> getters = ImmutableList.builder();
+            ImmutableList.Builder<MethodHandle> primitiveGetters = ImmutableList.builder();
+            ImmutableList.Builder<MethodHandle> primitiveSetters = ImmutableList.builder();
             ImmutableList.Builder<MethodHandle> setters = ImmutableList.builder();
             ImmutableList.Builder<Class<?>> types = ImmutableList.builder();
             ImmutableMap.Builder<String, Integer> indexes = ImmutableMap.builder();
@@ -44,11 +46,14 @@ public class AccessHandlePool {
                 }
                 getters.add(field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(Object.class, Object.class)));
                 setters.add(field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, Object.class)));
+                Class<?> primitive = MethodType.methodType(field.varType()).unwrap().returnType();
+                primitiveGetters.add(field.toMethodHandle(VarHandle.AccessMode.GET).asType(MethodType.methodType(primitive, Object.class)));
+                primitiveSetters.add(field.toMethodHandle(VarHandle.AccessMode.SET).asType(MethodType.methodType(void.class, Object.class, primitive)));
                 types.add(field.varType());
                 indexes.put(name, i);
             }
             return new Access(clazz, constructor.asType(MethodType.methodType(Object.class)), getters.build(),
-                setters.build(), types.build(), indexes.buildOrThrow());
+                setters.build(), types.build(), indexes.buildOrThrow(), primitiveGetters.build(), primitiveSetters.build());
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException("Cannot prepare fields of " + clazz.getName(), e);
         }
@@ -90,6 +95,8 @@ public class AccessHandlePool {
     }
 
     public static final class Access {
+        private final MethodHandle[] primitiveGetters;
+        private final MethodHandle[] primitiveSetters;
         private final Class<?> javaClass;
         private final MethodHandle constructor;
         private final ImmutableList<MethodHandle> getters;
@@ -98,7 +105,9 @@ public class AccessHandlePool {
         private final ImmutableMap<String, Integer> indexes;
 
         private Access(Class<?> javaClass, MethodHandle constructor, ImmutableList<MethodHandle> getters,
-                       ImmutableList<MethodHandle> setters, ImmutableList<Class<?>> types, ImmutableMap<String, Integer> indexes) {
+                       ImmutableList<MethodHandle> setters, ImmutableList<Class<?>> types, ImmutableMap<String, Integer> indexes, ImmutableList<MethodHandle> primitiveGetters, ImmutableList<MethodHandle> primitiveSetters) {
+            this.primitiveGetters = primitiveGetters.toArray(MethodHandle[]::new);
+            this.primitiveSetters = primitiveSetters.toArray(MethodHandle[]::new);
             this.javaClass = javaClass;
             this.constructor = constructor;
             this.getters = getters;
@@ -138,6 +147,118 @@ public class AccessHandlePool {
         public void set(Object target, int index, Object value) {
             try {
                 setters.get(index).invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public byte getByte(Object target, int index) {
+            try {
+                return (byte) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setByte(Object target, int index, byte value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public short getShort(Object target, int index) {
+            try {
+                return (short) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setShort(Object target, int index, short value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public int getInt(Object target, int index) {
+            try {
+                return (int) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setInt(Object target, int index, int value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public long getLong(Object target, int index) {
+            try {
+                return (long) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setLong(Object target, int index, long value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public float getFloat(Object target, int index) {
+            try {
+                return (float) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setFloat(Object target, int index, float value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public double getDouble(Object target, int index) {
+            try {
+                return (double) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setDouble(Object target, int index, double value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
+            } catch (Throwable e) {
+                throw failure("write field " + index, e);
+            }
+        }
+
+        public boolean getBool(Object target, int index) {
+            try {
+                return (boolean) primitiveGetters[index].invokeExact(target);
+            } catch (Throwable e) {
+                throw failure("read field " + index, e);
+            }
+        }
+
+        public void setBool(Object target, int index, boolean value) {
+            try {
+                primitiveSetters[index].invokeExact(target, value);
             } catch (Throwable e) {
                 throw failure("write field " + index, e);
             }

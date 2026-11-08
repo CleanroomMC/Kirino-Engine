@@ -3,470 +3,220 @@ package com.cleanroommc.kirino.ecs.storage;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableList;
-import org.jspecify.annotations.NonNull;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 import java.util.*;
 
-/**
- * It guarantees SoA memory layout.
- */
-public final class HeapPool extends ArchetypeDataPool{
-    private final List<byte[]> bytePool = new ArrayList<>();
-    private final List<short[]> shortPool = new ArrayList<>();
-    private final List<int[]> intPool = new ArrayList<>();
-    private final List<long[]> longPool = new ArrayList<>();
-    private final List<float[]> floatPool = new ArrayList<>();
-    private final List<double[]> doublePool = new ArrayList<>();
-    private final List<boolean[]> booleanPool = new ArrayList<>();
+public final class HeapPool extends ArchetypeDataPool {
+    private final Map<Class<?>, ColumnBinding> byClass = new Reference2ObjectOpenHashMap<>();
+    private final ColumnBinding[] bindings;
+    private final HeapPrimitiveArray[] columns;
+    private final CleanComponent[] insertionValues;
+    private final Int2IntOpenHashMap entityRows = new Int2IntOpenHashMap();
+    private final Int2IntOpenHashMap rowEntities = new Int2IntOpenHashMap();
+    private final IntArrayList freeRows = new IntArrayList();
+    private int rowLimit;
+    private int executions;
 
-    public static class ComDataLocation {
-        public final int byteArrFrom;
-        public final int byteArrTo;
-        public final int shortArrFrom;
-        public final int shortArrTo;
-        public final int intArrFrom;
-        public final int intArrTo;
-        public final int longArrFrom;
-        public final int longArrTo;
-        public final int floatArrFrom;
-        public final int floatArrTo;
-        public final int doubleArrFrom;
-        public final int doubleArrTo;
-        public final int booleanArrFrom;
-        public final int booleanArrTo;
-        public final ImmutableList<FlattenedScalarType> order;
-
-        private ComDataLocation(ImmutableList<FlattenedScalarType> order,
-                                int byteArrFrom, int byteArrTo,
-                                int shortArrFrom, int shortArrTo,
-                                int intArrFrom, int intArrTo,
-                                int longArrFrom, int longArrTo,
-                                int floatArrFrom, int floatArrTo,
-                                int doubleArrFrom, int doubleArrTo,
-                                int booleanArrFrom, int booleanArrTo) {
-            this.byteArrFrom = byteArrFrom;
-            this.byteArrTo = byteArrTo;
-            this.shortArrFrom = shortArrFrom;
-            this.shortArrTo = shortArrTo;
-            this.intArrFrom = intArrFrom;
-            this.intArrTo = intArrTo;
-            this.longArrFrom = longArrFrom;
-            this.longArrTo = longArrTo;
-            this.floatArrFrom = floatArrFrom;
-            this.floatArrTo = floatArrTo;
-            this.doubleArrFrom = doubleArrFrom;
-            this.doubleArrTo = doubleArrTo;
-            this.booleanArrFrom = booleanArrFrom;
-            this.booleanArrTo = booleanArrTo;
-            this.order = order;
+    public HeapPool(ComponentRegistry registry, List<Class<? extends CleanComponent>> components,
+                    int initSize, int growStep, int shrinkStep) {
+        super(registry, components, initSize, growStep, shrinkStep);
+        if (initSize < 0 || growStep <= 0 || shrinkStep <= 0) {
+            throw new IllegalArgumentException("Invalid pool capacity or resize step");
         }
-    }
-
-    private final Map<Class<? extends CleanComponent>, ComDataLocation> componentDataLocations = new HashMap<>();
-
-    // key: entity id
-    // value: array index
-    private final BiMap<Integer, Integer> entityDataIndexes = HashBiMap.create();
-
-    private final List<Integer> freeIndexes = new ArrayList<>();
-    private int indexCounter = 0;
-
-    /**
-     * <p>Prerequisites include:</p>
-     * <ul>
-     *     <li>All component types are valid and registered in the component registry</li>
-     * </ul>
-     *
-     * @param componentRegistry The component registry
-     * @param components The component types for this archetype
-     */
-    @SuppressWarnings("DataFlowIssue")
-    public HeapPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
-        super(componentRegistry, components, initSize, growStep, shrinkStep);
-
-        int byteArrCount = 0;
-        int shortArrCount = 0;
-        int intArrCount = 0;
-        int longArrCount = 0;
-        int floatArrCount = 0;
-        int doubleArrCount = 0;
-        int booleanArrCount = 0;
-        for (Class<? extends CleanComponent> clazz : components) {
-            SchemaLayout layout = componentRegistry.getLayout(clazz);
-
-            int byteArrFrom = byteArrCount;
-            int shortArrFrom = shortArrCount;
-            int intArrFrom = intArrCount;
-            int longArrFrom = longArrCount;
-            int floatArrFrom = floatArrCount;
-            int doubleArrFrom =  doubleArrCount;
-            int booleanArrFrom = booleanArrCount;
-            List<FlattenedScalarType> order = new ArrayList<>();
-
-            for (SchemaLayout.Column column : layout.columns()) {
-                FlattenedScalarType flattenedScalarType = column.type();
-                if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                    bytePool.add(new byte[initSize]);
-                    byteArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                    shortPool.add(new short[initSize]);
-                    shortArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                    intPool.add(new int[initSize]);
-                    intArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                    longPool.add(new long[initSize]);
-                    longArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                    floatPool.add(new float[initSize]);
-                    floatArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                    doublePool.add(new double[initSize]);
-                    doubleArrCount++;
-                } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                    booleanPool.add(new boolean[initSize]);
-                    booleanArrCount++;
-                }
-                order.add(flattenedScalarType);
+        entityRows.defaultReturnValue(-1);
+        bindings = new ColumnBinding[components.size()];
+        insertionValues = new CleanComponent[components.size()];
+        List<HeapPrimitiveArray> allColumns = new ArrayList<>();
+        for (int i = 0; i < components.size(); i++) {
+            Class<? extends CleanComponent> type = components.get(i);
+            ColumnBinding binding = new ColumnBinding(registry.getLayout(type), registry.getCodec(type), initSize, i);
+            if (byClass.putIfAbsent(type, binding) != null) {
+                throw new IllegalArgumentException("Duplicate component in archetype: " + type.getName());
             }
-
-            int byteArrTo = byteArrCount;
-            int shortArrTo = shortArrCount;
-            int intArrTo = intArrCount;
-            int longArrTo = longArrCount;
-            int floatArrTo = floatArrCount;
-            int doubleArrTo = doubleArrCount;
-            int booleanArrTo = booleanArrCount;
-
-            componentDataLocations.put(clazz, new ComDataLocation(ImmutableList.copyOf(order),
-                    byteArrFrom, byteArrTo,
-                    shortArrFrom, shortArrTo,
-                    intArrFrom, intArrTo,
-                    longArrFrom, longArrTo,
-                    floatArrFrom, floatArrTo,
-                    doubleArrFrom, doubleArrTo,
-                    booleanArrFrom, booleanArrTo));
+            bindings[i] = binding;
+            allColumns.addAll(Arrays.asList(binding.columns));
         }
+        columns = allColumns.toArray(HeapPrimitiveArray[]::new);
     }
 
     @Override
     public boolean containsEntity(int entityID) {
-        return entityDataIndexes.containsKey(entityID);
+        return entityRows.containsKey(entityID);
     }
 
-    @NonNull
     @Override
-    @SuppressWarnings("DataFlowIssue")
     public CleanComponent getComponent(int entityID, Class<? extends CleanComponent> component) {
-        ComDataLocation location = componentDataLocations.get(component);
-        int index = entityDataIndexes.get(entityID);
-
-        String comName = componentRegistry.getComponentName(component);
-        int unitCount = componentRegistry.getComponentDescFlattened(comName).getUnitCount();
-
-        int argIndex = 0;
-        Object[] args = new Object[unitCount];
-
-        int byteArrIndex = location.byteArrFrom;
-        int shortArrIndex = location.shortArrFrom;
-        int intArrIndex = location.intArrFrom;
-        int longArrIndex = location.longArrFrom;
-        int floatArrIndex = location.floatArrFrom;
-        int doubleArrIndex = location.doubleArrFrom;
-        int booleanArrIndex = location.booleanArrFrom;
-        for (FlattenedScalarType flattenedScalarType : location.order) {
-            if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                args[argIndex] = bytePool.get(byteArrIndex)[index];
-                byteArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                args[argIndex] = shortPool.get(shortArrIndex)[index];
-                shortArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                args[argIndex] = intPool.get(intArrIndex)[index];
-                intArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                args[argIndex] = longPool.get(longArrIndex)[index];
-                longArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                args[argIndex] = floatPool.get(floatArrIndex)[index];
-                floatArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                args[argIndex] = doublePool.get(doubleArrIndex)[index];
-                doubleArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                args[argIndex] = booleanPool.get(booleanArrIndex)[index];
-                booleanArrIndex++;
-            }
-            argIndex++;
-        }
-
-        return componentRegistry.newComponent(comName, args);
+        ColumnBinding binding = binding(component);
+        return (CleanComponent) binding.codec.read(binding, row(entityID));
     }
 
     @Override
     public void setComponent(int entityID, CleanComponent component) {
-        Object[] args = componentRegistry.flattenComponent(component);
+        Objects.requireNonNull(component);
+        ColumnBinding binding = binding(component.getClass());
+        binding.codec.write(component, binding, row(entityID));
+    }
 
-        ComDataLocation location = componentDataLocations.get(component.getClass());
-        int index = entityDataIndexes.get(entityID);
-
-        int argIndex = 0;
-        int byteArrIndex = location.byteArrFrom;
-        int shortArrIndex = location.shortArrFrom;
-        int intArrIndex = location.intArrFrom;
-        int longArrIndex = location.longArrFrom;
-        int floatArrIndex = location.floatArrFrom;
-        int doubleArrIndex = location.doubleArrFrom;
-        int booleanArrIndex = location.booleanArrFrom;
-        for (FlattenedScalarType flattenedScalarType : location.order) {
-            if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                bytePool.get(byteArrIndex)[index] = (Byte) args[argIndex];
-                byteArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                shortPool.get(shortArrIndex)[index] = (Short) args[argIndex];
-                shortArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                intPool.get(intArrIndex)[index] = (Integer) args[argIndex];
-                intArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                longPool.get(longArrIndex)[index] = (Long) args[argIndex];
-                longArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                floatPool.get(floatArrIndex)[index] = (Float) args[argIndex];
-                floatArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                doublePool.get(doubleArrIndex)[index] = (Double) args[argIndex];
-                doubleArrIndex++;
-            } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                booleanPool.get(booleanArrIndex)[index] = (Boolean) args[argIndex];
-                booleanArrIndex++;
+    @Override
+    public synchronized void addEntity(int entityID, List<CleanComponent> components) {
+        requireStructuralAccess();
+        Objects.requireNonNull(components);
+        if (entityRows.containsKey(entityID)) {
+            throw new IllegalArgumentException("Entity already exists: " + entityID);
+        }
+        if (components.size() != bindings.length) {
+            throw new IllegalArgumentException("Component count doesn't match archetype");
+        }
+        try {
+            for (CleanComponent component : components) {
+                Objects.requireNonNull(component);
+                ColumnBinding binding = binding(component.getClass());
+                int index = binding.componentIndex;
+                if (insertionValues[index] != null) {
+                    throw new IllegalArgumentException("Duplicate component: " + component.getClass().getName());
+                }
+                binding.codec.validate(component);
+                insertionValues[index] = component;
             }
-            argIndex++;
+            boolean reuse = !freeRows.isEmpty();
+            int row = reuse ? freeRows.getInt(freeRows.size() - 1) : rowLimit;
+            if (row >= currentSize) {
+                resize(Math.addExact(currentSize, growStep));
+            }
+            for (int i = 0; i < bindings.length; i++) {
+                bindings[i].codec.write(insertionValues[i], bindings[i], row);
+            }
+            entityRows.put(entityID, row);
+            rowEntities.put(row, entityID);
+            if (reuse) {
+                freeRows.removeInt(freeRows.size() - 1);
+            } else {
+                rowLimit++;
+            }
+        } finally {
+            Arrays.fill(insertionValues, null);
         }
     }
 
     @Override
-    public void addEntity(int entityID, List<CleanComponent> components) {
-        int index;
-        if (freeIndexes.isEmpty()) {
-            // grow pool
-            if (indexCounter >= currentSize) {
-                currentSize += growStep;
-                bytePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                shortPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                intPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                longPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                floatPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                doublePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                booleanPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
+    public synchronized void removeEntity(int entityID) {
+        requireStructuralAccess();
+        int row = row(entityID);
+        entityRows.remove(entityID);
+        rowEntities.remove(row);
+        if (row == rowLimit - 1) {
+            rowLimit--;
+            while (rowLimit > 0 && freeRows.rem(rowLimit - 1)) {
+                rowLimit--;
             }
-            index = indexCounter++;
-        } else {
-            index = freeIndexes.removeLast();
-        }
-
-        entityDataIndexes.put(entityID, index);
-
-        for (Class<? extends CleanComponent> clazz : this.components) {
-            CleanComponent component = Objects.requireNonNull(components.stream().filter(c -> c.getClass().equals(clazz)).findFirst().orElse(null));
-
-            Object[] args = componentRegistry.flattenComponent(component);
-            ComDataLocation location = componentDataLocations.get(clazz);
-
-            int argIndex = 0;
-            int byteArrIndex = location.byteArrFrom;
-            int shortArrIndex = location.shortArrFrom;
-            int intArrIndex = location.intArrFrom;
-            int longArrIndex = location.longArrFrom;
-            int floatArrIndex = location.floatArrFrom;
-            int doubleArrIndex = location.doubleArrFrom;
-            int booleanArrIndex = location.booleanArrFrom;
-            for (FlattenedScalarType flattenedScalarType : location.order) {
-                if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                    bytePool.get(byteArrIndex)[index] = (Byte) args[argIndex];
-                    byteArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                    shortPool.get(shortArrIndex)[index] = (Short) args[argIndex];
-                    shortArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                    intPool.get(intArrIndex)[index] = (Integer) args[argIndex];
-                    intArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                    longPool.get(longArrIndex)[index] = (Long) args[argIndex];
-                    longArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                    floatPool.get(floatArrIndex)[index] = (Float) args[argIndex];
-                    floatArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                    doublePool.get(doubleArrIndex)[index] = (Double) args[argIndex];
-                    doubleArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                    booleanPool.get(booleanArrIndex)[index] = (Boolean) args[argIndex];
-                    booleanArrIndex++;
-                }
-                argIndex++;
-            }
-        }
-    }
-
-    @Override
-    public void removeEntity(int entityID) {
-        int index = entityDataIndexes.remove(entityID);
-        if (index == indexCounter - 1) {
-            indexCounter--;
-            List<Integer> freeIndexesToRemove = new ArrayList<>();
-            while (freeIndexes.contains(indexCounter - 1)) {
-                freeIndexesToRemove.add(--indexCounter);
-            }
-            for (Integer freeIndex : freeIndexesToRemove) {
-                freeIndexes.remove(freeIndex);
-            }
-            // shrink pool
-            if (indexCounter + shrinkStep <= currentSize) {
-                if (currentSize - shrinkStep >= initSize) {
-                    currentSize -= shrinkStep;
-                    bytePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    shortPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    intPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    longPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    floatPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    doublePool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                    booleanPool.replaceAll(original -> Arrays.copyOf(original, currentSize));
-                }
+            int target = currentSize - shrinkStep;
+            if (target >= initSize && target >= rowLimit) {
+                resize(target);
             }
         } else {
-            freeIndexes.add(index);
+            freeRows.add(row);
         }
     }
 
-    @NonNull
+    private void resize(int size) {
+        Object[] replacements = new Object[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            replacements[i] = columns[i].resizedArray(size);
+        }
+        for (int i = 0; i < columns.length; i++) {
+            columns[i].replaceArray(replacements[i], size);
+        }
+        currentSize = size;
+    }
+
     @Override
-    public PrimitiveArray getArray(Class<? extends CleanComponent> component, String... fieldAccessChain) {
-        return getArray(component, componentRegistry.getLayout(component).resolve(fieldAccessChain));
+    public synchronized void beginExecution() {
+        executions++;
+    }
+
+    @Override
+    public synchronized void endExecution() {
+        if (executions == 0) {
+            throw new IllegalStateException("No active pool execution");
+        }
+        executions--;
+    }
+
+    private void requireStructuralAccess() {
+        if (executions != 0) {
+            throw new IllegalStateException("Structural changes aren't allowed while jobs use this pool");
+        }
+    }
+
+    private int row(int entityID) {
+        int row = entityRows.get(entityID);
+        if (row < 0) {
+            throw new IllegalArgumentException("Unknown entity: " + entityID);
+        }
+        return row;
+    }
+
+    private ColumnBinding binding(Class<?> component) {
+        ColumnBinding binding = byClass.get(Objects.requireNonNull(component));
+        if (binding == null) {
+            throw new IllegalArgumentException("Component isn't stored in this archetype: " + component.getName());
+        }
+        return binding;
+    }
+
+    @Override
+    public PrimitiveArray getArray(Class<? extends CleanComponent> component, String... path) {
+        ColumnBinding binding = binding(component);
+        return binding.column(binding.layout.resolve(path));
     }
 
     @Override
     public PrimitiveArray getArray(Class<? extends CleanComponent> component, SchemaLayout.Column column) {
-        SchemaLayout layout = componentRegistry.getLayout(component);
-        if (column.ordinal() >= layout.unitCount() || layout.columns().get(column.ordinal()) != column) {
-            throw new IllegalArgumentException("Column doesn't belong to component " + component.getName());
-        }
-        ComDataLocation location = componentDataLocations.get(component);
-        if (location == null) {
-            throw new IllegalArgumentException("Component isn't stored in this archetype: " + component.getName());
-        }
-        int index = column.typeIndex();
-        return switch (column.type()) {
-            case BYTE -> new HeapPrimitiveArray(bytePool.get(location.byteArrFrom + index));
-            case SHORT -> new HeapPrimitiveArray(shortPool.get(location.shortArrFrom + index));
-            case INT -> new HeapPrimitiveArray(intPool.get(location.intArrFrom + index));
-            case LONG -> new HeapPrimitiveArray(longPool.get(location.longArrFrom + index));
-            case FLOAT -> new HeapPrimitiveArray(floatPool.get(location.floatArrFrom + index));
-            case DOUBLE -> new HeapPrimitiveArray(doublePool.get(location.doubleArrFrom + index));
-            case BOOL -> new HeapPrimitiveArray(booleanPool.get(location.booleanArrFrom + index));
-        };
+        return binding(component).column(column);
     }
 
-    @NonNull
     @Override
     public ArrayRange getArrayRange() {
-        return new ArrayRange(0, indexCounter, new HashSet<>(freeIndexes));
+        return new ArrayRange(0, rowLimit, new IntOpenHashSet(freeRows));
     }
 
-    @NonNull
     @Override
-    public Optional<Integer> getEntityID(int index) {
-        return Optional.ofNullable(entityDataIndexes.inverse().get(index));
+    public int getEntityID(int index) {
+        if (!rowEntities.containsKey(index)) {
+            throw new IllegalStateException("No entity at index=" + index);
+        }
+        return rowEntities.get(index);
     }
 
     @Override
     public String getSnapshot() {
-        int snapshotLength = Math.min(currentSize, 10);
-
-        StringBuilder builder = new StringBuilder();
-        builder.append("\n=====HeapPool Snapshot=====\n");
-        int i = 0;
-        for (Class<? extends CleanComponent> clazz : components) {
-            ComDataLocation location = componentDataLocations.get(clazz);
-            builder.append("[").append(i++).append("] ")
-                    .append("Component name: ").append(componentRegistry.getComponentName(clazz))
-                    .append("; Component class: ").append(clazz.getName()).append("\n");
-
-            int byteArrIndex = location.byteArrFrom;
-            int shortArrIndex = location.shortArrFrom;
-            int intArrIndex = location.intArrFrom;
-            int longArrIndex = location.longArrFrom;
-            int floatArrIndex = location.floatArrFrom;
-            int doubleArrIndex = location.doubleArrFrom;
-            int booleanArrIndex = location.booleanArrFrom;
-            int j = 0;
-            for (FlattenedScalarType flattenedScalarType : location.order) {
-                builder.append("  [").append(j++).append(" ").append(flattenedScalarType).append("] ");
-                if (flattenedScalarType == FlattenedScalarType.BYTE) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(bytePool.get(byteArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
+        StringBuilder output = new StringBuilder("\n=====HeapPool Snapshot=====\n");
+        for (ColumnBinding binding : bindings) {
+            output.append("Component: ").append(binding.layout.name()).append('\n');
+            for (SchemaLayout.Column column : binding.layout.columns()) {
+                output.append(String.join(".", column.path())).append(": [");
+                PrimitiveArray array = binding.columns[column.ordinal()];
+                for (int row = 0; row < Math.min(currentSize, 10); row++) {
+                    if (row != 0) {
+                        output.append(", ");
                     }
-                    byteArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.SHORT) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(shortPool.get(shortArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
+                    switch (column.type()) {
+                        case BYTE -> output.append(array.getByte(row));
+                        case SHORT -> output.append(array.getShort(row));
+                        case INT -> output.append(array.getInt(row));
+                        case LONG -> output.append(array.getLong(row));
+                        case FLOAT -> output.append(array.getFloat(row));
+                        case DOUBLE -> output.append(array.getDouble(row));
+                        case BOOL -> output.append(array.getBool(row));
                     }
-                    shortArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.INT) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(intPool.get(intArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
-                    }
-                    intArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.LONG) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(longPool.get(longArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
-                    }
-                    longArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.FLOAT) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(floatPool.get(floatArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
-                    }
-                    floatArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.DOUBLE) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(doublePool.get(doubleArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
-                    }
-                    doubleArrIndex++;
-                } else if (flattenedScalarType == FlattenedScalarType.BOOL) {
-                    for (int k = 0; k < snapshotLength; k++) {
-                        builder.append(booleanPool.get(booleanArrIndex)[k]);
-                        if (k != snapshotLength - 1) {
-                            builder.append(", ");
-                        }
-                    }
-                    booleanArrIndex++;
                 }
-                builder.append("\n");
+                output.append("]\n");
             }
         }
-
-        return builder.toString();
+        return output.toString();
     }
 }
