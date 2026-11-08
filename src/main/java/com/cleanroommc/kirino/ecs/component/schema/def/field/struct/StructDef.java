@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field.struct;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.google.common.base.Preconditions;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
  * The opposite concept is a scalar ({@link ScalarType}).
  */
 public final class StructDef {
-    public final ImmutableObjectArrayList<FieldDef> fields;
+    public final ObjectArrayView<FieldDef> fields;
 
     public StructDef(@NonNull List<@NonNull FieldDef> fields) {
         Preconditions.checkNotNull(fields);
@@ -20,7 +20,7 @@ public final class StructDef {
             Preconditions.checkNotNull(field);
         }
 
-        this.fields = ImmutableObjectArrayList.copyOf(fields, FieldDef[]::new);
+        this.fields = ObjectArrayView.copyOf(fields, FieldDef[]::new);
     }
 
     public StructDef(@NonNull FieldDef @NonNull ... fields) {
@@ -29,7 +29,7 @@ public final class StructDef {
             Preconditions.checkNotNull(field);
         }
 
-        this.fields = ImmutableObjectArrayList.copyOf(fields);
+        this.fields = ObjectArrayView.copyOf(fields);
     }
 
     public String toString(@NonNull StructRegistry structRegistry) {

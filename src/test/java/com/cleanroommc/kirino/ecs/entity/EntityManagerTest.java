@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -179,6 +180,23 @@ class EntityManagerTest {
         CleanEntityHandle next = entities.createEntity(position(6));
         assertEquals(1, next.index);
         entities.flush();
+    }
+
+    @Test
+    void flush_checkedCallbackFailure_preservesCauseAndStopsManager() {
+        EntityManager entities = new EntityManager(registry());
+        Exception failure = new Exception("checked callback failure");
+        AtomicInteger calls = new AtomicInteger();
+        CleanEntityHandle handle = entities.createEntity(null, context -> {
+            calls.incrementAndGet();
+            EntityManagerTest.<RuntimeException>raise(failure);
+        }, position(1));
+
+        assertSame(failure, assertThrows(CompletionException.class, entities::flush).getCause());
+        assertSame(failure, assertThrows(IllegalStateException.class, entities::flush).getCause());
+        assertFalse(handle.valid());
+        assertThrows(IllegalStateException.class, () -> entities.createEntity(position(2)));
+        assertEquals(1, calls.get());
     }
 
     @Test
@@ -378,6 +396,11 @@ class EntityManagerTest {
         CleanEntityHandle copy = new CleanEntityHandle(firstManager, first.index, first.generation);
         assertEquals(first, copy);
         assertEquals(first.hashCode(), copy.hashCode());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void raise(Throwable failure) throws T {
+        throw (T) failure;
     }
 
     private static ArchetypeDataPool pool(EntityManager entities, int index,

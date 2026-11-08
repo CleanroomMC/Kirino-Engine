@@ -3,7 +3,7 @@ package com.cleanroommc.kirino.ecs.storage;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.schema.meta.SchemaLayout;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import org.jspecify.annotations.NonNull;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
  * @see #shrinkStep
  */
 public abstract class ArchetypeDataPool {
-    public final ImmutableObjectArrayList<Class<? extends CleanComponent>> components;
+    public final ObjectArrayView<Class<? extends CleanComponent>> components;
 
     protected int currentSize;
     public final int initSize;
@@ -48,7 +48,7 @@ public abstract class ArchetypeDataPool {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
         this.componentRegistry = componentRegistry;
-        this.components = ImmutableObjectArrayList.copyOf(components,
+        this.components = ObjectArrayView.copyOf(components,
             size -> (Class<? extends CleanComponent>[]) new Class[size]);
         this.initSize = initSize;
         this.growStep = growStep;

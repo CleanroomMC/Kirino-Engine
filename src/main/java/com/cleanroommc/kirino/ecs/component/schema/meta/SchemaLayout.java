@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.ecs.component.schema.meta;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import com.google.common.collect.ImmutableMap;
 
 import java.util.List;
@@ -12,16 +12,16 @@ import java.util.Objects;
 public final class SchemaLayout {
     private final String name;
     private final Class<?> javaClass;
-    private final ImmutableObjectArrayList<Member> members;
-    private final ImmutableObjectArrayList<Column> columns;
+    private final ObjectArrayView<Member> members;
+    private final ObjectArrayView<Column> columns;
     private final ImmutableMap<String, PathNode> paths;
 
     SchemaLayout(String name, Class<?> javaClass, List<Member> members,
                  List<Column> columns, Map<String, PathNode> paths) {
         this.name = name;
         this.javaClass = javaClass;
-        this.members = ImmutableObjectArrayList.copyOf(members, Member[]::new);
-        this.columns = ImmutableObjectArrayList.copyOf(columns, Column[]::new);
+        this.members = ObjectArrayView.copyOf(members, Member[]::new);
+        this.columns = ObjectArrayView.copyOf(columns, Column[]::new);
         this.paths = ImmutableMap.copyOf(paths);
     }
 
@@ -33,11 +33,11 @@ public final class SchemaLayout {
         return javaClass;
     }
 
-    public ImmutableObjectArrayList<Member> members() {
+    public ObjectArrayView<Member> members() {
         return members;
     }
 
-    public ImmutableObjectArrayList<Column> columns() {
+    public ObjectArrayView<Column> columns() {
         return columns;
     }
 
@@ -71,7 +71,7 @@ public final class SchemaLayout {
     public record Member(String name, FieldDef definition, int firstOrdinal, int unitCount, SchemaLayout nested) {
     }
 
-    public record Column(ImmutableObjectArrayList<String> path, FlattenedScalarType type, int ordinal, int typeIndex) {
+    public record Column(ObjectArrayView<String> path, FlattenedScalarType type, int ordinal, int typeIndex) {
         public Column {
             Objects.requireNonNull(path);
             Objects.requireNonNull(type);

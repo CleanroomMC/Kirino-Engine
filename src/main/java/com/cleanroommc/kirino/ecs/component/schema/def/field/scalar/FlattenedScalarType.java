@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.component.schema.def.field.scalar;
 
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 
 public enum FlattenedScalarType {
     BYTE(Byte.class), SHORT(Short.class), INT(Integer.class), LONG(Long.class),
@@ -12,7 +12,7 @@ public enum FlattenedScalarType {
         this.boxedClass = boxedClass;
     }
 
-    public static ImmutableObjectArrayList<FlattenedScalarType> flatten(ScalarType type) {
+    public static ObjectArrayView<FlattenedScalarType> flatten(ScalarType type) {
         return type.flattenedTypes;
     }
 

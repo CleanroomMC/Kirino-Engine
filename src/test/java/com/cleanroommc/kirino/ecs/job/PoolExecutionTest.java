@@ -98,6 +98,37 @@ class PoolExecutionTest {
     }
 
     @Test
+    void checkedPreparationFailure_afterAcceptedTask_keepsGuardUntilTaskFinishes() throws Exception {
+        assumeTrue(Runtime.getRuntime().availableProcessors() > 1);
+        Fixture fixture = fixture();
+        List<Runnable> pending = new ArrayList<>();
+
+        CompletionException failure = assertThrows(CompletionException.class,
+            () -> fixture.scheduler.executeParallelJob(fixture.entities, CheckedWorkloadJob.class, null, pending::add));
+
+        assertEquals("checked workload failure", failure.getCause().getMessage());
+        assertEquals(1, pending.size());
+        assertThrows(IllegalStateException.class, fixture.entities::flush);
+        assertThrows(IllegalStateException.class, () -> fixture.pool.removeEntity(1));
+        pending.getFirst().run();
+        fixture.entities.flush();
+        fixture.pool.removeEntity(1);
+    }
+
+    @Test
+    void checkedSynchronousTaskFailure_preservesCauseAndReleasesGuard() throws Exception {
+        Fixture fixture = fixture();
+        fixture.pool.removeEntity(2);
+
+        CompletionException failure = assertThrows(CompletionException.class,
+            () -> fixture.scheduler.executeParallelJob(fixture.entities, CheckedTaskJob.class, null, Runnable::run));
+
+        assertEquals("checked task failure", failure.getCause().getMessage());
+        fixture.entities.flush();
+        fixture.pool.removeEntity(1);
+    }
+
+    @Test
     void nestedExecutionGuards_requireMatchingReleases() throws Exception {
         Fixture fixture = fixture();
         fixture.pool.beginExecution(); fixture.pool.beginExecution();
@@ -128,6 +159,7 @@ class PoolExecutionTest {
         };
         JobRegistry jobs = new JobRegistry(registry);
         jobs.registerParallelJob(Job.class); jobs.registerParallelJob(ThrowingJob.class); jobs.registerParallelJob(InvalidJob.class);
+        jobs.registerParallelJob(CheckedWorkloadJob.class); jobs.registerParallelJob(CheckedTaskJob.class);
         return new Fixture(pool, entities, new JobScheduler(jobs), pool.getArray(Value.class, "value"));
     }
 
@@ -144,5 +176,33 @@ class PoolExecutionTest {
     }
     public static class InvalidJob extends Job {
         @Override public int estimateWorkload(int index) { return 0; }
+    }
+
+    public static class CheckedWorkloadJob extends Job {
+        private int estimates;
+
+        @Override
+        public int estimateWorkload(int index) {
+            if (++estimates == 4) {
+                return PoolExecutionTest.<RuntimeException>raise(new Exception("checked workload failure"));
+            }
+            return super.estimateWorkload(index);
+        }
+
+        @Override
+        public void execute(EntityManager manager, int index, int entity, int thread) {
+        }
+    }
+
+    public static class CheckedTaskJob extends Job {
+        @Override
+        public void execute(EntityManager manager, int index, int entity, int thread) {
+            PoolExecutionTest.<RuntimeException>raise(new Exception("checked task failure"));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> int raise(Throwable failure) throws T {
+        throw (T) failure;
     }
 }

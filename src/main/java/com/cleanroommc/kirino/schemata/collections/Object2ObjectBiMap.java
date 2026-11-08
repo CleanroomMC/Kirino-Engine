@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.utils.collections;
+package com.cleanroommc.kirino.schemata.collections;
 
 import com.google.common.collect.BiMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;

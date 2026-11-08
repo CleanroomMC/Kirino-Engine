@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.utils.collections;
+package com.cleanroommc.kirino.schemata.collections;
 
 import org.junit.jupiter.api.Test;
 
@@ -8,11 +8,11 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class ImmutableObjectArrayListTest {
+class ObjectArrayViewTest {
     @Test
     void copyOf_array_preservesTypeAndCopiesInput() {
         String[] input = {"first", "second"};
-        var list = ImmutableObjectArrayList.copyOf(input);
+        var list = ObjectArrayView.copyOf(input);
         String[] array = list.elements();
         assertNotSame(input, array);
         assertSame(array, list.elements());
@@ -30,7 +30,7 @@ class ImmutableObjectArrayListTest {
             for (int i = 0; i < size; i++) {
                 input.add("value" + i);
             }
-            var list = ImmutableObjectArrayList.copyOf(input, String[]::new);
+            var list = ObjectArrayView.copyOf(input, String[]::new);
             String[] elements = list.elements();
             assertEquals(String[].class, elements.getClass());
             assertEquals(size, elements.length);
@@ -38,15 +38,15 @@ class ImmutableObjectArrayListTest {
             input.clear();
             assertEquals(size, list.size());
         }
-        Object[] genericElements = ImmutableObjectArrayList.copyOf(List.of("value")).elements();
+        Object[] genericElements = ObjectArrayView.copyOf(List.of("value")).elements();
         assertArrayEquals(new Object[]{"value"}, genericElements);
-        String[] emptyElements = ImmutableObjectArrayList.<String>copyOf(new String[0]).elements();
+        String[] emptyElements = ObjectArrayView.<String>copyOf(new String[0]).elements();
         assertEquals(String[].class, emptyElements.getClass());
     }
 
     @Test
     void mutationMethods_iteratorsAndViews_rejectWrites() {
-        var list = ImmutableObjectArrayList.of("a", "b", "c");
+        var list = ObjectArrayView.of("a", "b", "c");
         assertThrows(UnsupportedOperationException.class, () -> list.set(0, "x"));
         assertThrows(UnsupportedOperationException.class, () -> list.add("x"));
         assertThrows(UnsupportedOperationException.class, () -> list.addAll(1, List.of("x")));
@@ -75,15 +75,45 @@ class ImmutableObjectArrayListTest {
 
     @Test
     void factories_nullValuesAreRejectedAndCopiesDoNotShareBackingArrays() {
-        assertThrows(NullPointerException.class, () -> ImmutableObjectArrayList.copyOf((String[]) null));
-        assertThrows(NullPointerException.class, () -> ImmutableObjectArrayList.of("a", null));
-        assertThrows(NullPointerException.class, () -> ImmutableObjectArrayList.copyOf(Arrays.asList("a", null)));
-        assertThrows(NullPointerException.class, () -> ImmutableObjectArrayList.copyOf(Arrays.asList("a", null), String[]::new));
-        var original = ImmutableObjectArrayList.of("a", "b");
+        assertThrows(NullPointerException.class, () -> ObjectArrayView.copyOf((String[]) null));
+        assertThrows(NullPointerException.class, () -> ObjectArrayView.of("a", null));
+        assertThrows(NullPointerException.class, () -> ObjectArrayView.copyOf(Arrays.asList("a", null)));
+        assertThrows(NullPointerException.class, () -> ObjectArrayView.copyOf(Arrays.asList("a", null), String[]::new));
+        var original = ObjectArrayView.of("a", "b");
         var clone = original.clone();
         assertNotSame(original.elements(), clone.elements());
         clone.elements()[0] = "changed";
         assertEquals("a", original.getFirst());
-        assertEquals(0, ImmutableObjectArrayList.of().elements().length);
+        assertEquals(0, ObjectArrayView.of().elements().length);
+    }
+
+    @Test
+    void backingArrayWrites_areVisibleThroughDerivedViewsAndCopiesRemainIndependent() {
+        var view = ObjectArrayView.of("first", "second", "third");
+        var slice = view.subList(1, 3);
+        var reversed = view.reversed();
+        var iterator = view.listIterator(1);
+        Object[] snapshot = view.toArray();
+        var copy = view.clone();
+
+        view.elements()[1] = "updated";
+
+        assertEquals("updated", slice.getFirst());
+        assertEquals("updated", reversed.get(1));
+        assertEquals("updated", iterator.next());
+        assertEquals(List.of("first", "updated", "third"), view);
+        assertEquals(List.of("first", "updated", "third").hashCode(), view.hashCode());
+        assertArrayEquals(new String[]{"first", "second", "third"}, snapshot);
+        assertEquals(List.of("first", "second", "third"), copy);
+    }
+
+    @Test
+    void get_rejectsIndicesOutsideTheFixedArray() {
+        var view = ObjectArrayView.of("value");
+
+        assertThrows(IndexOutOfBoundsException.class, () -> view.get(-1));
+        assertThrows(IndexOutOfBoundsException.class, () -> view.get(1));
+        assertThrows(IndexOutOfBoundsException.class, () -> ObjectArrayView.of().get(0));
+        assertEquals(1, view.size());
     }
 }

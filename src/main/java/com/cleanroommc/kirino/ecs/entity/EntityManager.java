@@ -9,7 +9,8 @@ import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeKey;
 import com.cleanroommc.kirino.ecs.storage.HeapPool;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
+import com.google.common.base.Throwables;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
 
 public class EntityManager {
     private enum State {
@@ -38,13 +40,13 @@ public class EntityManager {
 
     private static final class Archetype {
         final ArchetypeKey key;
-        final ImmutableObjectArrayList<Class<? extends CleanComponent>> components;
+        final ObjectArrayView<Class<? extends CleanComponent>> components;
         ArchetypeDataPool pool;
 
         @SuppressWarnings({"unchecked", "rawtypes"})
         Archetype(ArchetypeKey key, List<Class<? extends CleanComponent>> components) {
             this.key = key;
-            this.components = ImmutableObjectArrayList.copyOf(components,
+            this.components = ObjectArrayView.copyOf(components,
                 size -> (Class<? extends CleanComponent>[]) new Class[size]);
         }
     }
@@ -104,39 +106,40 @@ public class EntityManager {
 
     public final synchronized ExecutionScope beginExecution(EntityQuery query) {
         requireAvailable();
-        ExecutionScope scope = new ExecutionScope(ImmutableObjectArrayList.copyOf(startQuery(query), ArchetypeDataPool[]::new));
+        ExecutionScope scope = new ExecutionScope(ObjectArrayView.copyOf(startQuery(query), ArchetypeDataPool[]::new));
         int acquired = 0;
         try {
             for (ArchetypeDataPool pool : scope.pools.elements()) {
                 pool.beginExecution();
                 acquired++;
             }
-        } catch (RuntimeException | Error exception) {
+        } catch (Throwable exception) {
             for (int i = acquired - 1; i >= 0; i--) {
                 try {
                     scope.pools.elements()[i].endExecution();
-                } catch (RuntimeException | Error releaseFailure) {
+                } catch (Throwable releaseFailure) {
                     failure = exception;
                     if (releaseFailure != exception) {
                         exception.addSuppressed(releaseFailure);
                     }
                 }
             }
-            throw exception;
+            Throwables.throwIfUnchecked(exception);
+            throw new CompletionException(exception);
         }
         executions++;
         return scope;
     }
 
     public final class ExecutionScope implements AutoCloseable {
-        private final ImmutableObjectArrayList<ArchetypeDataPool> pools;
+        private final ObjectArrayView<ArchetypeDataPool> pools;
         private boolean closed;
 
-        private ExecutionScope(ImmutableObjectArrayList<ArchetypeDataPool> pools) {
+        private ExecutionScope(ObjectArrayView<ArchetypeDataPool> pools) {
             this.pools = pools;
         }
 
-        public ImmutableObjectArrayList<ArchetypeDataPool> pools() {
+        public ObjectArrayView<ArchetypeDataPool> pools() {
             return pools;
         }
 
@@ -151,7 +154,7 @@ public class EntityManager {
                 for (int i = pools.size() - 1; i >= 0; i--) {
                     try {
                         pools.elements()[i].endExecution();
-                    } catch (RuntimeException | Error exception) {
+                    } catch (Throwable exception) {
                         if (releaseFailure == null) {
                             releaseFailure = exception;
                         } else if (releaseFailure != exception) {
@@ -162,10 +165,8 @@ public class EntityManager {
                 executions--;
                 if (releaseFailure != null) {
                     failure = releaseFailure;
-                    if (releaseFailure instanceof Error error) {
-                        throw error;
-                    }
-                    throw (RuntimeException) releaseFailure;
+                    Throwables.throwIfUnchecked(releaseFailure);
+                    throw new CompletionException(releaseFailure);
                 }
             }
         }
@@ -199,9 +200,10 @@ public class EntityManager {
                     case ADD_COM, REMOVE_COM -> migrate(slot, command);
                 }
             }
-        } catch (RuntimeException | Error exception) {
+        } catch (Throwable exception) {
             failure = exception;
-            throw exception;
+            Throwables.throwIfUnchecked(exception);
+            throw new CompletionException(exception);
         } finally {
             commands.clear();
             createContext.setInternal(List.of(), List.of());
@@ -280,7 +282,7 @@ public class EntityManager {
                                                        @Nullable EntityCreateCallback createCallback, @NonNull CleanComponent @NonNull ... components) {
         requireAvailable();
         Objects.requireNonNull(components);
-        ImmutableObjectArrayList<CleanComponent> values = ImmutableObjectArrayList.copyOf(components);
+        ObjectArrayView<CleanComponent> values = ObjectArrayView.copyOf(components);
         List<Class<? extends CleanComponent>> types = new ArrayList<>(values.size());
         for (CleanComponent value : values.elements()) {
             validate(value);

@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.ecs.component.schema.def.field;
 
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
-import com.cleanroommc.kirino.utils.collections.Object2ObjectBiMap;
+import com.cleanroommc.kirino.schemata.collections.Object2ObjectBiMap;
 import com.google.common.base.Preconditions;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.openjdk.jmh.annotations.*;

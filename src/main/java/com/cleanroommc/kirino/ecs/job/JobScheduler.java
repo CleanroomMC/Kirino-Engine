@@ -9,6 +9,7 @@ import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
 import com.cleanroommc.kirino.ecs.storage.ArrayRange;
 import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 public class JobScheduler {
@@ -157,9 +159,10 @@ public class JobScheduler {
             }
 
             return new ExecutionHandle(finishExecution(futures, execution), threadOrdinal, !futures.isEmpty());
-        } catch (RuntimeException | Error failure) {
+        } catch (Throwable failure) {
             finishExecution(futures, execution);
-            throw failure;
+            Throwables.throwIfUnchecked(failure);
+            throw new CompletionException(failure);
         }
     }
 
@@ -170,7 +173,7 @@ public class JobScheduler {
             Throwable resultFailure = failure;
             try {
                 execution.close();
-            } catch (RuntimeException | Error releaseFailure) {
+            } catch (Throwable releaseFailure) {
                 if (resultFailure == null) {
                     resultFailure = releaseFailure;
                 } else if (resultFailure != releaseFailure) {

@@ -2,9 +2,9 @@ package com.cleanroommc.kirino.ecs.entity;
 
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.storage.ArchetypeKey;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 
-record EntityCommand(int index, int generation, Type type, ImmutableObjectArrayList<CleanComponent> components,
+record EntityCommand(int index, int generation, Type type, ObjectArrayView<CleanComponent> components,
                      CleanComponent component, Class<? extends CleanComponent> componentType,
                      ArchetypeKey target) {
     enum Type {

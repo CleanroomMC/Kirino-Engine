@@ -4,7 +4,7 @@ import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldKind;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.FlattenedScalarType;
 import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.cleanroommc.kirino.utils.collections.ImmutableObjectArrayList;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -43,21 +43,21 @@ public final class SchemaCompiler {
                     String[] path = new String[nestedPath.length + 1];
                     path[0] = fieldName;
                     System.arraycopy(nestedPath, 0, path, 1, nestedPath.length);
-                    addColumn(ImmutableObjectArrayList.copyOf(path),
+                    addColumn(ObjectArrayView.copyOf(path),
                         column.type(), columns, counts, paths);
                 }
             } else if (definition.fieldKind == FieldKind.SCALAR) {
                 ScalarType scalar = definition.scalarType;
                 FlattenedScalarType[] types = scalar.flattenedTypes.elements();
                 if (scalar.isSingular()) {
-                    addColumn(ImmutableObjectArrayList.of(fieldName), types[0], columns, counts, paths);
+                    addColumn(ObjectArrayView.of(fieldName), types[0], columns, counts, paths);
                 } else {
                     String[] fieldsByOrdinal = new String[types.length];
                     for (String field : scalar.fieldNames) {
                         fieldsByOrdinal[scalar.ordinalOffsetOfField(field)] = field;
                     }
                     for (int j = 0; j < fieldsByOrdinal.length; j++) {
-                        addColumn(ImmutableObjectArrayList.of(fieldName, fieldsByOrdinal[j]), types[j], columns, counts, paths);
+                        addColumn(ObjectArrayView.of(fieldName, fieldsByOrdinal[j]), types[j], columns, counts, paths);
                     }
                 }
             } else {
@@ -68,7 +68,7 @@ public final class SchemaCompiler {
         return new SchemaLayout(name, javaClass, members, columns, freeze(paths));
     }
 
-    private static void addColumn(ImmutableObjectArrayList<String> path, FlattenedScalarType type,
+    private static void addColumn(ObjectArrayView<String> path, FlattenedScalarType type,
                                   List<SchemaLayout.Column> columns, int[] counts, Map<String, MutableNode> paths) {
         SchemaLayout.Column column = new SchemaLayout.Column(path, type, columns.size(), counts[type.ordinal()]++);
         columns.add(column);

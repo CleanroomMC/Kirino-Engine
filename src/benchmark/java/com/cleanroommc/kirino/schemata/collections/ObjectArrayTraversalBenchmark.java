@@ -1,4 +1,4 @@
-package com.cleanroommc.kirino.utils.collections;
+package com.cleanroommc.kirino.schemata.collections;
 
 import org.openjdk.jmh.annotations.*;
 
@@ -11,12 +11,12 @@ import java.util.concurrent.TimeUnit;
 @Warmup(iterations = 5, time = 1)
 @Measurement(iterations = 5, time = 1)
 @Fork(1)
-public class ImmutableArrayTraversalBenchmark {
+public class ObjectArrayTraversalBenchmark {
     @Param({"1", "8", "64"})
     public int size;
 
     private List<Value> previous;
-    private ImmutableObjectArrayList<Value> current;
+    private ObjectArrayView<Value> current;
 
     @Setup
     public void setup() {
@@ -25,7 +25,7 @@ public class ImmutableArrayTraversalBenchmark {
             values[i] = new Value(i + 1000);
         }
         previous = List.of(values);
-        current = ImmutableObjectArrayList.copyOf(values);
+        current = ObjectArrayView.copyOf(values);
         if (jdkIterator() != directArray() || jdkIndexed() != directArray()) {
             throw new IllegalStateException("Different traversal result");
         }
