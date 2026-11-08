@@ -43,6 +43,24 @@ public final class McTtfFontData {
         }
     }
 
+    /**
+     * <p>Note: <code>source</code> will be closed automatically.</p>
+     */
+    public static byte @Nullable [] loadDefault(@NonNull AssetSource source, @Nullable String loggerName) {
+        Preconditions.checkNotNull(source);
+
+        try (source) {
+            return load(source, defaultCacheDirectory(), "default", Preconditions.checkNotNull(McTTF.STANDARD_FONTS.get("default")), FontStyle.REGULAR, loggerName);
+        } catch (Throwable failure) {
+            if (loggerName == null) {
+                LOGGER.error("Failed to prepare the default Minecraft font.", failure);
+            } else {
+                LOGGER.error("[{}] Failed to prepare the default Minecraft font.", loggerName, failure);
+            }
+            return null;
+        }
+    }
+
     static byte @NonNull [] load(
             @NonNull AssetSource source,
             @NonNull Path cacheDirectory,
