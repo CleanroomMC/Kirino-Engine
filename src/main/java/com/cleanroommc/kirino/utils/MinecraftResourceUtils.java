@@ -8,6 +8,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.*;
+import java.util.List;
 
 public final class MinecraftResourceUtils {
 
@@ -97,8 +98,7 @@ public final class MinecraftResourceUtils {
     /**
      * It finds the absolute path for resources inside the dev env.
      *
-     * <p>Note: It's only able to find a subset of dev env resources:
-     * <code>forge</code>, <code>kirino</code> and <code>cleanroom</code> resources including test data to be exact.</p>
+     * <p>Note: Searches the forge, kirino and cleanroom namespaces across all three modules.</p>
      */
     @Nullable
     private static String findResourceDevEnv(@NonNull String namespace, @NonNull String path) {
@@ -110,63 +110,18 @@ public final class MinecraftResourceUtils {
         File repo = findCleanroomRoot();
         Preconditions.checkNotNull(repo);
 
-        File resources1 = new File(repo, "module/forge/src/main/resources/assets/forge");
-        File resources2 = new File(repo, "module/kirino/src/main/resources/assets/kirino");
-        File resources3 = new File(repo, "module/forge/src/test/resources/assets/forge");
-        File resources4 = new File(repo, "module/kirino/src/test/resources/assets/kirino");
-        File resources5 = new File(repo, "module/cleanroom/src/main/resources/assets/cleanroom");
-        File resources6 = new File(repo, "module/cleanroom/src/test/resources/assets/cleanroom");
-
-        Preconditions.checkState(resources1.isDirectory() &&
-                        resources2.isDirectory() &&
-                        resources5.isDirectory(),
-                "This is not the dev env.");
-
         String target = path;
 
         if (target.startsWith("/")) {
             target = target.substring(1);
         }
 
-        if (namespace.equals("forge")) {
-            File candidate1 = new File(resources1, target);
-            if (candidate1.isFile()) {
-                return candidate1.getAbsolutePath();
-            }
-        }
-
-        if (namespace.equals("kirino")) {
-            File candidate2 = new File(resources2, target);
-            if (candidate2.isFile()) {
-                return candidate2.getAbsolutePath();
-            }
-        }
-
-        if (namespace.equals("cleanroom")) {
-            File candidate5 = new File(resources5, target);
-            if (candidate5.isFile()) {
-                return candidate5.getAbsolutePath();
-            }
-        }
-
-        if (namespace.equals("forge")) {
-            File candidate3 = new File(resources3, target);
-            if (candidate3.isFile()) {
-                return candidate3.getAbsolutePath();
-            }
-        }
-
-        if (namespace.equals("kirino")) {
-            File candidate4 = new File(resources4, target);
-            if (candidate4.isFile()) {
-                return candidate4.getAbsolutePath();
-            }
-        }
-
-        if (namespace.equals("cleanroom")) {
-            File candidate6 = new File(resources6, target);
-            if (candidate6.isFile()) {
-                return candidate6.getAbsolutePath();
+        for (String sourceSet : List.of("main", "test")) {
+            for (String module : List.of("forge", "kirino", "cleanroom")) {
+                File candidate = new File(repo, "module/" + module + "/src/" + sourceSet + "/resources/assets/" + namespace + "/" + target);
+                if (candidate.isFile()) {
+                    return candidate.getAbsolutePath();
+                }
             }
         }
 
