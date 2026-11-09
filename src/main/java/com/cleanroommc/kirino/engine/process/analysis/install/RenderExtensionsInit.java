@@ -8,8 +8,8 @@ import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOpt
 import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistrationEvent;
 import com.cleanroommc.kirino.engine.world.context.AnalyticalWorldView;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 
 import java.lang.invoke.MethodHandle;
 import java.util.List;

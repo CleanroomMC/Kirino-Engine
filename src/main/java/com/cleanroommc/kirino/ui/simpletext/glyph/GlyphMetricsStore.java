@@ -2,8 +2,8 @@ package com.cleanroommc.kirino.ui.simpletext.glyph;
 
 import com.cleanroommc.kirino.ui.simpletext.ST_Config;
 import com.cleanroommc.kirino.ui.simpletext.ST_FontHandle;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -61,6 +61,22 @@ public class GlyphMetricsStore {
         outMetrics.setSdf(config.sdfPadding());
 
         return outMetrics;
+    }
+
+
+    /**
+     * <p>Note: <b>Not</b> guaranteed to be thread safe.</p>
+     *
+     * @param fontRl This is for crash report info only
+     * @param glyphIndex Glyph index must be positive and valid
+     */
+    @NonNull
+    public GlyphMetrics loadMetricsIfAbsent(
+            @NonNull ST_FontHandle font,
+            net.minecraft.util.@Nullable ResourceLocation fontRl,
+            int glyphIndex) {
+
+        return loadMetricsIfAbsent(font, fontRl == null ? null : new ResourceLocation(fontRl.getNamespace(), fontRl.getPath()), glyphIndex);
     }
 
     /**

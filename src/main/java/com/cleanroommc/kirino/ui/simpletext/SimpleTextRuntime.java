@@ -9,9 +9,9 @@ import com.cleanroommc.kirino.ui.simpletext.facade.SimpleTextFontRendererFacade;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.ui.simpletext.text.*;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.text.BreakIterator;
-import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -23,7 +23,7 @@ import java.util.function.Function;
 public class SimpleTextRuntime implements AutoCloseable {
 
     //<editor-fold desc="boilerplate">
-    private final ResourceLocation fontRl;
+    private final @Nullable ResourceLocation fontRl;
     private final ST_FontHandle font;
     private final ST_Config config;
     private final ImmediateShaderAccess shaderAccess;
@@ -69,9 +69,80 @@ public class SimpleTextRuntime implements AutoCloseable {
      * <p>Note: It handles <code>underlineGui</code> and <code>strikethroughGui</code> disposal in {@link #close()},
      * as well as the instances produced by <code>consumerFactory</code> and <code>producerFactory</code>.</p>
      */
-    @SuppressWarnings("deprecation")
+    public SimpleTextRuntime(
+            @NonNull BiFunction<net.minecraft.util.@Nullable ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            @NonNull SimpleGuiRuntime underlineGui,
+            @NonNull SimpleGuiRuntime strikethroughGui,
+            @NonNull ST_Config config,
+            net.minecraft.util.@Nullable ResourceLocation fontRl) {
+
+        this(config1 -> Preconditions.checkNotNull(fontFactory).apply(fontRl, config1),
+                consumerFactory,
+                producerFactory,
+                shaderAccess,
+                underlineGui,
+                strikethroughGui,
+                config,
+                fontRl == null ? null : new ResourceLocation(fontRl.getNamespace(), fontRl.getPath()));
+    }
+
+    /**
+     * <p>Note: It handles <code>underlineGui</code> and <code>strikethroughGui</code> disposal in {@link #close()},
+     * as well as the instances produced by <code>consumerFactory</code> and <code>producerFactory</code>.</p>
+     */
     public SimpleTextRuntime(
             @NonNull BiFunction<@Nullable ResourceLocation, ST_Config, ST_FontHandle> fontFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            @NonNull SimpleGuiRuntime underlineGui,
+            @NonNull SimpleGuiRuntime strikethroughGui,
+            @NonNull ST_Config config,
+            @Nullable ResourceLocation fontRl) {
+
+        this(config1 -> Preconditions.checkNotNull(fontFactory).apply(fontRl, config1),
+                consumerFactory,
+                producerFactory,
+                shaderAccess,
+                underlineGui,
+                strikethroughGui,
+                config,
+                fontRl);
+    }
+
+    /**
+     * <p>Note: It handles <code>underlineGui</code> and <code>strikethroughGui</code> disposal in {@link #close()},
+     * as well as the instances produced by <code>consumerFactory</code> and <code>producerFactory</code>.</p>
+     */
+    public SimpleTextRuntime(
+            @NonNull Function<ST_Config, ST_FontHandle> fontFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
+            @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            @NonNull SimpleGuiRuntime underlineGui,
+            @NonNull SimpleGuiRuntime strikethroughGui,
+            @NonNull ST_Config config) {
+
+        this(fontFactory,
+                consumerFactory,
+                producerFactory,
+                shaderAccess,
+                underlineGui,
+                strikethroughGui,
+                config,
+                null);
+    }
+
+    /**
+     * <p>Note: It handles <code>underlineGui</code> and <code>strikethroughGui</code> disposal in {@link #close()},
+     * as well as the instances produced by <code>consumerFactory</code> and <code>producerFactory</code>.</p>
+     */
+    @SuppressWarnings("deprecation")
+    private SimpleTextRuntime(
+            @NonNull Function<ST_Config, ST_FontHandle> fontFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextConsumer> consumerFactory,
             @NonNull Function<SimpleTextRuntime, SimpleTextProducer> producerFactory,
             @NonNull ImmediateShaderAccess shaderAccess,
@@ -90,7 +161,7 @@ public class SimpleTextRuntime implements AutoCloseable {
 
         this.fontRl = fontRl;
         this.config = config;
-        font = fontFactory.apply(fontRl, config);
+        font = fontFactory.apply(config);
 
         Preconditions.checkState(font.type() == config.target(),
                 "Backend must match. Font backend type=%s but config backend target=%s.",

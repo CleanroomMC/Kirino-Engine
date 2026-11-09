@@ -5,8 +5,11 @@ import com.cleanroommc.kirino.engine.render.core.pipeline.state.PipelineStateObj
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
+
+import java.util.Arrays;
 
 public class PostProcessingEntry {
 
@@ -21,7 +24,7 @@ public class PostProcessingEntry {
     }
 
     public final String subpassName;
-    public final String[] shaders;
+    public final ResourceLocation[] shaders;
     public final PassConstructor ctor;
 
     public PostProcessingEntry(
@@ -29,9 +32,28 @@ public class PostProcessingEntry {
             @NonNull String @NonNull [] shaders,
             @NonNull PassConstructor ctor) {
 
+        this(subpassName, Arrays.stream(Preconditions.checkNotNull(shaders)).map(ResourceLocation::new).toArray(ResourceLocation[]::new), ctor);
+    }
+
+    public PostProcessingEntry(
+            @NonNull String subpassName,
+            net.minecraft.util.@NonNull ResourceLocation @NonNull [] shaders,
+            @NonNull PassConstructor ctor) {
+
+        this(subpassName, Arrays
+                .stream(Preconditions.checkNotNull(shaders))
+                .map(rl -> new ResourceLocation(rl.getNamespace(), rl.getPath()))
+                .toArray(ResourceLocation[]::new), ctor);
+    }
+
+    public PostProcessingEntry(
+            @NonNull String subpassName,
+            @NonNull ResourceLocation @NonNull [] shaders,
+            @NonNull PassConstructor ctor) {
+
         Preconditions.checkNotNull(subpassName);
         Preconditions.checkNotNull(shaders);
-        for (String shader : shaders) {
+        for (ResourceLocation shader : shaders) {
             Preconditions.checkNotNull(shader);
         }
         Preconditions.checkNotNull(ctor);

@@ -4,8 +4,8 @@ import com.cleanroommc.kirino.engine.render.core.debug.hud.ImmediateHUD;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingEntry;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.PostProcessingManager;
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 
 import java.util.*;

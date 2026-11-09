@@ -10,7 +10,7 @@ import com.cleanroommc.kirino.gl.shader.ShaderType;
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -20,8 +20,22 @@ import java.util.*;
 
 public class ShaderRegistry {
 
-    // key: rl.toString
-    private final Map<String, Shader> shaders = new HashMap<>();
+    private final Map<ResourceLocation, Shader> shaders = new HashMap<>();
+
+    /**
+     * This step is purely string manipulation and parsing. No GL submissions involved.
+     */
+    @NonNull
+    public Shader register(
+            @NonNull Logger logger,
+            net.minecraft.util.@NonNull ResourceLocation rl,
+            @Nullable ShaderCompileOptions options,
+            boolean enableShaderDebug) {
+
+        Preconditions.checkNotNull(rl);
+
+        return register(logger, new ResourceLocation(rl.getNamespace(), rl.getPath()), options, enableShaderDebug);
+    }
 
     /**
      * This step is purely string manipulation and parsing. No GL submissions involved.
@@ -83,7 +97,7 @@ public class ShaderRegistry {
 
         Shader shader = MethodHolder.initShader(shaderSource, rawRl, shaderType);
 
-        shaders.put(rawRl, shader);
+        shaders.put(rl, shader);
         return shader;
     }
 
@@ -116,7 +130,27 @@ public class ShaderRegistry {
     public ShaderProgram newShaderProgram(@NonNull String @NonNull ... shaderRLs) {
         Preconditions.checkNotNull(shaderRLs);
 
-        for (String rl : shaderRLs) {
+        return newShaderProgram(Arrays
+                .stream(shaderRLs)
+                .map(ResourceLocation::new)
+                .toArray(ResourceLocation[]::new));
+    }
+
+    @NonNull
+    public ShaderProgram newShaderProgram(net.minecraft.util.@NonNull ResourceLocation @NonNull ... shaderRLs) {
+        Preconditions.checkNotNull(shaderRLs);
+
+        return newShaderProgram(Arrays
+                .stream(shaderRLs)
+                .map(rl -> new ResourceLocation(rl.getNamespace(), rl.getPath()))
+                .toArray(ResourceLocation[]::new));
+    }
+
+    @NonNull
+    public ShaderProgram newShaderProgram(@NonNull ResourceLocation @NonNull ... shaderRLs) {
+        Preconditions.checkNotNull(shaderRLs);
+
+        for (ResourceLocation rl : shaderRLs) {
             Preconditions.checkNotNull(rl);
 
             if (!shaders.containsKey(rl)) {
@@ -129,10 +163,6 @@ public class ShaderRegistry {
             shaders1[i] = shaders.get(shaderRLs[i]);
         }
         return MethodHolder.initShaderProgram(shaders1);
-    }
-
-    public ShaderProgram newShaderProgram(ResourceLocation... shaderRLs) {
-        return newShaderProgram(Arrays.stream(shaderRLs).map(ResourceLocation::toString).toList().toArray(new String[0]));
     }
 
     private static final class MethodHolder {

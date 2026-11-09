@@ -3,29 +3,69 @@ package com.cleanroommc.kirino.engine.render.core.shader;
 import com.cleanroommc.kirino.gl.shader.*;
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
-import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ImmediateShaderAccess {
 
+    @FunctionalInterface
+    private interface SourceLoader {
+
+        String load(ResourceLocation rl);
+    }
+
     private static final Logger LOGGER = LogManager.getLogger("Kirino ImmediateShaderAccess");
     private static final DefaultShaderAnalyzer ANALYZER = new DefaultShaderAnalyzer();
 
-    private final Function<ResourceLocation, String> sourceLoader;
+    private final SourceLoader sourceLoader;
 
     public ImmediateShaderAccess() {
-        this(rl -> MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
+        this((SourceLoader) rl -> MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
     }
 
-    public ImmediateShaderAccess(@NonNull Function<ResourceLocation, String> sourceLoader) {
-        this.sourceLoader = Preconditions.checkNotNull(sourceLoader);
+    public ImmediateShaderAccess(@NonNull Function<net.minecraft.util.ResourceLocation, String> sourceLoader) {
+        this((SourceLoader) rl -> sourceLoader.apply(new net.minecraft.util.ResourceLocation(rl.namespace(), rl.path())));
+        Preconditions.checkNotNull(sourceLoader);
+    }
+
+    /**
+     * Loads shader sources from their namespace and path.
+     */
+    public ImmediateShaderAccess(@NonNull BiFunction<String, String, String> sourceLoader) {
+        this((SourceLoader) rl -> sourceLoader.apply(rl.namespace(), rl.path()));
+        Preconditions.checkNotNull(sourceLoader);
+    }
+
+    private ImmediateShaderAccess(SourceLoader sourceLoader) {
+        this.sourceLoader = sourceLoader;
+    }
+
+    @NonNull
+    public static ImmediateShaderAccess fromSourceLoader(@NonNull Function<ResourceLocation, String> sourceLoader) {
+        Preconditions.checkNotNull(sourceLoader);
+
+        return new ImmediateShaderAccess((SourceLoader) sourceLoader::apply);
+    }
+
+    @NonNull
+    public Shader makeShader(net.minecraft.util.@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        return makeShader(new ResourceLocation(rl.getNamespace(), rl.getPath()));
+    }
+
+    @NonNull
+    public Shader makeShader(net.minecraft.util.@NonNull ResourceLocation rl, @NonNull ShaderAnalyzer analyzer) {
+        Preconditions.checkNotNull(rl);
+
+        return makeShader(new ResourceLocation(rl.getNamespace(), rl.getPath()), analyzer);
     }
 
     /**
@@ -57,7 +97,7 @@ public class ImmediateShaderAccess {
             throw new IllegalStateException("Invalid Shader ResourceLocation " + rawRl + ". Can't parse the shader type.");
         }
 
-        String shaderSource = sourceLoader.apply(rl);
+        String shaderSource = sourceLoader.load(rl);
 
         LOGGER.debug("{} Shader \"{}\" assembled:\n{}",
                 shaderType.toString(),
@@ -68,6 +108,16 @@ public class ImmediateShaderAccess {
         result.analyze(analyzer);
 
         return result;
+    }
+
+    @NonNull
+    public Shader makeShader(@NonNull String namespace, @NonNull String path) {
+        return makeShader(new ResourceLocation(namespace, path));
+    }
+
+    @NonNull
+    public Shader makeShader(@NonNull String namespace, @NonNull String path, @NonNull ShaderAnalyzer analyzer) {
+        return makeShader(new ResourceLocation(namespace, path), analyzer);
     }
 
     @NonNull

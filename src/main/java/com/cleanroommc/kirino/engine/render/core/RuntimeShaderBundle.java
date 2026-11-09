@@ -3,12 +3,15 @@ package com.cleanroommc.kirino.engine.render.core;
 import com.cleanroommc.kirino.engine.resource.ResourceLayout;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * @see com.cleanroommc.kirino.engine.process.graphics.install.RuntimeShaderBundleInit
@@ -21,15 +24,15 @@ public final class RuntimeShaderBundle {
     // value: collision count
     private final Map<String, Integer> collision = new HashMap<>();
 
-    private String shaders2id(String[] shaders) {
-        return String.valueOf(String.join(",", shaders).hashCode());
+    private String shaders2id(ResourceLocation[] shaders) {
+        return String.valueOf(Arrays.stream(shaders).map(ResourceLocation::toString).collect(Collectors.joining(",")).hashCode());
     }
 
     @NonNull
-    private ResourceSlot<ShaderProgram> newShaderProgram(@NonNull String name, @NonNull String @NonNull [] shaders) {
+    private ResourceSlot<ShaderProgram> newShaderProgram(@NonNull String name, @NonNull ResourceLocation @NonNull [] shaders) {
         Preconditions.checkNotNull(name);
         Preconditions.checkNotNull(shaders);
-        for (String shader : shaders) {
+        for (ResourceLocation shader : shaders) {
             Preconditions.checkNotNull(shader);
         }
 

@@ -11,8 +11,8 @@ import com.cleanroommc.kirino.engine.render.core.shader.event.ShaderRegistration
 import com.cleanroommc.kirino.mod.KirinoECSModContainer;
 import com.cleanroommc.kirino.mod.KirinoEngineModContainer;
 import com.cleanroommc.kirino.mod.KirinoGLModContainer;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.InjectedModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;

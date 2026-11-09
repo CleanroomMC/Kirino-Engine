@@ -20,11 +20,11 @@ import com.cleanroommc.kirino.ui.simpletext.backend.FreeTypeFontHandle;
 import com.cleanroommc.kirino.ui.simpletext.backend.DefaultTextProducer;
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeManager;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.cleanroommc.mcttf.glyph.GlyphBuilder;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.*;
-import net.minecraft.util.ResourceLocation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -304,7 +304,7 @@ public final class ImmediateClientServices {
                     FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
 
             textRuntime = new SimpleTextRuntime(
-                    (rl, cfg) -> {
+                    cfg -> {
                         FT_Face face = textFont != null
                                 ? freeTypeManager.load(textFont, 0, cfg.pixelSize())
                                 : freeTypeManager.load(FALLBACK_TEXT_FONT, 0, cfg.pixelSize());
@@ -323,8 +323,7 @@ public final class ImmediateClientServices {
                     shaderAccess,
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
                     new SimpleGuiRuntime(shaderAccess, dummyVao),
-                    config,
-                    null);
+                    config);
         } else {
             textRuntime = null;
         }
@@ -440,7 +439,7 @@ public final class ImmediateClientServices {
         }
 
         textRuntimeVanilla = new SimpleTextRuntime(
-                (rl, cfg) -> new FreeTypeFontHandle(face),
+                cfg -> new FreeTypeFontHandle(face),
                 (context) -> {
                     DefaultTextRenderer renderer = new DefaultTextRenderer(
                             context,
@@ -455,8 +454,7 @@ public final class ImmediateClientServices {
                 shaderAccess,
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
                 new SimpleGuiRuntime(shaderAccess, dummyVao),
-                config,
-                null);
+                config);
 
         return true;
     }

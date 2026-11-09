@@ -16,13 +16,13 @@ import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapDecod
 import com.cleanroommc.kirino.ui.simpletext.backend.freetype.FreeTypeBitmapLoader;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFBitmap;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorBruteForceImpl;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.*;

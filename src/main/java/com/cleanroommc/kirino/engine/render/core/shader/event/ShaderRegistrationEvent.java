@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.core.shader.event;
 
 import com.cleanroommc.kirino.engine.render.core.shader.compile.ShaderCompileOptions;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import org.jspecify.annotations.NonNull;
 
@@ -13,6 +13,18 @@ import java.util.Optional;
 public class ShaderRegistrationEvent extends Event {
 
     private final Map<ResourceLocation, Optional<ShaderCompileOptions>> rawShaders = new HashMap<>();
+
+    public void register(net.minecraft.util.@NonNull ResourceLocation resourceLocation) {
+        Preconditions.checkNotNull(resourceLocation);
+
+        register(new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath()));
+    }
+
+    public void register(net.minecraft.util.@NonNull ResourceLocation resourceLocation, int debugFlags) {
+        Preconditions.checkNotNull(resourceLocation);
+
+        register(new ResourceLocation(resourceLocation.getNamespace(), resourceLocation.getPath()), debugFlags);
+    }
 
     public void register(@NonNull ResourceLocation resourceLocation) {
         Preconditions.checkNotNull(resourceLocation);

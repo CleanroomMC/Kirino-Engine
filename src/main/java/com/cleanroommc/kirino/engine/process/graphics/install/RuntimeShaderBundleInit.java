@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.world.context.GraphicsWorldView;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 
 import java.lang.invoke.MethodHandle;
@@ -30,7 +31,7 @@ public final class RuntimeShaderBundleInit {
 
         static {
             DELEGATE = new Delegate(
-                    ReflectionUtils.getMethod(RuntimeShaderBundle.class, "newShaderProgram", ResourceSlot.class, String.class, String[].class),
+                    ReflectionUtils.getMethod(RuntimeShaderBundle.class, "newShaderProgram", ResourceSlot.class, String.class, ResourceLocation[].class),
                     ReflectionUtils.getMethod(PostProcessingEntry.class, "setShaderProgram", void.class, ResourceSlot.class));
 
             Preconditions.checkNotNull(DELEGATE.newShaderProgram);
@@ -38,7 +39,7 @@ public final class RuntimeShaderBundleInit {
         }
 
         @SuppressWarnings("unchecked")
-        static ResourceSlot<ShaderProgram> newShaderProgram(RuntimeShaderBundle owner, String name, String[] shaders) {
+        static ResourceSlot<ShaderProgram> newShaderProgram(RuntimeShaderBundle owner, String name, ResourceLocation[] shaders) {
             try {
                 return (ResourceSlot<ShaderProgram>) DELEGATE.newShaderProgram.invokeExact(owner, name, shaders);
             } catch (Throwable e) {

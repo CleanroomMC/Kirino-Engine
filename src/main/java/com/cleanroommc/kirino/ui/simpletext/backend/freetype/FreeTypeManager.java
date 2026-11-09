@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.ui.simpletext.backend.freetype;
 
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
@@ -101,6 +101,20 @@ public final class FreeTypeManager {
 
             initialized = true;
         }
+    }
+
+    @NonNull
+    public FT_Face load(net.minecraft.util.@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        return load(new ResourceLocation(rl.getNamespace(), rl.getPath()));
+    }
+
+    @NonNull
+    public FT_Face load(net.minecraft.util.@NonNull ResourceLocation rl, long faceIndex, int pixelSize) {
+        Preconditions.checkNotNull(rl);
+
+        return load(new ResourceLocation(rl.getNamespace(), rl.getPath()), faceIndex, pixelSize);
     }
 
     @NonNull
@@ -210,6 +224,12 @@ public final class FreeTypeManager {
             FreeType.FT_Done_Face(entry.getValue());
             iterator.remove();
         }
+    }
+
+    public void unload(net.minecraft.util.@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        unload(new ResourceLocation(rl.getNamespace(), rl.getPath()));
     }
 
     /**

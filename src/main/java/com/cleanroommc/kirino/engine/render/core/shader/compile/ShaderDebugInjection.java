@@ -2,8 +2,8 @@ package com.cleanroommc.kirino.engine.render.core.shader.compile;
 
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.utils.MinecraftResourceUtils;
+import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
-import net.minecraft.util.ResourceLocation;
 
 import java.util.*;
 

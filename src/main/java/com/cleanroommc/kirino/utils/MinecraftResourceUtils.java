@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IResource;
 import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.util.ResourceLocation;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -28,7 +27,7 @@ public final class MinecraftResourceUtils {
         IResourceManager resourceManager = Minecraft.getMinecraft().getResourceManager();
         Preconditions.checkNotNull(resourceManager);
 
-        IResource resource = resourceManager.getResource(rl);
+        IResource resource = resourceManager.getResource(new net.minecraft.util.ResourceLocation(rl.namespace(), rl.path()));
 
         final InputStream input;
 
@@ -102,10 +101,11 @@ public final class MinecraftResourceUtils {
      * <code>forge</code>, <code>kirino</code> and <code>cleanroom</code> resources including test data to be exact.</p>
      */
     @Nullable
-    private static String findResourceDevEnv(@NonNull ResourceLocation rl) {
-        Preconditions.checkNotNull(rl);
-        Preconditions.checkState(rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino") || rl.getNamespace().equals("cleanroom"),
-                "Provided ResourceLocation \"%s\" must be \"forge\", \"kirino\" or \"cleanroom\" namespace.", rl.toString());
+    private static String findResourceDevEnv(@NonNull String namespace, @NonNull String path) {
+        Preconditions.checkNotNull(namespace);
+        Preconditions.checkNotNull(path);
+        Preconditions.checkState(namespace.equals("forge") || namespace.equals("kirino") || namespace.equals("cleanroom"),
+                "Provided namespace \"%s\" must be \"forge\", \"kirino\" or \"cleanroom\".", namespace);
 
         File repo = findCleanroomRoot();
         Preconditions.checkNotNull(repo);
@@ -122,48 +122,48 @@ public final class MinecraftResourceUtils {
                         resources5.isDirectory(),
                 "This is not the dev env.");
 
-        String target = rl.getPath();
+        String target = path;
 
         if (target.startsWith("/")) {
             target = target.substring(1);
         }
 
-        if (rl.getNamespace().equals("forge")) {
+        if (namespace.equals("forge")) {
             File candidate1 = new File(resources1, target);
             if (candidate1.isFile()) {
                 return candidate1.getAbsolutePath();
             }
         }
 
-        if (rl.getNamespace().equals("kirino")) {
+        if (namespace.equals("kirino")) {
             File candidate2 = new File(resources2, target);
             if (candidate2.isFile()) {
                 return candidate2.getAbsolutePath();
             }
         }
 
-        if (rl.getNamespace().equals("cleanroom")) {
+        if (namespace.equals("cleanroom")) {
             File candidate5 = new File(resources5, target);
             if (candidate5.isFile()) {
                 return candidate5.getAbsolutePath();
             }
         }
 
-        if (rl.getNamespace().equals("forge")) {
+        if (namespace.equals("forge")) {
             File candidate3 = new File(resources3, target);
             if (candidate3.isFile()) {
                 return candidate3.getAbsolutePath();
             }
         }
 
-        if (rl.getNamespace().equals("kirino")) {
+        if (namespace.equals("kirino")) {
             File candidate4 = new File(resources4, target);
             if (candidate4.isFile()) {
                 return candidate4.getAbsolutePath();
             }
         }
 
-        if (rl.getNamespace().equals("cleanroom")) {
+        if (namespace.equals("cleanroom")) {
             File candidate6 = new File(resources6, target);
             if (candidate6.isFile()) {
                 return candidate6.getAbsolutePath();
@@ -242,39 +242,61 @@ public final class MinecraftResourceUtils {
         NONE
     }
 
+    /**
+     * Minecraft agnostic.
+     */
+    @NonNull
+    public static InputStream getEarlyInputStream(net.minecraft.util.@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        return getEarlyInputStream(new ResourceLocation(rl.getNamespace(), rl.getPath()));
+    }
+
+    /**
+     * Minecraft agnostic.
+     */
+    @NonNull
+    public static InputStream getEarlyInputStream(@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        String namespace = rl.namespace();
+        String path = rl.path();
+
+        if (isDevEnv() && (namespace.equals("forge") || namespace.equals("kirino") || namespace.equals("cleanroom"))) {
+            String absolutePath = findResourceDevEnv(namespace, path);
+            Preconditions.checkNotNull(absolutePath,
+                    "Resource \"%s:%s\" doesn't correspond to an actual file.", namespace, path);
+
+            try {
+                return getInputStreamFromPath(absolutePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        String target = path.startsWith("/") ? path.substring(1) : path;
+        String resource = "/assets/" + namespace + "/" + target;
+        InputStream stream = MinecraftResourceUtils.class.getResourceAsStream(resource);
+        return Preconditions.checkNotNull(stream,
+                "Resource \"%s:%s\" doesn't correspond to an actual classpath resource \"%s\".",
+                namespace, path, resource);
+    }
+
+    @NonNull
+    public static InputStream getInputStream(net.minecraft.util.@NonNull ResourceLocation rl) {
+        Preconditions.checkNotNull(rl);
+
+        return getInputStream(new ResourceLocation(rl.getNamespace(), rl.getPath()));
+    }
+
     @NonNull
     public static InputStream getInputStream(@NonNull ResourceLocation rl) {
         Preconditions.checkNotNull(rl);
 
         InputStream stream;
 
-        // Cleanroom dev env forge/kirino path
-        // it doesn't rely on vanilla resource manager initialization
-        if (isDevEnv() && (rl.getNamespace().equals("forge") || rl.getNamespace().equals("kirino") || rl.getNamespace().equals("cleanroom"))) {
-            String path = findResourceDevEnv(rl);
-            Preconditions.checkNotNull(path,
-                    "Provided ResourceLocation \"%s\" doesn't correspond to an actual file.",
-                    rl.toString());
-
-            try {
-                stream = getInputStreamFromPath(path);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-        // early path
-        } else if (beforeResourceManagerInitialization) {
-            String target = rl.getPath();
-            if (target.startsWith("/")) {
-                target = target.substring(1);
-            }
-            String path = "/assets/" + rl.getNamespace() + "/" + target;
-
-            stream = Minecraft.class.getResourceAsStream(path);
-
-            Preconditions.checkNotNull(stream,
-                    "Provided ResourceLocation \"%s\" doesn't correspond to an actual classpath resource \"%s\".",
-                    rl.toString(), path);
+        if (beforeResourceManagerInitialization || (isDevEnv() && (rl.namespace().equals("forge") || rl.namespace().equals("kirino") || rl.namespace().equals("cleanroom")))) {
+            stream = getEarlyInputStream(rl);
 
         // normal path
         } else {
@@ -286,6 +308,13 @@ public final class MinecraftResourceUtils {
         }
 
         return stream;
+    }
+
+    @NonNull
+    public static String readText(net.minecraft.util.@NonNull ResourceLocation rl, @NonNull NewLineType newLine) {
+        Preconditions.checkNotNull(rl);
+
+        return readText(new ResourceLocation(rl.getNamespace(), rl.getPath()), newLine);
     }
 
     @NonNull
