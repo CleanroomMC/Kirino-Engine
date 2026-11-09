@@ -2,7 +2,7 @@ package com.cleanroommc.kirino.engine.render.usage.scene;
 
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.KirinoClientDebug;
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
+import com.cleanroommc.kirino.ecs.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.world.CleanWorld;

@@ -1,40 +1,9 @@
 package com.cleanroommc.kirino.ecs.entity.callback;
 
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.storage.ArchetypeDataPool;
-import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
-import java.util.List;
-
-public class EntityDestroyContext {
-    private int entityID;
-    private List<Class<? extends CleanComponent>> components;
-    private ArchetypeDataPool archetype;
-
-    public EntityDestroyContext() {
-    }
-
-    /**
-     * Must not be accessed by clients.
-     */
-    public void setInternal(int entityID, List<Class<? extends CleanComponent>> components, ArchetypeDataPool archetype) {
-        this.entityID = entityID;
-        this.components = components;
-        this.archetype = archetype;
-    }
-
-    public void clearInternal() {
-        entityID = -1;
-        components = List.of();
-        archetype = null;
-    }
-
+public interface EntityDestroyContext {
     @NonNull
-    public CleanComponent getComponent(Class<? extends CleanComponent> component) {
-        Preconditions.checkArgument(components.contains(component),
-                "The target entity doesn't contain the argument \"component\" - %s.", component.getName());
-
-        return archetype.getComponent(entityID, component);
-    }
+    <T extends CleanComponent> T getComponent(@NonNull Class<T> component);
 }

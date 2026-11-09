@@ -1,9 +1,5 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.*;
-import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import org.joml.Vector3f;
 import org.openjdk.jmh.annotations.*;
 

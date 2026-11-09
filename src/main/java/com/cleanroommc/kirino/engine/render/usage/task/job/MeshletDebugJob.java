@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
+import com.cleanroommc.kirino.ecs.EntityCommands;
+import com.cleanroommc.kirino.ecs.EntityQuery;
 import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
@@ -131,7 +131,7 @@ public class MeshletDebugJob implements ParallelJob {
     PrimitiveArray block31Array;
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
+    public void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal) {
         int blockCount = blockCountArray.getInt(index);
         List<Integer> blocks = new ArrayList<>();
 

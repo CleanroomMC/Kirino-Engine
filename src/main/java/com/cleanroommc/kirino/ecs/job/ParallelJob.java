@@ -1,22 +1,14 @@
 package com.cleanroommc.kirino.ecs.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
+import com.cleanroommc.kirino.ecs.EntityCommands;
+import com.cleanroommc.kirino.ecs.EntityQuery;
 import org.jspecify.annotations.NonNull;
 
 /**
  * Jobs will be instantiated per thread. A job must have an empty (no parameters) constructor.
  */
 public interface ParallelJob {
-    /**
-     * Every execution should be stateless except the index.
-     * You can introduce state-dependent logic if two executions share the same <code>threadOrdinal</code>.
-     *
-     * @param entityManager The entity manager
-     * @param index The index
-     * @param threadOrdinal The ordinal number of the current thread
-     */
-    void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal);
+    void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal);
 
     void query(@NonNull EntityQuery entityQuery);
 

@@ -1,15 +1,11 @@
 package com.cleanroommc.kirino.ecs;
 
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+
 import com.cleanroommc.kirino.ecs.component.*;
 import com.cleanroommc.kirino.ecs.component.scan.event.*;
-import com.cleanroommc.kirino.ecs.component.scan.helper.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.*;
-import com.cleanroommc.kirino.ecs.component.schema.meta.*;
-import com.cleanroommc.kirino.ecs.component.schema.reflect.*;
-import com.cleanroommc.kirino.ecs.job.*;
-import com.cleanroommc.kirino.ecs.storage.*;
 import org.joml.*;
 import org.junit.jupiter.api.Test;
 
@@ -371,8 +367,8 @@ class PreparedSchemaTest {
     public static class TestJob implements ParallelJob {
         @JobDataQuery(componentClass = TestComponent.class, fieldAccessChain = {"leaf", "count"})
         public PrimitiveArray counts;
-        public void execute(com.cleanroommc.kirino.ecs.entity.EntityManager manager, int index, int id, int ordinal) {}
-        public void query(com.cleanroommc.kirino.ecs.entity.EntityQuery query) {}
+        public void execute(com.cleanroommc.kirino.ecs.EntityCommands manager, int index, int id, int ordinal) {}
+        public void query(com.cleanroommc.kirino.ecs.EntityQuery query) {}
         public int estimateWorkload(int index) { return 1; }
     }
     public static class InvalidJob extends TestJob {

@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
+import com.cleanroommc.kirino.ecs.EntityCommands;
+import com.cleanroommc.kirino.ecs.EntityQuery;
 import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
@@ -129,7 +129,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
     boolean[][][] visited = new boolean[16][16][16];
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
+    public void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal) {
         Preconditions.checkState(pass == 0 || pass == 1 || pass == 2,
                 "Invalid pass number %s. Must be either 0 or 1 or 2.", pass);
 
@@ -166,7 +166,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
 
         BufferBuilder bufferBuilder = tempBuffers.computeIfAbsent(threadOrdinal, k -> new BufferBuilder(169));
 
-        regionGrowing(faceMask, visited, chunkCluster, entityManager, bufferBuilder);
+        regionGrowing(faceMask, visited, chunkCluster, commands, bufferBuilder);
     }
 
     /**
@@ -304,7 +304,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
         return (new Vector3f(x, y, z)).normalize();
     }
 
-    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityManager entityManager, BufferBuilder bufferBuilder) {
+    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityCommands commands, BufferBuilder bufferBuilder) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -376,7 +376,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
                     fillBlockInfo(chunkCluster, cluster, bufferBuilder);
 
-                    entityManager.createEntity(meshletDestroyCallback, meshletCreateCallback, meshletComponent);
+                    commands.createEntity(meshletDestroyCallback, meshletCreateCallback, meshletComponent);
                 }
             }
         }

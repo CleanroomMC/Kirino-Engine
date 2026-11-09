@@ -20,7 +20,7 @@ public class MeshletDestroyCallback implements EntityDestroyCallback {
 
     @Override
     public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
-        MeshletComponent meshletComponent = (MeshletComponent) destroyContext.getComponent(MeshletComponent.class);
+        MeshletComponent meshletComponent = destroyContext.getComponent(MeshletComponent.class);
         storage.get(meshletGpuRegistry).disposeMeshletID(meshletComponent.meshletId);
     }
 }

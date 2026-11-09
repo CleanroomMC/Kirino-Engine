@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.ecs.system.exegraph;
 
 import com.cleanroommc.anone.value.CanIgnoreReturnValue;
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
+import com.cleanroommc.kirino.ecs.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
 import com.cleanroommc.kirino.ecs.system.ExecutionContainer;

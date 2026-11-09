@@ -1,14 +1,10 @@
 package com.cleanroommc.kirino.ecs;
 
+import com.cleanroommc.kirino.ecs.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.job.JobScheduler;
+
 import com.cleanroommc.kirino.ecs.component.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.*;
-import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.*;
-import com.cleanroommc.kirino.ecs.storage.*;
 import com.cleanroommc.kirino.config.KirinoConfig;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
@@ -109,16 +105,16 @@ class EcsValidationTest {
 
     @Test
     void entityAccess_validAndInvalidIndexes_preserveBoundsChecks() {
-        ExposedEntityManager entities = new ExposedEntityManager();
-        assertThrows(IndexOutOfBoundsException.class, () -> entities.generation(0));
-        assertThrows(IndexOutOfBoundsException.class, () -> entities.types(-1));
+        EntityManager entities = new EntityManager(emptyComponentRegistry());
+        assertThrows(IndexOutOfBoundsException.class, () -> entities.getLatestGeneration(0));
+        assertThrows(IndexOutOfBoundsException.class, () -> entities.getComponentTypes(-1));
         var handle = entities.createEntity(new MissingComponent());
         assertTrue(handle.valid());
-        assertEquals(0, entities.generation(handle.index));
-        assertEquals(List.of(MissingComponent.class), entities.types(handle.index));
-        assertThrows(IndexOutOfBoundsException.class, () -> entities.generation(handle.index + 1));
-        assertThrows(IndexOutOfBoundsException.class, () -> entities.types(handle.index + 1));
-        entities.destroyEntity(handle.index);
+        assertEquals(0, entities.getLatestGeneration(handle.index));
+        assertEquals(List.of(MissingComponent.class), entities.getComponentTypes(handle.index));
+        assertThrows(IndexOutOfBoundsException.class, () -> entities.getLatestGeneration(handle.index + 1));
+        assertThrows(IndexOutOfBoundsException.class, () -> entities.getComponentTypes(handle.index + 1));
+        assertTrue(handle.tryDestroy());
         assertFalse(handle.valid());
     }
 
@@ -137,14 +133,9 @@ class EcsValidationTest {
             Launch.minecraftHome = previousLaunchHome;
         }
         ComponentRegistry components = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
-        HeapPool pool = new HeapPool(components, List.of(), 1, 1, 1);
-        pool.addEntity(42, new CleanComponent[0]);
-        EntityManager entities = new EntityManager(components) {
-            @Override
-            public List<ArchetypeDataPool> startQuery(EntityQuery query) {
-                return List.of(pool);
-            }
-        };
+        EntityManager entities = new EntityManager(components);
+        assertEquals(0, entities.createEntity().index);
+        entities.flush();
         JobRegistry registry = new JobRegistry(components) {
             @Override
             public Map<JobDataQuery, JobDataInjector> getParallelJobDataQueries(Class<? extends ParallelJob> clazz) {
@@ -159,7 +150,7 @@ class EcsValidationTest {
                 return clazz == InvalidJob.class ? InvalidJob::new : TestJob::new;
             }
         };
-        JobScheduler scheduler = new JobScheduler(registry);
+        JobScheduler scheduler = CleanECSRuntime.newJobScheduler(registry);
         var handle = scheduler.executeParallelJob(entities, TestJob.class, null, Runnable::run);
         handle.future().join();
         assertFalse(handle.async());
@@ -183,22 +174,15 @@ class EcsValidationTest {
         public Leaf leaf;
     }
     public static class MissingComponent implements CleanComponent {}
-    private static class ExposedEntityManager extends EntityManager {
-        ExposedEntityManager() {
-            super(emptyComponentRegistry());
-        }
-        private static ComponentRegistry emptyComponentRegistry() {
-            ComponentRegistry registry = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
-            registry.registerComponent("missing", MissingComponent.class, new MemberLayout());
-            registry.lock();
-            return registry;
-        }
-        int generation(int id) { return getLatestGeneration(id); }
-        List<Class<? extends CleanComponent>> types(int id) { return getComponentTypes(id); }
+    private static ComponentRegistry emptyComponentRegistry() {
+        ComponentRegistry registry = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
+        registry.registerComponent("missing", MissingComponent.class, new MemberLayout());
+        registry.lock();
+        return registry;
     }
     public static class TestJob implements ParallelJob {
-        public void execute(EntityManager entities, int index, int entityID, int ordinal) {
-            assertEquals(42, entityID);
+        public void execute(EntityCommands entities, int index, int entityID, int ordinal) {
+            assertEquals(0, entityID);
         }
         public void query(EntityQuery query) {}
         public int estimateWorkload(int index) { return 1; }

@@ -16,7 +16,7 @@ public class ChunkDestroyCallback implements EntityDestroyCallback {
 
     @Override
     public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
-        ChunkComponent chunkComponent = (ChunkComponent) destroyContext.getComponent(ChunkComponent.class);
+        ChunkComponent chunkComponent = destroyContext.getComponent(ChunkComponent.class);
         chunkDelta.chunksDestroyedLastFrame.add(new ChunkPosKey(chunkComponent.chunkPosX, chunkComponent.chunkPosY, chunkComponent.chunkPosZ));
     }
 }

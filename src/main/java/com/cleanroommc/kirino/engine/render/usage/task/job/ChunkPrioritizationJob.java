@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
+import com.cleanroommc.kirino.ecs.EntityCommands;
+import com.cleanroommc.kirino.ecs.EntityQuery;
 import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
@@ -35,7 +35,7 @@ public class ChunkPrioritizationJob implements ParallelJob {
     Vector3f worldOffset = null;
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
+    public void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal) {
         float chunkWorldX = (float) chunkPosXArray.getInt(index) * 16 + 8f;
         float chunkWorldY = (float) chunkPosYArray.getInt(index) * 16 + 8f;
         float chunkWorldZ = (float) chunkPosZArray.getInt(index) * 16 + 8f;

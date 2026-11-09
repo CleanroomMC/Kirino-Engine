@@ -20,7 +20,7 @@ public class MeshletCreateCallback implements EntityCreateCallback {
 
     @Override
     public void beforeCreate(@NonNull EntityCreateContext createContext) {
-        MeshletComponent meshletComponent = (MeshletComponent) createContext.getComponent(MeshletComponent.class);
+        MeshletComponent meshletComponent = createContext.getComponent(MeshletComponent.class);
         storage.get(meshletGpuRegistry).allocateMeshletID(meshletComponent);
     }
 }

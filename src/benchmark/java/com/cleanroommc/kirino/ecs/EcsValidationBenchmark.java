@@ -1,10 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
 import com.cleanroommc.kirino.ecs.component.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.*;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
-import com.cleanroommc.kirino.ecs.component.schema.meta.MemberLayout;
 import com.google.common.base.Preconditions;
 import org.openjdk.jmh.annotations.*;
 

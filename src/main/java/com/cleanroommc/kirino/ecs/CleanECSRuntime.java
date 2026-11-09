@@ -1,27 +1,14 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.ComponentDesc;
-import com.cleanroommc.kirino.ecs.component.ComponentRegistry;
 import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.component.scan.ComponentRegisterPlan;
-import com.cleanroommc.kirino.ecs.component.scan.StructRegisterPlan;
 import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
-import com.cleanroommc.kirino.ecs.component.scan.helper.ComponentScanningHelper;
-import com.cleanroommc.kirino.ecs.component.scan.helper.StructScanningHelper;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldDef;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.FieldRegistry;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.scalar.ScalarType;
-import com.cleanroommc.kirino.ecs.component.schema.def.field.struct.StructRegistry;
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
 import com.cleanroommc.kirino.ecs.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobRegistry;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import org.apache.logging.log4j.Logger;
 
@@ -30,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class CleanECSRuntime {
+public final class CleanECSRuntime {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final StructRegistry structRegistry;
@@ -147,7 +134,7 @@ public class CleanECSRuntime {
         entityManager = new EntityManager(componentRegistry);
 
         jobRegistry = new JobRegistry(componentRegistry);
-        jobScheduler = new JobScheduler(jobRegistry);
+        jobScheduler = newJobScheduler(jobRegistry);
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
@@ -173,11 +160,20 @@ public class CleanECSRuntime {
         }
     }
 
+    public static CleanECSRuntime create(EventBus eventBus, Logger logger) {
+        return new CleanECSRuntime(Preconditions.checkNotNull(eventBus), Preconditions.checkNotNull(logger));
+    }
+
+    static JobScheduler newJobScheduler(JobRegistry registry) {
+        return MethodHolder.newJobScheduler(new JobExecutor(registry));
+    }
+
     private static final class MethodHolder {
         private static final Delegate DELEGATE;
 
         static {
-            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class));
+            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class),
+                Preconditions.checkNotNull(ReflectionUtils.getConstructor(JobScheduler.class, Object.class)));
 
             Preconditions.checkNotNull(DELEGATE.parallelJobsGetter);
         }
@@ -191,7 +187,16 @@ public class CleanECSRuntime {
             }
         }
 
-        record Delegate(MethodHandle parallelJobsGetter) {
+        static JobScheduler newJobScheduler(Object executor) {
+            try {
+                return (JobScheduler) DELEGATE.schedulerConstructor.invokeExact(executor);
+            } catch (Throwable failure) {
+                com.google.common.base.Throwables.throwIfUnchecked(failure);
+                throw new java.util.concurrent.CompletionException(failure);
+            }
+        }
+
+        record Delegate(MethodHandle parallelJobsGetter, MethodHandle schedulerConstructor) {
         }
     }
 }

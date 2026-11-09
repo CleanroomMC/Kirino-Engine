@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
+import com.cleanroommc.kirino.ecs.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.usage.minecraft.utils.BlockMeshGenerator;

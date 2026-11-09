@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.ecs.system;
 
 import com.cleanroommc.kirino.ecs.world.CleanWorld;
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
+import com.cleanroommc.kirino.ecs.EntityManager;
 import com.cleanroommc.kirino.ecs.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.system.exegraph.SystemExeFlowGraph;
 import org.jspecify.annotations.NonNull;

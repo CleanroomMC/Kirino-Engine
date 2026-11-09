@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs.entity.callback;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
+import com.cleanroommc.kirino.ecs.EntityManager;
 import org.jspecify.annotations.NonNull;
 
 public interface EntityCreateCallback {
