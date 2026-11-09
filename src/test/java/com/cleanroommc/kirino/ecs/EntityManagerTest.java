@@ -1,8 +1,10 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -198,7 +200,7 @@ class EntityManagerTest {
             if (components.contains(PositionExtra.class)) {
                 throw new IllegalStateException("destination failed");
             }
-            return new HeapPool(registry, components, 100, 50, 50);
+            return new HeapPool(registry, components, 100);
         });
         CleanEntityHandle handle = entities.createEntity(position(19));
         entities.flush();

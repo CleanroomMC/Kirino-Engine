@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage;
 
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.GraphicsRuntimeBundle;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;

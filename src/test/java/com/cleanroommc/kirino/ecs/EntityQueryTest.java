@@ -1,6 +1,8 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
@@ -20,14 +22,14 @@ class EntityQueryTest {
         EntityQuery query = EntityQuery.query();
         assertSame(query, query.with(A.class).with(A.class).with(B.class).with(B.class));
         assertSame(query, query.without(B.class).without(B.class).without(A.class).without(A.class));
-        assertEquals(2, query.mustHave.size());
-        assertEquals(2, query.mustNotHave.size());
-        assertTrue(query.mustHave.contains(A.class));
-        assertTrue(query.mustHave.contains(B.class));
-        assertTrue(query.mustNotHave.contains(A.class));
-        assertTrue(query.mustNotHave.contains(B.class));
-        assertTrue(EntityQuery.query().mustHave.isEmpty());
-        assertTrue(EntityQuery.query().mustNotHave.isEmpty());
+        assertEquals(2, QueryAccess.mustHave(query).size());
+        assertEquals(2, QueryAccess.mustNotHave(query).size());
+        assertTrue(QueryAccess.mustHave(query).contains(A.class));
+        assertTrue(QueryAccess.mustHave(query).contains(B.class));
+        assertTrue(QueryAccess.mustNotHave(query).contains(A.class));
+        assertTrue(QueryAccess.mustNotHave(query).contains(B.class));
+        assertTrue(QueryAccess.mustHave(EntityQuery.query()).isEmpty());
+        assertTrue(QueryAccess.mustNotHave(EntityQuery.query()).isEmpty());
     }
 
     @Test

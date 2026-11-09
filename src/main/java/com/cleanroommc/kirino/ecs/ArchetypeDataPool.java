@@ -1,26 +1,19 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Besides the abstract methods, a pool must implement grow and shrink mechanism.
- *
- * @see #growStep
- * @see #shrinkStep
- */
 abstract class ArchetypeDataPool {
     public final ObjectArrayView<Class<? extends CleanComponent>> components;
 
     protected int currentSize;
     public final int initSize;
-    public final int growStep;
-    public final int shrinkStep;
 
     protected final ComponentRegistry componentRegistry;
 
@@ -33,27 +26,19 @@ abstract class ArchetypeDataPool {
         return currentSize;
     }
 
-    /**
-     * <p>Prerequisites include:</p>
-     * <ul>
-     *     <li>All component types are valid and registered in the component registry</li>
-     * </ul>
-     *
-     * @param componentRegistry The component registry
-     * @param components        The component types for this archetype
-     * @param initSize          The number entities this pool can contain initially
-     * @param growStep          The size to grow when the pool is full
-     * @param shrinkStep        The threshold to judge when the pool is too large; Also the size to shrink
-     */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
+    ArchetypeDataPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize) {
+        if (initSize < 0 || initSize > PoolCapacity.MAX_CAPACITY) {
+            throw new IllegalArgumentException("Invalid initial pool capacity");
+        }
         this.componentRegistry = componentRegistry;
         this.components = ObjectArrayView.copyOf(components,
             size -> (Class<? extends CleanComponent>[]) new Class[size]);
         this.initSize = initSize;
-        this.growStep = growStep;
-        this.shrinkStep = shrinkStep;
         currentSize = initSize;
+    }
+
+    void trimCapacity() {
     }
 
     public abstract boolean containsEntity(int entityID);
@@ -112,6 +97,8 @@ abstract class ArchetypeDataPool {
      */
     public abstract void removeEntity(int entityID);
 
+    abstract void addEntityFrom(int entityID, ArchetypeDataPool source, @Nullable CleanComponent addition);
+
     /**
      * <p>Prerequisites include:</p>
      * <ul>
@@ -131,7 +118,7 @@ abstract class ArchetypeDataPool {
     }
 
     @NonNull
-    public abstract ArrayRange getArrayRange();
+    public abstract PoolRows getRows();
 
     public abstract int getEntityID(int index);
 

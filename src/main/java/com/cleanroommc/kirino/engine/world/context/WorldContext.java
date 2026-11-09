@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.world.context;
 
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.RenderExtensions;

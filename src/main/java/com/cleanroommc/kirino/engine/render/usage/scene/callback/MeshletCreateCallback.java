@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.callback;
 
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateCallback;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateContext;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;

@@ -1,9 +1,9 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
-import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
-import com.cleanroommc.kirino.ecs.job.event.JobRegistrationEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.ComponentScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.api.job.event.JobRegistrationEvent;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.*;

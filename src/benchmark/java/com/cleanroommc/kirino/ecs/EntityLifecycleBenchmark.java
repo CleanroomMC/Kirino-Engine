@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyCallback;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateCallback;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyCallback;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;

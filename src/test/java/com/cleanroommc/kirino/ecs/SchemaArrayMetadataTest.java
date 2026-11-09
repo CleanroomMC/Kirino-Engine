@@ -96,7 +96,7 @@ class SchemaArrayMetadataTest {
         assertEquals(0, columns.length);
         assertArrayEquals(new Object[0], structs.flattenStruct(structs.newStruct("empty")));
         ComponentRegistry registry = new ComponentRegistry(new FieldRegistry(structs));
-        HeapPool pool = new HeapPool(registry, List.of(), 1, 1, 1);
+        HeapPool pool = new HeapPool(registry, List.of(), 1);
         Class<?>[] components = pool.components.elements();
         assertEquals(0, components.length);
     }

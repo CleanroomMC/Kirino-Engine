@@ -1,17 +1,22 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.component.*;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -23,6 +28,55 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class PoolExecutionTest {
     @TempDir Path home;
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void fragmentedPool_syncAndCancelledAsync_visitEachLiveRowOnce(boolean asynchronous) throws Exception {
+        if (asynchronous) assumeTrue(Runtime.getRuntime().availableProcessors() > 1);
+        fixture();
+        ComponentRegistry registry = registry();
+        HeapPool pool = new HeapPool(registry, List.of(Value.class), 0);
+        EntityManager entities = new EntityManager(registry, components -> pool);
+        CleanEntityHandle[] handles = new CleanEntityHandle[64];
+        for (int i = 0; i < handles.length; i++) {
+            Value value = new Value();
+            value.value = i + 100;
+            handles[i] = entities.createEntity(value);
+        }
+        entities.flush();
+        for (int i = 0; i < handles.length; i += 3) assertTrue(handles[i].tryDestroy());
+        entities.flush();
+        PoolRows rows = pool.getRows();
+        int[] borrowed = rows.nextFree;
+        RowProbe probe = new RowProbe(asynchronous);
+        JobRegistry jobs = new JobRegistry(registry);
+        jobs.registerParallelJob(RowAuditJob.class);
+        List<Runnable> pending = new ArrayList<>();
+        var handle = RuntimeBootstrap.newJobScheduler(jobs).executeParallelJob(entities,
+            RowAuditJob.class, Map.of("probe", probe), pending::add);
+        assertEquals(asynchronous, handle.async());
+        if (asynchronous) {
+            assertFalse(pending.isEmpty());
+            assertTrue(handle.future().cancel(false));
+            assertThrows(IllegalStateException.class, entities::flush);
+            for (int i = pending.size() - 1; i >= 0; i--) {
+                pending.get(i).run();
+                if (i != 0) assertThrows(IllegalStateException.class, entities::flush);
+                assertSame(borrowed, rows.nextFree);
+            }
+        } else {
+            assertTrue(pending.isEmpty());
+            handle.future().join();
+        }
+        entities.flush();
+        for (int i = 0; i < handles.length; i++) {
+            assertEquals(i % 3 == 0 ? 0 : 1, probe.visits[i], "row=" + i);
+            if (i % 3 != 0) {
+                assertEquals(handles[i].index, probe.ids[i]);
+                assertEquals(i + 101f, handles[i].readComponent(Value.class).orElseThrow().value, 0f);
+            }
+        }
+    }
 
     @Test
     void asyncExecution_cancellationKeepsStructuralGuardUntilActualTasksFinish() throws Exception {
@@ -44,7 +98,8 @@ class PoolExecutionTest {
         assertEquals(1f, fixture.column.getFloat(0), 0f);
         assertEquals(1f, fixture.column.getFloat(1), 0f);
         assertSame(fixture.column, fixture.pool.getArray(Value.class, "value"));
-        assertEquals(3, fixture.column.length());
+        assertEquals(fixture.pool.getCurrentSize(), fixture.column.length());
+        assertTrue(fixture.column.length() >= 3);
     }
 
     @Test
@@ -150,7 +205,7 @@ class PoolExecutionTest {
         entities.flush();
         JobRegistry jobs = new JobRegistry(registry);
         jobs.registerParallelJob(CommandJob.class);
-        JobScheduler scheduler = CleanECSRuntime.newJobScheduler(jobs);
+        JobScheduler scheduler = RuntimeBootstrap.newJobScheduler(jobs);
         CommandProbe probe = new CommandProbe();
         List<Runnable> pending = new ArrayList<>();
 
@@ -170,7 +225,7 @@ class PoolExecutionTest {
         assertThrows(IllegalStateException.class, () -> writer.tryDestroy(first.index));
         entities.flush();
         assertEquals(2, probe.created.size());
-        for (CleanEntityHandle created : probe.created) {
+        for (var created : probe.created) {
             assertTrue(created.isAlive());
             assertEquals(7f, created.readComponent(Value.class).orElseThrow().value, 0f);
         }
@@ -186,9 +241,9 @@ class PoolExecutionTest {
             field.set(null, previous); Launch.minecraftHome = previousLaunch;
         }
         ComponentRegistry registry = registry();
-        HeapPool pool = new HeapPool(registry, List.of(Value.class), 1, 2, 1);
+        HeapPool pool = new HeapPool(registry, List.of(Value.class), 1);
         EntityManager entities = new EntityManager(registry, components ->
-            components.equals(List.of(Value.class)) ? pool : new HeapPool(registry, components, 100, 50, 50));
+            components.equals(List.of(Value.class)) ? pool : new HeapPool(registry, components, 100));
         CleanEntityHandle temporary = entities.createEntity();
         assertEquals(1, entities.createEntity(new Value()).index);
         assertEquals(2, entities.createEntity(new Value()).index);
@@ -197,7 +252,7 @@ class PoolExecutionTest {
         JobRegistry jobs = new JobRegistry(registry);
         jobs.registerParallelJob(Job.class); jobs.registerParallelJob(ThrowingJob.class); jobs.registerParallelJob(InvalidJob.class);
         jobs.registerParallelJob(CheckedWorkloadJob.class); jobs.registerParallelJob(CheckedTaskJob.class);
-        return new Fixture(pool, entities, CleanECSRuntime.newJobScheduler(jobs), pool.getArray(Value.class, "value"));
+        return new Fixture(pool, entities, RuntimeBootstrap.newJobScheduler(jobs), pool.getArray(Value.class, "value"));
     }
 
     private static ComponentRegistry registry() {
@@ -212,7 +267,37 @@ class PoolExecutionTest {
 
     public static class CommandProbe {
         final List<EntityCommands> writers = new ArrayList<>();
-        final List<CleanEntityHandle> created = new ArrayList<>();
+        final List<com.cleanroommc.kirino.ecs.api.CleanEntityHandle> created = new ArrayList<>();
+    }
+
+    public static class RowProbe {
+        final boolean asynchronous;
+        final int[] visits = new int[64];
+        final int[] ids = new int[64];
+
+        RowProbe(boolean asynchronous) { this.asynchronous = asynchronous; }
+    }
+
+    public static class RowAuditJob implements ParallelJob {
+        @JobDataQuery(componentClass = Value.class, fieldAccessChain = {"value"})
+        public PrimitiveArray values;
+        @JobExternalDataQuery
+        public RowProbe probe;
+
+        @Override
+        public void execute(EntityCommands commands, int row, int id, int ordinal) {
+            probe.visits[row]++;
+            probe.ids[row] = id;
+            values.setFloat(row, values.getFloat(row) + 1);
+        }
+
+        @Override
+        public void query(EntityQuery query) { query.with(Value.class); }
+
+        @Override
+        public int estimateWorkload(int row) {
+            return probe.asynchronous ? KirinoConfig.NEEDS_RESTART.targetWorkloadPerThread : 1;
+        }
     }
 
     public static class CommandJob implements ParallelJob {

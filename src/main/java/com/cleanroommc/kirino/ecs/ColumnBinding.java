@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArrayType;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArrayType;
 
 import java.util.Objects;
 

@@ -1,11 +1,11 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.EntityCommands;
-import com.cleanroommc.kirino.ecs.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;

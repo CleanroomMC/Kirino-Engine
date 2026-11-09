@@ -2,10 +2,10 @@ package com.cleanroommc.kirino.engine.render.usage.scene;
 
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.KirinoClientDebug;
-import com.cleanroommc.kirino.ecs.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
-import com.cleanroommc.kirino.ecs.world.CleanWorld;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.world.CleanWorld;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.usage.minecraft.utils.BlockMeshGenerator;

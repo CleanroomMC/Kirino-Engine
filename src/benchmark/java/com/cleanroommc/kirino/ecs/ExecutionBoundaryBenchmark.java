@@ -1,9 +1,13 @@
 package com.cleanroommc.kirino.ecs;
 
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+
 import com.cleanroommc.common.CleanroomEnvironment;
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
 import net.minecraftforge.fml.relauncher.Side;
@@ -55,7 +59,7 @@ public class ExecutionBoundaryBenchmark {
         JobRegistry jobs = new JobRegistry(components);
         jobs.registerParallelJob(NoopJob.class);
         direct = new JobExecutor(jobs);
-        scheduler = CleanECSRuntime.newJobScheduler(jobs);
+        scheduler = RuntimeBootstrap.newJobScheduler(jobs);
         var expected = directAccess();
         var actual = schedulerBridge();
         expected.future().join();

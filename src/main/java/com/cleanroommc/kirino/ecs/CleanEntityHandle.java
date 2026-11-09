@@ -1,11 +1,11 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 
-public final class CleanEntityHandle {
+final class CleanEntityHandle implements com.cleanroommc.kirino.ecs.api.CleanEntityHandle {
     private final EntityManager entityManager;
     final int index;
     final int generation;

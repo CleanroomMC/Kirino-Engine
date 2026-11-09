@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.scheduler;
 
-import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.CallbackDrivenChunkDelta;
 import com.cleanroommc.kirino.engine.render.usage.scene.fsm.TerrainCpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.usage.task.system.ChunkMeshletGenSystem;

@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.EngineInitParams;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;

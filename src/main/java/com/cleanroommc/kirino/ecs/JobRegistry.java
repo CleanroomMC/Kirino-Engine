@@ -1,13 +1,14 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -43,10 +44,10 @@ class JobRegistry {
         CallSite callSite;
         try {
             callSite = LambdaMetafactory.metafactory(MethodHandles.lookup(), "inject",
-                    MethodType.methodType(JobDataInjector.class, MethodHandle.class),
-                    setterType.erase(),
-                    MethodHandles.exactInvoker(setter.type()),
-                    setterType);
+                MethodType.methodType(JobDataInjector.class, MethodHandle.class),
+                setterType.erase(),
+                MethodHandles.exactInvoker(setter.type()),
+                setterType);
         } catch (LambdaConversionException e) {
             throw new RuntimeException(e);
         }
@@ -66,10 +67,10 @@ class JobRegistry {
         CallSite callSite;
         try {
             callSite = LambdaMetafactory.metafactory(MethodHandles.lookup(), "instantiate",
-                    MethodType.methodType(JobInstantiator.class, MethodHandle.class),
-                    ctorType.erase(),
-                    MethodHandles.exactInvoker(ctorType),
-                    ctorType);
+                MethodType.methodType(JobInstantiator.class, MethodHandle.class),
+                ctorType.erase(),
+                MethodHandles.exactInvoker(ctorType),
+                ctorType);
         } catch (LambdaConversionException e) {
             throw new RuntimeException(e);
         }
@@ -89,9 +90,9 @@ class JobRegistry {
 
         // TODO: Rework THIS
         JobInstantiator instantiator = genParallelJobInstantiator(clazz);
-        Map<JobDataQuery, JobDataInjector> dataQueryMap = new HashMap<>();
-        Map<String, JobDataInjector> externalDataQueryMap = new HashMap<>();
-        Map<JobDataQuery, SchemaLayout.Column> columns = new HashMap<>();
+        Map<JobDataQuery, JobDataInjector> dataQueryMap = new Object2ObjectOpenHashMap<>();
+        Map<String, JobDataInjector> externalDataQueryMap = new Object2ObjectOpenHashMap<>();
+        Map<JobDataQuery, SchemaLayout.Column> columns = new Object2ObjectOpenHashMap<>();
 
         String exceptionText = "Parallel job class \"" + clazz.getName() + "\" contains invalid annotation entries.";
 

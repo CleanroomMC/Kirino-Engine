@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
@@ -27,21 +27,21 @@ class ComponentRegistry {
      * This method is the entry point to register components.
      * <code>memberLayout.fieldNames</code> must match <code>fieldTypeNames</code> one by one.
      *
-     * @param name The registry name of the component
-     * @param clazz The corresponding class of the component
-     * @param memberLayout The metadata of the component class
+     * @param name           The registry name of the component
+     * @param clazz          The corresponding class of the component
+     * @param memberLayout   The metadata of the component class
      * @param fieldTypeNames The field registry names of the component
      */
     public synchronized void registerComponent(
-            @NonNull String name,
-            @NonNull Class<? extends CleanComponent> clazz,
-            @NonNull MemberLayout memberLayout,
-            @NonNull String @NonNull ... fieldTypeNames) {
+        @NonNull String name,
+        @NonNull Class<? extends CleanComponent> clazz,
+        @NonNull MemberLayout memberLayout,
+        @NonNull String @NonNull ... fieldTypeNames) {
 
         Preconditions.checkState(!lockRegistry, "The registry is already locked!");
         Preconditions.checkNotNull(name);
         Preconditions.checkState(!componentData.containsKey(name),
-                "Component \"%s\" is already registered.", name);
+            "Component \"%s\" is already registered.", name);
         Preconditions.checkNotNull(clazz);
         Preconditions.checkNotNull(memberLayout);
         Preconditions.checkNotNull(fieldTypeNames);
@@ -54,7 +54,7 @@ class ComponentRegistry {
         for (String fieldTypeName : fieldTypeNames) {
             FieldDef field = fieldRegistry.getFieldDef(fieldTypeName);
             Preconditions.checkArgument(field != null,
-                    "Field type %s doesn't exist.", fieldTypeName);
+                "Field type %s doesn't exist.", fieldTypeName);
 
             fields.add(field);
         }
@@ -103,7 +103,7 @@ class ComponentRegistry {
         Preconditions.checkNotNull(name);
 
         Data data = componentData.get(name);
-        if(data == null) {
+        if (data == null) {
             return null;
         }
 
@@ -115,7 +115,7 @@ class ComponentRegistry {
         Preconditions.checkNotNull(clazz);
 
         Data data = componentDataByClass.get(clazz);
-        if(data == null) {
+        if (data == null) {
             return null;
         }
 
@@ -127,7 +127,7 @@ class ComponentRegistry {
         Preconditions.checkNotNull(name);
 
         Data data = componentData.get(name);
-        if(data == null) {
+        if (data == null) {
             return null;
         }
 
@@ -139,7 +139,7 @@ class ComponentRegistry {
         Preconditions.checkNotNull(name);
 
         Data data = componentData.get(name);
-        if(data == null) {
+        if (data == null) {
             return null;
         }
 
@@ -149,7 +149,7 @@ class ComponentRegistry {
     //</editor-fold>
 
     /**
-     * @param name Component name must be valid
+     * @param name             Component name must be valid
      * @param fieldAccessChain The field access chain must be valid
      */
     @SuppressWarnings("DataFlowIssue")

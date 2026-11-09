@@ -1,10 +1,13 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.CleanStructSignature;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.FieldInfo;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
@@ -14,7 +17,7 @@ import java.util.*;
  * Scan struct classes and generate a list of register plans.
  * There is no class loading involved at all.
  *
- * @see com.cleanroommc.kirino.ecs.CleanECSRuntime
+ * @see com.cleanroommc.kirino.ecs.api.CleanECSRuntime
  */
 final class StructScanningHelper {
     private StructScanningHelper() {
@@ -39,14 +42,14 @@ final class StructScanningHelper {
     private static List<StructRegisterPlan> generatePlans(Map<String, List<FieldInfo>> structs, FieldRegistry fieldRegistry) {
         List<StructRegisterPlan> plans = new ArrayList<>();
 
-        Map<String, Integer> structNameDuplicates = new HashMap<>();
-        Map<String, String> structNames = new HashMap<>();
+        Object2IntOpenHashMap<String> structNameDuplicates = new Object2IntOpenHashMap<>();
+        Map<String, String> structNames = new Object2ObjectOpenHashMap<>();
 
         for (Map.Entry<String, List<FieldInfo>> entry : structs.entrySet()) {
             String structName = ClassScanUtils.getClassSimpleName(entry.getKey());
             int duplicate = 0;
             if (structNameDuplicates.containsKey(structName)) {
-                duplicate = structNameDuplicates.get(structName);
+                duplicate = structNameDuplicates.getInt(structName);
                 structNameDuplicates.put(structName, duplicate + 1);
             } else {
                 structNameDuplicates.put(structName, 1);
@@ -81,22 +84,22 @@ final class StructScanningHelper {
     /**
      * Retrieve a list of struct register plans.
      *
-     * @param event The struct scanning event
+     * @param event         The struct scanning event
      * @param fieldRegistry The field registry
      * @return A list of struct register plans
      */
     @NonNull
     public static List<@NonNull StructRegisterPlan> scanStructClasses(
-            @NonNull StructScanningEvent event,
-            @NonNull FieldRegistry fieldRegistry) {
+        @NonNull StructScanningEvent event,
+        @NonNull FieldRegistry fieldRegistry) {
 
         Preconditions.checkNotNull(event);
         Preconditions.checkNotNull(fieldRegistry);
 
         List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
         Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
-                scanPackageNames,
-                "com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature");
+            scanPackageNames,
+            CleanStructSignature.class.getName());
 
         Map<String, List<FieldInfo>> structs = new TreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
@@ -118,7 +121,7 @@ final class StructScanningHelper {
         @SuppressWarnings("unchecked")
         static List<String> getScanPackageNames(StructScanningEvent event) {
             try {
-                return  (List<String>) DELEGATE.scanPackageNamesGetter.invokeExact(event);
+                return (List<String>) DELEGATE.scanPackageNamesGetter.invokeExact(event);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }

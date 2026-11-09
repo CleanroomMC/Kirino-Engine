@@ -1,6 +1,13 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.ExecutionContainer;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph;
 import io.github.classgraph.ClassGraph;
 import org.junit.jupiter.api.Test;
 
@@ -12,9 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class KernelBoundaryTest {
     @Test
-    void kernelTypes_onlySupportedFacadesArePublic() {
-        Set<Class<?>> facades = Set.of(CleanECSRuntime.class, EntityManager.class,
-            CleanEntityHandle.class, EntityQuery.class, EntityCommands.class);
+    void kernelTypes_allImplementationClassesAreHidden() {
         int internalCount = 0;
         try (var scan = new ClassGraph().enableClassInfo().ignoreClassVisibility()
             .acceptPackagesNonRecursive("com.cleanroommc.kirino.ecs").scan()) {
@@ -23,12 +28,8 @@ class KernelBoundaryTest {
                 if (type.getEnclosingClass() != null || !production(type)) {
                     continue;
                 }
-                if (facades.contains(type)) {
-                    assertTrue(Modifier.isPublic(type.getModifiers()), type.getName());
-                } else {
-                    assertFalse(Modifier.isPublic(type.getModifiers()), type.getName());
-                    internalCount++;
-                }
+                assertFalse(Modifier.isPublic(type.getModifiers()), type.getName());
+                internalCount++;
             }
         }
         assertTrue(internalCount >= 30);
@@ -52,6 +53,36 @@ class KernelBoundaryTest {
     }
 
     @Test
+    void apiEntityContracts_haveOpaqueImplementationsAndNoStructuralHooks() {
+        assertTrue(com.cleanroommc.kirino.ecs.api.EntityManager.class.isInterface());
+        assertTrue(com.cleanroommc.kirino.ecs.api.CleanEntityHandle.class.isInterface());
+        assertTrue(com.cleanroommc.kirino.ecs.api.EntityManager.class.isAssignableFrom(EntityManager.class));
+        assertTrue(com.cleanroommc.kirino.ecs.api.CleanEntityHandle.class.isAssignableFrom(CleanEntityHandle.class));
+        assertEquals(Set.of("createEntity", "newQuery", "flush"), java.util.Arrays.stream(
+            com.cleanroommc.kirino.ecs.api.EntityManager.class.getMethods())
+            .map(Method::getName).collect(java.util.stream.Collectors.toSet()));
+        assertEquals(0, com.cleanroommc.kirino.ecs.api.CleanEntityHandle.class.getFields().length);
+        for (Field field : EntityQuery.class.getDeclaredFields()) {
+            assertFalse(accessible(field.getModifiers()), field.toString());
+        }
+    }
+
+    @Test
+    void flowApi_exposesBuilderContractAndHidesGraphImplementation() throws Exception {
+        assertTrue(Modifier.isFinal(SingleFlow.class.getModifiers()));
+        assertTrue(Modifier.isFinal(ExecutionContainer.class.getModifiers()));
+        assertEquals(Object.class, SingleFlow.class.getSuperclass());
+        assertEquals(SystemExeFlowGraph.Builder.class, SingleFlow.class.getMethod("newBuilder",
+            com.cleanroommc.kirino.ecs.api.world.CleanWorld.class, Class.class).getReturnType());
+        assertEquals(Set.of("Builder"), java.util.Arrays.stream(SystemExeFlowGraph.class.getClasses())
+            .map(Class::getSimpleName).collect(java.util.stream.Collectors.toSet()));
+        assertThrows(NoSuchMethodException.class, () -> SystemExeFlowGraph.class.getMethod("joinSystem",
+            com.cleanroommc.kirino.ecs.api.system.CleanSystem.class));
+        assertThrows(ClassNotFoundException.class,
+            () -> Class.forName("com.cleanroommc.kirino.ecs.api.system.exegraph.AbstractFlow"));
+    }
+
+    @Test
     void publicSignatures_doNotExposeKernelTypesOrMutableMetadata() {
         try (var scan = new ClassGraph().enableClassInfo()
             .acceptPackages("com.cleanroommc.kirino.ecs").scan()) {
@@ -60,6 +91,8 @@ class KernelBoundaryTest {
                 if (!exported(type) || !production(type)) {
                     continue;
                 }
+                assertTrue(type.getName().startsWith("com.cleanroommc.kirino.ecs.api."),
+                    "Public ECS type outside API: " + type.getName());
                 Set<Type> visited = new HashSet<>();
                 inspect(type.getGenericSuperclass(), visited);
                 for (Type variable : type.getTypeParameters()) inspect(variable, visited);
@@ -92,6 +125,8 @@ class KernelBoundaryTest {
                 inspect(clazz.getComponentType(), visited);
             } else if (clazz.getName().startsWith("com.cleanroommc.kirino.ecs.")) {
                 assertTrue(exported(clazz), "Internal type leaked: " + clazz.getName());
+                assertTrue(clazz.getName().startsWith("com.cleanroommc.kirino.ecs.api."),
+                    "API signature depends on kernel package: " + clazz.getName());
             }
         } else if (type instanceof ParameterizedType parameterized) {
             inspect(parameterized.getRawType(), visited);

@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine;
 
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.process.analysis.install.AnalyticalWorldInstaller;
 import com.cleanroommc.kirino.engine.process.graphics.install.GraphicsWorldInstaller;
 import com.cleanroommc.kirino.engine.process.graphics.view.GraphicsWorldViewImpl;

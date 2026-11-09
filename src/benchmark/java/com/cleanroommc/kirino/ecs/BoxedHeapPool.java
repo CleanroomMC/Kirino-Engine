@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
@@ -11,6 +11,8 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public final class BoxedHeapPool extends ArchetypeDataPool{
+    private final int growStep;
+    private final int shrinkStep;
     private final List<byte[]> bytePool = new ArrayList<>();
     private final List<short[]> shortPool = new ArrayList<>();
     private final List<int[]> intPool = new ArrayList<>();
@@ -71,7 +73,9 @@ public final class BoxedHeapPool extends ArchetypeDataPool{
 
     @SuppressWarnings("DataFlowIssue")
     public BoxedHeapPool(ComponentRegistry componentRegistry, List<Class<? extends CleanComponent>> components, int initSize, int growStep, int shrinkStep) {
-        super(componentRegistry, components, initSize, growStep, shrinkStep);
+        super(componentRegistry, components, initSize);
+        this.growStep = growStep;
+        this.shrinkStep = shrinkStep;
 
         int byteArrCount = 0;
         int shortArrCount = 0;
@@ -136,6 +140,16 @@ public final class BoxedHeapPool extends ArchetypeDataPool{
                     doubleArrFrom, doubleArrTo,
                     booleanArrFrom, booleanArrTo));
         }
+    }
+
+    @Override
+    void addEntityFrom(int entityID, ArchetypeDataPool source, CleanComponent addition) {
+        CleanComponent[] values = new CleanComponent[components.size()];
+        for (int i = 0; i < values.length; i++) {
+            Class<? extends CleanComponent> type = components.get(i);
+            values[i] = addition != null && addition.getClass() == type ? addition : source.getComponent(entityID, type);
+        }
+        addEntity(entityID, values);
     }
 
     @Override
@@ -356,6 +370,15 @@ public final class BoxedHeapPool extends ArchetypeDataPool{
 
     @NonNull
     @Override
+    public PoolRows getRows() {
+        PoolRows rows = new PoolRows(indexCounter);
+        rows.limit = indexCounter;
+        for (int row : freeIndexes) {
+            rows.release(row);
+        }
+        return rows;
+    }
+
     public ArrayRange getArrayRange() {
         return new ArrayRange(0, indexCounter, new HashSet<>(freeIndexes));
     }

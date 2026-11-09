@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 
-import com.cleanroommc.kirino.ecs.component.*;
+import com.cleanroommc.kirino.ecs.api.component.*;
 import org.joml.*;
 import org.openjdk.jmh.annotations.*;
 
@@ -39,7 +39,7 @@ public class DirectStorageBenchmark {
         registry.registerComponent("value", Value.class, new MemberLayout("id", "mass", "position", "child", "matrix"),
             "INT", "FLOAT", "VEC3", "child", "MAT4");
         registry.lock();
-        direct = new HeapPool(registry, List.of(Value.class), 16, 16, 16);
+        direct = new HeapPool(registry, List.of(Value.class), 16);
         boxed = new BoxedHeapPool(registry, List.of(Value.class), 16, 16, 16);
         value = new Value(); value.id = 1000; value.mass = 7.25f;
         value.position = new Vector3f(1.5f, 2.5f, 3.5f);

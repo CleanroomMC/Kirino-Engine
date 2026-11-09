@@ -1,9 +1,9 @@
 package com.cleanroommc.kirino.engine.render.usage.scene;
 
 import com.cleanroommc.kirino.KirinoClientDebug;
-import com.cleanroommc.kirino.ecs.CleanEntityHandle;
-import com.cleanroommc.kirino.ecs.EntityManager;
-import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.CleanEntityHandle;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.ChunkComponent;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.ChunkCreateCallback;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.ChunkDestroyCallback;

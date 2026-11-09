@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

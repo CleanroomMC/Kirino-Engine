@@ -1,9 +1,12 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Modifier;
@@ -136,7 +139,7 @@ class EntityPublicAccessTest {
     void commands_deferredCreateKeepsOwnershipAndCallbackOrder() {
         EntityManager entities = entities();
         List<Integer> events = new java.util.ArrayList<>();
-        CleanEntityHandle created;
+        com.cleanroommc.kirino.ecs.api.CleanEntityHandle created;
         try (var scope = entities.beginExecution(entities.newQuery())) {
             CleanComponent[] input = {position(5)};
             created = scope.commands().createEntity(context -> events.add(2), context -> {
@@ -146,7 +149,7 @@ class EntityPublicAccessTest {
             input[0] = extra(99);
             assertTrue(created.valid());
             assertFalse(created.isAlive());
-            assertFalse(scope.commands().tryDestroy(created.index));
+            assertFalse(scope.commands().tryDestroy(((CleanEntityHandle) created).index));
         }
 
         assertTrue(events.isEmpty());

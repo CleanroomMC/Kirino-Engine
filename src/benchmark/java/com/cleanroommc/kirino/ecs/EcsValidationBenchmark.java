@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.*;
+import com.cleanroommc.kirino.ecs.api.component.*;
 import com.google.common.base.Preconditions;
 import org.openjdk.jmh.annotations.*;
 

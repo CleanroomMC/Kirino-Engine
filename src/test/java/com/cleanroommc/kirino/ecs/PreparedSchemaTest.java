@@ -1,11 +1,15 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
 
-import com.cleanroommc.kirino.ecs.component.*;
-import com.cleanroommc.kirino.ecs.component.scan.event.*;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.ComponentScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
+
 import org.joml.*;
 import org.junit.jupiter.api.Test;
 
@@ -255,7 +259,7 @@ class PreparedSchemaTest {
     @Test
     void heapPool_preparedColumns_matchPathsAcrossGrowthAndMultipleComponents() {
         ComponentRegistry components = components();
-        HeapPool pool = new HeapPool(components, List.of(OtherComponent.class, TestComponent.class), 1, 2, 1);
+        HeapPool pool = new HeapPool(components, List.of(OtherComponent.class, TestComponent.class), 1);
         TestComponent test = component(7);
         OtherComponent other = new OtherComponent(); other.value = 30f;
         pool.addEntity(10, new CleanComponent[]{other, test});
@@ -286,7 +290,7 @@ class PreparedSchemaTest {
         JobDataQuery query = TestJob.class.getField("counts").getAnnotation(JobDataQuery.class);
         SchemaLayout.Column column = jobs.getParallelJobColumn(TestJob.class, query);
         assertSame(components.getLayout(TestComponent.class).resolve("leaf", "count"), column);
-        HeapPool pool = new HeapPool(components, List.of(TestComponent.class), 1, 1, 1);
+        HeapPool pool = new HeapPool(components, List.of(TestComponent.class), 1);
         pool.addEntity(4, new CleanComponent[]{component(7)});
         TestJob job = (TestJob) jobs.getParallelJobInstantiator(TestJob.class).instantiate();
         jobs.getParallelJobDataQueries(TestJob.class).get(query).inject(job, pool.getArray(TestComponent.class, column));
@@ -367,8 +371,8 @@ class PreparedSchemaTest {
     public static class TestJob implements ParallelJob {
         @JobDataQuery(componentClass = TestComponent.class, fieldAccessChain = {"leaf", "count"})
         public PrimitiveArray counts;
-        public void execute(com.cleanroommc.kirino.ecs.EntityCommands manager, int index, int id, int ordinal) {}
-        public void query(com.cleanroommc.kirino.ecs.EntityQuery query) {}
+        public void execute(EntityCommands manager, int index, int id, int ordinal) {}
+        public void query(com.cleanroommc.kirino.ecs.api.EntityQuery query) {}
         public int estimateWorkload(int index) { return 1; }
     }
     public static class InvalidJob extends TestJob {

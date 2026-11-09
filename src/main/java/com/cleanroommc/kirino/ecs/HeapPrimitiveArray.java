@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArrayType;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArrayType;
 
 import com.google.common.base.Preconditions;
 
@@ -71,6 +71,18 @@ final class HeapPrimitiveArray implements PrimitiveArray {
             case FLOAT -> floatArray = new float[length];
             case DOUBLE -> doubleArray = new double[length];
             case BOOL -> booleanArray = new boolean[length];
+        }
+    }
+
+    void copyTo(int sourceRow, HeapPrimitiveArray target, int targetRow) {
+        switch (type) {
+            case BYTE -> target.byteArray[targetRow] = byteArray[sourceRow];
+            case SHORT -> target.shortArray[targetRow] = shortArray[sourceRow];
+            case INT -> target.intArray[targetRow] = intArray[sourceRow];
+            case LONG -> target.longArray[targetRow] = longArray[sourceRow];
+            case FLOAT -> target.floatArray[targetRow] = floatArray[sourceRow];
+            case DOUBLE -> target.doubleArray[targetRow] = doubleArray[sourceRow];
+            case BOOL -> target.booleanArray[targetRow] = booleanArray[sourceRow];
         }
     }
 

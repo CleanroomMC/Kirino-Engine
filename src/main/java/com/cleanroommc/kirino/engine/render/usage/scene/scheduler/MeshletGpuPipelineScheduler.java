@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.scheduler;
 
 import com.cleanroommc.kirino.KirinoClientDebug;
-import com.cleanroommc.kirino.ecs.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.engine.render.usage.debug.data.MeshletGpuTimeline;
 import com.cleanroommc.kirino.engine.render.usage.scene.fsm.MeshletGpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletComputeSystem;

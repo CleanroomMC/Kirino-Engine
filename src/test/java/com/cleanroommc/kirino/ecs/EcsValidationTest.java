@@ -1,10 +1,13 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
 
-import com.cleanroommc.kirino.ecs.component.*;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+
 import com.cleanroommc.kirino.config.KirinoConfig;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
@@ -150,7 +153,7 @@ class EcsValidationTest {
                 return clazz == InvalidJob.class ? InvalidJob::new : TestJob::new;
             }
         };
-        JobScheduler scheduler = CleanECSRuntime.newJobScheduler(registry);
+        JobScheduler scheduler = RuntimeBootstrap.newJobScheduler(registry);
         var handle = scheduler.executeParallelJob(entities, TestJob.class, null, Runnable::run);
         handle.future().join();
         assertFalse(handle.async());

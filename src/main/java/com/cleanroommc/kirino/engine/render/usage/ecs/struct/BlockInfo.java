@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.render.usage.ecs.struct;
 
-import com.cleanroommc.kirino.ecs.component.scan.CleanStructSignature;
+import com.cleanroommc.kirino.ecs.api.component.scan.CleanStructSignature;
 
 @CleanStructSignature
 public class BlockInfo {

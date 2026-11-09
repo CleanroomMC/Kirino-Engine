@@ -1,7 +1,11 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.openjdk.jmh.annotations.*;
 
@@ -26,7 +30,7 @@ public class EntityIdIterationBenchmark {
 
     private ArchetypeDataPool pool;
     private Int2IntOpenHashMap rows;
-    private ArrayRange range;
+    private PoolRows range;
     private EntityManager.ExecutionScope execution;
     private EntityCommands commands;
     private ParallelJob job;
@@ -35,7 +39,7 @@ public class EntityIdIterationBenchmark {
     @Setup
     public void setup() {
         ComponentRegistry registry = new ComponentRegistry(new FieldRegistry(new StructRegistry()));
-        pool = new HeapPool(registry, List.of(), rowCount, rowCount, rowCount);
+        pool = new HeapPool(registry, List.of(), rowCount);
         rows = new Int2IntOpenHashMap();
         output = new int[rowCount];
         EntityManager entityManager = new EntityManager(registry);
@@ -55,7 +59,7 @@ public class EntityIdIterationBenchmark {
         } else if (removedPercent != 0) {
             throw new IllegalArgumentException("Unsupported removal percentage: " + removedPercent);
         }
-        range = pool.getArrayRange();
+        range = pool.getRows();
         verifyLookups();
         int[] expected = new int[rowCount];
         for (int row = 0; row < rowCount; row++) {
@@ -75,8 +79,8 @@ public class EntityIdIterationBenchmark {
 
     @Benchmark
     public int[] boxedIds() {
-        for (int row = range.start; row < range.end; row++) {
-            if (range.deprecatedIndexes.contains(row)) {
+        for (int row = 0; row < range.limit; row++) {
+            if (range.nextFree[row] != 0) {
                 continue;
             }
             int id = boxedEntityId(row).orElseThrow(IllegalStateException::new);
@@ -87,8 +91,8 @@ public class EntityIdIterationBenchmark {
 
     @Benchmark
     public int[] optionalIntIds() {
-        for (int row = range.start; row < range.end; row++) {
-            if (range.deprecatedIndexes.contains(row)) {
+        for (int row = 0; row < range.limit; row++) {
+            if (range.nextFree[row] != 0) {
                 continue;
             }
             int id = optionalIntEntityId(row).orElseThrow(IllegalStateException::new);
@@ -99,8 +103,8 @@ public class EntityIdIterationBenchmark {
 
     @Benchmark
     public int[] checkedIntIds() {
-        for (int row = range.start; row < range.end; row++) {
-            if (range.deprecatedIndexes.contains(row)) {
+        for (int row = 0; row < range.limit; row++) {
+            if (range.nextFree[row] != 0) {
                 continue;
             }
             int id = pool.getEntityID(row);
@@ -111,8 +115,8 @@ public class EntityIdIterationBenchmark {
 
     @Benchmark
     public int[] checkedIntSingleLookupIds() {
-        for (int row = range.start; row < range.end; row++) {
-            if (range.deprecatedIndexes.contains(row)) {
+        for (int row = 0; row < range.limit; row++) {
+            if (range.nextFree[row] != 0) {
                 continue;
             }
             int id = checkedEntityIdSingleLookup(row);

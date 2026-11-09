@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -36,6 +36,6 @@ class EntityIdLookupTest {
     }
 
     private static HeapPool pool() {
-        return new HeapPool(new ComponentRegistry(new FieldRegistry(new StructRegistry())), List.of(), 8, 8, 8);
+        return new HeapPool(new ComponentRegistry(new FieldRegistry(new StructRegistry())), List.of(), 8);
     }
 }

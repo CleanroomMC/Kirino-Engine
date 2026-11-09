@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.component.scan.CleanComponentSignature;
-import com.cleanroommc.kirino.ecs.component.scan.event.ComponentScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.scan.CleanComponentSignature;
+import com.cleanroommc.kirino.ecs.api.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import io.github.classgraph.ClassInfo;
@@ -20,7 +20,7 @@ import java.util.*;
  * Scan component classes and generate a list of register plans.
  * There is no class loading involved at all.
  *
- * @see com.cleanroommc.kirino.ecs.CleanECSRuntime
+ * @see com.cleanroommc.kirino.ecs.api.CleanECSRuntime
  */
 final class ComponentScanningHelper {
     private ComponentScanningHelper() {
@@ -41,13 +41,10 @@ final class ComponentScanningHelper {
         return fields;
     }
 
-    private static List<ComponentRegisterPlan> generatePlans(
-        Map<String, ObjectArrayList<FieldInfo>> components,
-        FieldRegistry fieldRegistry
-    ) {
+    private static List<ComponentRegisterPlan> generatePlans(Map<String, ObjectArrayList<FieldInfo>> components, FieldRegistry fieldRegistry) {
         List<ComponentRegisterPlan> plans = new ObjectArrayList<>();
 
-        Object2IntOpenHashMap<String> componentNameDuplicates   = new Object2IntOpenHashMap<>();
+        Object2IntOpenHashMap<String> componentNameDuplicates = new Object2IntOpenHashMap<>();
         Object2ObjectOpenHashMap<String, String> componentNames = new Object2ObjectOpenHashMap<>();
 
         for (Map.Entry<String, ObjectArrayList<FieldInfo>> entry : components.entrySet()) {
@@ -90,25 +87,21 @@ final class ComponentScanningHelper {
      * @return A list of component register plans
      */
     @NonNull
-    public static List<@NonNull ComponentRegisterPlan> scanComponentClasses(
-        @NonNull ComponentScanningEvent event,
-        @NonNull FieldRegistry fieldRegistry) {
+    public static List<@NonNull ComponentRegisterPlan> scanComponentClasses(@NonNull ComponentScanningEvent event, @NonNull FieldRegistry fieldRegistry) {
 
         Preconditions.checkNotNull(event);
         Preconditions.checkNotNull(fieldRegistry);
 
         // Чёткое указание класса, так как если он поменяет путь будут ошибка которую не сразу можно обнаружить
         String componentSignatureName = CleanComponentSignature.class.getName();
-        String cleanComponentName     = CleanComponent.class.getName();
+        String cleanComponentName = CleanComponent.class.getName();
 
         List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
-        Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
-            scanPackageNames,
-            componentSignatureName);
+        Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(scanPackageNames, componentSignatureName);
 
         Map<String, ObjectArrayList<FieldInfo>> components = new Object2ObjectAVLTreeMap<>();
         for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
-            if(!entry.getValue().implementsInterface(cleanComponentName)) {
+            if (!entry.getValue().implementsInterface(cleanComponentName)) {
                 continue;
             }
 

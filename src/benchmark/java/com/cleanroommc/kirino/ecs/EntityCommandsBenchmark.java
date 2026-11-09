@@ -1,6 +1,10 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import org.openjdk.jmh.annotations.*;
 
 import java.util.concurrent.TimeUnit;

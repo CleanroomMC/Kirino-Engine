@@ -1,16 +1,19 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityCreateContext;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateCallback;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateContext;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyCallback;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -23,7 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 
-public final class EntityManager {
+final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManager {
     private enum State {
         FREE, RESERVED, ALIVE, PENDING_DESTROY, RETIRED
     }
@@ -54,6 +57,7 @@ public final class EntityManager {
     private final Function<List<Class<? extends CleanComponent>>, ArchetypeDataPool> poolFactory;
     private final Map<ArchetypeKey, Archetype> archetypes = new Object2ObjectOpenHashMap<>();
     private final ObjectArrayList<EntityCommand> commands = new ObjectArrayList<>();
+    private final ReferenceOpenHashSet<ArchetypeDataPool> shrinkCandidates = new ReferenceOpenHashSet<>();
     private final IntArrayList freeSlots = new IntArrayList();
     private final CreateContext createContext = new CreateContext();
     private final DestroyContext destroyContext = new DestroyContext();
@@ -64,7 +68,7 @@ public final class EntityManager {
     private Throwable failure;
 
     EntityManager(ComponentRegistry componentRegistry) {
-        this(componentRegistry, components -> new HeapPool(componentRegistry, components, 100, 50, 50));
+        this(componentRegistry, components -> new HeapPool(componentRegistry, components, 100));
     }
 
     EntityManager(ComponentRegistry componentRegistry,
@@ -83,12 +87,14 @@ public final class EntityManager {
         requireAvailable();
         Objects.requireNonNull(query);
         List<ArchetypeDataPool> result = new ArrayList<>();
+        var mustHave = QueryAccess.mustHave(query);
+        var mustNotHave = QueryAccess.mustNotHave(query);
         for (Archetype archetype : archetypes.values()) {
             if (archetype.pool == null) {
                 continue;
             }
             boolean matches = true;
-            for (Class<? extends CleanComponent> component : query.mustHave) {
+            for (Class<? extends CleanComponent> component : mustHave) {
                 if (!archetype.key.contains(component)) {
                     matches = false;
                     break;
@@ -97,7 +103,7 @@ public final class EntityManager {
             if (!matches) {
                 continue;
             }
-            for (Class<? extends CleanComponent> component : query.mustNotHave) {
+            for (Class<? extends CleanComponent> component : mustNotHave) {
                 if (archetype.key.contains(component)) {
                     matches = false;
                     break;
@@ -294,12 +300,18 @@ public final class EntityManager {
                     case ADD_COM, REMOVE_COM -> migrate(slot, command);
                 }
             }
+            if (!shrinkCandidates.isEmpty()) {
+                for (ArchetypeDataPool pool : shrinkCandidates) {
+                    pool.trimCapacity();
+                }
+            }
         } catch (Throwable exception) {
             failure = exception;
             Throwables.throwIfUnchecked(exception);
             throw new CompletionException(exception);
         } finally {
             commands.clear();
+            shrinkCandidates.clear();
             createContext.components = null;
             destroyContext.pool = null;
             destroyContext.entityID = -1;
@@ -339,6 +351,7 @@ public final class EntityManager {
             }
         }
         old.pool.removeEntity(index);
+        shrinkCandidates.add(old.pool);
         slot.committed = null;
         slot.projected = null;
         slot.createCallback = null;
@@ -355,17 +368,10 @@ public final class EntityManager {
     private void migrate(Slot slot, EntityCommand command) {
         Archetype old = slot.committed;
         Archetype target = archetypes.get(command.target());
-        CleanComponent[] values = new CleanComponent[target.components.size()];
-        Class<? extends CleanComponent>[] elements = target.components.elements();
-
-        for (int i = 0; i < elements.length; i++) {
-            Class<? extends CleanComponent> component = elements[i];
-            values[i] = component == command.componentType() && command.type() == EntityCommand.Type.ADD_COM
-                ? command.component() : old.pool.getComponent(command.index(), component);
-        }
-
-        pool(target).addEntity(command.index(), values);
+        pool(target).addEntityFrom(command.index(), old.pool,
+            command.type() == EntityCommand.Type.ADD_COM ? command.component() : null);
         old.pool.removeEntity(command.index());
+        shrinkCandidates.add(old.pool);
         slot.committed = target;
     }
 

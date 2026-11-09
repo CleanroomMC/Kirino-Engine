@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.usage.task.job.ChunkPrioritizationJob;
 import org.jspecify.annotations.NonNull;

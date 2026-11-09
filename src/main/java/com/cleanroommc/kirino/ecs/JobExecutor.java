@@ -1,14 +1,15 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
 
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobScheduler.ExecutionHandle;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler.ExecutionHandle;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import org.jspecify.annotations.Nullable;
@@ -27,7 +28,13 @@ final class JobExecutor {
         this.jobRegistry = jobRegistry;
     }
 
-    public ExecutionHandle executeParallelJob(EntityManager entityManager, Class<? extends ParallelJob> clazz, @Nullable Map<String, Object> externalData, Executor executor) {
+    public ExecutionHandle executeParallelJob(com.cleanroommc.kirino.ecs.api.EntityManager manager,
+                                              Class<? extends ParallelJob> clazz,
+                                              @Nullable Map<String, Object> externalData,
+                                              Executor executor) {
+        if (!(manager instanceof EntityManager entityManager)) {
+            throw new IllegalArgumentException("Jobs require the built-in ECS entity manager implementation");
+        }
         Map<JobDataQuery, JobDataInjector> parallelJobDataQueries = jobRegistry.getParallelJobDataQueries(clazz);
         Map<String, JobDataInjector> parallelJobExternalDataQueries = jobRegistry.getParallelJobExternalDataQueries(clazz);
         JobInstantiator instantiator = jobRegistry.getParallelJobInstantiator(clazz);
@@ -57,11 +64,13 @@ final class JobExecutor {
             for (ArchetypeDataPool archetype : archetypes) {
                 ParallelJob job = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
-                ArrayRange arrayRange = archetype.getArrayRange();
+                PoolRows rows = archetype.getRows();
+                int rowLimit = rows.limit;
+                int[] nextFree = rows.nextFree;
 
                 int workload = 0;
-                for (int i = arrayRange.start; i < arrayRange.end; i++) {
-                    if (arrayRange.deprecatedIndexes.contains(i)) {
+                for (int i = 0; i < rowLimit; i++) {
+                    if (nextFree[i] != 0) {
                         continue;
                     }
 
@@ -84,8 +93,8 @@ final class JobExecutor {
 
                 if (futureCount <= 1) {
                     // run synchronously
-                    for (int i = arrayRange.start; i < arrayRange.end; i++) {
-                        if (arrayRange.deprecatedIndexes.contains(i)) {
+                    for (int i = 0; i < rowLimit; i++) {
+                        if (nextFree[i] != 0) {
                             continue;
                         }
 
@@ -95,10 +104,10 @@ final class JobExecutor {
                 } else {
                     // run asynchronously
                     int accumulated = 0;
-                    int startIndex = arrayRange.start;
+                    int startIndex = 0;
 
-                    for (int i = arrayRange.start; i < arrayRange.end; i++) {
-                        if (arrayRange.deprecatedIndexes.contains(i)) {
+                    for (int i = 0; i < rowLimit; i++) {
+                        if (nextFree[i] != 0) {
                             continue;
                         }
 
@@ -113,7 +122,7 @@ final class JobExecutor {
 
                             futures.add(CompletableFuture.runAsync(() -> {
                                 for (int j = finalStartIndex; j < endIndexExclusive; j++) {
-                                    if (arrayRange.deprecatedIndexes.contains(j)) {
+                                    if (nextFree[j] != 0) {
                                         continue;
                                     }
 
@@ -128,8 +137,8 @@ final class JobExecutor {
                     }
 
                     boolean hasRemainingWork = false;
-                    for (int j = startIndex; j < arrayRange.end; j++) {
-                        if (!arrayRange.deprecatedIndexes.contains(j)) {
+                    for (int j = startIndex; j < rowLimit; j++) {
+                        if (nextFree[j] == 0) {
                             hasRemainingWork = true;
                             break;
                         }
@@ -142,8 +151,8 @@ final class JobExecutor {
                         final ParallelJob jobPerThread = newParallelJob(instantiator, parallelJobDataQueries, parallelJobExternalDataQueries, archetype, externalData);
 
                         futures.add(CompletableFuture.runAsync(() -> {
-                            for (int j = finalStartIndex; j < arrayRange.end; j++) {
-                                if (arrayRange.deprecatedIndexes.contains(j)) {
+                            for (int j = finalStartIndex; j < rowLimit; j++) {
+                                if (nextFree[j] != 0) {
                                     continue;
                                 }
 

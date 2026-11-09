@@ -1,12 +1,12 @@
 package com.cleanroommc.kirino.ecs;
 
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 
-import com.cleanroommc.kirino.ecs.component.CleanComponent;
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.*;
 
@@ -17,17 +17,15 @@ final class HeapPool extends ArchetypeDataPool {
     private final CleanComponent[] insertionValues;
     private final Int2IntOpenHashMap entityRows = new Int2IntOpenHashMap();
     private final Int2IntOpenHashMap rowEntities = new Int2IntOpenHashMap();
-    private final IntArrayList freeRows = new IntArrayList();
-    private int rowLimit;
+    private final PoolRows rows;
+    private final Map<HeapPool, TransferPlan> transfers = new Reference2ObjectOpenHashMap<>();
     private int executions;
 
     public HeapPool(ComponentRegistry registry, List<Class<? extends CleanComponent>> components,
-                    int initSize, int growStep, int shrinkStep) {
-        super(registry, components, initSize, growStep, shrinkStep);
-        if (initSize < 0 || growStep <= 0 || shrinkStep <= 0) {
-            throw new IllegalArgumentException("Invalid pool capacity or resize step");
-        }
+                    int initSize) {
+        super(registry, components, initSize);
         entityRows.defaultReturnValue(-1);
+        rows = new PoolRows(initSize);
         bindings = new ColumnBinding[components.size()];
         insertionValues = new CleanComponent[components.size()];
         List<HeapPrimitiveArray> allColumns = new ArrayList<>();
@@ -85,25 +83,111 @@ final class HeapPool extends ArchetypeDataPool {
                 binding.codec.validate(component);
                 insertionValues[index] = component;
             }
-            boolean reuse = !freeRows.isEmpty();
-            int row = reuse ? freeRows.getInt(freeRows.size() - 1) : rowLimit;
-            if (row >= currentSize) {
-                resize(Math.addExact(currentSize, growStep));
-            }
+            int row = nextInsertionRow();
             for (int i = 0; i < bindings.length; i++) {
                 ColumnBinding binding = bindings[i];
 
                 binding.codec.write(insertionValues[i], binding, row);
             }
-            entityRows.put(entityID, row);
-            rowEntities.put(row, entityID);
-            if (reuse) {
-                freeRows.removeInt(freeRows.size() - 1);
-            } else {
-                rowLimit++;
-            }
+            publishEntity(entityID, row);
         } finally {
             Arrays.fill(insertionValues, null);
+        }
+    }
+
+    @Override
+    synchronized void addEntityFrom(int entityID, ArchetypeDataPool source, @Nullable CleanComponent addition) {
+        requireStructuralAccess();
+        if (!(source instanceof HeapPool sourcePool) || source.componentRegistry != componentRegistry) {
+            throw new IllegalArgumentException("Transfer requires heap pools from the same component registry");
+        }
+        sourcePool.requireStructuralAccess();
+        if (entityRows.containsKey(entityID)) {
+            throw new IllegalArgumentException("Entity already exists: " + entityID);
+        }
+        int sourceRow = sourcePool.row(entityID);
+        TransferPlan plan = transfers.get(sourcePool);
+        if (plan == null) {
+            plan = new TransferPlan(sourcePool, this);
+            transfers.put(sourcePool, plan);
+        }
+        if (plan.addition == null) {
+            if (addition != null) {
+                throw new IllegalArgumentException("REMOVE transfer doesn't accept an added component");
+            }
+        } else {
+            if (addition == null || addition.getClass() != plan.addition.layout.javaClass()) {
+                throw new IllegalArgumentException("Added component doesn't match target archetype");
+            }
+            plan.addition.codec.validate(addition);
+        }
+        int targetRow = nextInsertionRow();
+        if (plan.addition != null) {
+            plan.addition.codec.write(addition, plan.addition, targetRow);
+        }
+        for (int column = 0; column < plan.sources.length; column++) {
+            plan.sources[column].copyTo(sourceRow, plan.targets[column], targetRow);
+        }
+        publishEntity(entityID, targetRow);
+    }
+
+    private int nextInsertionRow() {
+        int row = rows.nextRow();
+        if (row >= currentSize) {
+            resize(PoolCapacity.grow(currentSize, Math.incrementExact(row)));
+        }
+        return row;
+    }
+
+    private void publishEntity(int entityID, int row) {
+        entityRows.put(entityID, row);
+        rowEntities.put(row, entityID);
+        rows.occupy(row);
+    }
+
+    private static final class TransferPlan {
+        final HeapPrimitiveArray[] sources;
+        final HeapPrimitiveArray[] targets;
+        final ColumnBinding addition;
+
+        TransferPlan(HeapPool source, HeapPool target) {
+            ColumnBinding missing = null;
+            int count = 0;
+            for (ColumnBinding destination : target.bindings) {
+                ColumnBinding origin = source.byClass.get(destination.layout.javaClass());
+                if (origin == null) {
+                    if (missing != null) {
+                        throw new IllegalArgumentException("Transfer adds more than one component");
+                    }
+                    missing = destination;
+                } else {
+                    if (origin.layout != destination.layout) {
+                        throw new IllegalArgumentException("Shared component layouts don't match");
+                    }
+                    count = Math.addExact(count, origin.columns.length);
+                }
+            }
+            if (missing == null ? source.bindings.length != target.bindings.length + 1
+                : source.bindings.length != target.bindings.length - 1) {
+                throw new IllegalArgumentException("Transfer must add or remove exactly one component");
+            }
+            addition = missing;
+            sources = new HeapPrimitiveArray[count];
+            targets = new HeapPrimitiveArray[count];
+            int offset = 0;
+            for (ColumnBinding destination : target.bindings) {
+                ColumnBinding origin = source.byClass.get(destination.layout.javaClass());
+                if (origin != null) {
+                    for (int column = 0; column < origin.columns.length; column++) {
+                        if (origin.columns[column].type() != destination.columns[column].type()) {
+                            throw new IllegalArgumentException("Shared column types don't match");
+                        }
+                        sources[offset] = origin.columns[column];
+                        targets[offset] = destination.columns[column];
+                        offset++;
+                    }
+                }
+            }
         }
     }
 
@@ -113,21 +197,21 @@ final class HeapPool extends ArchetypeDataPool {
         int row = row(entityID);
         entityRows.remove(entityID);
         rowEntities.remove(row);
-        if (row == rowLimit - 1) {
-            rowLimit--;
-            while (rowLimit > 0 && freeRows.rem(rowLimit - 1)) {
-                rowLimit--;
-            }
-            int target = currentSize - shrinkStep;
-            if (target >= initSize && target >= rowLimit) {
-                resize(target);
-            }
-        } else {
-            freeRows.add(row);
+        rows.release(row);
+    }
+
+    @Override
+    synchronized void trimCapacity() {
+        requireStructuralAccess();
+        int target = PoolCapacity.shrink(currentSize, rows.limit, initSize);
+        if (target != currentSize) {
+            resize(target);
         }
     }
 
     private void resize(int size) {
+        int[] nextFree = Arrays.copyOf(rows.nextFree, size);
+        int[] previousFree = Arrays.copyOf(rows.previousFree, size);
         Object[] replacements = new Object[columns.length];
         for (int i = 0; i < columns.length; i++) {
             replacements[i] = columns[i].resizedArray(size);
@@ -135,6 +219,8 @@ final class HeapPool extends ArchetypeDataPool {
         for (int i = 0; i < columns.length; i++) {
             columns[i].replaceArray(replacements[i], size);
         }
+        rows.nextFree = nextFree;
+        rows.previousFree = previousFree;
         currentSize = size;
     }
 
@@ -185,8 +271,8 @@ final class HeapPool extends ArchetypeDataPool {
     }
 
     @Override
-    public ArrayRange getArrayRange() {
-        return new ArrayRange(0, rowLimit, new IntOpenHashSet(freeRows));
+    public PoolRows getRows() {
+        return rows;
     }
 
     @Override

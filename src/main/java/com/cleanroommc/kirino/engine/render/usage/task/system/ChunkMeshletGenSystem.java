@@ -1,8 +1,8 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.usage.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.MeshletCreateCallback;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.MeshletDestroyCallback;
