@@ -1,5 +1,6 @@
 package com.cleanroommc.kirino.ui.font;
 
+import com.cleanroommc.cleanroom.cache.Cache;
 import com.cleanroommc.mcttf.api.McTTF;
 import com.cleanroommc.mcttf.extract.AssetSource;
 import com.cleanroommc.mcttf.font.FontStyle;
@@ -22,9 +23,9 @@ public final class McTtfFontData {
 
     @NonNull
     static Path defaultCacheDirectory() {
-        return Paths.get("").toAbsolutePath()
-                .resolve("cache")
-                .resolve("kirino")
+        return Cache.global()
+                .namespace("kirino")
+                .root()
                 .resolve("mcttf_fonts");
     }
 
