@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.NonNull;
 
 import java.lang.invoke.MethodHandle;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class ImmediateShaderAccess {
@@ -28,19 +27,6 @@ public class ImmediateShaderAccess {
 
     public ImmediateShaderAccess() {
         this((SourceLoader) rl -> MinecraftResourceUtils.readText(rl, MinecraftResourceUtils.NewLineType.BACK_SLASH_N));
-    }
-
-    public ImmediateShaderAccess(@NonNull Function<net.minecraft.util.ResourceLocation, String> sourceLoader) {
-        this((SourceLoader) rl -> sourceLoader.apply(new net.minecraft.util.ResourceLocation(rl.namespace(), rl.path())));
-        Preconditions.checkNotNull(sourceLoader);
-    }
-
-    /**
-     * Loads shader sources from their namespace and path.
-     */
-    public ImmediateShaderAccess(@NonNull BiFunction<String, String, String> sourceLoader) {
-        this((SourceLoader) rl -> sourceLoader.apply(rl.namespace(), rl.path()));
-        Preconditions.checkNotNull(sourceLoader);
     }
 
     private ImmediateShaderAccess(SourceLoader sourceLoader) {
