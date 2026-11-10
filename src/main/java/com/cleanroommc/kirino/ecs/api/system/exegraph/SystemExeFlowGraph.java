@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 /**
  * It guides the execution flow of ecs-systems.
@@ -110,6 +111,10 @@ public interface SystemExeFlowGraph {
         @CanIgnoreReturnValue
         @NonNull
         Builder<TFlowGraph> setFinishCallback(@Nullable Runnable callback);
+
+        @CanIgnoreReturnValue
+        @NonNull
+        Builder<TFlowGraph> setFailureCallback(@Nullable Consumer<Throwable> callback);
 
         /**
          * @return The building result

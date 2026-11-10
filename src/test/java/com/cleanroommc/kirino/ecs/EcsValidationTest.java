@@ -5,7 +5,7 @@ import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.EntityCommands;
 import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
@@ -139,20 +139,10 @@ class EcsValidationTest {
         EntityManager entities = new EntityManager(components);
         assertEquals(0, entities.createEntity().index);
         entities.flush();
-        JobRegistry registry = new JobRegistry(components) {
-            @Override
-            public Map<JobDataQuery, JobDataInjector> getParallelJobDataQueries(Class<? extends ParallelJob> clazz) {
-                return Map.of();
-            }
-            @Override
-            public Map<String, JobDataInjector> getParallelJobExternalDataQueries(Class<? extends ParallelJob> clazz) {
-                return clazz == ExternalJob.class ? Map.of("required", (owner, value) -> {}) : Map.of();
-            }
-            @Override
-            public JobInstantiator getParallelJobInstantiator(Class<? extends ParallelJob> clazz) {
-                return clazz == InvalidJob.class ? InvalidJob::new : TestJob::new;
-            }
-        };
+        JobRegistry registry = new JobRegistry(components);
+        registry.registerParallelJob(TestJob.class);
+        registry.registerParallelJob(InvalidJob.class);
+        registry.registerParallelJob(ExternalJob.class);
         JobScheduler scheduler = RuntimeBootstrap.newJobScheduler(registry);
         var handle = scheduler.executeParallelJob(entities, TestJob.class, null, Runnable::run);
         handle.future().join();
@@ -194,5 +184,8 @@ class EcsValidationTest {
         @Override
         public int estimateWorkload(int index) { return 0; }
     }
-    public static class ExternalJob extends TestJob {}
+    public static class ExternalJob extends TestJob {
+        @JobExternalDataQuery
+        private Object required;
+    }
 }

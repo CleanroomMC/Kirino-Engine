@@ -1,6 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage;
 
 import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.ShutdownManager;
 import com.cleanroommc.kirino.engine.render.core.GraphicsRuntimeBundle;
 import com.cleanroommc.kirino.engine.render.core.camera.MinecraftCamera;
@@ -44,9 +45,25 @@ public final class McSceneViewState {
         ForkJoinPool systemFlowPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystemFlow");
         ForkJoinPool systemPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoMinecraftSystem");
 
-        ShutdownManager.registerAsync(() -> {
+        Runnable workerShutdown = () -> {
+            ecsRuntime.quiesce().handle((unused, failure) -> null).join();
             ForkJoinPoolUtils.shutdownPool(systemFlowPool, 5);
             ForkJoinPoolUtils.shutdownPool(systemPool, 5);
+        };
+        ShutdownManager.registerAsync(workerShutdown);
+
+        ShutdownManager.registerBeforeResources(() -> {
+            try {
+                ecsRuntime.close();
+            } catch (Throwable failure) {
+                if (ecsRuntime.state() != CleanECSRuntime.State.CLOSED) {
+                    throw failure;
+                }
+                KirinoCommonCore.LOGGER.error("ECS shutdown completed with errors.", failure);
+            }
+            ForkJoinPoolUtils.shutdownPool(systemFlowPool, 5);
+            ForkJoinPoolUtils.shutdownPool(systemPool, 5);
+            ShutdownManager.unregisterAsync(workerShutdown);
         });
 
         meshletGpuRegistry = resourceLayout.slot(MeshletGpuRegistry.class, "meshlet_gpu_registry");

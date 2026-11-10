@@ -153,8 +153,7 @@ class PoolExecutionTest {
     }
 
     @Test
-    void checkedPreparationFailure_afterAcceptedTask_keepsGuardUntilTaskFinishes() throws Exception {
-        assumeTrue(Runtime.getRuntime().availableProcessors() > 1);
+    void checkedPreparationFailure_releasesGuardBeforeSubmittingThePool() throws Exception {
         Fixture fixture = fixture();
         List<Runnable> pending = new ArrayList<>();
 
@@ -162,10 +161,7 @@ class PoolExecutionTest {
             () -> fixture.scheduler.executeParallelJob(fixture.entities, CheckedWorkloadJob.class, null, pending::add));
 
         assertEquals("checked workload failure", failure.getCause().getMessage());
-        assertEquals(1, pending.size());
-        assertThrows(IllegalStateException.class, fixture.entities::flush);
-        assertThrows(IllegalStateException.class, () -> fixture.pool.removeEntity(1));
-        pending.getFirst().run();
+        assertTrue(pending.isEmpty());
         fixture.entities.flush();
         fixture.pool.removeEntity(1);
     }
@@ -345,7 +341,7 @@ class PoolExecutionTest {
 
         @Override
         public int estimateWorkload(int index) {
-            if (++estimates == 4) {
+            if (++estimates == 2) {
                 return PoolExecutionTest.<RuntimeException>raise(new Exception("checked workload failure"));
             }
             return super.estimateWorkload(index);

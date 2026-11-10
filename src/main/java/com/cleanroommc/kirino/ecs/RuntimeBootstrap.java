@@ -4,7 +4,6 @@ import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import com.cleanroommc.kirino.ecs.api.component.scan.event.ComponentScanningEvent;
 import com.cleanroommc.kirino.ecs.api.component.scan.event.StructScanningEvent;
-import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.job.event.JobRegistrationEvent;
@@ -137,20 +136,26 @@ final class RuntimeBootstrap {
         entityManager = new EntityManager(componentRegistry);
 
         jobRegistry = new JobRegistry(componentRegistry);
-        jobScheduler = newJobScheduler(jobRegistry);
+        jobScheduler = MethodHolder.newJobScheduler(new JobExecutor(jobRegistry, entityManager));
 
         JobRegistrationEvent jobRegistrationEvent = new JobRegistrationEvent();
         eventBus.post(jobRegistrationEvent);
         List<Class<? extends ParallelJob>> parallelJobs = MethodHolder.getParallelJobs(jobRegistrationEvent);
         for (Class<? extends ParallelJob> clazz : parallelJobs) {
             jobRegistry.registerParallelJob(clazz);
-            logger.debug("Parallel job \"{}\" registered. Data queries are as follows:{}", clazz.getName(), jobRegistry.getParallelJobDataQueries(clazz).isEmpty() && jobRegistry.getParallelJobExternalDataQueries(clazz).isEmpty() ? " (Empty)" : "");
+            JobDefinition definition = jobRegistry.getDefinition(clazz);
+            logger.debug("Parallel job \"{}\" registered. Data queries are as follows:{}", clazz.getName(),
+                definition.dataBindings.length == 0 && definition.externalBindings.length == 0 ? " (Empty)" : "");
 
             List<String> arrayQueries = new ArrayList<>();
-            for (JobDataQuery jobDataQuery : jobRegistry.getParallelJobDataQueries(clazz).keySet()) {
-                arrayQueries.add(componentRegistry.getComponentName(jobDataQuery.componentClass().asSubclass(CleanComponent.class)) + "; " + String.join(".", jobDataQuery.fieldAccessChain()));
+            for (JobDefinition.DataBinding binding : definition.dataBindings) {
+                arrayQueries.add(componentRegistry.getComponentName(binding.component) + "; "
+                    + String.join(".", binding.column.path()));
             }
-            List<String> externalQueries = new ArrayList<>(jobRegistry.getParallelJobExternalDataQueries(clazz).keySet());
+            List<String> externalQueries = new ArrayList<>();
+            for (JobDefinition.ExternalBinding binding : definition.externalBindings) {
+                externalQueries.add(binding.key);
+            }
             arrayQueries = arrayQueries.stream().sorted().toList();
             externalQueries = externalQueries.stream().sorted().toList();
 
@@ -170,6 +175,18 @@ final class RuntimeBootstrap {
 
     static JobScheduler newJobScheduler(JobRegistry registry) {
         return MethodHolder.newJobScheduler(new JobExecutor(registry));
+    }
+
+    static CleanECSRuntime.State state(com.cleanroommc.kirino.ecs.api.EntityManager manager) {
+        return ((EntityManager) manager).lifecycle.state();
+    }
+
+    static java.util.concurrent.CompletableFuture<Void> quiesce(com.cleanroommc.kirino.ecs.api.EntityManager manager) {
+        return ((EntityManager) manager).lifecycle.quiesce();
+    }
+
+    static void finish(com.cleanroommc.kirino.ecs.api.EntityManager manager, boolean reset) {
+        ((EntityManager) manager).lifecycle.finish(reset);
     }
 
     private static final class MethodHolder {

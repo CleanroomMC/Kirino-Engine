@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.render.usage.scene;
 
 import com.cleanroommc.kirino.KirinoClientCore;
 import com.cleanroommc.kirino.KirinoClientDebug;
+import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.ecs.api.EntityManager;
 import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
@@ -33,6 +34,7 @@ public class MinecraftScene extends CleanWorld {
     // callbacks will be executed at the end of the update - EntityManager.flush() to be exact
 
     private final ResourceStorage storage;
+    private final SceneFailure failure = new SceneFailure();
 
     private final Executor systemFlowExecutor;
 
@@ -77,8 +79,14 @@ public class MinecraftScene extends CleanWorld {
 
     private void condFlushECS() {
         if (!isAnySystemFlowExecuting()) {
+            failure.check();
             flushECS();
         }
+    }
+
+    private void onFlowFailure(String message, Throwable cause) {
+        failure.record(cause);
+        KirinoCommonCore.LOGGER.error(message, cause);
     }
 
     public MinecraftScene(
@@ -109,12 +117,12 @@ public class MinecraftScene extends CleanWorld {
 
         chunkPrioritizationSystem = SingleFlow.newBuilder(this, ChunkPrioritizationSystem.class)
                 .addTransition(new ChunkPrioritizationSystem(camera, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(terrainFsm::next)
+                .setFailureCallback(cause -> onFlowFailure("Chunk prioritization failed.", cause))
                 .build();
 
         chunkMeshletGenSystem = SingleFlow.newBuilder(this, ChunkMeshletGenSystem.class)
                 .addTransition(new ChunkMeshletGenSystem(storage, blockMeshGenerator, new MeshletDestroyCallback(storage, meshletGpuRegistry), new MeshletCreateCallback(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(terrainFsm::next)
+                .setFailureCallback(cause -> onFlowFailure("Chunk meshlet generation failed.", cause))
                 .build();
 
         chunkDelta = new CallbackDrivenChunkDelta();
@@ -123,18 +131,17 @@ public class MinecraftScene extends CleanWorld {
 
         meshletDestroySystem = SingleFlow.newBuilder(this, MeshletDestroySystem.class)
                 .addTransition(new MeshletDestroySystem(chunkDelta, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
-                .setFinishCallback(() -> {
-                    chunkDelta.chunksDestroyedLastFrame.clear();
-                    terrainFsm.next();
-                })
+                .setFailureCallback(cause -> onFlowFailure("Meshlet destruction failed.", cause))
                 .build();
 
         meshletDebugSystem = SingleFlow.newBuilder(this, MeshletDebugSystem.class)
                 .addTransition(new MeshletDebugSystem(storage, gizmosManager, systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .setFailureCallback(cause -> onFlowFailure("Meshlet debugging failed.", cause))
                 .build();
 
         meshletBufferWriteSystem = SingleFlow.newBuilder(this, MeshletBufferWriteSystem.class)
                 .addTransition(new MeshletBufferWriteSystem(new MeshletGpuWriterContext(storage, meshletGpuRegistry), systemExecutor), SingleFlow.START_NODE, SingleFlow.END_NODE)
+                .setFailureCallback(cause -> onFlowFailure("Meshlet buffer write failed.", cause))
                 .build();
 
         diffing = new DiffingContainer(camera);
@@ -190,10 +197,12 @@ public class MinecraftScene extends CleanWorld {
     private MeshletRenderPayload meshletRenderPayload = new MeshletRenderPayload(0, 0);
 
     public MeshletRenderPayload getMeshletRenderPayload() {
+        failure.check();
         return meshletRenderPayload;
     }
 
     public boolean isMeshletRenderReady() {
+        failure.check();
         return meshletFsm.isPullResultReady();
     }
     //</editor-fold>
@@ -204,11 +213,25 @@ public class MinecraftScene extends CleanWorld {
      * @param minecraftWorld The world from <code>Minecraft.getMinecraft().world</code>
      */
     public void tryUpdateWorld(WorldClient minecraftWorld) {
-        worldControl.tryUpdateWorld(minecraftWorld);
+        failure.check();
+        try {
+            worldControl.tryUpdateWorld(minecraftWorld);
+        } catch (Throwable worldFailure) {
+            throw failure.fail(worldFailure);
+        }
     }
 
     @Override
     public void update() {
+        failure.check();
+        try {
+            updateScene();
+        } catch (Throwable updateFailure) {
+            throw failure.fail(updateFailure);
+        }
+    }
+
+    private void updateScene() {
         if (!worldControl.isWorldReady()) {
             return;
         }

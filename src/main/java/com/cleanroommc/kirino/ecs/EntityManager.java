@@ -20,7 +20,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletionException;
@@ -54,8 +53,11 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     }
 
     private final ComponentRegistry componentRegistry;
+    final RuntimeLifecycle lifecycle = new RuntimeLifecycle(this);
     private final Function<List<Class<? extends CleanComponent>>, ArchetypeDataPool> poolFactory;
-    private final Map<ArchetypeKey, Archetype> archetypes = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<ArchetypeKey, Archetype> archetypes = new Object2ObjectOpenHashMap<>();
+    private QueryCache queryCache;
+    private int poolCount;
     private final ObjectArrayList<EntityCommand> commands = new ObjectArrayList<>();
     private final ReferenceOpenHashSet<ArchetypeDataPool> shrinkCandidates = new ReferenceOpenHashSet<>();
     private final IntArrayList freeSlots = new IntArrayList();
@@ -116,9 +118,35 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
         return result;
     }
 
+    final synchronized ArchetypeDataPool[] selectPools(EntityQuery query) {
+        requireAvailable();
+        Objects.requireNonNull(query);
+        if (poolCount < QueryCache.MIN_POOLS) {
+            return startQuery(query).toArray(ArchetypeDataPool[]::new);
+        }
+
+        var required = QueryAccess.mustHave(query);
+        var excluded = QueryAccess.mustNotHave(query);
+        if ((long) required.size() + excluded.size() > QueryCache.MAX_CONDITIONS) {
+            return startQuery(query).toArray(ArchetypeDataPool[]::new);
+        }
+        if (queryCache == null) {
+            queryCache = new QueryCache();
+        }
+        int hash = QueryCache.hash(required, excluded);
+        ArchetypeDataPool[] pools = queryCache.find(hash, required, excluded);
+        if (pools != null) {
+            return pools;
+        }
+
+        pools = startQuery(query).toArray(ArchetypeDataPool[]::new);
+        queryCache.store(hash, required, excluded, pools);
+        return pools;
+    }
+
     final synchronized ExecutionScope beginExecution(EntityQuery query) {
         requireAvailable();
-        ExecutionScope scope = new ExecutionScope(startQuery(query).toArray(ArchetypeDataPool[]::new));
+        ExecutionScope scope = new ExecutionScope(selectPools(query));
         int acquired = 0;
         try {
             for (ArchetypeDataPool pool : scope.pools) {
@@ -141,6 +169,70 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
         }
         executions++;
         return scope;
+    }
+
+    synchronized void requireLifecycleAccess() {
+        Preconditions.checkState(!flushing, "Runtime lifecycle operations are forbidden inside entity callbacks.");
+    }
+
+    synchronized Throwable clearEntities(boolean reset) {
+        Preconditions.checkState(executions == 0, "Cannot clear entities while jobs use their storage.");
+        flushing = true;
+        Throwable cleanupFailure = null;
+        try {
+            commands.clear();
+            freeSlots.clear();
+            for (int i = 0; i < slotCount; i++) {
+                Slot slot = slots[i];
+                try {
+                    if (slot.committed != null && slot.destroyCallback != null) {
+                        destroyContext.entityID = i;
+                        destroyContext.pool = slot.committed.pool;
+                        slot.destroyCallback.beforeDestroy(destroyContext);
+                    }
+                } catch (Throwable callbackFailure) {
+                    cleanupFailure = ExecutionFailures.merge(cleanupFailure, callbackFailure);
+                } finally {
+                    destroyContext.pool = null;
+                    destroyContext.entityID = -1;
+                    slot.committed = null;
+                    slot.projected = null;
+                    slot.createCallback = null;
+                    slot.destroyCallback = null;
+                    if (slot.generation == Integer.MAX_VALUE || slot.state == State.RETIRED) {
+                        slot.state = State.RETIRED;
+                    } else {
+                        slot.generation++;
+                        slot.state = State.FREE;
+                        freeSlots.add(i);
+                    }
+                }
+            }
+        } finally {
+            commands.clear();
+            commands.trim();
+            shrinkCandidates.clear();
+            shrinkCandidates.trim();
+            archetypes.clear();
+            archetypes.trim();
+            if (queryCache != null) {
+                queryCache.clear();
+            }
+            queryCache = null;
+            poolCount = 0;
+            createContext.components = null;
+            destroyContext.pool = null;
+            destroyContext.entityID = -1;
+            failure = null;
+            if (!reset) {
+                slots = new Slot[16];
+                slotCount = 0;
+                freeSlots.clear();
+                freeSlots.trim();
+            }
+            flushing = false;
+        }
+        return cleanupFailure;
     }
 
     final class ExecutionScope implements AutoCloseable {
@@ -206,7 +298,7 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
                                               EntityCreateCallback createCallback, CleanComponent... components) {
             synchronized (EntityManager.this) {
                 requireOpen();
-                return EntityManager.this.createEntity(destroyCallback, createCallback, components);
+                return createEntityInternal(destroyCallback, createCallback, components);
             }
         }
 
@@ -267,7 +359,7 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
         }
 
         private void requireOpen() {
-            requireAvailable();
+            requireHealthy();
             Preconditions.checkState(!execution.closed, "The entity command writer's execution has ended.");
         }
     }
@@ -341,10 +433,12 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     private void destroy(Slot slot, int index) {
         Archetype old = slot.committed;
         if (slot.destroyCallback != null) {
+            EntityDestroyCallback callback = slot.destroyCallback;
+            slot.destroyCallback = null;
             destroyContext.entityID = index;
             destroyContext.pool = old.pool;
             try {
-                slot.destroyCallback.beforeDestroy(destroyContext);
+                callback.beforeDestroy(destroyContext);
             } finally {
                 destroyContext.pool = null;
                 destroyContext.entityID = -1;
@@ -384,6 +478,11 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     public synchronized CleanEntityHandle createEntity(@Nullable EntityDestroyCallback destroyCallback,
                                                        @Nullable EntityCreateCallback createCallback, @NonNull CleanComponent @NonNull ... components) {
         requireAvailable();
+        return createEntityInternal(destroyCallback, createCallback, components);
+    }
+
+    private CleanEntityHandle createEntityInternal(EntityDestroyCallback destroyCallback,
+                                                   EntityCreateCallback createCallback, CleanComponent[] components) {
         Objects.requireNonNull(components);
         ObjectArrayView<CleanComponent> values = ObjectArrayView.copyOf(components);
         List<Class<? extends CleanComponent>> types = new ArrayList<>(values.size());
@@ -506,7 +605,8 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     }
 
     synchronized boolean isValid(int index, int generation) {
-        return failure == null && index >= 0 && index < slotCount && acceptsCommands(slots[index], generation);
+        return lifecycle.state() == com.cleanroommc.kirino.ecs.api.CleanECSRuntime.State.RUNNING
+            && failure == null && index >= 0 && index < slotCount && acceptsCommands(slots[index], generation);
     }
 
     synchronized boolean contains(int index, int generation, Class<? extends CleanComponent> component) {
@@ -529,7 +629,8 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     }
 
     synchronized boolean isAlive(int index, int generation) {
-        return failure == null && index >= 0 && index < slotCount
+        return lifecycle.state() == com.cleanroommc.kirino.ecs.api.CleanECSRuntime.State.RUNNING
+            && failure == null && index >= 0 && index < slotCount
             && slots[index].generation == generation && slots[index].state == State.ALIVE;
     }
 
@@ -549,6 +650,10 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     private ArchetypeDataPool pool(Archetype archetype) {
         if (archetype.pool == null) {
             archetype.pool = Objects.requireNonNull(createPool(archetype.components));
+            poolCount++;
+            if (queryCache != null) {
+                queryCache.clear();
+            }
         }
         return archetype.pool;
     }
@@ -610,6 +715,11 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
     }
 
     private void requireAvailable() {
+        lifecycle.requireRunning();
+        requireHealthy();
+    }
+
+    private void requireHealthy() {
         if (failure != null) {
             throw new IllegalStateException("Entity manager failed during commit or execution release", failure);
         }

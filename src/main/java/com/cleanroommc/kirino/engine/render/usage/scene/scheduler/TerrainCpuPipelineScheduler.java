@@ -1,17 +1,22 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.scheduler;
 
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.CallbackDrivenChunkDelta;
 import com.cleanroommc.kirino.engine.render.usage.scene.fsm.TerrainCpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.usage.task.system.ChunkMeshletGenSystem;
 import com.cleanroommc.kirino.engine.render.usage.task.system.ChunkPrioritizationSystem;
 import com.cleanroommc.kirino.engine.render.usage.task.system.MeshletDestroySystem;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.jspecify.annotations.Nullable;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
+import java.util.function.IntConsumer;
 
-public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
+public final class TerrainCpuPipelineScheduler implements UpdateScheduler {
 
     public static class UpdateHint {
         public boolean cameraMoved;
@@ -24,10 +29,14 @@ public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
     public final UpdateHint updateHint = new UpdateHint();
 
     private final TerrainCpuPipelineFSM terrainFsm;
-    private final SingleFlow<ChunkPrioritizationSystem> chunkPrioritizationSystem;
-    private final SingleFlow<MeshletDestroySystem> meshletDestroySystem;
-    private final SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem;
+    private final SystemExeFlowGraph chunkPrioritizationSystem;
+    private final SystemExeFlowGraph meshletDestroySystem;
+    private final SystemExeFlowGraph chunkMeshletGenSystem;
+    private final IntConsumer setLod;
     private final Executor systemFlowExecutor;
+    private @Nullable CompletableFuture<Void> pending;
+    private TerrainCpuPipelineFSM.@Nullable State pendingStage;
+    private @Nullable Throwable failure;
 
     public TerrainCpuPipelineScheduler(
             TerrainCpuPipelineFSM terrainFsm,
@@ -36,10 +45,18 @@ public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
             SingleFlow<ChunkMeshletGenSystem> chunkMeshletGenSystem,
             Executor systemFlowExecutor) {
 
+        this(terrainFsm, chunkPrioritizationSystem, meshletDestroySystem, chunkMeshletGenSystem,
+            chunkMeshletGenSystem.getSystem()::setLod, systemFlowExecutor);
+    }
+
+    TerrainCpuPipelineScheduler(TerrainCpuPipelineFSM terrainFsm, SystemExeFlowGraph chunkPrioritizationSystem,
+                                SystemExeFlowGraph meshletDestroySystem, SystemExeFlowGraph chunkMeshletGenSystem,
+                                IntConsumer setLod, Executor systemFlowExecutor) {
         this.terrainFsm = terrainFsm;
         this.chunkPrioritizationSystem = chunkPrioritizationSystem;
         this.meshletDestroySystem = meshletDestroySystem;
         this.chunkMeshletGenSystem = chunkMeshletGenSystem;
+        this.setLod = setLod;
         this.systemFlowExecutor = systemFlowExecutor;
     }
 
@@ -52,7 +69,31 @@ public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
         Preconditions.checkArgument(payload instanceof UpdateHint,
                 "Payload must be an instance of \"TerrainCpuPipelineScheduler.UpdateHint\".");
 
-        UpdateHint hint = (UpdateHint) payload;
+        if (failure != null) {
+            throw fail(failure);
+        }
+
+        try {
+            return update((UpdateHint) payload);
+        } catch (Throwable updateFailure) {
+            throw fail(updateFailure);
+        }
+    }
+
+    private boolean update(UpdateHint hint) {
+        if (pending != null) {
+            if (!pending.isDone()) {
+                return false;
+            }
+
+            pending.join();
+            Preconditions.checkState(terrainFsm.getState() == pendingStage,
+                "The terrain stage changed while its flow was running.");
+
+            terrainFsm.next();
+            pending = null;
+            pendingStage = null;
+        }
 
         // newChunksAdded will be modified at the end of update by ChunkCreateCallback
         boolean chunkPopulationChange = hint.cameraMoved || hint.renderDisChanged || hint.newWorld || hint.chunkDelta.newChunksAdded;
@@ -70,17 +111,16 @@ public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
             terrainFsm.setMeshletGenCounter(hint.foregroundRenderDis); // we just updated the render distance; it's up to date
             terrainFsm.prioritizeChunks();
 
-            // compute the lod of every loaded chunk
-            // callback: terrainFsm.next() (MESHLET_GEN_TASK)
-            chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
+            pendingStage = terrainFsm.getState();
+            pending = chunkPrioritizationSystem.executeAsync(systemFlowExecutor);
         }
         //</editor-fold>
 
         //<editor-fold desc="process MESHLET_GEN_TASK -> IDLE">
-        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.MESHLET_GEN_TASK && !chunkMeshletGenSystem.isExecuting()) {
-            chunkMeshletGenSystem.getSystem().setLod(terrainFsm.getMeshletGenCounter());
-            // callback: terrainFsm.next() (MESHLET_GEN_TASK; finally IDLE); it also increments meshlet gen counter
-            chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
+        if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.MESHLET_GEN_TASK) {
+            setLod.accept(terrainFsm.getMeshletGenCounter());
+            pendingStage = terrainFsm.getState();
+            pending = chunkMeshletGenSystem.executeAsync(systemFlowExecutor);
         }
         //</editor-fold>
 
@@ -88,12 +128,24 @@ public final class TerrainCpuPipelineScheduler implements UpdateScheduler{
         // chunksDestroyedLastFrame will be modified at the end of update by ChunkDestroyCallback
         if (terrainFsm.getState() == TerrainCpuPipelineFSM.State.IDLE && !hint.chunkDelta.chunksDestroyedLastFrame.isEmpty()) {
             terrainFsm.destroyMeshlets();
-            // callback: terrainFsm.next() (IDLE)
             // must be blocking to prevent chunksDestroyedLastFrame from being modified (race)
             meshletDestroySystem.execute();
+            hint.chunkDelta.chunksDestroyedLastFrame.clear();
+            terrainFsm.next();
         }
         //</editor-fold>
 
         return false;
+    }
+
+    private RuntimeException fail(Throwable cause) {
+        while (cause instanceof CompletionException && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        if (failure == null) {
+            failure = cause;
+        }
+        Throwables.throwIfUnchecked(failure);
+        return new CompletionException(failure);
     }
 }

@@ -65,8 +65,9 @@ class PreparedSchemaTest {
         assertArrayEquals(values, components.flattenComponent(components.newComponent(components.getComponentName(meshlet), values)));
         JobRegistry jobs = new JobRegistry(components);
         jobs.registerParallelJob(com.cleanroommc.kirino.engine.render.usage.task.job.ChunkMeshletGenJob.class);
-        for (JobDataQuery query : jobs.getParallelJobDataQueries(com.cleanroommc.kirino.engine.render.usage.task.job.ChunkMeshletGenJob.class).keySet()) {
-            assertNotNull(jobs.getParallelJobColumn(com.cleanroommc.kirino.engine.render.usage.task.job.ChunkMeshletGenJob.class, query));
+        for (JobDefinition.DataBinding binding : jobs.getDefinition(
+            com.cleanroommc.kirino.engine.render.usage.task.job.ChunkMeshletGenJob.class).dataBindings) {
+            assertSame(components.getLayout(binding.component).resolve(binding.column.path().elements()), binding.column);
         }
     }
 
@@ -287,17 +288,16 @@ class PreparedSchemaTest {
         ComponentRegistry components = components();
         JobRegistry jobs = new JobRegistry(components);
         jobs.registerParallelJob(TestJob.class);
-        JobDataQuery query = TestJob.class.getField("counts").getAnnotation(JobDataQuery.class);
-        SchemaLayout.Column column = jobs.getParallelJobColumn(TestJob.class, query);
+        JobDefinition definition = jobs.getDefinition(TestJob.class);
+        assertEquals(1, definition.dataBindings.length);
+        SchemaLayout.Column column = definition.dataBindings[0].column;
         assertSame(components.getLayout(TestComponent.class).resolve("leaf", "count"), column);
         HeapPool pool = new HeapPool(components, List.of(TestComponent.class), 1);
         pool.addEntity(4, new CleanComponent[]{component(7)});
-        TestJob job = (TestJob) jobs.getParallelJobInstantiator(TestJob.class).instantiate();
-        jobs.getParallelJobDataQueries(TestJob.class).get(query).inject(job, pool.getArray(TestComponent.class, column));
+        TestJob job = (TestJob) definition.instantiate(definition.resolveColumns(pool), definition.resolveExternalData(null));
         assertEquals(17, job.counts.getInt(0));
         assertThrows(RuntimeException.class, () -> jobs.registerParallelJob(InvalidJob.class));
-        assertNull(jobs.getParallelJobInstantiator(InvalidJob.class));
-        assertNull(jobs.getParallelJobDataQueries(InvalidJob.class));
+        assertNull(jobs.getDefinition(InvalidJob.class));
     }
 
     @Test

@@ -17,6 +17,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.invoke.MethodHandle;
 import java.util.*;
 import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
 
 import static com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph.*;
 
@@ -31,6 +32,7 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
 
         private TSys system = null;
         private @Nullable Runnable finishCallback;
+        private @Nullable Consumer<Throwable> failureCallback;
 
         BuilderImpl(CleanWorld world, Class<TSys> clazz) {
             this.world = world;
@@ -109,6 +111,13 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             return this;
         }
 
+        @CanIgnoreReturnValue
+        @Override
+        public @NonNull Builder<SingleFlow<TSys>> setFailureCallback(@Nullable Consumer<Throwable> callback) {
+            failureCallback = callback;
+            return this;
+        }
+
         @Override
         public @NonNull SingleFlow<TSys> build() {
             Preconditions.checkState(system != null,
@@ -173,14 +182,14 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkState(reachable.size() == nodes.size(),
                 "Some nodes are not reachable from the START node.");
 
-            return MethodHolder.newFlow(system, new SingleFlowExecutor<>(world, topo, finishCallback));
+            return MethodHolder.newFlow(system, new SingleFlowExecutor<>(world, topo, finishCallback, failureCallback));
         }
     }
     //</editor-fold>
 
     private SingleFlowExecutor(@NonNull CleanWorld world, @NonNull List<@NonNull BarrierNode> topo,
-                               @Nullable Runnable finishCallback) {
-        super(world, topo, finishCallback);
+                               @Nullable Runnable finishCallback, @Nullable Consumer<Throwable> failureCallback) {
+        super(world, topo, finishCallback, failureCallback);
     }
 
     static <T extends CleanSystem> Builder<SingleFlow<T>> newBuilder(CleanWorld world, Class<T> clazz) {

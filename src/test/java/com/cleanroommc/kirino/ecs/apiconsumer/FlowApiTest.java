@@ -60,7 +60,9 @@ class FlowApiTest {
         assertEquals(1, pending.size());
         assertThrows(IllegalStateException.class, flow::execute);
         assertThrows(IllegalStateException.class, () -> flow.executeAsync(pending::add));
-        pending.getFirst().run();
+        while (!pending.isEmpty()) {
+            pending.removeFirst().run();
+        }
         completion.join();
         assertFalse(flow.isExecuting());
         assertEquals(List.of("system"), events);
@@ -106,21 +108,25 @@ class FlowApiTest {
     }
 
     @Test
-    void systemFailure_propagatesAndRunsFinishCallbackBeforeReleasingExecutionState() throws Exception {
+    void systemFailure_propagatesAndSkipsSuccessCallback() throws Exception {
         World world = new World(RuntimeApiTest.runtime(home));
         IllegalStateException failure = new IllegalStateException("test system failure");
         List<String> events = new ArrayList<>();
         var flow = SingleFlow.newBuilder(world, FailingSystem.class)
             .addTransition(new FailingSystem(failure), SystemExeFlowGraph.START_NODE, SystemExeFlowGraph.END_NODE)
             .setFinishCallback(() -> events.add("finish"))
+            .setFailureCallback(actual -> {
+                assertSame(failure, actual);
+                events.add("failure");
+            })
             .build();
         assertSame(failure, assertThrows(IllegalStateException.class, flow::execute));
-        assertEquals(List.of("finish"), events);
+        assertEquals(List.of("failure"), events);
         assertFalse(flow.isExecuting());
         CompletionException completion = assertThrows(CompletionException.class,
             () -> flow.executeAsync(Runnable::run).join());
         assertSame(failure, completion.getCause());
-        assertEquals(List.of("finish", "finish"), events);
+        assertEquals(List.of("failure", "failure"), events);
         assertFalse(flow.isExecuting());
     }
 
@@ -134,6 +140,17 @@ class FlowApiTest {
             .addDummyTransition("cycle", "cycle")
             .addDummyTransition("cycle", SystemExeFlowGraph.END_NODE);
         assertThrows(IllegalStateException.class, builder::build);
+    }
+
+    @Test
+    void failureCallbackWrappingPrimary_doesNotReplaceItOrCreateCircularSuppression() throws Exception {
+        World world = new World(RuntimeApiTest.runtime(home));
+        IllegalStateException primary = new IllegalStateException("system");
+        var flow = SingleFlow.newBuilder(world, FailingSystem.class)
+            .addTransition(new FailingSystem(primary), SystemExeFlowGraph.START_NODE, SystemExeFlowGraph.END_NODE)
+            .setFailureCallback(cause -> { throw new RuntimeException("observer", cause); }).build();
+        assertSame(primary, assertThrows(IllegalStateException.class, flow::execute));
+        assertEquals(0, primary.getSuppressed().length);
     }
 
     private static SingleFlow<RecordingSystem> simpleFlow(World world, RecordingSystem system) {

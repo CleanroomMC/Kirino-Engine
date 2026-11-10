@@ -2,6 +2,7 @@ package com.cleanroommc.kirino.engine.render.usage.scene.scheduler;
 
 import com.cleanroommc.kirino.KirinoClientDebug;
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
+import com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph;
 import com.cleanroommc.kirino.engine.render.usage.debug.data.MeshletGpuTimeline;
 import com.cleanroommc.kirino.engine.render.usage.scene.fsm.MeshletGpuPipelineFSM;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletComputeSystem;
@@ -10,9 +11,12 @@ import com.cleanroommc.kirino.engine.render.usage.task.system.MeshletBufferWrite
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL30;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
@@ -29,8 +33,10 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
     private final ResourceStorage storage;
     private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
     private final ResourceSlot<MeshletComputeSystem> meshletComputeSystem;
-    private final SingleFlow<MeshletBufferWriteSystem> meshletBufferWriteSystem;
+    private final SystemExeFlowGraph meshletBufferWriteSystem;
     private final Executor systemFlowExecutor;
+    private @Nullable CompletableFuture<Void> writing;
+    private @Nullable Throwable failure;
 
     public MeshletGpuPipelineScheduler(
             MeshletGpuPipelineFSM meshletFsm,
@@ -40,6 +46,14 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
             SingleFlow<MeshletBufferWriteSystem> meshletBufferWriteSystem,
             Executor systemFlowExecutor) {
 
+        this(meshletFsm, storage, meshletGpuRegistry, meshletComputeSystem,
+            (SystemExeFlowGraph) meshletBufferWriteSystem, systemFlowExecutor);
+    }
+
+    MeshletGpuPipelineScheduler(MeshletGpuPipelineFSM meshletFsm, ResourceStorage storage,
+                               ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry,
+                               ResourceSlot<MeshletComputeSystem> meshletComputeSystem,
+                               SystemExeFlowGraph meshletBufferWriteSystem, Executor systemFlowExecutor) {
         this.meshletFsm = meshletFsm;
         this.storage = storage;
         this.meshletGpuRegistry = meshletGpuRegistry;
@@ -61,6 +75,22 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
         ComputeResult result = (ComputeResult) payload;
         result.update = false;
 
+        if (failure != null) {
+            throw fail(failure);
+        }
+
+        try {
+            return update(result);
+        } catch (Throwable updateFailure) {
+            throw fail(updateFailure);
+        }
+    }
+
+    private boolean update(ComputeResult result) {
+        if (writing != null && writing.isDone()) {
+            writing.join();
+        }
+
         //<editor-fold desc="process INITIAL_WAIT -> IDLE">
         if (meshletFsm.getState() == MeshletGpuPipelineFSM.State.INITIAL_WAIT) {
             meshletFsm.next(); // INITIAL_WAIT or IDLE
@@ -81,8 +111,7 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
                 } else {
                     KirinoClientDebug.MeshletGpuTimeline$beginWriting();
 
-                    storage.get(meshletGpuRegistry).beginWriting();
-                    meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+                    beginWriting();
                     meshletFsm.next(); // COMPUTABLE
 
                     KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_BEGIN_WRITING);
@@ -92,10 +121,11 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
 
                 if (!storage.get(meshletComputeSystem).isShaderRunning()
                         && storage.get(meshletGpuRegistry).isWriting()
-                        && !meshletBufferWriteSystem.isExecuting()) {
+                        && writingSucceeded()) {
                     KirinoClientDebug.MeshletGpuTimeline$finishWriting();
 
                     storage.get(meshletGpuRegistry).finishWriting();
+                    writing = null;
                     meshletFsm.next(); // COMPUTABLE
 
                     KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.IDLE_FINISH_WRITING);
@@ -109,15 +139,15 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
             // before dispatching compute, finish existing writing task if possible
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isWriting()
-                    && !meshletBufferWriteSystem.isExecuting()) {
+                    && writingSucceeded()) {
                 KirinoClientDebug.MeshletGpuTimeline$finishWriting();
 
                 storage.get(meshletGpuRegistry).finishWriting();
+                writing = null;
 
                 KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_FINISH_WRITING);
             }
 
-            // todo: fail safe
             // start dispatching if possible
             if (!storage.get(meshletComputeSystem).isShaderRunning()
                     && storage.get(meshletGpuRegistry).isFinishedWritingOnce()
@@ -136,8 +166,7 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
                 if (storage.get(meshletGpuRegistry).hasMeshletChanges()) {
                     KirinoClientDebug.MeshletGpuTimeline$beginWriting();
 
-                    storage.get(meshletGpuRegistry).beginWriting();
-                    meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+                    beginWriting();
 
                     KirinoClientDebug.MeshletGpuTimeline$pushFrameState(MeshletGpuTimeline.State.COMPUTABLE_BEGIN_WRITING);
                 }
@@ -167,5 +196,33 @@ public final class MeshletGpuPipelineScheduler implements UpdateScheduler {
         //</editor-fold>
 
         return false;
+    }
+
+    private void beginWriting() {
+        Preconditions.checkState(writing == null, "The previous writing execution has not been consumed.");
+
+        storage.get(meshletGpuRegistry).beginWriting();
+        writing = meshletBufferWriteSystem.executeAsync(systemFlowExecutor);
+    }
+
+    private boolean writingSucceeded() {
+        Preconditions.checkState(writing != null, "Writing has no associated flow execution.");
+        if (!writing.isDone()) {
+            return false;
+        }
+
+        writing.join();
+        return true;
+    }
+
+    private RuntimeException fail(Throwable cause) {
+        while (cause instanceof CompletionException && cause.getCause() != null) {
+            cause = cause.getCause();
+        }
+        if (failure == null) {
+            failure = cause;
+        }
+        Throwables.throwIfUnchecked(failure);
+        return new CompletionException(failure);
     }
 }

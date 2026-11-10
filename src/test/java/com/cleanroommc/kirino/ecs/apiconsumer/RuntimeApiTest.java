@@ -86,7 +86,8 @@ public class RuntimeApiTest {
         runtime.entityManager.flush();
     }
 
-    static CleanECSRuntime runtime(Path home) throws Exception {
+    @SafeVarargs
+    static CleanECSRuntime runtime(Path home, Class<? extends ParallelJob>... extraJobs) throws Exception {
         CleanroomEnvironment.setSide(Side.CLIENT);
         var homeField = FMLInjectionData.class.getDeclaredField("minecraftHome");
         homeField.setAccessible(true);
@@ -101,7 +102,7 @@ public class RuntimeApiTest {
             Launch.minecraftHome = previousLaunch;
         }
         EventBus events = new EventBus();
-        Registration registration = new Registration();
+        Registration registration = new Registration(extraJobs);
         events.register(registration);
         try {
             return CleanECSRuntime.create(events, LogManager.getLogger(RuntimeApiTest.class));
@@ -111,12 +112,19 @@ public class RuntimeApiTest {
     }
 
     public static class Registration {
+        private final Class<? extends ParallelJob>[] extraJobs;
+
+        Registration(Class<? extends ParallelJob>[] extraJobs) { this.extraJobs = extraJobs; }
+
         @SubscribeEvent
         public void registration(Event event) {
             if (event instanceof ComponentScanningEvent components) {
                 components.register(RuntimeApiTest.class.getPackageName());
             } else if (event instanceof JobRegistrationEvent jobs) {
                 jobs.register(IncrementJob.class);
+                for (Class<? extends ParallelJob> job : extraJobs) {
+                    jobs.register(job);
+                }
             }
         }
     }
