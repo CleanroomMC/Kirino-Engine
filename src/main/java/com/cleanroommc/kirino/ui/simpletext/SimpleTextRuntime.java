@@ -251,7 +251,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     //</editor-fold>
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private static final float LINE_GAP = 1f;
     private float penX = 0;

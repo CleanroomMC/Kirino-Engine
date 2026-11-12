@@ -32,8 +32,8 @@ public class GuiRenderer implements AutoCloseable {
     private final ShaderProgram program;
     private final VAO dummyVao;
 
-    private final float viewportWidth;
-    private final float viewportHeight;
+    private final float logicalWidth;
+    private final float logicalHeight;
 
     // stride=8
     // vec2 pos
@@ -82,17 +82,23 @@ public class GuiRenderer implements AutoCloseable {
     private ByteBuffer idbWorkspace = null;
     private final IDBView idb;
 
+    /**
+     * @param logicalWidth Logical GUI width. Both dimensions must be finite and positive,
+     *                     or both zero to use Minecraft's scaled resolution at draw time
+     * @param logicalHeight Logical GUI height. Both dimensions must be finite and positive,
+     *                      or both zero to use Minecraft's scaled resolution at draw time
+     */
     GuiRenderer(
             ImmediateShaderAccess shaderAccess,
             VAO dummyVao, TransientArena arena,
-            float viewportWidth,
-            float viewportHeight) {
+            float logicalWidth,
+            float logicalHeight) {
 
-        Preconditions.checkArgument((viewportWidth == 0 && viewportHeight == 0)
-                || (Float.isFinite(viewportWidth) && viewportWidth > 0 && Float.isFinite(viewportHeight) && viewportHeight > 0));
+        Preconditions.checkArgument((logicalWidth == 0 && logicalHeight == 0)
+                || (Float.isFinite(logicalWidth) && logicalWidth > 0 && Float.isFinite(logicalHeight) && logicalHeight > 0));
 
-        this.viewportWidth = viewportWidth;
-        this.viewportHeight = viewportHeight;
+        this.logicalWidth = logicalWidth;
+        this.logicalHeight = logicalHeight;
         this.dummyVao = dummyVao;
         this.arena = arena;
 
@@ -612,15 +618,15 @@ public class GuiRenderer implements AutoCloseable {
         int scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
         int useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
 
-        float screenWidth = viewportWidth;
-        float screenHeight = viewportHeight;
-        if (screenWidth == 0) {
+        float resolvedLogicalWidth = logicalWidth;
+        float resolvedLogicalHeight = logicalHeight;
+        if (resolvedLogicalWidth == 0) {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-            screenWidth = (float) resolution.getScaledWidth_double();
-            screenHeight = (float) resolution.getScaledHeight_double();
+            resolvedLogicalWidth = (float) resolution.getScaledWidth_double();
+            resolvedLogicalHeight = (float) resolution.getScaledHeight_double();
         }
 
-        GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
+        GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
         GL20.glUniform1i(useDepthLoc, 0);
 
         idb.bind();

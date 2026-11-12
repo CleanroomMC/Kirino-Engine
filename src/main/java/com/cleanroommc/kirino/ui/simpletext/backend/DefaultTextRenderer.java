@@ -127,12 +127,14 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private final int scaledResLoc;
     private final int tickLoc;
 
-    private final float viewportWidth;
-    private final float viewportHeight;
+    private final float logicalWidth;
+    private final float logicalHeight;
 
     private boolean closed;
 
     /**
+     * Uses Minecraft's scaled resolution as the logical GUI size.
+     *
      * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float)
      */
     public DefaultTextRenderer(
@@ -148,20 +150,25 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
      * It allocates worker pool for itself. Must call {@link #close()} in the end.
      *
      * <p>Note: <code>glyphAtlas</code> will also be closed in {@link #close()}.</p>
+     *
+     * @param logicalWidth Logical GUI width. Both dimensions must be finite and positive,
+     *                     or both zero to use Minecraft's scaled resolution at draw time
+     * @param logicalHeight Logical GUI height. Both dimensions must be finite and positive,
+     *                      or both zero to use Minecraft's scaled resolution at draw time
      */
     public DefaultTextRenderer(
             @NonNull SimpleTextRuntime context,
             @NonNull Tex2DArrayGlyphAtlas glyphAtlas,
             @NonNull ImmediateShaderAccess shaderAccess,
             int maxResidentGlyphs,
-            float viewportWidth,
-            float viewportHeight) {
+            float logicalWidth,
+            float logicalHeight) {
 
-        Preconditions.checkArgument((viewportWidth == 0 && viewportHeight == 0)
-                || (Float.isFinite(viewportWidth) && viewportWidth > 0 && Float.isFinite(viewportHeight) && viewportHeight > 0));
+        Preconditions.checkArgument((logicalWidth == 0 && logicalHeight == 0)
+                || (Float.isFinite(logicalWidth) && logicalWidth > 0 && Float.isFinite(logicalHeight) && logicalHeight > 0));
 
-        this.viewportWidth = viewportWidth;
-        this.viewportHeight = viewportHeight;
+        this.logicalWidth = logicalWidth;
+        this.logicalHeight = logicalHeight;
 
         Preconditions.checkNotNull(context);
         Preconditions.checkNotNull(glyphAtlas);
@@ -546,16 +553,16 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private void draw(int instanceCount) {
         Preconditions.checkArgument(instanceCount > 0);
 
-        float screenWidth = viewportWidth;
-        float screenHeight = viewportHeight;
-        if (screenWidth == 0) {
+        float resolvedLogicalWidth = logicalWidth;
+        float resolvedLogicalHeight = logicalHeight;
+        if (resolvedLogicalWidth == 0) {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
-            screenWidth = (float) resolution.getScaledWidth_double();
-            screenHeight = (float) resolution.getScaledHeight_double();
+            resolvedLogicalWidth = (float) resolution.getScaledWidth_double();
+            resolvedLogicalHeight = (float) resolution.getScaledHeight_double();
         }
 
         program.use();
-        GL20.glUniform2f(scaledResLoc, screenWidth, screenHeight);
+        GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
         if (tickLoc >= 0) {
             GL30.glUniform1ui(tickLoc, (int) (System.nanoTime() / 80_000_000L));
         }

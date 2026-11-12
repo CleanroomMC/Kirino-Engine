@@ -27,7 +27,7 @@ import java.util.function.IntConsumer;
 public class DefaultTextProducer implements SimpleTextProducer {
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private final static float STANDARD_FONT_SIZE = 8.6f;
 
@@ -35,7 +35,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
     private final int pixelSize;
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private final float standardFontSize;
     private final TextCommandList cmdList = new TextCommandList(64);
@@ -43,17 +43,17 @@ public class DefaultTextProducer implements SimpleTextProducer {
     private boolean batching;
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private float penX;
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private float penY;
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      * <p>Note: Estimate under {@link #standardFontSize}.</p>
      */
     private float lineHeightEstimate;
@@ -95,7 +95,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
     }
 
     /**
-     * @return Pixel -> Minecraft scaled resolution
+     * @return The distance in logical GUI units converted from font raster pixels
      */
     private float pixel2screen(float pixel, float fontSize) {
         return (pixel / (float) pixelSize) * fontSize;
@@ -138,7 +138,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
     }
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     private float calcMissingGlyphSize(float fontSize) {
         return fontSize;
@@ -150,7 +150,7 @@ public class DefaultTextProducer implements SimpleTextProducer {
     }
 
     /**
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      */
     public float calcLineHeight(@NonNull String text, float fontSize) {
         Preconditions.checkNotNull(text);

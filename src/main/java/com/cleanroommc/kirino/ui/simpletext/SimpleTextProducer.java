@@ -29,7 +29,7 @@ public interface SimpleTextProducer extends AutoCloseable {
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getProgressiveLengthAt(int index) {
             Preconditions.checkElementIndex(index, codepointCount);
@@ -38,42 +38,42 @@ public interface SimpleTextProducer extends AutoCloseable {
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getLineTopToBaseline() {
             return lineTopToBaseline;
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getLineWidth() {
             return lineWidth;
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getMaxX() {
             return maxX;
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getMaxY() {
             return maxY;
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getMinX() {
             return minX;
         }
 
         /**
-         * <p>Unit: Minecraft scaled resolution</p>
+         * <p>Unit: logical GUI units</p>
          */
         public float getMinY() {
             return minY;
@@ -128,7 +128,7 @@ public interface SimpleTextProducer extends AutoCloseable {
     /**
      * Line height is also known as the <code>LineTopToBaseline</code>.
      *
-     * <p>Unit: Minecraft scaled resolution</p>
+     * <p>Unit: logical GUI units</p>
      *
      * @param text The text to evaluate
      * @param fontSize This parameter is unitless and intended as a guideline only.
@@ -140,8 +140,8 @@ public interface SimpleTextProducer extends AutoCloseable {
 
     /**
      * @param text The raw text to be drawn
-     * @param x Minecraft scaled resolution x coordinate
-     * @param y Minecraft scaled resolution y coordinate
+     * @param x X coordinate in logical GUI units
+     * @param y Y coordinate in logical GUI units
      * @param fontSize This parameter is unitless and intended as a guideline only.
      *                 Actual implementations interpret it as appropriate
      * @param outLineInfo It'll receive the line info when the input is non-null
@@ -158,8 +158,8 @@ public interface SimpleTextProducer extends AutoCloseable {
      * are essentially meaningless; your {@link SimpleTextConsumer} implementations interpret them as appropriate.</p>
      *
      * @param text The raw text to be drawn
-     * @param x Minecraft scaled resolution x coordinate
-     * @param y Minecraft scaled resolution y coordinate
+     * @param x X coordinate in logical GUI units
+     * @param y Y coordinate in logical GUI units
      * @param fontSize This parameter is unitless and intended as a guideline only.
      *                 Actual implementations interpret it as appropriate
      * @param size Per-glyph size override. Length must match <code>text</code> codepoint count

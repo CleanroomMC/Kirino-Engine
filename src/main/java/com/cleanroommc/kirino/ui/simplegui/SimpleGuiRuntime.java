@@ -15,15 +15,24 @@ public class SimpleGuiRuntime implements AutoCloseable {
     private final GuiCompiler compiler;
     private final GuiRenderer renderer;
 
+    /**
+     * Uses Minecraft's scaled resolution as the logical GUI size.
+     */
     public SimpleGuiRuntime(@NonNull ImmediateShaderAccess shaderAccess, @NonNull VAO dummyVao) {
         this(shaderAccess, dummyVao, 0, 0);
     }
 
+    /**
+     * @param logicalWidth Logical GUI width. Both dimensions must be finite and positive,
+     *                     or both zero to use Minecraft's scaled resolution at draw time
+     * @param logicalHeight Logical GUI height. Both dimensions must be finite and positive,
+     *                      or both zero to use Minecraft's scaled resolution at draw time
+     */
     public SimpleGuiRuntime(
             @NonNull ImmediateShaderAccess shaderAccess,
             @NonNull VAO dummyVao,
-            float viewportWidth,
-            float viewportHeight) {
+            float logicalWidth,
+            float logicalHeight) {
 
         Preconditions.checkNotNull(shaderAccess);
         Preconditions.checkNotNull(dummyVao);
@@ -31,7 +40,7 @@ public class SimpleGuiRuntime implements AutoCloseable {
         arena = new TransientArena(128);
         stream = new GuiCommandStream(128);
         compiler = new GuiCompiler(arena);
-        renderer = new GuiRenderer(shaderAccess, dummyVao, arena, viewportWidth, viewportHeight);
+        renderer = new GuiRenderer(shaderAccess, dummyVao, arena, logicalWidth, logicalHeight);
     }
 
     private boolean batch = false;
