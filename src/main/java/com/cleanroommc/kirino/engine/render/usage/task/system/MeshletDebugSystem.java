@@ -1,10 +1,11 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
 import com.cleanroommc.kirino.engine.render.usage.task.job.MeshletDebugJob;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import org.jspecify.annotations.NonNull;
@@ -20,8 +21,8 @@ public class MeshletDebugSystem extends CleanSystem {
 
     public MeshletDebugSystem(ResourceStorage storage, ResourceSlot<GizmosManager> gizmosManager, Executor executor) {
         externalData = new HashMap<>();
-        externalData.put("storage", storage);
-        externalData.put("gizmosManager", gizmosManager);
+        externalData.put(RenderJobDataKeys.STORAGE, storage);
+        externalData.put(RenderJobDataKeys.GIZMOS_MANAGER, gizmosManager);
         this.executor = executor;
     }
 

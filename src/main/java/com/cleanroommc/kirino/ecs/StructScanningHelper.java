@@ -1,0 +1,133 @@
+package com.cleanroommc.kirino.ecs;
+
+import com.cleanroommc.kirino.ecs.api.component.scan.event.StructScanningEvent;
+import com.cleanroommc.kirino.ecs.api.component.scan.CleanStructSignature;
+import com.cleanroommc.kirino.utils.ReflectionUtils;
+import com.google.common.base.Preconditions;
+import io.github.classgraph.ClassInfo;
+import io.github.classgraph.FieldInfo;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.jspecify.annotations.NonNull;
+
+import java.lang.invoke.MethodHandle;
+import java.util.*;
+
+/**
+ * Scan struct classes and generate a list of register plans.
+ * There is no class loading involved at all.
+ *
+ * @see com.cleanroommc.kirino.ecs.api.CleanECSRuntime
+ */
+final class StructScanningHelper {
+    private StructScanningHelper() {
+        super();
+    }
+
+    private static List<FieldInfo> getValidFields(Map<String, ClassInfo> allClassInfos, ClassInfo structClassInfo, FieldRegistry fieldRegistry) {
+        List<FieldInfo> fields = new ArrayList<>();
+
+        for (FieldInfo field : structClassInfo.getFieldInfo()) {
+            String fieldClassName = field.getTypeDescriptor().toString();
+            if (allClassInfos.containsKey(fieldClassName) || fieldRegistry.fieldTypeExists_ClassName(fieldClassName)) {
+                fields.add(field);
+            }
+        }
+
+        fields.sort(Comparator.comparing(FieldInfo::getName));
+
+        return fields;
+    }
+
+    private static List<StructRegisterPlan> generatePlans(Map<String, List<FieldInfo>> structs, FieldRegistry fieldRegistry) {
+        List<StructRegisterPlan> plans = new ArrayList<>();
+
+        Object2IntOpenHashMap<String> structNameDuplicates = new Object2IntOpenHashMap<>();
+        Map<String, String> structNames = new Object2ObjectOpenHashMap<>();
+
+        for (Map.Entry<String, List<FieldInfo>> entry : structs.entrySet()) {
+            String structName = ClassScanUtils.getClassSimpleName(entry.getKey());
+            int duplicate = 0;
+            if (structNameDuplicates.containsKey(structName)) {
+                duplicate = structNameDuplicates.getInt(structName);
+                structNameDuplicates.put(structName, duplicate + 1);
+            } else {
+                structNameDuplicates.put(structName, 1);
+            }
+            if (duplicate > 0) {
+                structName = structName + "$" + duplicate;
+            }
+            structNames.put(entry.getKey(), structName);
+        }
+
+        for (Map.Entry<String, List<FieldInfo>> entry : structs.entrySet()) {
+            String structClass = entry.getKey();
+            String structName = structNames.get(entry.getKey());
+            MemberLayout memberLayout = new MemberLayout(entry.getValue().stream().map(FieldInfo::getName).toList());
+            List<FieldDef> fieldDefs = new ArrayList<>();
+            for (FieldInfo field : entry.getValue()) {
+                String fieldClassName = field.getTypeDescriptor().toString();
+                if (structNames.containsKey(fieldClassName)) {
+                    fieldDefs.add(new FieldDef(structNames.get(fieldClassName)));
+                } else {
+                    fieldDefs.add(fieldRegistry.getFieldDef(fieldRegistry.getFieldTypeName_ClassName(fieldClassName)));
+                }
+            }
+            StructDef structDef = new StructDef(fieldDefs);
+
+            plans.add(new StructRegisterPlan(structName, structClass, memberLayout, structDef));
+        }
+
+        return plans;
+    }
+
+    /**
+     * Retrieve a list of struct register plans.
+     *
+     * @param event         The struct scanning event
+     * @param fieldRegistry The field registry
+     * @return A list of struct register plans
+     */
+    @NonNull
+    public static List<@NonNull StructRegisterPlan> scanStructClasses(
+        @NonNull StructScanningEvent event,
+        @NonNull FieldRegistry fieldRegistry) {
+
+        Preconditions.checkNotNull(event);
+        Preconditions.checkNotNull(fieldRegistry);
+
+        List<String> scanPackageNames = MethodHolder.getScanPackageNames(event);
+        Map<String, ClassInfo> allClassInfos = ClassScanUtils.scan(
+            scanPackageNames,
+            CleanStructSignature.class.getName());
+
+        Map<String, List<FieldInfo>> structs = new TreeMap<>();
+        for (Map.Entry<String, ClassInfo> entry : allClassInfos.entrySet()) {
+            structs.put(entry.getKey(), getValidFields(allClassInfos, entry.getValue(), fieldRegistry));
+        }
+
+        return generatePlans(structs, fieldRegistry);
+    }
+
+    private static final class MethodHolder {
+        private static final Delegate DELEGATE;
+
+        static {
+            DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(StructScanningEvent.class, "scanPackageNames", List.class));
+
+            Preconditions.checkNotNull(DELEGATE.scanPackageNamesGetter);
+        }
+
+        @SuppressWarnings("unchecked")
+        static List<String> getScanPackageNames(StructScanningEvent event) {
+            try {
+                return (List<String>) DELEGATE.scanPackageNamesGetter.invokeExact(event);
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        record Delegate(MethodHandle scanPackageNamesGetter) {
+        }
+    }
+}

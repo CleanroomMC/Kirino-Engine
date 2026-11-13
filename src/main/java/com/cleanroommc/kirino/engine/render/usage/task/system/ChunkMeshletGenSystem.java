@@ -1,12 +1,13 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.usage.minecraft.utils.BlockMeshGenerator;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.MeshletCreateCallback;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.MeshletDestroyCallback;
 import com.cleanroommc.kirino.engine.render.usage.task.job.ChunkMeshletGenJob;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import net.minecraft.client.multiplayer.ChunkProviderClient;
@@ -32,11 +33,11 @@ public class ChunkMeshletGenSystem extends CleanSystem {
             Executor executor) {
 
         externalData = new HashMap<>();
-        externalData.put("storage", storage);
-        externalData.put("blockMeshGenerator", blockMeshGenerator);
-        externalData.put("tempBuffers", new ConcurrentHashMap<Integer, BufferBuilder>());
-        externalData.put("meshletDestroyCallback", meshletDestroyCallback);
-        externalData.put("meshletCreateCallback", meshletCreateCallback);
+        externalData.put(RenderJobDataKeys.STORAGE, storage);
+        externalData.put(RenderJobDataKeys.BLOCK_MESH_GENERATOR, blockMeshGenerator);
+        externalData.put(RenderJobDataKeys.TEMP_BUFFERS, new ConcurrentHashMap<Integer, BufferBuilder>());
+        externalData.put(RenderJobDataKeys.MESHLET_DESTROY_CALLBACK, meshletDestroyCallback);
+        externalData.put(RenderJobDataKeys.MESHLET_CREATE_CALLBACK, meshletCreateCallback);
         this.executor = executor;
     }
 
@@ -56,11 +57,19 @@ public class ChunkMeshletGenSystem extends CleanSystem {
         this.world = world;
     }
 
+    public void releaseWorldReferences() {
+        world = null;
+        chunkProvider = null;
+        externalData.remove(RenderJobDataKeys.WORLD);
+        externalData.remove(RenderJobDataKeys.CHUNK_PROVIDER);
+        ((Map<?, ?>) externalData.get(RenderJobDataKeys.TEMP_BUFFERS)).clear();
+    }
+
     @Override
     public void update(@NonNull EntityManager entityManager, @NonNull JobScheduler jobScheduler) {
-        externalData.put("lod", lod);
-        externalData.put("chunkProvider", chunkProvider);
-        externalData.put("world", world);
+        externalData.put(RenderJobDataKeys.LOD, lod);
+        externalData.put(RenderJobDataKeys.CHUNK_PROVIDER, chunkProvider);
+        externalData.put(RenderJobDataKeys.WORLD, world);
         JobScheduler.ExecutionHandle handle = jobScheduler.executeParallelJob(
                 entityManager,
                 ChunkMeshletGenJob.class,

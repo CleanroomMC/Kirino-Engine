@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.EngineInitParams;
 import com.cleanroommc.kirino.engine.KirinoEngine;
 import com.cleanroommc.kirino.engine.render.core.pipeline.post.builtin.DefaultPostProcessingPass;
@@ -85,12 +85,7 @@ public final class KirinoCommonCore {
         StopWatch stopWatch = StopWatch.createStarted();
 
         try {
-            Constructor<CleanECSRuntime> ctor = CleanECSRuntime.class.getDeclaredConstructor(EventBus.class, Logger.class);
-            Preconditions.checkNotNull(ctor);
-
-            ctor.setAccessible(true);
-
-            ECS_RUNTIME = ctor.newInstance(KIRINO_EVENT_BUS, LOGGER);
+            ECS_RUNTIME = CleanECSRuntime.create(KIRINO_EVENT_BUS, LOGGER);
         } catch (Throwable throwable) {
             throw new RuntimeException("ECS Runtime failed to initialize.", throwable);
         }

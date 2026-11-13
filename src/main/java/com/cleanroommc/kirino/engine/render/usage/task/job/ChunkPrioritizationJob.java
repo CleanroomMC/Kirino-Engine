@@ -1,11 +1,12 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.ChunkComponent;
 import org.joml.Vector3f;
@@ -14,10 +15,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChunkPrioritizationJob implements ParallelJob {
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MAX_LOD_COUNTER)
     AtomicInteger maxLodCounter;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.CAMERA)
     Camera camera;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
@@ -35,7 +36,7 @@ public class ChunkPrioritizationJob implements ParallelJob {
     Vector3f worldOffset = null;
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
+    public void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal) {
         float chunkWorldX = (float) chunkPosXArray.getInt(index) * 16 + 8f;
         float chunkWorldY = (float) chunkPosYArray.getInt(index) * 16 + 8f;
         float chunkWorldZ = (float) chunkPosZArray.getInt(index) * 16 + 8f;

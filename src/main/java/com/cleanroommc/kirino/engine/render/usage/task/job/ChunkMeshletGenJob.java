@@ -1,11 +1,12 @@
 package com.cleanroommc.kirino.engine.render.usage.task.job;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.entity.EntityQuery;
-import com.cleanroommc.kirino.ecs.job.ParallelJob;
-import com.cleanroommc.kirino.ecs.job.JobDataQuery;
-import com.cleanroommc.kirino.ecs.job.JobExternalDataQuery;
-import com.cleanroommc.kirino.ecs.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.EntityCommands;
+import com.cleanroommc.kirino.ecs.api.EntityQuery;
+import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
+import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
+import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.usage.ecs.struct.AABB;
 import com.cleanroommc.kirino.engine.render.usage.ecs.struct.Block;
@@ -42,28 +43,28 @@ public class ChunkMeshletGenJob implements ParallelJob {
      */
     int pass = 0;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.STORAGE)
     ResourceStorage storage;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.TEMP_BUFFERS)
     ConcurrentHashMap<Integer, BufferBuilder> tempBuffers;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.LOD)
     int lod;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MESHLET_DESTROY_CALLBACK)
     MeshletDestroyCallback meshletDestroyCallback;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MESHLET_CREATE_CALLBACK)
     MeshletCreateCallback meshletCreateCallback;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.CHUNK_PROVIDER)
     ChunkProviderClient chunkProvider;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.WORLD)
     WorldClient world;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.BLOCK_MESH_GENERATOR)
     ResourceSlot<BlockMeshGenerator> blockMeshGenerator;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})
@@ -129,7 +130,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
     boolean[][][] visited = new boolean[16][16][16];
 
     @Override
-    public void execute(@NonNull EntityManager entityManager, int index, int entityID, int threadOrdinal) {
+    public void execute(@NonNull EntityCommands commands, int index, int entityID, int threadOrdinal) {
         Preconditions.checkState(pass == 0 || pass == 1 || pass == 2,
                 "Invalid pass number %s. Must be either 0 or 1 or 2.", pass);
 
@@ -166,7 +167,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
 
         BufferBuilder bufferBuilder = tempBuffers.computeIfAbsent(threadOrdinal, k -> new BufferBuilder(169));
 
-        regionGrowing(faceMask, visited, chunkCluster, entityManager, bufferBuilder);
+        regionGrowing(faceMask, visited, chunkCluster, commands, bufferBuilder);
     }
 
     /**
@@ -304,7 +305,7 @@ public class ChunkMeshletGenJob implements ParallelJob {
         return (new Vector3f(x, y, z)).normalize();
     }
 
-    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityManager entityManager, BufferBuilder bufferBuilder) {
+    void regionGrowing(int[][][] faceMask, boolean[][][] visited, ChunkCluster chunkCluster, EntityCommands commands, BufferBuilder bufferBuilder) {
         for (int x = 0; x < 16; x++) {
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
@@ -376,20 +377,24 @@ public class ChunkMeshletGenJob implements ParallelJob {
                     meshletComponent.chunkPosZ = chunkCluster.chunkZ;
                     fillBlockInfo(chunkCluster, cluster, bufferBuilder);
 
-                    entityManager.createEntity(meshletDestroyCallback, meshletCreateCallback, meshletComponent);
+                    commands.createEntity(meshletDestroyCallback, meshletCreateCallback, meshletComponent);
                 }
             }
         }
     }
 
     void fillBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
+        int originX = chunkCluster.chunkX * 16;
+        int originY = chunkCluster.chunkY * 16;
+        int originZ = chunkCluster.chunkZ * 16;
         for (Block block : cluster) {
+            int worldY = originY + block.position.y;
             block.blockInfo = storage.get(blockMeshGenerator).genFullBlockInfo(
-                    block.position.x,
-                    block.position.y,
-                    block.position.z,
+                    originX + block.position.x,
+                    worldY,
+                    originZ + block.position.z,
                     world,
-                    chunkCluster.center.getBlockState(block.position.x, block.position.y, block.position.z), bufferBuilder);
+                    chunkCluster.center.getBlockState(block.position.x, worldY, block.position.z), bufferBuilder);
         }
     }
 

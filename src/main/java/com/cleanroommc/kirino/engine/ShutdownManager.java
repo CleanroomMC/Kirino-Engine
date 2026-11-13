@@ -16,6 +16,7 @@ public class ShutdownManager {
     private static final Logger LOGGER = LogManager.getLogger("Kirino ShutdownManager");
 
     private static final List<Runnable> mainThreadHooks = new CopyOnWriteArrayList<>();
+    private static final List<Runnable> beforeResourceHooks = new CopyOnWriteArrayList<>();
     private static final List<Runnable> workerThreadHooks = new CopyOnWriteArrayList<>();
     private static final AtomicBoolean installed = new AtomicBoolean(false);
 
@@ -34,6 +35,10 @@ public class ShutdownManager {
         mainThreadHooks.add(hook);
     }
 
+    public static void registerBeforeResources(@NonNull Runnable hook) {
+        beforeResourceHooks.add(Preconditions.checkNotNull(hook));
+    }
+
     /**
      * Register on a worker thread.
      */
@@ -44,10 +49,25 @@ public class ShutdownManager {
         onDemandInstall();
     }
 
+    public static void unregisterAsync(@NonNull Runnable hook) {
+        workerThreadHooks.remove(Preconditions.checkNotNull(hook));
+    }
+
     /**
      * <p><b>Note</b>: Must not be called by clients!</p>
      */
     public static void runMainHooks() {
+        List<Runnable> preparation = new ArrayList<>(beforeResourceHooks);
+        Collections.reverse(preparation);
+        for (Runnable hook : preparation) {
+            try {
+                hook.run();
+                beforeResourceHooks.remove(hook);
+            } catch (Throwable failure) {
+                LOGGER.error("Shutdown preparation failed; resource disposal was skipped.", failure);
+                return;
+            }
+        }
         List<Runnable> reversed = new ArrayList<>(mainThreadHooks);
         Collections.reverse(reversed);
 
@@ -58,6 +78,8 @@ public class ShutdownManager {
                 hook.run();
             } catch (Throwable t) {
                 LOGGER.throwing(t);
+            } finally {
+                mainThreadHooks.remove(hook);
             }
         }
 
@@ -75,6 +97,8 @@ public class ShutdownManager {
                 hook.run();
             } catch (Throwable t) {
                 LOGGER.throwing(t);
+            } finally {
+                workerThreadHooks.remove(hook);
             }
         }
 

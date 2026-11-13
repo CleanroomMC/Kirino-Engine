@@ -106,4 +106,8 @@ public class MeshletBufferSlotAllocator {
     public int getMeshletCount() {
         return meshletId2BufSlotMapping.size();
     }
+
+    public void reset() {
+        meshletId2BufSlotMapping.clear();
+    }
 }

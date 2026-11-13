@@ -1,10 +1,11 @@
 package com.cleanroommc.kirino.engine.render.usage.task.system;
 
-import com.cleanroommc.kirino.ecs.entity.EntityManager;
-import com.cleanroommc.kirino.ecs.job.JobScheduler;
-import com.cleanroommc.kirino.ecs.system.CleanSystem;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
+import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.usage.scene.callback.CallbackDrivenChunkDelta;
 import com.cleanroommc.kirino.engine.render.usage.task.job.MeshletDestroyJob;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -18,7 +19,7 @@ public class MeshletDestroySystem extends CleanSystem {
 
     public MeshletDestroySystem(CallbackDrivenChunkDelta chunkDelta, Executor executor) {
         externalData = new HashMap<>();
-        externalData.put("chunkDelta", chunkDelta);
+        externalData.put(RenderJobDataKeys.CHUNK_DELTA, chunkDelta);
         this.executor = executor;
     }
 

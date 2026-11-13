@@ -1,6 +1,6 @@
 package com.cleanroommc.kirino.engine.process.graphics.view;
 
-import com.cleanroommc.kirino.ecs.CleanECSRuntime;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.engine.FramePhase;
 import com.cleanroommc.kirino.engine.FramePhaseTiming;
 import com.cleanroommc.kirino.engine.render.core.*;
@@ -544,17 +544,16 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     private void update(KnowledgeRuntime glKnowledge) {
         storage().get(graphicsb().graphicResourceManager).runStaging();
-        mcscene().scene.tryUpdateWorld(Minecraft.getMinecraft().world);
-        mcscene().scene.update();
+        mcscene().updateWorld(Minecraft.getMinecraft().world);
     }
 
     private void renderOpaque(KnowledgeRuntime glKnowledge) {
-//        if (sceneViewState.scene.isMeshletRenderReady()) {
+//        if (sceneViewState.isMeshletRenderReady()) {
 //            rs().terrainGpuPass.render(
 //                    storage,
 //                    sceneViewState.camera,
 //                    null,
-//                    new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
+//                    new Object[]{sceneViewState.getMeshletRenderPayload()});
 //        }
 //        rs().chunkCpuPass.render(sceneViewState.camera);
     }

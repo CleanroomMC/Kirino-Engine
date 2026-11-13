@@ -1,0 +1,12 @@
+package com.cleanroommc.kirino.ecs;
+
+import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
+import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
+
+record EntityCommand(int index, int generation, Type type, ObjectArrayView<CleanComponent> components,
+                     CleanComponent component, Class<? extends CleanComponent> componentType,
+                     ArchetypeKey target) {
+    enum Type {
+        CREATE, DESTROY, SET_COM, ADD_COM, REMOVE_COM
+    }
+}

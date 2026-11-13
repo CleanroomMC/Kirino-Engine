@@ -1,7 +1,7 @@
 package com.cleanroommc.kirino.engine.render.usage.scene.callback;
 
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyCallback;
-import com.cleanroommc.kirino.ecs.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyCallback;
+import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyContext;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletGpuRegistry;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
@@ -9,6 +9,8 @@ import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import org.jspecify.annotations.NonNull;
 
 public class MeshletDestroyCallback implements EntityDestroyCallback {
+
+    private static final String[] MESHLET_ID = {"meshletId"};
 
     private final ResourceStorage storage;
     private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
@@ -20,7 +22,7 @@ public class MeshletDestroyCallback implements EntityDestroyCallback {
 
     @Override
     public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
-        MeshletComponent meshletComponent = (MeshletComponent) destroyContext.getComponent(MeshletComponent.class);
-        storage.get(meshletGpuRegistry).disposeMeshletID(meshletComponent.meshletId);
+        int meshletId = destroyContext.getInt(MeshletComponent.class, MESHLET_ID);
+        storage.get(meshletGpuRegistry).disposeMeshletID(meshletId);
     }
 }

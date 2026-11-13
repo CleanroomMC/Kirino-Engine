@@ -3,6 +3,8 @@ package com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
+import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL43;
 
 public class DrawIndexOutputDoubleBuffer {
 
@@ -11,13 +13,13 @@ public class DrawIndexOutputDoubleBuffer {
     private int indexSsboSize0;
     private int indexSsboSize1;
 
-    private int calcWorstCaseIndexBytes(int meshletCount) {
-        return meshletCount * MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES + 4; // padding: 4
+    private long calcWorstCaseIndexBytes(int meshletCount) {
+        return MeshletBufferCapacity.requiredBytes(meshletCount, MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES, 4);
     }
 
     private final static int INITIAL_INDEX_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
 
-    private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
+    private int maxSsboSize = MeshletBufferCapacity.maximumBytes(Integer.MAX_VALUE);
 
     public DrawIndexOutputDoubleBuffer() {
         indexSsboSize0 = INITIAL_INDEX_SSBO_SIZE;
@@ -25,6 +27,7 @@ public class DrawIndexOutputDoubleBuffer {
     }
 
     public void lateInit() {
+        maxSsboSize = MeshletBufferCapacity.maximumBytes(GL32.glGetInteger64(GL43.GL_MAX_SHADER_STORAGE_BLOCK_SIZE));
         indexSsbo0 = new SSBOView(new GLBuffer());
         indexSsbo1 = new SSBOView(new GLBuffer());
 
@@ -49,15 +52,15 @@ public class DrawIndexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growIndexSsbo0(int meshletCount) {
-        int targetSize = calcWorstCaseIndexBytes(meshletCount);
+        long targetSize = calcWorstCaseIndexBytes(meshletCount);
         if (indexSsboSize0 >= targetSize) {
             return true;
         }
-        if (targetSize > MAX_SSBO_SIZE) {
+        if (targetSize > maxSsboSize) {
             return false;
         }
 
-        indexSsboSize0 = targetSize;
+        indexSsboSize0 = (int) targetSize;
         resizeIndexSsbo0(indexSsboSize0);
 
         return true;
@@ -70,15 +73,15 @@ public class DrawIndexOutputDoubleBuffer {
      * @return Whether successfully grew the buffer
      */
     private boolean growIndexSsbo1(int meshletCount) {
-        int targetSize = calcWorstCaseIndexBytes(meshletCount);
+        long targetSize = calcWorstCaseIndexBytes(meshletCount);
         if (indexSsboSize1 >= targetSize) {
             return true;
         }
-        if (targetSize > MAX_SSBO_SIZE) {
+        if (targetSize > maxSsboSize) {
             return false;
         }
 
-        indexSsboSize1 = targetSize;
+        indexSsboSize1 = (int) targetSize;
         resizeIndexSsbo1(indexSsboSize1);
 
         return true;
@@ -130,6 +133,10 @@ public class DrawIndexOutputDoubleBuffer {
     //</editor-fold>
 
     private int index = 0;
+
+    public int getMaxBufferSize() {
+        return maxSsboSize;
+    }
 
     /**
      * Swap the current write target and consume target.

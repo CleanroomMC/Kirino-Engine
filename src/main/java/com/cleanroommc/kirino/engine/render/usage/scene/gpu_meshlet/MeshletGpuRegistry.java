@@ -5,6 +5,8 @@ import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.DrawIndexOutputDoubleBuffer;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletBufferSlotAllocator;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletInputDoubleBuffer;
+import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletBufferCapacity;
+import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletConstants;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.VertexOutputDoubleBuffer;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
@@ -43,6 +45,19 @@ public class MeshletGpuRegistry {
         meshletInputBuffer.lateInit();
         vertexOutputBuffer.lateInit();
         drawIndexOutputBuffer.lateInit();
+    }
+
+    public synchronized void resetForWorld() {
+        meshletIdCounter = 0;
+        freeMeshletIds.clear();
+        pendingMeshletIdRemoval.clear();
+        meshletIdAddedSinceLastBegin.clear();
+        meshletIdRemovedSinceLastBegin.clear();
+        dirtySlotTracker.clear();
+        meshletBufferSlotAllocator.reset();
+        writing = false;
+        computing = false;
+        finishedWritingOnce = false;
     }
 
     //<editor-fold desc="id allocation & disposal">
@@ -172,14 +187,21 @@ public class MeshletGpuRegistry {
 
         // the meshlet count is up to date since last beginWriting
         // which is valid at this phase. finishWriting --> beginComputing --> beginWriting
-        if (!vertexOutputBuffer.growVertex(meshletBufferSlotAllocator.getMeshletCount())) {
-            throw new RuntimeException("Failed to grow the write target vertex buffer.");
+        int count = meshletBufferSlotAllocator.getMeshletCount();
+        MeshletBufferCapacity.checkedBytes("Meshlet vertex buffer", count,
+            MeshletConstants.WORST_CASE_MESHLET_VERTEX_BYTES, 4, vertexOutputBuffer.getMaxBufferSize());
+        MeshletBufferCapacity.checkedBytes("Meshlet index buffer", count,
+            MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES, 4, vertexOutputBuffer.getMaxBufferSize());
+        MeshletBufferCapacity.checkedBytes("Meshlet draw index buffer", count,
+            MeshletConstants.WORST_CASE_MESHLET_INDEX_BYTES, 4, drawIndexOutputBuffer.getMaxBufferSize());
+        if (!vertexOutputBuffer.growVertex(count)) {
+            throw new RuntimeException("Failed to grow the write target vertex buffer for " + count + " meshlets.");
         }
-        if (!vertexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount())) {
-            throw new RuntimeException("Failed to grow the write target index buffer.");
+        if (!vertexOutputBuffer.growIndex(count)) {
+            throw new RuntimeException("Failed to grow the write target index buffer for " + count + " meshlets.");
         }
-        if (!drawIndexOutputBuffer.growIndex(meshletBufferSlotAllocator.getMeshletCount())) {
-            throw new RuntimeException("Failed to grow the write target draw index buffer.");
+        if (!drawIndexOutputBuffer.growIndex(count)) {
+            throw new RuntimeException("Failed to grow the write target draw index buffer for " + count + " meshlets.");
         }
 
         vertexOutputBuffer.growToMatchSize();
