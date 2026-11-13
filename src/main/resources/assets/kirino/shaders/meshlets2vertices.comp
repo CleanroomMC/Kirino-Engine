@@ -59,6 +59,7 @@ layout(std430, binding = 4) buffer MeshletRanges
 };
 
 uniform usamplerBuffer dirtyList;
+uniform uint dirtyOffset;
 
 const uint MESHLET_VERTEX_CAPACITY = 768u; // 24576 / 32 = 768 elements
 const uint MESHLET_INDEX_CAPACITY = 1152u; // 4608 / 4 = 1152 elements
@@ -121,7 +122,7 @@ layout(std430, binding = 13) buffer TempBuffer
 void main()
 {
     uint dirtyCount = texelFetch(dirtyList, 0).r;
-    uint dispatchIndex = gl_GlobalInvocationID.x;
+    uint dispatchIndex = dirtyOffset + gl_GlobalInvocationID.x;
 
     if (dispatchIndex >= dirtyCount) return;
 

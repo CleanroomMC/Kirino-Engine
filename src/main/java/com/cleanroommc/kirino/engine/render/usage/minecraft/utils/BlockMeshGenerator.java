@@ -58,7 +58,10 @@ public class BlockMeshGenerator {
      */
     @SuppressWarnings("all")
     public BlockInfo genFullBlockInfo(int worldX, int worldY, int worldZ, IBlockAccess blockAccess, IBlockState blockState, BufferBuilder bufferBuilder) {
-        Preconditions.checkState(BlockUnifier.getBlockModelType(blockState) == BlockModelType.FULL_BLOCK);
+        if (BlockUnifier.getBlockModelType(blockState) != BlockModelType.FULL_BLOCK) {
+            throw new IllegalStateException("Expected a full block at (" + worldX + ", " + worldY + ", " + worldZ
+                + "), got " + blockState);
+        }
         Preconditions.checkArgument(MethodHolder.getByteBuffer(bufferBuilder).capacity() >= 112 * 6,
                 "Size of argument \"bufferBuilder\" is %s bytes. Requires at least 672 bytes.", MethodHolder.getByteBuffer(bufferBuilder).capacity());
 

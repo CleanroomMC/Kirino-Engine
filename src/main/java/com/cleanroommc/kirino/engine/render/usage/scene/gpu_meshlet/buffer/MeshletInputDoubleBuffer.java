@@ -3,6 +3,8 @@ package com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
 import com.cleanroommc.kirino.gl.buffer.meta.MapBufferAccessBit;
 import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
+import org.lwjgl.opengl.GL32;
+import org.lwjgl.opengl.GL43;
 
 public class MeshletInputDoubleBuffer {
 
@@ -12,7 +14,7 @@ public class MeshletInputDoubleBuffer {
     private int ssboSize1;
 
     private final static int INITIAL_SSBO_SIZE = 1024 * 1024 * 16; // 16MB
-    private final static int MAX_SSBO_SIZE = 1024 * 1024 * 512; // 512MB
+    private int maxSsboSize = MeshletBufferCapacity.maximumBytes(Integer.MAX_VALUE);
 
     public MeshletInputDoubleBuffer() {
         ssboSize0 = INITIAL_SSBO_SIZE;
@@ -20,6 +22,7 @@ public class MeshletInputDoubleBuffer {
     }
 
     public void lateInit() {
+        maxSsboSize = MeshletBufferCapacity.maximumBytes(GL32.glGetInteger64(GL43.GL_MAX_SHADER_STORAGE_BLOCK_SIZE));
         ssbo0 = new SSBOView(new GLBuffer());
         ssbo1 = new SSBOView(new GLBuffer());
 
@@ -45,7 +48,7 @@ public class MeshletInputDoubleBuffer {
      */
     private boolean growSsbo0() {
         int oldSize0 = ssboSize0;
-        ssboSize0 = Math.min(MAX_SSBO_SIZE, ssboSize0 * 2);
+        ssboSize0 = (int) Math.min(maxSsboSize, (long) ssboSize0 * 2);
 
         if (oldSize0 == ssboSize0) {
             return false;
@@ -64,7 +67,7 @@ public class MeshletInputDoubleBuffer {
      */
     private boolean growSsbo1() {
         int oldSize1 = ssboSize1;
-        ssboSize1 = Math.min(MAX_SSBO_SIZE, ssboSize1 * 2);
+        ssboSize1 = (int) Math.min(maxSsboSize, (long) ssboSize1 * 2);
 
         if (oldSize1 == ssboSize1) {
             return false;

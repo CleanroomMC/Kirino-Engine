@@ -384,13 +384,17 @@ public class ChunkMeshletGenJob implements ParallelJob {
     }
 
     void fillBlockInfo(ChunkCluster chunkCluster, List<Block> cluster, BufferBuilder bufferBuilder) {
+        int originX = chunkCluster.chunkX * 16;
+        int originY = chunkCluster.chunkY * 16;
+        int originZ = chunkCluster.chunkZ * 16;
         for (Block block : cluster) {
+            int worldY = originY + block.position.y;
             block.blockInfo = storage.get(blockMeshGenerator).genFullBlockInfo(
-                    block.position.x,
-                    block.position.y,
-                    block.position.z,
+                    originX + block.position.x,
+                    worldY,
+                    originZ + block.position.z,
                     world,
-                    chunkCluster.center.getBlockState(block.position.x, block.position.y, block.position.z), bufferBuilder);
+                    chunkCluster.center.getBlockState(block.position.x, worldY, block.position.z), bufferBuilder);
         }
     }
 

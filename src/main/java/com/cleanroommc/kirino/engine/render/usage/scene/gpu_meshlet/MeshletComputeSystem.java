@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet;
 import com.cleanroommc.kirino.KirinoCommonCore;
 import com.cleanroommc.kirino.engine.render.core.debug.shader.ShaderDebugResource;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletConstants;
+import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.buffer.MeshletBufferCapacity;
 import com.cleanroommc.kirino.engine.resource.ResourceSlot;
 import com.cleanroommc.kirino.engine.resource.ResourceStorage;
 import com.cleanroommc.kirino.gl.buffer.GLBuffer;
@@ -24,10 +25,12 @@ import java.util.List;
 public class MeshletComputeSystem {
 
     // these buffers won't face RAW/WAR hazards. no need to do double buffering
-    private static final class InternalBuffers {
+    static final class InternalBuffers {
 
-        private final static int MAX_DIRTY_LIST_BYTES = 4 * (MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS + 2);
-        private final static int MAX_RANGE_BYTES = 12 * MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS;
+        private int maxDirtyListBytes;
+        private int maxRangeBytes;
+        private int currentRangeBytes;
+        private int maxDispatchCount;
 
         // record global vertex/index count
         private SSBOView counterSsbo;
@@ -42,6 +45,9 @@ public class MeshletComputeSystem {
         private SSBOView rangeSsbo;
 
         void lateInit() {
+            maxRangeBytes = MeshletBufferCapacity.maximumBytes(GL32.glGetInteger64(GL43.GL_MAX_SHADER_STORAGE_BLOCK_SIZE));
+            maxDirtyListBytes = MeshletBufferCapacity.maximumBytes((long) GL11.glGetInteger(GL31.GL_MAX_TEXTURE_BUFFER_SIZE) * 4);
+            maxDispatchCount = GL30.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0);
             counterSsbo = new SSBOView(new GLBuffer());
             counterSsbo.bind();
             counterSsbo.allocPersistent(8, MapBufferAccessBit.READ_BIT, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
@@ -57,12 +63,36 @@ public class MeshletComputeSystem {
             tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
             tboWorkspace.bind(0);
 
-            rangeSsbo = new SSBOView(new GLBuffer());
-            rangeSsbo.bind();
-            rangeSsbo.allocPersistent(MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-            rangeSsbo.clearUint0(); // must clear since compute reads and writes
-            rangeSsbo.mapPersistent(0, MAX_RANGE_BYTES, MapBufferAccessBit.WRITE_BIT, MapBufferAccessBit.MAP_PERSISTENT_BIT, MapBufferAccessBit.MAP_COHERENT_BIT);
-            rangeSsbo.bind(0);
+            prepareRanges(MeshletConstants.WORST_CASE_MESHLET_COUNT_IN_R8_16CUBIC_CHUNKS);
+        }
+
+        void prepareRanges(int meshletCount) {
+            int required = MeshletBufferCapacity.checkedBytes("Meshlet ranges", meshletCount, 12, 0, maxRangeBytes);
+            if (required <= currentRangeBytes) return;
+            SSBOView replacement = new SSBOView(new GLBuffer());
+            int previous = replacement.fetchCurrentBoundBufferID();
+            try {
+                replacement.bind();
+                replacement.allocImmutable(required, 0);
+                if (replacement.fetchBufferSize64() != required) {
+                    throw new IllegalStateException("Failed to allocate meshlet ranges: requiredBytes=" + required);
+                }
+                replacement.clearUint0();
+                if (rangeSsbo != null) {
+                    rangeSsbo.copyTo(replacement, 0, 0, currentRangeBytes);
+                }
+                GL42.glMemoryBarrier(GL42.GL_BUFFER_UPDATE_BARRIER_BIT | GL43.GL_SHADER_STORAGE_BARRIER_BIT);
+            } catch (Throwable failure) {
+                replacement.buffer.disposeManually();
+                throw failure;
+            } finally {
+                replacement.bind(previous);
+            }
+            if (rangeSsbo != null) {
+                rangeSsbo.buffer.disposeManually();
+            }
+            rangeSsbo = replacement;
+            currentRangeBytes = required;
         }
 
         void resetForWorld() {
@@ -84,19 +114,16 @@ public class MeshletComputeSystem {
          * @return The compute dispatch count
          */
         int prepareTbo(List<Integer> dirtyList) {
-            int padding = 1;
-            int size = dirtyList.size() + 1 + padding; // (header=1 int) + extra padding
-            if (size * 4 > currentTboWorkspaceSize) {
-                currentTboWorkspaceSize = size * 4;
-                Preconditions.checkState(currentTboWorkspaceSize <= MAX_DIRTY_LIST_BYTES,
-                        "Dirty list TBO workspace overflow. %s bytes exceeds MAX_DIRTY_LIST_BYTES=%s.", currentTboWorkspaceSize, MAX_DIRTY_LIST_BYTES);
-
-                tboTempByteBuffer = BufferUtils.createByteBuffer(currentTboWorkspaceSize);
+            int required = MeshletBufferCapacity.checkedBytes("Meshlet dirty list", dirtyList.size(), 4, 8, maxDirtyListBytes);
+            if (required > currentTboWorkspaceSize) {
+                ByteBuffer replacement = BufferUtils.createByteBuffer(required);
 
                 int prevID = tboWorkspace.fetchCurrentBoundBufferID();
                 tboWorkspace.bind();
-                tboWorkspace.alloc(currentTboWorkspaceSize, BufferUploadHint.STATIC_DRAW);
+                tboWorkspace.alloc(required, BufferUploadHint.STATIC_DRAW);
                 tboWorkspace.bind(prevID);
+                tboTempByteBuffer = replacement;
+                currentTboWorkspaceSize = required;
             }
 
             tboTempByteBuffer.clear();
@@ -116,7 +143,7 @@ public class MeshletComputeSystem {
                     TextureFormat.R32UI.internalFormat,
                     tboWorkspace.bufferID,
                     0,
-                    size * 4L);
+                    required);
 
             return dirtyList.size();
         }
@@ -182,12 +209,13 @@ public class MeshletComputeSystem {
 
         Preconditions.checkState(!shaderRunning, "Compute shader must not be running already.");
 
-        shaderRunning = true;
-
         ShaderProgram vertexGenProgram = storage.get(vertexGenCompute);
         ShaderProgram drawIndexGenProgram = storage.get(drawIndexGenCompute);
 
+        buffers.prepareRanges(meshletCount);
         int dispatchCount = buffers.prepareTbo(meshletGpuRegistry.getDirtySlots());
+
+        shaderRunning = true;
 
         // todo: abstract shader setup
         GL30.glBindBufferBase(meshletGpuRegistry.getConsumeTarget().target(), 0, meshletGpuRegistry.getConsumeTarget().bufferID);
@@ -209,7 +237,13 @@ public class MeshletComputeSystem {
         ShaderDebugResource.RESOURCE.setDispatchCount(dispatchCount);
         KirinoCommonCore.LOGGER.info("dispatch " + dispatchCount);
 
-        GL43.glDispatchCompute(dispatchCount, 1, 1);
+        int dirtyOffset = GL20.glGetUniformLocation(vertexGenProgram.getProgramID(), "dirtyOffset");
+        for (int offset = 0; offset < dispatchCount;) {
+            int batch = Math.min(dispatchCount - offset, buffers.maxDispatchCount);
+            GL30.glUniform1ui(dirtyOffset, offset);
+            GL43.glDispatchCompute(batch, 1, 1);
+            offset += batch;
+        }
         GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
 
         drawIndexGenProgram.use();
