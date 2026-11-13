@@ -15,6 +15,9 @@ import java.nio.FloatBuffer;
  */
 public final class UiTransformBinding {
 
+    private static final String TRANSFORM_MODE = "KirinoEngine_UI_transformMode";
+    private static final String POST_NDC_TRANSFORM = "KirinoEngine_UI_postNdcTransform";
+
     private final int programId;
     private final int modeLocation;
     private final int matrixLocation;
@@ -25,8 +28,8 @@ public final class UiTransformBinding {
      */
     public UiTransformBinding(int programId) {
         this.programId = programId;
-        modeLocation = GL20.glGetUniformLocation(programId, "KirinoEngine_UI_transformMode");
-        matrixLocation = GL20.glGetUniformLocation(programId, "KirinoEngine_UI_postNdcTransform");
+        modeLocation = GL20.glGetUniformLocation(programId, TRANSFORM_MODE);
+        matrixLocation = GL20.glGetUniformLocation(programId, POST_NDC_TRANSFORM);
     }
 
     public void validate(@NonNull UiTransformContext context) {
@@ -47,7 +50,7 @@ public final class UiTransformBinding {
     /**
      * Uploads the transform.
      *
-     * @param dsa When <code>true</code>, uses DSA path thus not requiring a bound program.
+     * @param dsa When <code>true</code>, uses DSA without requiring a bound program.
      *            When <code>false</code>, the owning program must already be current
      */
     public void bind(

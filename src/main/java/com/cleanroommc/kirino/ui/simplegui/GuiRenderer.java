@@ -35,8 +35,6 @@ public class GuiRenderer implements AutoCloseable {
     private final VAO dummyVao;
     private final UiTransformBinding transformBinding;
     private UiTransformContext transformContext = UiTransformContext.ndc();
-    private final int scaledResLoc;
-    private final int useDepthLoc;
 
     private final float logicalWidth;
     private final float logicalHeight;
@@ -119,8 +117,6 @@ public class GuiRenderer implements AutoCloseable {
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
         transformBinding = new UiTransformBinding(program.getProgramID());
-        scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
-        useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
     }
 
     /**
@@ -638,10 +634,10 @@ public class GuiRenderer implements AutoCloseable {
         arenaSsbo.alloc(arena.view().remaining(), BufferUploadHint.STREAM_DRAW);
         arenaSsbo.uploadBySubData(0, arena.view());
 
-        GL30.glBindBufferBase(drawInfo.target(), 0, drawInfo.bufferID);
-        GL30.glBindBufferBase(rectPayload.target(), 1, rectPayload.bufferID);
-        GL30.glBindBufferBase(linesPayload.target(), 2, linesPayload.bufferID);
-        GL30.glBindBufferBase(arenaSsbo.target(), 4, arenaSsbo.bufferID);
+        program.bindStorageBase("DrawInfos", drawInfo.bufferID);
+        program.bindStorageBase("RectPayloads", rectPayload.bufferID);
+        program.bindStorageBase("LinesPayloads", linesPayload.bufferID);
+        program.bindStorageBase("ArenaVerts", arenaSsbo.bufferID);
 
         program.use();
 
@@ -653,8 +649,8 @@ public class GuiRenderer implements AutoCloseable {
             resolvedLogicalHeight = (float) resolution.getScaledHeight_double();
         }
 
-        GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
-        GL20.glUniform1i(useDepthLoc, 0);
+        program.uniform2f("scaledRes", resolvedLogicalWidth, resolvedLogicalHeight);
+        program.uniform1b("useDepth", false);
         transformBinding.bind(transformContext, resolvedLogicalWidth, resolvedLogicalHeight);
 
         idb.bind();

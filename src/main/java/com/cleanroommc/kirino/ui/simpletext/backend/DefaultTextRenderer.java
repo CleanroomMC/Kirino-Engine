@@ -37,7 +37,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
 import org.lwjgl.system.MemoryUtil;
@@ -128,10 +127,8 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private final Shader frag;
     private final ShaderProgram program;
 
-    private final int scaledResLoc;
-    private final int tickLoc;
-    private final int edgeModeLoc;
-    private final int smoothingScaleLoc;
+    private final boolean supportsEdgeMode;
+    private final boolean supportsSmoothingScale;
 
     private final UiTransformBinding transformBinding;
     private UiTransformContext transformContext = UiTransformContext.ndc();
@@ -210,24 +207,13 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         program = shaderAccess.makeProgram(vert, frag);
         transformBinding = new UiTransformBinding(program.getProgramID());
 
-        scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
-        int atlasLoc = GL20.glGetUniformLocation(program.getProgramID(), "atlas");
-        tickLoc = GL20.glGetUniformLocation(program.getProgramID(), "tick");
-        int sdfSpreadLoc = GL20.glGetUniformLocation(program.getProgramID(), "sdfSpread");
-        edgeModeLoc = GL20.glGetUniformLocation(program.getProgramID(), "KirinoEngine_UI_textEdgeMode");
-        smoothingScaleLoc = GL20.glGetUniformLocation(program.getProgramID(), "KirinoEngine_UI_textSmoothingScale");
+        Preconditions.checkState(program.uniformLocation("scaledRes") >= 0);
+        Preconditions.checkState(program.uniformLocation("atlas") >= 0);
+        supportsEdgeMode = program.uniformLocation("KirinoEngine_UI_textEdgeMode") >= 0;
+        supportsSmoothingScale = program.uniformLocation("KirinoEngine_UI_textSmoothingScale") >= 0;
 
-        Preconditions.checkState(scaledResLoc >= 0);
-        Preconditions.checkState(atlasLoc >= 0);
-        // "tick" could be optimized => tickLoc == -1
-        // "sdfSpread" could be optimized => sdfSpreadLoc == -1
-
-        program.use();
-        GL20.glUniform1i(atlasLoc, ATLAS_TEXTURE_UNIT_INDEX);
-        if (sdfSpreadLoc >= 0) {
-            GL30.glUniform1ui(sdfSpreadLoc, sdfSpread);
-        }
-        program.use0();
+        program.uniform1i("atlas", ATLAS_TEXTURE_UNIT_INDEX);
+        program.uniform1ui("sdfSpread", sdfSpread);
 
         int[] outParallelism = new int[1];
         workerPool = ForkJoinPoolUtils.newWorkStealingPool("KirinoSimpleTextSDF", outParallelism);
@@ -328,10 +314,10 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     public void validateRenderOptions(@NonNull SDFRenderOptions options) {
         Preconditions.checkNotNull(options);
 
-        if (edgeModeLoc < 0 && options.edgeMode() != SDFEdgeMode.SMOOTH) {
+        if (!supportsEdgeMode && options.edgeMode() != SDFEdgeMode.SMOOTH) {
             throw new UnsupportedOperationException("Shader does not support SDF edge mode options.");
         }
-        if (smoothingScaleLoc < 0 && options.smoothingScale() != 1.0f && options.edgeMode() != SDFEdgeMode.HARD) {
+        if (!supportsSmoothingScale && options.smoothingScale() != 1.0f && options.edgeMode() != SDFEdgeMode.HARD) {
             throw new UnsupportedOperationException("Shader does not support SDF smoothing options.");
         }
     }
@@ -636,20 +622,14 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         }
 
         program.use();
-        GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
+        program.uniform2f("scaledRes", resolvedLogicalWidth, resolvedLogicalHeight);
         transformBinding.bind(context, resolvedLogicalWidth, resolvedLogicalHeight);
-        if (edgeModeLoc >= 0) {
-            GL20.glUniform1i(edgeModeLoc, switch (options.edgeMode()) {
-                case SMOOTH -> 0;
-                case HARD -> 1;
-            });
-        }
-        if (smoothingScaleLoc >= 0) {
-            GL20.glUniform1f(smoothingScaleLoc, options.smoothingScale());
-        }
-        if (tickLoc >= 0) {
-            GL30.glUniform1ui(tickLoc, (int) (System.nanoTime() / 80_000_000L));
-        }
+        program.uniform1i("KirinoEngine_UI_textEdgeMode", switch (options.edgeMode()) {
+            case SMOOTH -> 0;
+            case HARD -> 1;
+        });
+        program.uniform1f("KirinoEngine_UI_textSmoothingScale", options.smoothingScale());
+        program.uniform1ui("tick", (int) (System.nanoTime() / 80_000_000L));
 
         GL13.glActiveTexture(ATLAS_TEXTURE_UNIT);
         GL11.glBindTexture(GL30.GL_TEXTURE_2D_ARRAY, glyphAtlas.getTexture().textureID());
