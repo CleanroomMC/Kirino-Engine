@@ -24,7 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
-final class RendererTestSupport {
+public final class RendererTestSupport {
     private static final MethodHandle NEW_STORAGE = ReflectionUtils.getConstructor(ResourceStorage.class);
     private static final MethodHandle NEW_LAYOUT = ReflectionUtils.getConstructor(ResourceLayout.class);
     private static final MethodHandle NEW_DEBUG = ReflectionUtils.getConstructor(DebugDataServiceLocator.class);
@@ -33,7 +33,7 @@ final class RendererTestSupport {
     private static final MethodHandle SET_TIMELINE = ReflectionUtils.getFieldSetter(KirinoClientDebug.class,
         "meshletGpuTimeline", DebugDataHandle.class);
 
-    static void initializeConfig(Path home) throws Exception {
+    public static void initializeConfig(Path home) throws Exception {
         CleanroomEnvironment.setSide(Side.CLIENT);
         var homeField = FMLInjectionData.class.getDeclaredField("minecraftHome");
         homeField.setAccessible(true);
@@ -52,7 +52,7 @@ final class RendererTestSupport {
     static ResourceStorage storage() throws Throwable { return (ResourceStorage) NEW_STORAGE.invokeExact(); }
     static ResourceLayout layout() throws Throwable { return (ResourceLayout) NEW_LAYOUT.invokeExact(); }
 
-    static DebugDataHandle<?> installInactiveTimeline() throws Throwable {
+    public static DebugDataHandle<?> installInactiveTimeline() throws Throwable {
         DebugDataHandle<?> previous = (DebugDataHandle<?>) GET_TIMELINE.invokeExact();
         DebugDataServiceLocator debug = (DebugDataServiceLocator) NEW_DEBUG.invokeExact();
         debug.register(MeshletGpuTimeline.class, new MeshletGpuTimeline() {
@@ -62,7 +62,7 @@ final class RendererTestSupport {
         return previous;
     }
 
-    static void setTimeline(DebugDataHandle<?> handle) throws Throwable {
+    public static void setTimeline(DebugDataHandle<?> handle) throws Throwable {
         SET_TIMELINE.invokeExact((DebugDataHandle) handle);
     }
 

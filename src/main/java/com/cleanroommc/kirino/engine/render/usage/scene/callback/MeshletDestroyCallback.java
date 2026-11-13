@@ -10,6 +10,8 @@ import org.jspecify.annotations.NonNull;
 
 public class MeshletDestroyCallback implements EntityDestroyCallback {
 
+    private static final String[] MESHLET_ID = {"meshletId"};
+
     private final ResourceStorage storage;
     private final ResourceSlot<MeshletGpuRegistry> meshletGpuRegistry;
 
@@ -20,7 +22,7 @@ public class MeshletDestroyCallback implements EntityDestroyCallback {
 
     @Override
     public void beforeDestroy(@NonNull EntityDestroyContext destroyContext) {
-        MeshletComponent meshletComponent = destroyContext.getComponent(MeshletComponent.class);
-        storage.get(meshletGpuRegistry).disposeMeshletID(meshletComponent.meshletId);
+        int meshletId = destroyContext.getInt(MeshletComponent.class, MESHLET_ID);
+        storage.get(meshletGpuRegistry).disposeMeshletID(meshletId);
     }
 }

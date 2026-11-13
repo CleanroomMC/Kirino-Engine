@@ -1,12 +1,15 @@
 package com.cleanroommc.kirino.ecs;
 
 import com.cleanroommc.kirino.config.KirinoConfig;
+import com.cleanroommc.kirino.ecs.api.CleanECSRuntime;
 import com.cleanroommc.kirino.ecs.api.EntityCommands;
 import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobScheduler.ExecutionHandle;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -31,6 +34,12 @@ final class JobExecutor {
         if (owner != null) {
             owner.lifecycle.setClearScratch(workloads::clear);
         }
+    }
+
+    CleanECSRuntime newSession(EntityManager manager) {
+        Preconditions.checkState(owner == manager, "The scheduler belongs to another runtime.");
+        EntityManager session = manager.newSessionManager();
+        return RuntimeBootstrap.newRuntime(session, new JobExecutor(jobRegistry, session));
     }
 
     public ExecutionHandle executeParallelJob(com.cleanroommc.kirino.ecs.api.EntityManager manager,
@@ -70,7 +79,7 @@ final class JobExecutor {
 
         EntityQuery query = entityManager.newQuery();
         ((ParallelJob) definition.instantiator.instantiate()).query(query);
-        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        List<CompletableFuture<Void>> futures = new ObjectArrayList<>();
         EntityManager.ExecutionScope execution = entityManager.beginExecution(query);
         JobWorkload preparation = null;
         try {

@@ -47,6 +47,11 @@ final class HeapPool extends ArchetypeDataPool {
     }
 
     @Override
+    int getEntityRow(int entityID) {
+        return row(entityID);
+    }
+
+    @Override
     public CleanComponent getComponent(int entityID, Class<? extends CleanComponent> component) {
         ColumnBinding binding = binding(component);
         return (CleanComponent) binding.codec.read(binding, row(entityID));
@@ -206,6 +211,15 @@ final class HeapPool extends ArchetypeDataPool {
         int target = PoolCapacity.shrink(currentSize, rows.limit, initSize);
         if (target != currentSize) {
             resize(target);
+        }
+    }
+
+    @Override
+    synchronized void reserveCapacity(int capacity) {
+        requireStructuralAccess();
+        PoolCapacity.validateRequested(capacity);
+        if (capacity > currentSize) {
+            resize(capacity);
         }
     }
 

@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.usage.ecs.struct.AABB;
@@ -42,28 +43,28 @@ public class ChunkMeshletGenJob implements ParallelJob {
      */
     int pass = 0;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.STORAGE)
     ResourceStorage storage;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.TEMP_BUFFERS)
     ConcurrentHashMap<Integer, BufferBuilder> tempBuffers;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.LOD)
     int lod;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MESHLET_DESTROY_CALLBACK)
     MeshletDestroyCallback meshletDestroyCallback;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MESHLET_CREATE_CALLBACK)
     MeshletCreateCallback meshletCreateCallback;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.CHUNK_PROVIDER)
     ChunkProviderClient chunkProvider;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.WORLD)
     WorldClient world;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.BLOCK_MESH_GENERATOR)
     ResourceSlot<BlockMeshGenerator> blockMeshGenerator;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})

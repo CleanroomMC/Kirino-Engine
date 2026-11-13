@@ -168,6 +168,17 @@ public class KirinoEngine {
                         shaderIntrospection),
                 resourceLayout,
                 headlessInstallers.toArray(ModuleInstaller[]::new));
+
+        ShutdownManager.registerBeforeResources(() -> {
+            try {
+                ecsRuntime.close();
+            } catch (Throwable cause) {
+                if (ecsRuntime.state() != CleanECSRuntime.State.CLOSED) {
+                    throw cause;
+                }
+                logger.error("Engine ECS shutdown completed with errors.", cause);
+            }
+        });
     }
 
     private boolean modeChosen = false;

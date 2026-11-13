@@ -3,33 +3,47 @@ package com.cleanroommc.kirino.ecs;
 import com.cleanroommc.kirino.ecs.api.component.CleanComponent;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
 final class ArchetypeKey {
-    private final ReferenceOpenHashSet<Class<? extends CleanComponent>> components;
+    private static final int LINEAR_LIMIT = 8;
+    private final Class<?>[] components;
+    private final ReferenceOpenHashSet<Class<?>> membership;
     private final int hash;
-    public final String key;
 
     public ArchetypeKey(List<Class<? extends CleanComponent>> components) {
         Objects.requireNonNull(components);
-        this.components = new ReferenceOpenHashSet<>();
+        this.components = components.toArray(Class<?>[]::new);
+        membership = this.components.length > LINEAR_LIMIT ? new ReferenceOpenHashSet<>(this.components.length) : null;
         int hash = 0;
-        for (Class<? extends CleanComponent> component : components) {
-            Objects.requireNonNull(component);
-            if (!this.components.add(component)) {
-                throw new IllegalArgumentException("Duplicate component: " + component.getName());
+        for (int i = 0; i < this.components.length; i++) {
+            Class<?> component = Objects.requireNonNull(this.components[i]);
+            if (membership != null) {
+                if (!membership.add(component)) {
+                    throw new IllegalArgumentException("Duplicate component: " + component.getName());
+                }
+            } else {
+                for (int previous = 0; previous < i; previous++) {
+                    if (this.components[previous] == component) {
+                        throw new IllegalArgumentException("Duplicate component: " + component.getName());
+                    }
+                }
             }
             hash += System.identityHashCode(component);
         }
         this.hash = hash;
-        key = String.join(",", components.stream().map(Class::getName).sorted().toList());
     }
 
     @Override
     public boolean equals(Object other) {
-        return this == other || other instanceof ArchetypeKey that
-            && components.size() == that.components.size() && components.containsAll(that.components);
+        if (this == other) return true;
+        if (!(other instanceof ArchetypeKey that) || components.length != that.components.length) return false;
+        for (Class<?> component : components) {
+            if (!that.containsType(component)) return false;
+        }
+        return true;
     }
 
     @Override
@@ -39,10 +53,21 @@ final class ArchetypeKey {
 
     @Override
     public String toString() {
-        return "ArchetypeKey{" + key + "}";
+        String[] names = new String[components.length];
+        for (int i = 0; i < components.length; i++) names[i] = components[i].getName();
+        Arrays.sort(names);
+        return "ArchetypeKey{" + String.join(",", names) + "}";
     }
 
     public boolean contains(Class<? extends CleanComponent> component) {
-        return components.contains(Objects.requireNonNull(component));
+        return containsType(Objects.requireNonNull(component));
+    }
+
+    private boolean containsType(Class<?> component) {
+        if (membership != null) return membership.contains(component);
+        for (Class<?> stored : components) {
+            if (stored == component) return true;
+        }
+        return false;
     }
 }

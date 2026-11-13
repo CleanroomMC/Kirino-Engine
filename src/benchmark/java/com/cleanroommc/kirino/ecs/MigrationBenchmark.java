@@ -168,6 +168,7 @@ public class MigrationBenchmark {
             delegate.addEntity(id, values);
         }
         @Override public boolean containsEntity(int id) { return delegate.containsEntity(id); }
+        @Override int getEntityRow(int id) { return delegate.getEntityRow(id); }
         @Override public CleanComponent getComponent(int id, Class<? extends CleanComponent> type) { return delegate.getComponent(id, type); }
         @Override public void setComponent(int id, CleanComponent value) { delegate.setComponent(id, value); }
         @Override public void addEntity(int id, CleanComponent[] values) { delegate.addEntity(id, values); }

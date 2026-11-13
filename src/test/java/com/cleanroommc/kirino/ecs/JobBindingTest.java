@@ -249,7 +249,7 @@ class JobBindingTest {
         JobRegistry registry = new JobRegistry(components());
         for (Class<? extends ParallelJob> type : List.of(InvalidPathJob.class,
             ConflictingAnnotationsJob.class, FinalFieldJob.class, WrongTypeJob.class,
-            UnregisteredComponentJob.class, AbstractJob.class, NoDefaultConstructorJob.class)) {
+            UnregisteredComponentJob.class, AbstractJob.class, NoDefaultConstructorJob.class, BlankExternalKeyJob.class)) {
             assertThrows(RuntimeException.class, () -> registry.registerParallelJob(type), type.getName());
             assertNull(registry.getDefinition(type), type.getName());
         }
@@ -313,6 +313,11 @@ class JobBindingTest {
         @Override
         public boolean containsEntity(int entity) {
             return delegate.containsEntity(entity);
+        }
+
+        @Override
+        int getEntityRow(int entity) {
+            return delegate.getEntityRow(entity);
         }
 
         @Override
@@ -467,6 +472,11 @@ class JobBindingTest {
     public static class FinalFieldJob extends BaseJob {
         @JobExternalDataQuery
         private final int invalid = 0;
+    }
+
+    public static class BlankExternalKeyJob extends BaseJob {
+        @JobExternalDataQuery(" \t")
+        private Object invalid;
     }
 
     public static class WrongTypeJob extends BaseJob {

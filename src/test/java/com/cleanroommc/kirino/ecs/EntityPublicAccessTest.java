@@ -235,13 +235,17 @@ class EntityPublicAccessTest {
     }
 
     @Test
-    void callbackApi_onlyExposesTypedComponentAccess() throws Exception {
+    void callbackApi_onlyExposesTypedComponentCopiesAndPrimitiveFieldValues() throws Exception {
         for (Class<?> context : List.of(EntityCreateContext.class, EntityDestroyContext.class)) {
             assertTrue(context.isInterface());
             assertEquals(0, context.getConstructors().length);
-            assertEquals(1, context.getDeclaredMethods().length);
-            assertEquals("getComponent", context.getDeclaredMethods()[0].getName());
+            assertEquals(context == EntityCreateContext.class ? 1 : 8, context.getDeclaredMethods().length);
             assertEquals(1, context.getMethod("getComponent", Class.class).getTypeParameters().length);
+        }
+        var fields = java.util.Map.of("getByte", byte.class, "getShort", short.class, "getInt", int.class,
+            "getLong", long.class, "getFloat", float.class, "getDouble", double.class, "getBool", boolean.class);
+        for (var field : fields.entrySet()) {
+            assertEquals(field.getValue(), EntityDestroyContext.class.getMethod(field.getKey(), Class.class, String[].class).getReturnType());
         }
     }
 

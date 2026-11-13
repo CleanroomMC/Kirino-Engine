@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.core.camera.Camera;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.ChunkComponent;
@@ -14,10 +15,10 @@ import org.jspecify.annotations.NonNull;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ChunkPrioritizationJob implements ParallelJob {
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MAX_LOD_COUNTER)
     AtomicInteger maxLodCounter;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.CAMERA)
     Camera camera;
 
     @JobDataQuery(componentClass = ChunkComponent.class, fieldAccessChain = {"chunkPosX"})

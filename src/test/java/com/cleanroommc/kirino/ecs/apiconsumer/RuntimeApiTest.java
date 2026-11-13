@@ -87,7 +87,7 @@ public class RuntimeApiTest {
     }
 
     @SafeVarargs
-    static CleanECSRuntime runtime(Path home, Class<? extends ParallelJob>... extraJobs) throws Exception {
+    public static CleanECSRuntime runtime(Path home, Class<? extends ParallelJob>... extraJobs) throws Exception {
         CleanroomEnvironment.setSide(Side.CLIENT);
         var homeField = FMLInjectionData.class.getDeclaredField("minecraftHome");
         homeField.setAccessible(true);

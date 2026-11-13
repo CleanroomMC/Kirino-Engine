@@ -7,6 +7,7 @@ import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -89,8 +90,8 @@ final class JobRegistry {
         }
 
         JobInstantiator instantiator = genParallelJobInstantiator(clazz);
-        List<JobDefinition.DataBinding> dataBindings = new ArrayList<>();
-        List<JobDefinition.ExternalBinding> externalBindings = new ArrayList<>();
+        List<JobDefinition.DataBinding> dataBindings = new ObjectArrayList<>();
+        List<JobDefinition.ExternalBinding> externalBindings = new ObjectArrayList<>();
 
         String exceptionText = "Parallel job class \"" + clazz.getName() + "\" contains invalid annotation entries.";
 
@@ -101,7 +102,8 @@ final class JobRegistry {
                 }
 
                 JobDataQuery jobDataQuery = field.getAnnotation(JobDataQuery.class);
-                boolean external = field.isAnnotationPresent(JobExternalDataQuery.class);
+                JobExternalDataQuery externalQuery = field.getAnnotation(JobExternalDataQuery.class);
+                boolean external = externalQuery != null;
                 if (jobDataQuery == null && !external) {
                     continue;
                 }
@@ -114,7 +116,11 @@ final class JobRegistry {
 
                 JobDataInjector injector = genParallelJobDataInjector(owner, field.getName(), field.getType());
                 if (external) {
-                    externalBindings.add(new JobDefinition.ExternalBinding(field.getName(), injector));
+                    String key = externalQuery.value().isEmpty() ? field.getName() : externalQuery.value();
+                    Preconditions.checkArgument(!key.isBlank(),
+                        "External data key for field \"%s\" in \"%s\" must not be blank.", field.getName(), owner.getName());
+                    externalBindings.add(new JobDefinition.ExternalBinding(key, field.getType(),
+                        owner.getName() + "." + field.getName(), injector));
                     continue;
                 }
 

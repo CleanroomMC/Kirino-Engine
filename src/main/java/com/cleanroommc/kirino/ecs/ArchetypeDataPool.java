@@ -41,7 +41,13 @@ abstract class ArchetypeDataPool {
     void trimCapacity() {
     }
 
+    void reserveCapacity(int capacity) {
+        throw new UnsupportedOperationException("This pool does not support capacity reservation.");
+    }
+
     public abstract boolean containsEntity(int entityID);
+
+    abstract int getEntityRow(int entityID);
 
     public void beginExecution() {
     }

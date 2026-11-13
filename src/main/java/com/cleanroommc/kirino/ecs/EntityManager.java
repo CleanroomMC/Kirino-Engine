@@ -7,6 +7,8 @@ import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateCallback;
 import com.cleanroommc.kirino.ecs.api.entity.callback.EntityCreateContext;
 import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyCallback;
 import com.cleanroommc.kirino.ecs.api.entity.callback.EntityDestroyContext;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
+import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArrayType;
 import com.cleanroommc.kirino.schemata.collections.ObjectArrayView;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -71,6 +73,39 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
 
     EntityManager(ComponentRegistry componentRegistry) {
         this(componentRegistry, components -> new HeapPool(componentRegistry, components, 100));
+    }
+
+    synchronized EntityManager newSessionManager() {
+        requireAvailable();
+        return new EntityManager(componentRegistry);
+    }
+
+    synchronized void reserveCapacity(List<Class<? extends CleanComponent>> components, int capacity) {
+        requireAvailable();
+        Objects.requireNonNull(components);
+        PoolCapacity.validateRequested(capacity);
+        if (executions != 0) {
+            throw new IllegalStateException("Cannot reserve capacity while jobs use this entity manager");
+        }
+        ArchetypeKey key = new ArchetypeKey(components);
+        Archetype target = archetypes.get(key);
+        if (target != null && target.pool != null) {
+            target.pool.reserveCapacity(capacity);
+            return;
+        }
+
+        List<Class<? extends CleanComponent>> poolComponents = target == null ? components : target.components;
+        ArchetypeDataPool reserved = Objects.requireNonNull(createPool(poolComponents));
+        reserved.reserveCapacity(capacity);
+        if (target == null) {
+            target = new Archetype(key, components);
+            archetypes.put(key, target);
+        }
+        target.pool = reserved;
+        poolCount++;
+        if (queryCache != null) {
+            queryCache.clear();
+        }
     }
 
     EntityManager(ComponentRegistry componentRegistry,
@@ -711,6 +746,48 @@ final class EntityManager implements com.cleanroommc.kirino.ecs.api.EntityManage
                 "The entity does not contain component %s.", component.getName());
 
             return component.cast(pool.getComponent(entityID, component));
+        }
+
+        @Override
+        public byte getByte(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.BYTE).getByte(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public short getShort(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.SHORT).getShort(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public int getInt(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.INT).getInt(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public long getLong(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.LONG).getLong(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public float getFloat(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.FLOAT).getFloat(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public double getDouble(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.DOUBLE).getDouble(pool.getEntityRow(entityID));
+        }
+
+        @Override
+        public boolean getBool(Class<? extends CleanComponent> component, String... path) {
+            return field(component, path, PrimitiveArrayType.BOOL).getBool(pool.getEntityRow(entityID));
+        }
+
+        private PrimitiveArray field(Class<? extends CleanComponent> component, String[] path, PrimitiveArrayType expected) {
+            Preconditions.checkState(pool != null, "The entity destroy context is no longer active.");
+            PrimitiveArray array = pool.getArray(component, path);
+            Preconditions.checkArgument(array.type() == expected, "The field has a different primitive type.");
+            return array;
         }
     }
 

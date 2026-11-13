@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
 import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletGpuWriterContext;
 import com.cleanroommc.kirino.engine.render.usage.task.job.MeshletBufferWriteJob;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
@@ -18,7 +19,7 @@ public class MeshletBufferWriteSystem extends CleanSystem {
 
     public MeshletBufferWriteSystem(MeshletGpuWriterContext meshletGpuWriterContext, Executor executor) {
         externalData = new HashMap<>();
-        externalData.put("meshletGpuWriterContext", meshletGpuWriterContext);
+        externalData.put(RenderJobDataKeys.MESHLET_GPU_WRITER, meshletGpuWriterContext);
         this.executor = executor;
     }
 

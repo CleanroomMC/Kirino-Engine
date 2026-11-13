@@ -5,7 +5,8 @@ import com.cleanroommc.kirino.ecs.api.system.CleanSystem;
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SingleFlow;
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph.Builder;
 import com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph;
-import com.cleanroommc.kirino.ecs.api.world.CleanWorld;
+import com.cleanroommc.kirino.ecs.api.EntityManager;
+import com.cleanroommc.kirino.ecs.api.job.JobScheduler;
 import com.cleanroommc.kirino.utils.ReflectionUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -18,6 +19,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.*;
 import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static com.cleanroommc.kirino.ecs.api.system.exegraph.SystemExeFlowGraph.*;
 
@@ -25,7 +27,9 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
 
     //<editor-fold desc="builder">
     private static final class BuilderImpl<TSys extends CleanSystem> implements Builder<SingleFlow<TSys>> {
-        private final CleanWorld world;
+        private final EntityManager entityManager;
+        private final JobScheduler jobScheduler;
+        private final Function<CleanSystem, Object> executionState;
         private final Class<TSys> clazz;
         private final Map<String, BarrierNode> nodes = new Object2ObjectOpenHashMap<>();
         private final List<Transition> edges = new ObjectArrayList<>();
@@ -34,8 +38,11 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
         private @Nullable Runnable finishCallback;
         private @Nullable Consumer<Throwable> failureCallback;
 
-        BuilderImpl(CleanWorld world, Class<TSys> clazz) {
-            this.world = world;
+        BuilderImpl(EntityManager entityManager, JobScheduler jobScheduler, Class<TSys> clazz,
+                    Function<CleanSystem, Object> executionState) {
+            this.entityManager = entityManager;
+            this.jobScheduler = jobScheduler;
+            this.executionState = executionState;
             this.clazz = clazz;
             nodes.put(START_NODE, new BarrierNode(START_NODE, null));
             nodes.put(END_NODE, new BarrierNode(END_NODE, null));
@@ -50,7 +57,12 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkArgument(!nodeID.equals(END_NODE),
                 "Must not use \"%s\" as the node ID. \"%s\" is a built-in node.", END_NODE, END_NODE);
 
-            nodes.put(nodeID, new BarrierNode(nodeID, callback));
+            BarrierNode existing = nodes.get(nodeID);
+            if (existing == null) {
+                nodes.put(nodeID, new BarrierNode(nodeID, callback));
+            } else {
+                existing.callback = callback;
+            }
             return this;
         }
 
@@ -75,8 +87,9 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkArgument(task.getClass() == clazz,
                 "The type of the argument \"task\" must match %s.", clazz.getName());
 
+            addTransitionInternal(task, fromNodeID, toNodeID);
             system = (TSys) task;
-            return addTransitionInternal(system, fromNodeID, toNodeID);
+            return this;
         }
 
         @CanIgnoreReturnValue
@@ -86,7 +99,8 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkNotNull(from, "From node not found: \"%s\".", fromNodeID);
             Preconditions.checkNotNull(to, "To node not found: \"%s\".", toNodeID);
 
-            edges.add(new Transition(task, from, to));
+            SystemExecution execution = task == null ? null : (SystemExecution) executionState.apply(task);
+            edges.add(new Transition(task, execution, from, to));
             return this;
         }
 
@@ -134,6 +148,13 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
                 edge.to.inDegree++;
             }
 
+            BarrierNode start = nodes.get(START_NODE);
+            BarrierNode end = nodes.get(END_NODE);
+            Preconditions.checkState(start.inDegree == 0,
+                "START node must have in degree = 0.");
+            Preconditions.checkState(end.outgoing.isEmpty(),
+                "END node must not have outgoing edges.");
+
             Deque<BarrierNode> queue = new ArrayDeque<>();
             List<BarrierNode> topo = new ObjectArrayList<>();
 
@@ -155,15 +176,6 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkState(topo.size() == nodes.size(),
                 "SingleFlow graph is not a DAG.");
 
-            BarrierNode start = nodes.get(START_NODE);
-            BarrierNode end = nodes.get(END_NODE);
-
-            Preconditions.checkState(start.inDegree == 0,
-                "START node must have in degree = 0.");
-
-            Preconditions.checkState(end.outgoing.isEmpty(),
-                "END node must not have outgoing edges.");
-
             Set<BarrierNode> reachable = new HashSet<>();
             Deque<BarrierNode> stack = new ArrayDeque<>();
             stack.push(start);
@@ -182,20 +194,36 @@ final class SingleFlowExecutor<TSys extends CleanSystem> extends AbstractFlow {
             Preconditions.checkState(reachable.size() == nodes.size(),
                 "Some nodes are not reachable from the START node.");
 
-            return MethodHolder.newFlow(system, new SingleFlowExecutor<>(world, topo, finishCallback, failureCallback));
+            reachable.clear();
+            stack.push(end);
+            while (!stack.isEmpty()) {
+                BarrierNode node = stack.pop();
+                if (!reachable.add(node)) {
+                    continue;
+                }
+                for (Transition edge : node.incoming) {
+                    stack.push(edge.from);
+                }
+            }
+            Preconditions.checkState(reachable.size() == nodes.size(),
+                "Some nodes cannot reach the END node.");
+
+            return MethodHolder.newFlow(system,
+                new SingleFlowExecutor<>(entityManager, jobScheduler, topo, finishCallback, failureCallback));
         }
     }
     //</editor-fold>
 
-    private SingleFlowExecutor(@NonNull CleanWorld world, @NonNull List<@NonNull BarrierNode> topo,
+    private SingleFlowExecutor(EntityManager entityManager, JobScheduler jobScheduler, @NonNull List<@NonNull BarrierNode> topo,
                                @Nullable Runnable finishCallback, @Nullable Consumer<Throwable> failureCallback) {
-        super(world, topo, finishCallback, failureCallback);
+        super(entityManager, jobScheduler, topo, finishCallback, failureCallback);
     }
 
-    static <T extends CleanSystem> Builder<SingleFlow<T>> newBuilder(CleanWorld world, Class<T> clazz) {
-        Preconditions.checkNotNull(world);
+    static <T extends CleanSystem> Builder<SingleFlow<T>> newBuilder(EntityManager entityManager, JobScheduler jobScheduler,
+                                                                     Class<T> clazz, Function<CleanSystem, Object> executionState) {
         Preconditions.checkNotNull(clazz);
-        return new BuilderImpl<>(world, clazz);
+        Preconditions.checkNotNull(executionState);
+        return new BuilderImpl<>(entityManager, jobScheduler, clazz, executionState);
     }
 
     private static final class MethodHolder {

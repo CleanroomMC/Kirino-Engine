@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.core.debug.gizmos.GizmosManager;
@@ -16,10 +17,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MeshletDebugJob implements ParallelJob {
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.STORAGE)
     ResourceStorage storage;
 
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.GIZMOS_MANAGER)
     ResourceSlot<GizmosManager> gizmosManager;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"blockCount"})

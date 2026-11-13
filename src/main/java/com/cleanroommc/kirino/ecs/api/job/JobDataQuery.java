@@ -11,5 +11,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface JobDataQuery {
     @NonNull Class<?> componentClass();
+
     @NonNull String @NonNull [] fieldAccessChain();
 }

@@ -11,6 +11,11 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import java.util.*;
 
 final class FixedStepHeapPool extends ArchetypeDataPool {
+
+    @Override
+    int getEntityRow(int entityID) {
+        return row(entityID);
+    }
     private final int growStep;
     private final int shrinkStep;
     private final Map<Class<?>, ColumnBinding> byClass = new Reference2ObjectOpenHashMap<>();

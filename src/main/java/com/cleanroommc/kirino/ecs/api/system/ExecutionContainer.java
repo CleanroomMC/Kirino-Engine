@@ -22,6 +22,10 @@ public final class ExecutionContainer {
 
     private final Object state = MethodHolder.create();
 
+    Object state() {
+        return state;
+    }
+
     public void noExecutions() {
         updateExecutions(null, (JobScheduler.ExecutionHandle[]) null);
     }

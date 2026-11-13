@@ -6,6 +6,12 @@ final class PoolCapacity {
     private PoolCapacity() {
     }
 
+    static void validateRequested(int capacity) {
+        if (capacity < 0 || capacity > MAX_CAPACITY) {
+            throw new IllegalArgumentException("Invalid pool capacity: " + capacity);
+        }
+    }
+
     static int grow(int capacity, int required) {
         if (required < 0 || required > MAX_CAPACITY) {
             throw new OutOfMemoryError("Required pool capacity exceeds the supported array length");

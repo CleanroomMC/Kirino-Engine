@@ -35,6 +35,7 @@ public class MinecraftScene extends CleanWorld {
 
     private final ResourceStorage storage;
     private final SceneFailure failure = new SceneFailure();
+    private boolean retired;
 
     private final Executor systemFlowExecutor;
 
@@ -197,11 +198,17 @@ public class MinecraftScene extends CleanWorld {
     private MeshletRenderPayload meshletRenderPayload = new MeshletRenderPayload(0, 0);
 
     public MeshletRenderPayload getMeshletRenderPayload() {
+        if (retired) {
+            return new MeshletRenderPayload(0, 0);
+        }
         failure.check();
         return meshletRenderPayload;
     }
 
     public boolean isMeshletRenderReady() {
+        if (retired) {
+            return false;
+        }
         failure.check();
         return meshletFsm.isPullResultReady();
     }
@@ -213,6 +220,7 @@ public class MinecraftScene extends CleanWorld {
      * @param minecraftWorld The world from <code>Minecraft.getMinecraft().world</code>
      */
     public void tryUpdateWorld(WorldClient minecraftWorld) {
+        com.google.common.base.Preconditions.checkState(!retired, "This scene has been retired.");
         failure.check();
         try {
             worldControl.tryUpdateWorld(minecraftWorld);
@@ -223,12 +231,30 @@ public class MinecraftScene extends CleanWorld {
 
     @Override
     public void update() {
+        if (retired) {
+            return;
+        }
         failure.check();
         try {
             updateScene();
         } catch (Throwable updateFailure) {
             throw failure.fail(updateFailure);
         }
+    }
+
+    public void detachWorld() {
+        retired = true;
+        worldControl.detach();
+    }
+
+    public void releaseWorldReferences() {
+        com.google.common.base.Preconditions.checkState(!isAnySystemFlowExecuting(),
+            "Wait for scene flows before releasing their world references.");
+        worldControl.releaseWorldReferences();
+        chunkMeshletGenSystem.getSystem().releaseWorldReferences();
+        chunkDelta.chunksDestroyedLastFrame.clear();
+        chunkDelta.newChunksAdded = false;
+        meshletRenderPayload = new MeshletRenderPayload(0, 0);
     }
 
     private void updateScene() {

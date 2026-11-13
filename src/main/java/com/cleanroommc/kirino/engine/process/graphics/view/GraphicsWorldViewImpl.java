@@ -544,17 +544,16 @@ public class GraphicsWorldViewImpl implements GraphicsWorldView {
 
     private void update(KnowledgeRuntime glKnowledge) {
         storage().get(graphicsb().graphicResourceManager).runStaging();
-        mcscene().scene.tryUpdateWorld(Minecraft.getMinecraft().world);
-        mcscene().scene.update();
+        mcscene().updateWorld(Minecraft.getMinecraft().world);
     }
 
     private void renderOpaque(KnowledgeRuntime glKnowledge) {
-//        if (sceneViewState.scene.isMeshletRenderReady()) {
+//        if (sceneViewState.isMeshletRenderReady()) {
 //            rs().terrainGpuPass.render(
 //                    storage,
 //                    sceneViewState.camera,
 //                    null,
-//                    new Object[]{sceneViewState.scene.getMeshletRenderPayload()});
+//                    new Object[]{sceneViewState.getMeshletRenderPayload()});
 //        }
 //        rs().chunkCpuPass.render(sceneViewState.camera);
     }

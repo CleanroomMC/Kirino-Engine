@@ -65,6 +65,21 @@ public class MeshletComputeSystem {
             rangeSsbo.bind(0);
         }
 
+        void resetForWorld() {
+            if (counterSsbo != null) {
+                int previous = counterSsbo.fetchCurrentBoundBufferID();
+                counterSsbo.bind();
+                counterSsbo.clearUint0();
+                counterSsbo.bind(previous);
+            }
+            if (rangeSsbo != null) {
+                int previous = rangeSsbo.fetchCurrentBoundBufferID();
+                rangeSsbo.bind();
+                rangeSsbo.clearUint0();
+                rangeSsbo.bind(previous);
+            }
+        }
+
         /**
          * @return The compute dispatch count
          */
@@ -149,6 +164,17 @@ public class MeshletComputeSystem {
         buffers.lateInit();
     }
 
+    public void resetForWorld() {
+        if (fence != 0) {
+            GL32C.glDeleteSync(fence);
+            fence = 0;
+        }
+        buffers.resetForWorld();
+        vertexCount = 0;
+        indexCount = 0;
+        shaderRunning = false;
+    }
+
     public void startDispatch(
             ResourceStorage storage,
             MeshletGpuRegistry meshletGpuRegistry,
@@ -194,6 +220,7 @@ public class MeshletComputeSystem {
         GL42.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT);
 
         fence = GL32C.glFenceSync(GL32C.GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+        Preconditions.checkState(fence != 0, "Failed to create the meshlet compute fence.");
     }
 
     public boolean tryPullResult() {
@@ -202,6 +229,7 @@ public class MeshletComputeSystem {
         int waitReturn = GL32C.glClientWaitSync(fence, GL32.GL_SYNC_FLUSH_COMMANDS_BIT, 0L);
         if (waitReturn == GL32.GL_ALREADY_SIGNALED || waitReturn == GL32.GL_CONDITION_SATISFIED) {
             GL32C.glDeleteSync(fence);
+            fence = 0;
 
             ByteBuffer byteBuffer = buffers.counterSsbo.getPersistentMappedBuffer().orElseThrow();
 
@@ -214,6 +242,7 @@ public class MeshletComputeSystem {
             return true;
         }
 
+        Preconditions.checkState(waitReturn == GL32.GL_TIMEOUT_EXPIRED, "Failed to wait for the meshlet compute fence.");
         return false;
     }
 }

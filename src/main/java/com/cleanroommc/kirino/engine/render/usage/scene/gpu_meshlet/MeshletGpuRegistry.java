@@ -45,6 +45,19 @@ public class MeshletGpuRegistry {
         drawIndexOutputBuffer.lateInit();
     }
 
+    public synchronized void resetForWorld() {
+        meshletIdCounter = 0;
+        freeMeshletIds.clear();
+        pendingMeshletIdRemoval.clear();
+        meshletIdAddedSinceLastBegin.clear();
+        meshletIdRemovedSinceLastBegin.clear();
+        dirtySlotTracker.clear();
+        meshletBufferSlotAllocator.reset();
+        writing = false;
+        computing = false;
+        finishedWritingOnce = false;
+    }
+
     //<editor-fold desc="id allocation & disposal">
     /**
      * <p>Prerequisites include:</p>

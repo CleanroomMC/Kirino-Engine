@@ -35,6 +35,10 @@ public final class CleanECSRuntime implements AutoCloseable {
         return MethodHolder.state(entityManager);
     }
 
+    public CleanECSRuntime newSession() {
+        return MethodHolder.newSession(entityManager, jobScheduler);
+    }
+
     public CompletableFuture<Void> quiesce() {
         return MethodHolder.quiesce(entityManager);
     }
@@ -54,7 +58,12 @@ public final class CleanECSRuntime implements AutoCloseable {
         static {
             try {
                 Class<?> bootstrap = Class.forName("com.cleanroommc.kirino.ecs.RuntimeBootstrap");
-                DELEGATE = new Delegate(Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "create", CleanECSRuntime.class, EventBus.class, Logger.class)), Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "state", State.class, EntityManager.class)), Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "quiesce", CompletableFuture.class, EntityManager.class)), Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "finish", void.class, EntityManager.class, boolean.class)));
+                DELEGATE = new Delegate(
+                    Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "create", CleanECSRuntime.class, EventBus.class, Logger.class)),
+                    Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "state", State.class, EntityManager.class)),
+                    Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "quiesce", CompletableFuture.class, EntityManager.class)),
+                    Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "finish", void.class, EntityManager.class, boolean.class)),
+                    Preconditions.checkNotNull(ReflectionUtils.getMethod(bootstrap, "newSession", CleanECSRuntime.class, EntityManager.class, JobScheduler.class)));
             } catch (ClassNotFoundException failure) {
                 throw new ExceptionInInitializerError(failure);
             }
@@ -78,6 +87,15 @@ public final class CleanECSRuntime implements AutoCloseable {
             }
         }
 
+        static CleanECSRuntime newSession(EntityManager manager, JobScheduler scheduler) {
+            try {
+                return (CleanECSRuntime) DELEGATE.newSession.invokeExact(manager, scheduler);
+            } catch (Throwable cause) {
+                Throwables.throwIfUnchecked(cause);
+                throw new CompletionException(cause);
+            }
+        }
+
         @SuppressWarnings("unchecked")
         static CompletableFuture<Void> quiesce(EntityManager manager) {
             try {
@@ -97,7 +115,8 @@ public final class CleanECSRuntime implements AutoCloseable {
             }
         }
 
-        private record Delegate(MethodHandle create, MethodHandle state, MethodHandle quiesce, MethodHandle finish) {
+        private record Delegate(MethodHandle create, MethodHandle state, MethodHandle quiesce, MethodHandle finish,
+                                MethodHandle newSession) {
         }
     }
 }

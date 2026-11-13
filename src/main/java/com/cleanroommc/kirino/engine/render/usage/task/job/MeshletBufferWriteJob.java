@@ -5,6 +5,7 @@ import com.cleanroommc.kirino.ecs.api.EntityQuery;
 import com.cleanroommc.kirino.ecs.api.job.ParallelJob;
 import com.cleanroommc.kirino.ecs.api.job.JobDataQuery;
 import com.cleanroommc.kirino.ecs.api.job.JobExternalDataQuery;
+import com.cleanroommc.kirino.engine.render.usage.task.RenderJobDataKeys;
 import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.cleanroommc.kirino.engine.render.usage.ecs.component.MeshletComponent;
 import com.cleanroommc.kirino.engine.render.usage.scene.gpu_meshlet.MeshletGpuWriterContext;
@@ -13,7 +14,7 @@ import org.jspecify.annotations.NonNull;
 import java.nio.ByteBuffer;
 
 public class MeshletBufferWriteJob implements ParallelJob {
-    @JobExternalDataQuery
+    @JobExternalDataQuery(RenderJobDataKeys.MESHLET_GPU_WRITER)
     MeshletGpuWriterContext meshletGpuWriterContext;
 
     @JobDataQuery(componentClass = MeshletComponent.class, fieldAccessChain = {"meshletId"})

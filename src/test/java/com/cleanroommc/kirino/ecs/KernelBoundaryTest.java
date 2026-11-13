@@ -80,6 +80,12 @@ class KernelBoundaryTest {
             com.cleanroommc.kirino.ecs.api.system.CleanSystem.class));
         assertThrows(ClassNotFoundException.class,
             () -> Class.forName("com.cleanroommc.kirino.ecs.api.system.exegraph.AbstractFlow"));
+        assertEquals(SystemExeFlowGraph.Builder.class, com.cleanroommc.kirino.ecs.api.system.CleanSystem.class
+            .getMethod("newSingleFlowBuilder", com.cleanroommc.kirino.ecs.api.EntityManager.class,
+                JobScheduler.class, Class.class).getReturnType());
+        assertTrue(Modifier.isFinal(com.cleanroommc.kirino.ecs.api.world.CleanWorld.class
+            .getMethod("newSingleFlowBuilder", Class.class).getModifiers()));
+        assertThrows(NoSuchMethodException.class, () -> ExecutionContainer.class.getMethod("state"));
     }
 
     @Test

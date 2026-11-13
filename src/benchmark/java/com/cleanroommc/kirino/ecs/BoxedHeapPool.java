@@ -11,6 +11,15 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 
 public final class BoxedHeapPool extends ArchetypeDataPool{
+
+    @Override
+    int getEntityRow(int entityID) {
+        Integer row = entityDataIndexes.get(entityID);
+        if (row == null) {
+            throw new IllegalArgumentException("Unknown entity: " + entityID);
+        }
+        return row;
+    }
     private final int growStep;
     private final int shrinkStep;
     private final List<byte[]> bytePool = new ArrayList<>();

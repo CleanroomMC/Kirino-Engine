@@ -177,6 +177,14 @@ final class RuntimeBootstrap {
         return MethodHolder.newJobScheduler(new JobExecutor(registry));
     }
 
+    static CleanECSRuntime newRuntime(EntityManager manager, JobExecutor executor) {
+        return MethodHolder.newRuntime(manager, MethodHolder.newJobScheduler(executor));
+    }
+
+    static CleanECSRuntime newSession(com.cleanroommc.kirino.ecs.api.EntityManager manager, JobScheduler scheduler) {
+        return MethodHolder.executor(scheduler).newSession((EntityManager) manager);
+    }
+
     static CleanECSRuntime.State state(com.cleanroommc.kirino.ecs.api.EntityManager manager) {
         return ((EntityManager) manager).lifecycle.state();
     }
@@ -196,7 +204,8 @@ final class RuntimeBootstrap {
             DELEGATE = new Delegate(ReflectionUtils.getFieldGetter(JobRegistrationEvent.class, "parallelJobClasses", List.class),
                 Preconditions.checkNotNull(ReflectionUtils.getConstructor(JobScheduler.class, Object.class)),
                 Preconditions.checkNotNull(ReflectionUtils.getConstructor(CleanECSRuntime.class,
-                    com.cleanroommc.kirino.ecs.api.EntityManager.class, JobScheduler.class)));
+                    com.cleanroommc.kirino.ecs.api.EntityManager.class, JobScheduler.class)),
+                Preconditions.checkNotNull(ReflectionUtils.getFieldGetter(JobScheduler.class, "executor", Object.class)));
 
             Preconditions.checkNotNull(DELEGATE.parallelJobsGetter);
         }
@@ -219,6 +228,15 @@ final class RuntimeBootstrap {
             }
         }
 
+        static JobExecutor executor(JobScheduler scheduler) {
+            try {
+                return (JobExecutor) (Object) DELEGATE.executorGetter.invokeExact(scheduler);
+            } catch (Throwable cause) {
+                Throwables.throwIfUnchecked(cause);
+                throw new CompletionException(cause);
+            }
+        }
+
         static CleanECSRuntime newRuntime(
             com.cleanroommc.kirino.ecs.api.EntityManager entities, JobScheduler scheduler) {
             try {
@@ -229,7 +247,8 @@ final class RuntimeBootstrap {
             }
         }
 
-        record Delegate(MethodHandle parallelJobsGetter, MethodHandle schedulerConstructor, MethodHandle runtimeConstructor) {
+        record Delegate(MethodHandle parallelJobsGetter, MethodHandle schedulerConstructor, MethodHandle runtimeConstructor,
+                        MethodHandle executorGetter) {
         }
     }
 }

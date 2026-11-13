@@ -126,7 +126,7 @@ public final class KirinoClientCore {
             return;
         }
 
-        MethodHolder2.getMcSceneViewState(KIRINO_ENGINE).scene.notifyBlockUpdate(x, y, z, oldState, newState);
+        MethodHolder2.getMcSceneViewState(KIRINO_ENGINE).notifyBlockUpdate(x, y, z, oldState, newState);
     }
 
     /**
@@ -154,7 +154,7 @@ public final class KirinoClientCore {
             return;
         }
 
-        MethodHolder2.getMcSceneViewState(KIRINO_ENGINE).scene.notifyLightUpdate(x, y, z);
+        MethodHolder2.getMcSceneViewState(KIRINO_ENGINE).notifyLightUpdate(x, y, z);
     }
     //</editor-fold>
 

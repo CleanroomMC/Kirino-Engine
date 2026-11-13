@@ -6,6 +6,7 @@ import com.cleanroommc.kirino.ecs.api.storage.PrimitiveArray;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.Nullable;
 
+import java.lang.invoke.MethodType;
 import java.util.Map;
 
 final class JobDefinition {
@@ -47,10 +48,14 @@ final class JobDefinition {
 
         Object[] values = new Object[externalBindings.length];
         for (int i = 0; i < externalBindings.length; i++) {
-            String key = externalBindings[i].key;
+            ExternalBinding binding = externalBindings[i];
+            String key = binding.key;
             Preconditions.checkArgument(externalData.containsKey(key),
                 "Missing the entry \"%s\" from \"externalData\".", key);
-            values[i] = externalData.get(key);
+            Object value = externalData.get(key);
+            Preconditions.checkArgument(value == null ? !binding.primitive : binding.valueType.isInstance(value),
+                "External data \"%s\" for %s requires %s.", key, binding.target, binding.valueType.getName());
+            values[i] = value;
         }
         return values;
     }
@@ -81,10 +86,16 @@ final class JobDefinition {
 
     static final class ExternalBinding {
         final String key;
+        final Class<?> valueType;
+        final boolean primitive;
+        final String target;
         final JobDataInjector injector;
 
-        ExternalBinding(String key, JobDataInjector injector) {
+        ExternalBinding(String key, Class<?> fieldType, String target, JobDataInjector injector) {
             this.key = key;
+            this.valueType = MethodType.methodType(fieldType).wrap().returnType();
+            this.primitive = fieldType.isPrimitive();
+            this.target = target;
             this.injector = injector;
         }
     }
