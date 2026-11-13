@@ -22,6 +22,8 @@ import com.cleanroommc.kirino.ui.simpletext.sdf.SDFBitmap;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGenerator;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorPool;
+import com.cleanroommc.kirino.ui.simpletext.sdf.SDFEdgeMode;
+import com.cleanroommc.kirino.ui.simpletext.sdf.SDFRenderOptions;
 import com.cleanroommc.kirino.ui.transform.UiTransformBinding;
 import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.cleanroommc.kirino.utils.ForkJoinPoolUtils;
@@ -140,7 +142,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     /**
      * Uses Minecraft's scaled resolution as the logical GUI size.
      *
-     * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float)
+     * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float, SDFRenderOptions)
      */
     public DefaultTextRenderer(
             @NonNull SimpleTextRuntime context,
@@ -149,6 +151,35 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
             int maxResidentGlyphs) {
 
         this(context, glyphAtlas, shaderAccess, maxResidentGlyphs, 0, 0);
+    }
+
+    /**
+     * Uses Minecraft's scaled resolution and the supplied SDF rendering options.
+     *
+     * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float, SDFRenderOptions)
+     */
+    public DefaultTextRenderer(
+            @NonNull SimpleTextRuntime context,
+            @NonNull Tex2DArrayGlyphAtlas glyphAtlas,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            int maxResidentGlyphs,
+            @NonNull SDFRenderOptions options) {
+
+        this(context, glyphAtlas, shaderAccess, maxResidentGlyphs, 0, 0, options);
+    }
+
+    /**
+     * @see DefaultTextRenderer#DefaultTextRenderer(SimpleTextRuntime, Tex2DArrayGlyphAtlas, ImmediateShaderAccess, int, float, float, SDFRenderOptions)
+     */
+    public DefaultTextRenderer(
+            @NonNull SimpleTextRuntime context,
+            @NonNull Tex2DArrayGlyphAtlas glyphAtlas,
+            @NonNull ImmediateShaderAccess shaderAccess,
+            int maxResidentGlyphs,
+            float logicalWidth,
+            float logicalHeight) {
+
+        this(context, glyphAtlas, shaderAccess, maxResidentGlyphs, logicalWidth, logicalHeight, SDFRenderOptions.DEFAULT);
     }
 
     /**
@@ -167,8 +198,10 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
             @NonNull ImmediateShaderAccess shaderAccess,
             int maxResidentGlyphs,
             float logicalWidth,
-            float logicalHeight) {
+            float logicalHeight,
+            @NonNull SDFRenderOptions options) {
 
+        Preconditions.checkNotNull(options);
         Preconditions.checkArgument((logicalWidth == 0 && logicalHeight == 0)
                 || (Float.isFinite(logicalWidth) && logicalWidth > 0 && Float.isFinite(logicalHeight) && logicalHeight > 0));
 
@@ -210,16 +243,32 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         int atlasLoc = GL20.glGetUniformLocation(program.getProgramID(), "atlas");
         tickLoc = GL20.glGetUniformLocation(program.getProgramID(), "tick");
         int sdfSpreadLoc = GL20.glGetUniformLocation(program.getProgramID(), "sdfSpread");
+        int edgeModeLoc = GL20.glGetUniformLocation(program.getProgramID(), "KirinoEngine_UI_textEdgeMode");
+        int smoothingScaleLoc = GL20.glGetUniformLocation(program.getProgramID(), "KirinoEngine_UI_textSmoothingScale");
 
         Preconditions.checkState(scaledResLoc >= 0);
         Preconditions.checkState(atlasLoc >= 0);
         // "tick" could be optimized => tickLoc == -1
         // "sdfSpread" could be optimized => sdfSpreadLoc == -1
 
+        Preconditions.checkArgument(edgeModeLoc >= 0 || options.edgeMode() == SDFEdgeMode.SMOOTH,
+                "Shader does not support SDF edge mode options.");
+        Preconditions.checkArgument(smoothingScaleLoc >= 0 || options.smoothingScale() == 1.0f || options.edgeMode() == SDFEdgeMode.HARD,
+                "Shader does not support SDF smoothing options.");
+
         program.use();
         GL20.glUniform1i(atlasLoc, ATLAS_TEXTURE_UNIT_INDEX);
         if (sdfSpreadLoc >= 0) {
             GL30.glUniform1ui(sdfSpreadLoc, sdfSpread);
+        }
+        if (edgeModeLoc >= 0) {
+            GL20.glUniform1i(edgeModeLoc, switch (options.edgeMode()) {
+                case SMOOTH -> 0;
+                case HARD -> 1;
+            });
+        }
+        if (smoothingScaleLoc >= 0) {
+            GL20.glUniform1f(smoothingScaleLoc, options.smoothingScale());
         }
         program.use0();
 

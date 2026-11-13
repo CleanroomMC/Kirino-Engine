@@ -18,7 +18,24 @@ flat in uvec4 ObfParam7;
 uniform sampler2DArray atlas;
 uniform uint sdfSpread;
 
+uniform int KirinoEngine_UI_textEdgeMode = 0;
+uniform float KirinoEngine_UI_textSmoothingScale = 1.0;
+
 out vec4 FragColor;
+
+float sdfCoverage(float dist, float edge, float width)
+{
+    if (KirinoEngine_UI_textEdgeMode == 1) return step(edge, dist);
+    float w = width * KirinoEngine_UI_textSmoothingScale;
+    return smoothstep(edge - w, edge + w, dist);
+}
+
+vec3 sdfCoverage(vec3 dist, float edge, vec3 width)
+{
+    if (KirinoEngine_UI_textEdgeMode == 1) return step(vec3(edge), dist);
+    vec3 w = width * KirinoEngine_UI_textSmoothingScale;
+    return smoothstep(vec3(edge) - w, vec3(edge) + w, dist);
+}
 
 const uint TEXT_COLOR_PALETTE_32[32] = uint[32](
     0x000000u, //  0 black
@@ -421,7 +438,7 @@ float obfuscatedGlyph(vec2 atlasUV)
 float obfuscatedMask(vec2 atlasUV, float edge, float w)
 {
     float dist = obfuscatedGlyphRaw(atlasUV);
-    return smoothstep(edge - w, edge + w, dist);
+    return sdfCoverage(dist, edge, w);
 }
 
 float obfuscatedShadowMask(vec2 atlasUV, float edge, float w)
@@ -470,7 +487,7 @@ float directionalShadow(bool enableObfuscated, vec2 atlasUV, vec2 texel, float f
                 sampleAtlas(shadowUV - sideUV),
                 sampleAtlas(shadowUV + sideUV));
             vec3 width = max(fwidth(dist), vec3(0.001));
-            mask = smoothstep(vec3(fillEdge) - width, vec3(fillEdge) + width, dist);
+            mask = sdfCoverage(dist, fillEdge, width);
         }
 
         float t = clamp((shadowDistance - 1.0) / (SHADOW_LENGTH - 1.0), 0.0, 1.0);
@@ -503,8 +520,8 @@ void main()
     float fillEdge = edge - boldness;
     float outerEdge = fillEdge - outlineThickness;
 
-    float fill = smoothstep(fillEdge - w, fillEdge + w, dist);
-    float outer = enableOutline ? smoothstep(outerEdge - w, outerEdge + w, dist) : fill;
+    float fill = sdfCoverage(dist, fillEdge, w);
+    float outer = enableOutline ? sdfCoverage(dist, outerEdge, w) : fill;
     float stroke = enableOutline ? max(outer - fill, 0.0) : 0.0;
 
     float shadow = enableShadow ? directionalShadow(enableObfuscated, UV, texel, fillEdge, w) : 0.0;
