@@ -32,6 +32,15 @@ public final class FreeTypeManager {
     private static final Logger LOGGER = LogManager.getLogger("Kirino FreeTypeManager");
 
     /**
+     * <p>Note: Must call {@link #destroy()} when it's no longer used.</p>
+     * <p>Note: You're responsible for its lifecycle.</p>
+     */
+    @NonNull
+    public static FreeTypeManager create() {
+        return new FreeTypeManager();
+    }
+
+    /**
      * To be injected by the owner before use.
      *
      * <p>When null, no instance name is added to log messages.</p>
