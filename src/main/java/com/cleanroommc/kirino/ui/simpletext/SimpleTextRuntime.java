@@ -8,6 +8,7 @@ import com.cleanroommc.kirino.ui.simpletext.facade.FontRendererFacade;
 import com.cleanroommc.kirino.ui.simpletext.facade.SimpleTextFontRendererFacade;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
+import com.cleanroommc.kirino.ui.simpletext.sdf.SDFRenderOptions;
 import com.cleanroommc.kirino.ui.simpletext.text.*;
 import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.cleanroommc.kirino.utils.ResourceLocation;
@@ -56,6 +57,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     private final SimpleTextProducer textProducer;
     private final SimpleTextProducer dummyTextProducer;
     private UiTransformContext transformContext = UiTransformContext.ndc();
+    private SDFRenderOptions renderOptions = SDFRenderOptions.DEFAULT;
 
     private final ParagraphLineBreaker paragraphLineBreaker;
 
@@ -217,7 +219,7 @@ public class SimpleTextRuntime implements AutoCloseable {
         }
     }
 
-    private SimpleTextRuntime beginInternal(UiTransformContext context) {
+    private SimpleTextRuntime beginInternal(UiTransformContext context, SDFRenderOptions options) {
         textProducer.beginBatch();
         if (context.isDefault()) {
             underlineGui.begin();
@@ -227,13 +229,14 @@ public class SimpleTextRuntime implements AutoCloseable {
             strikethroughGui.begin(context);
         }
         transformContext = context;
+        renderOptions = options;
         return this;
     }
 
     @CanIgnoreReturnValue
     @NonNull
     public SimpleTextRuntime begin() {
-        return beginInternal(UiTransformContext.ndc());
+        return beginInternal(UiTransformContext.ndc(), SDFRenderOptions.DEFAULT);
     }
 
     @CanIgnoreReturnValue
@@ -243,7 +246,19 @@ public class SimpleTextRuntime implements AutoCloseable {
 
         validateTransform(context);
 
-        return beginInternal(context);
+        return beginInternal(context, SDFRenderOptions.DEFAULT);
+    }
+
+    @CanIgnoreReturnValue
+    @NonNull
+    public SimpleTextRuntime begin(@NonNull UiTransformContext context, @NonNull SDFRenderOptions options) {
+        Preconditions.checkNotNull(context);
+        Preconditions.checkNotNull(options);
+
+        validateTransform(context);
+        textConsumer.validateRenderOptions(options);
+
+        return beginInternal(context, options);
     }
 
     @CanIgnoreReturnValue
@@ -252,7 +267,9 @@ public class SimpleTextRuntime implements AutoCloseable {
         try {
             textProducer.endBatch();
             underlineGui.endDraw();
-            if (transformContext.isDefault()) {
+            if (!SDFRenderOptions.DEFAULT.equals(renderOptions)) {
+                textConsumer.consume(textProducer.submit(), transformContext, renderOptions);
+            } else if (transformContext.isDefault()) {
                 textConsumer.consume(textProducer.submit());
             } else {
                 textConsumer.consume(textProducer.submit(), transformContext);
@@ -261,6 +278,7 @@ public class SimpleTextRuntime implements AutoCloseable {
             return this;
         } finally {
             transformContext = UiTransformContext.ndc();
+            renderOptions = SDFRenderOptions.DEFAULT;
         }
     }
 
