@@ -1,4 +1,4 @@
-#version 460 core
+#version 460 compatibility
 
 #define DRAW_RECT 1
 #define DRAW_LINES 2

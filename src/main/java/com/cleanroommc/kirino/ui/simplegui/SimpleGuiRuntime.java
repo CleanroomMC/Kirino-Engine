@@ -3,6 +3,7 @@ package com.cleanroommc.kirino.ui.simplegui;
 import com.cleanroommc.anone.value.CanIgnoreReturnValue;
 import com.cleanroommc.kirino.engine.render.core.shader.ImmediateShaderAccess;
 import com.cleanroommc.kirino.gl.vao.VAO;
+import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.google.common.base.Preconditions;
 import org.jspecify.annotations.NonNull;
 
@@ -45,6 +46,14 @@ public class SimpleGuiRuntime implements AutoCloseable {
 
     private boolean batch = false;
 
+    private UiTransformContext transformContext = UiTransformContext.ndc();
+
+    public void validateTransform(@NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(context);
+
+        renderer.validateTransform(context);
+    }
+
     @CanIgnoreReturnValue
     @NonNull
     public SimpleGuiRuntime begin() {
@@ -54,6 +63,19 @@ public class SimpleGuiRuntime implements AutoCloseable {
 
         arena.reset();
         stream.reset();
+        transformContext = UiTransformContext.ndc();
+        return this;
+    }
+
+    @CanIgnoreReturnValue
+    @NonNull
+    public SimpleGuiRuntime begin(@NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(context);
+
+        validateTransform(context);
+
+        begin();
+        transformContext = context;
         return this;
     }
 
@@ -64,9 +86,17 @@ public class SimpleGuiRuntime implements AutoCloseable {
 
         batch = false;
 
-        compiler.compile(stream);
-        renderer.render(stream);
-        return this;
+        try {
+            compiler.compile(stream);
+            if (transformContext.isDefault()) {
+                renderer.render(stream);
+            } else {
+                renderer.render(stream, transformContext);
+            }
+            return this;
+        } finally {
+            transformContext = UiTransformContext.ndc();
+        }
     }
 
     @CanIgnoreReturnValue

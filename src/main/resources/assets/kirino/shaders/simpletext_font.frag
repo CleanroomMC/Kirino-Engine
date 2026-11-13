@@ -1,4 +1,4 @@
-#version 430 core
+#version 460 compatibility
 
 in vec2 UV;
 flat in vec4 UVRect;

@@ -1,4 +1,15 @@
-#version 430 core
+#version 460 compatibility
+
+uniform int KirinoEngine_UI_transformMode;
+uniform mat4 KirinoEngine_UI_postNdcTransform;
+
+vec4 kirinoApplyUiTransform(vec4 uiNdc)
+{
+    if (KirinoEngine_UI_transformMode == 0) return uiNdc;
+    vec4 mapped = KirinoEngine_UI_postNdcTransform * uiNdc;
+    if (KirinoEngine_UI_transformMode == 1) return gl_ModelViewProjectionMatrix * mapped;
+    return mapped;
+}
 
 layout(location = 0) in vec4 uv;
 layout(location = 1) in vec4 rect;
@@ -215,5 +226,5 @@ void main()
 
     initObfParams(enableObfuscated);
 
-    gl_Position = vec4(res2Ndc(scaledRes, pos), 0.0, 1.0);
+    gl_Position = kirinoApplyUiTransform(vec4(res2Ndc(scaledRes, pos), 0.0, 1.0));
 }

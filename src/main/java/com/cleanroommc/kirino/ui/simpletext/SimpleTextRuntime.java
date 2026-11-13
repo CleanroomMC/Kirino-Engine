@@ -9,6 +9,7 @@ import com.cleanroommc.kirino.ui.simpletext.facade.SimpleTextFontRendererFacade;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetrics;
 import com.cleanroommc.kirino.ui.simpletext.glyph.GlyphMetricsStore;
 import com.cleanroommc.kirino.ui.simpletext.text.*;
+import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 import com.ibm.icu.text.BreakIterator;
@@ -54,6 +55,7 @@ public class SimpleTextRuntime implements AutoCloseable {
     private final SimpleTextConsumer textConsumer;
     private final SimpleTextProducer textProducer;
     private final SimpleTextProducer dummyTextProducer;
+    private UiTransformContext transformContext = UiTransformContext.ndc();
 
     private final ParagraphLineBreaker paragraphLineBreaker;
 
@@ -207,23 +209,59 @@ public class SimpleTextRuntime implements AutoCloseable {
     }
     //</editor-fold>
 
-    @CanIgnoreReturnValue
-    @NonNull
-    public SimpleTextRuntime begin() {
+    private void validateTransform(UiTransformContext context) {
+        if (!context.isDefault()) {
+            textConsumer.validateTransform(context);
+            underlineGui.validateTransform(context);
+            strikethroughGui.validateTransform(context);
+        }
+    }
+
+    private SimpleTextRuntime beginInternal(UiTransformContext context) {
         textProducer.beginBatch();
-        underlineGui.begin();
-        strikethroughGui.begin();
+        if (context.isDefault()) {
+            underlineGui.begin();
+            strikethroughGui.begin();
+        } else {
+            underlineGui.begin(context);
+            strikethroughGui.begin(context);
+        }
+        transformContext = context;
         return this;
     }
 
     @CanIgnoreReturnValue
     @NonNull
+    public SimpleTextRuntime begin() {
+        return beginInternal(UiTransformContext.ndc());
+    }
+
+    @CanIgnoreReturnValue
+    @NonNull
+    public SimpleTextRuntime begin(@NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(context);
+
+        validateTransform(context);
+
+        return beginInternal(context);
+    }
+
+    @CanIgnoreReturnValue
+    @NonNull
     public SimpleTextRuntime endDraw() {
-        textProducer.endBatch();
-        underlineGui.endDraw();
-        textConsumer.consume(textProducer.submit());
-        strikethroughGui.endDraw();
-        return this;
+        try {
+            textProducer.endBatch();
+            underlineGui.endDraw();
+            if (transformContext.isDefault()) {
+                textConsumer.consume(textProducer.submit());
+            } else {
+                textConsumer.consume(textProducer.submit(), transformContext);
+            }
+            strikethroughGui.endDraw();
+            return this;
+        } finally {
+            transformContext = UiTransformContext.ndc();
+        }
     }
 
     //<editor-fold desc="simulate">

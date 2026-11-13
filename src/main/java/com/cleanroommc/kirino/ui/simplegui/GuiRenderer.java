@@ -8,6 +8,8 @@ import com.cleanroommc.kirino.gl.buffer.view.SSBOView;
 import com.cleanroommc.kirino.gl.shader.Shader;
 import com.cleanroommc.kirino.gl.shader.ShaderProgram;
 import com.cleanroommc.kirino.gl.vao.VAO;
+import com.cleanroommc.kirino.ui.transform.UiTransformBinding;
+import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
 import net.minecraft.client.Minecraft;
@@ -31,6 +33,10 @@ public class GuiRenderer implements AutoCloseable {
     private final Shader frag;
     private final ShaderProgram program;
     private final VAO dummyVao;
+    private final UiTransformBinding transformBinding;
+    private UiTransformContext transformContext = UiTransformContext.ndc();
+    private final int scaledResLoc;
+    private final int useDepthLoc;
 
     private final float logicalWidth;
     private final float logicalHeight;
@@ -112,6 +118,9 @@ public class GuiRenderer implements AutoCloseable {
         frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
+        transformBinding = new UiTransformBinding(program.getProgramID());
+        scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
+        useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
     }
 
     /**
@@ -496,6 +505,27 @@ public class GuiRenderer implements AutoCloseable {
         return payloadPos;
     }
 
+    public void validateTransform(@NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(context);
+
+        transformBinding.validate(context);
+    }
+
+    public void render(@NonNull GuiCommandStream stream, @NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(stream);
+        Preconditions.checkNotNull(context);
+
+        validateTransform(context);
+
+        UiTransformContext previous = transformContext;
+        transformContext = context;
+        try {
+            render(stream);
+        } finally {
+            transformContext = previous;
+        }
+    }
+
     public void render(@NonNull GuiCommandStream stream) {
         Preconditions.checkNotNull(stream);
 
@@ -615,11 +645,8 @@ public class GuiRenderer implements AutoCloseable {
 
         program.use();
 
-        int scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
-        int useDepthLoc = GL20.glGetUniformLocation(program.getProgramID(), "useDepth");
-
-        float resolvedLogicalWidth = logicalWidth;
-        float resolvedLogicalHeight = logicalHeight;
+        float resolvedLogicalWidth = transformContext.logicalWidthOr(logicalWidth);
+        float resolvedLogicalHeight = transformContext.logicalHeightOr(logicalHeight);
         if (resolvedLogicalWidth == 0) {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
             resolvedLogicalWidth = (float) resolution.getScaledWidth_double();
@@ -628,6 +655,7 @@ public class GuiRenderer implements AutoCloseable {
 
         GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
         GL20.glUniform1i(useDepthLoc, 0);
+        transformBinding.bind(transformContext, resolvedLogicalWidth, resolvedLogicalHeight);
 
         idb.bind();
         dummyVao.bind();

@@ -14,6 +14,58 @@ prepare GL states for the draw call. You'll have to take care of the GL state ch
 Notice that immediate services are intrinsically the antipattern of our immutable pipeline design,
 so GL state leaks are inevitable.
 
+## Transform contexts
+
+`begin()` & `endDraw()` use a NDC canvas by default. 
+To opt in custom transformations, pass a `UiTransformContext` to `begin(context)`. 
+The same overload is available on `SimpleGuiRuntime`.
+
+UI geometry still converts logical GUI coordinates to canonical NDC first. 
+The context then maps NDC to homogeneous clip space. 
+
+It never sets any GL state including framebuffer, GL viewport, depth, blending or scissor state. 
+
+### Opt in legacy GL matrices
+
+```java
+glPushMatrix();
+glTranslatef(20.5f, 30.25f, 0);
+glScalef(0.75f, 0.75f, 1);
+text.begin(UiTransformContext.legacyGui())
+        .append("Text", 0, 0)
+        .endDraw();
+glPopMatrix();
+```
+
+### A top-left canvas in the world
+
+```java
+UiWorldCanvas canvas = UiWorldCanvas.builder(320, 180)
+        .position(worldX, worldY, worldZ)
+        .unitsPerWorldUnit(200)
+        .rotation(orientation)
+        .build();
+
+// snapshot again when the camera changes
+UiTransformContext context = UiTransformContext.hologram(
+        UiCameraSnapshot.from(camera), 
+        canvas);
+
+gui.begin(context)
+        .append(commands -> commands.rect(0, 0, 320, 180, backgroundColor))
+        .endDraw();
+text.begin(context)
+        .append("World canvas", 8, 8)
+        .endDraw();
+```
+
+Position anchors logical `(0, 0)` at the world's top-left pivot. Rotation is around that pivot. 
+`worldSize(width, height)` can set world dimensions independently instead of choosing a uniform density. 
+
+Choose the appropriate scene depth/blend state in the caller's render pass. 
+An inherited scissor remains a framebuffer-space rectangle; it does not become a rotated canvas clip.
+The transform context does not add local clipping or input hit testing.
+
 ## Assumptions
 
 - Features like MSDF, ligature, BiDi, shaping are out of scope
@@ -134,3 +186,71 @@ However, the interfaces and specs are all modular and codepoint oriented (instea
 possible to implement emoji rendering with your own `SimpleTextProducer` & `SimpleTextConsumer` implementations.
 
 For more details, please look into the source code and Javadoc.
+
+## Advanced Usage Examples
+
+Without a ResourceLocation
+```java
+float logicalWidth = 720, logicalHeight = 360;
+ST_Config config = new ST_Config(
+        ST_FontBackendType.FREE_TYPE, 48, 16, 12,
+        FreeType.FT_LOAD_RENDER | FreeType.FT_LOAD_NO_HINTING);
+FT_Face face = freeType.load(fontResource, 0, config.pixelSize());
+
+// custom shader source loader: works before Minecraft's resource manager is ready
+ImmediateShaderAccess shaders = ImmediateShaderAccess.fromSourceLoader(rl -> {
+    try (InputStream input = MinecraftResourceUtils.getEarlyInputStream(rl)) {
+        return new String(input.readAllBytes(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
+        throw new UncheckedIOException(e);
+    }
+});
+
+AttributeLayout layout = new AttributeLayout();
+layout.push(new Stride(0));
+VAO dummyVao = new VAO(layout, null, (VBOView[]) null);
+
+SimpleGuiRuntime gui = new SimpleGuiRuntime(shaders, dummyVao, logicalWidth, logicalHeight);
+SimpleGuiRuntime underline = new SimpleGuiRuntime(shaders, dummyVao, logicalWidth, logicalHeight);
+SimpleGuiRuntime strike = new SimpleGuiRuntime(shaders, dummyVao, logicalWidth, logicalHeight);
+SimpleTextRuntime text = new SimpleTextRuntime(
+        cfg -> new FreeTypeFontHandle(face),
+        runtime -> new DefaultTextRenderer(
+                runtime, 
+                new Tex2DArrayGlyphAtlas(1024, 1024), 
+                shaders, 
+                256,
+                logicalWidth, 
+                logicalHeight),
+        runtime -> new DefaultTextProducer(runtime, config.pixelSize()),
+        shaders, 
+        underline, 
+        strike, 
+        config);
+```
+
+With a ResourceLocation
+```java
+import com.cleanroommc.kirino.utils.ResourceLocation;
+
+ResourceLocation fontResource = new ResourceLocation(
+        "kirino:fonts/jetbrains/jetbrains_mono_nl_regular.ttf");
+
+SimpleGuiRuntime underline = new SimpleGuiRuntime(shaders, dummyVao, logicalWidth, logicalHeight);
+SimpleGuiRuntime strike = new SimpleGuiRuntime(shaders, dummyVao, logicalWidth, logicalHeight);
+SimpleTextRuntime resourceText = new SimpleTextRuntime(
+        (rl, cfg) -> new FreeTypeFontHandle(freeType.load(rl, 0, cfg.pixelSize())),
+        runtime -> new DefaultTextRenderer(
+                runtime, 
+                new Tex2DArrayGlyphAtlas(1024, 1024), 
+                shaders, 
+                256,
+                logicalWidth, 
+                logicalHeight),
+        runtime -> new DefaultTextProducer(runtime, runtime.getConfig().pixelSize()),
+        shaders,    
+        underline, 
+        strike, 
+        config, 
+        fontResource);
+```

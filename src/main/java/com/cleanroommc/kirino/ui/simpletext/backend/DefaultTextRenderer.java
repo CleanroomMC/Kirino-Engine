@@ -22,6 +22,8 @@ import com.cleanroommc.kirino.ui.simpletext.sdf.SDFBitmap;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGenerator;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorBruteForceImpl;
 import com.cleanroommc.kirino.ui.simpletext.sdf.SDFGeneratorPool;
+import com.cleanroommc.kirino.ui.transform.UiTransformBinding;
+import com.cleanroommc.kirino.ui.transform.UiTransformContext;
 import com.cleanroommc.kirino.utils.ForkJoinPoolUtils;
 import com.cleanroommc.kirino.utils.ResourceLocation;
 import com.google.common.base.Preconditions;
@@ -127,6 +129,9 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private final int scaledResLoc;
     private final int tickLoc;
 
+    private final UiTransformBinding transformBinding;
+    private UiTransformContext transformContext = UiTransformContext.ndc();
+
     private final float logicalWidth;
     private final float logicalHeight;
 
@@ -199,6 +204,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.frag"));
         shaderAccess.submitToGL(vert, frag);
         program = shaderAccess.makeProgram(vert, frag);
+        transformBinding = new UiTransformBinding(program.getProgramID());
 
         scaledResLoc = GL20.glGetUniformLocation(program.getProgramID(), "scaledRes");
         int atlasLoc = GL20.glGetUniformLocation(program.getProgramID(), "atlas");
@@ -311,6 +317,29 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         }
     }
     //</editor-fold>
+
+    @Override
+    public void validateTransform(@NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(context);
+
+        transformBinding.validate(context);
+    }
+
+    @Override
+    public void consume(@NonNull TextCommandList commandList, @NonNull UiTransformContext context) {
+        Preconditions.checkNotNull(commandList);
+        Preconditions.checkNotNull(context);
+
+        validateTransform(context);
+
+        UiTransformContext previous = transformContext;
+        transformContext = context;
+        try {
+            consume(commandList);
+        } finally {
+            transformContext = previous;
+        }
+    }
 
     @Override
     public void consume(@NonNull TextCommandList commandList) {
@@ -553,8 +582,8 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
     private void draw(int instanceCount) {
         Preconditions.checkArgument(instanceCount > 0);
 
-        float resolvedLogicalWidth = logicalWidth;
-        float resolvedLogicalHeight = logicalHeight;
+        float resolvedLogicalWidth = transformContext.logicalWidthOr(logicalWidth);
+        float resolvedLogicalHeight = transformContext.logicalHeightOr(logicalHeight);
         if (resolvedLogicalWidth == 0) {
             ScaledResolution resolution = new ScaledResolution(Minecraft.getMinecraft());
             resolvedLogicalWidth = (float) resolution.getScaledWidth_double();
@@ -563,6 +592,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
         program.use();
         GL20.glUniform2f(scaledResLoc, resolvedLogicalWidth, resolvedLogicalHeight);
+        transformBinding.bind(transformContext, resolvedLogicalWidth, resolvedLogicalHeight);
         if (tickLoc >= 0) {
             GL30.glUniform1ui(tickLoc, (int) (System.nanoTime() / 80_000_000L));
         }
