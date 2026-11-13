@@ -1,4 +1,9 @@
 
+### Cleanroom 0.7.0-alpha
+- Engine Module `epoch-1.a7`
+- ECS Module `epoch-1.a5`
+- GL Module `epoch-1.a4`
+
 ### Cleanroom 0.5.7-alpha
 - Engine Module `epoch-1.a5`
 - ECS Module `epoch-1.a3`
