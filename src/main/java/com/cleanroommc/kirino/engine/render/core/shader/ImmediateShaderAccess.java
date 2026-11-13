@@ -108,12 +108,17 @@ public class ImmediateShaderAccess {
 
     @NonNull
     public ShaderProgram makeProgram(@NonNull Shader @NonNull ... shaders) {
+        return makeProgram(false, shaders);
+    }
+
+    @NonNull
+    public ShaderProgram makeProgram(boolean dsa, @NonNull Shader @NonNull ... shaders) {
         Preconditions.checkNotNull(shaders);
         for (Shader shader : shaders) {
             Preconditions.checkNotNull(shader);
         }
 
-        return MethodHolder.initShaderProgram(shaders);
+        return MethodHolder.initShaderProgram(dsa, shaders);
     }
 
     public void submitToGL(@NonNull Shader @NonNull ... shaders) {
@@ -145,7 +150,7 @@ public class ImmediateShaderAccess {
         static {
             DELEGATE = new ShaderDelegate(
                     ReflectionUtils.getConstructor(Shader.class, String.class, String.class, ShaderType.class),
-                    ReflectionUtils.getConstructor(ShaderProgram.class, Shader[].class));
+                    ReflectionUtils.getConstructor(ShaderProgram.class, boolean.class, Shader[].class));
 
             Preconditions.checkNotNull(DELEGATE.shaderCtor());
             Preconditions.checkNotNull(DELEGATE.shaderProgramCtor());
@@ -163,12 +168,11 @@ public class ImmediateShaderAccess {
         }
 
         /**
-         * @see ShaderProgram#ShaderProgram(Shader...)
+         * @see ShaderProgram#ShaderProgram(boolean, Shader...)
          */
-        @SuppressWarnings("ConfusingArgumentToVarargsMethod")
-        static ShaderProgram initShaderProgram(Shader... shaders) {
+        static ShaderProgram initShaderProgram(boolean dsa, Shader... shaders) {
             try {
-                return (ShaderProgram) DELEGATE.shaderProgramCtor().invokeExact(shaders);
+                return (ShaderProgram) DELEGATE.shaderProgramCtor().invokeExact(dsa, shaders);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }

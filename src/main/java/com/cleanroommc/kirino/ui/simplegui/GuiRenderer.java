@@ -115,7 +115,7 @@ public class GuiRenderer implements AutoCloseable {
         vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.vert"));
         frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simplegui_renderer.frag"));
         shaderAccess.submitToGL(vert, frag);
-        program = shaderAccess.makeProgram(vert, frag);
+        program = shaderAccess.makeProgram(true, vert, frag);
         transformBinding = new UiTransformBinding(program.getProgramID());
     }
 
@@ -651,7 +651,7 @@ public class GuiRenderer implements AutoCloseable {
 
         program.uniform2f("scaledRes", resolvedLogicalWidth, resolvedLogicalHeight);
         program.uniform1b("useDepth", false);
-        transformBinding.bind(transformContext, resolvedLogicalWidth, resolvedLogicalHeight);
+        transformBinding.bind(transformContext, resolvedLogicalWidth, resolvedLogicalHeight, true);
 
         idb.bind();
         dummyVao.bind();

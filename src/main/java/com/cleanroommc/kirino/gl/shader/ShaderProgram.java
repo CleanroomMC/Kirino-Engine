@@ -24,6 +24,7 @@ public class ShaderProgram extends GLDisposable {
 
     private final ImmutableList<Shader> shaders;
     private final int programID;
+    private final boolean dsa;
 
     public ImmutableList<Shader> getShaders() {
         return shaders;
@@ -327,167 +328,293 @@ public class ShaderProgram extends GLDisposable {
     }
 
     public void uniform1b(@NonNull String name, boolean value) {
-        GL41.glProgramUniform1i(programID, uniformLocation(name), value ? 1 : 0);
+        if (dsa) {
+            GL41.glProgramUniform1i(programID, uniformLocation(name), value ? 1 : 0);
+        } else {
+            GL20.glUniform1i(uniformLocation(name), value ? 1 : 0);
+        }
     }
 
     public void uniform1i(@NonNull String name, int value) {
-        GL41.glProgramUniform1i(programID, uniformLocation(name), value);
+        if (dsa) {
+            GL41.glProgramUniform1i(programID, uniformLocation(name), value);
+        } else {
+            GL20.glUniform1i(uniformLocation(name), value);
+        }
     }
 
     public void uniform2i(@NonNull String name, int x, int y) {
-        GL41.glProgramUniform2i(programID, uniformLocation(name), x, y);
+        if (dsa) {
+            GL41.glProgramUniform2i(programID, uniformLocation(name), x, y);
+        } else {
+            GL20.glUniform2i(uniformLocation(name), x, y);
+        }
     }
 
     public void uniform3i(@NonNull String name, int x, int y, int z) {
-        GL41.glProgramUniform3i(programID, uniformLocation(name), x, y, z);
+        if (dsa) {
+            GL41.glProgramUniform3i(programID, uniformLocation(name), x, y, z);
+        } else {
+            GL20.glUniform3i(uniformLocation(name), x, y, z);
+        }
     }
 
     public void uniform4i(@NonNull String name, int x, int y, int z, int w) {
-        GL41.glProgramUniform4i(programID, uniformLocation(name), x, y, z, w);
+        if (dsa) {
+            GL41.glProgramUniform4i(programID, uniformLocation(name), x, y, z, w);
+        } else {
+            GL20.glUniform4i(uniformLocation(name), x, y, z, w);
+        }
     }
 
     public void uniform1ui(@NonNull String name, int value) {
-        GL41.glProgramUniform1ui(programID, uniformLocation(name), value);
+        if (dsa) {
+            GL41.glProgramUniform1ui(programID, uniformLocation(name), value);
+        } else {
+            GL30.glUniform1ui(uniformLocation(name), value);
+        }
     }
 
     public void uniform2ui(@NonNull String name, int x, int y) {
-        GL41.glProgramUniform2ui(programID, uniformLocation(name), x, y);
+        if (dsa) {
+            GL41.glProgramUniform2ui(programID, uniformLocation(name), x, y);
+        } else {
+            GL30.glUniform2ui(uniformLocation(name), x, y);
+        }
     }
 
     public void uniform3ui(@NonNull String name, int x, int y, int z) {
-        GL41.glProgramUniform3ui(programID, uniformLocation(name), x, y, z);
+        if (dsa) {
+            GL41.glProgramUniform3ui(programID, uniformLocation(name), x, y, z);
+        } else {
+            GL30.glUniform3ui(uniformLocation(name), x, y, z);
+        }
     }
 
     public void uniform4ui(@NonNull String name, int x, int y, int z, int w) {
-        GL41.glProgramUniform4ui(programID, uniformLocation(name), x, y, z, w);
+        if (dsa) {
+            GL41.glProgramUniform4ui(programID, uniformLocation(name), x, y, z, w);
+        } else {
+            GL30.glUniform4ui(uniformLocation(name), x, y, z, w);
+        }
     }
 
     public void uniform1f(@NonNull String name, float value) {
-        GL41.glProgramUniform1f(programID, uniformLocation(name), value);
+        if (dsa) {
+            GL41.glProgramUniform1f(programID, uniformLocation(name), value);
+        } else {
+            GL20.glUniform1f(uniformLocation(name), value);
+        }
     }
 
     public void uniform2f(@NonNull String name, float x, float y) {
-        GL41.glProgramUniform2f(programID, uniformLocation(name), x, y);
+        if (dsa) {
+            GL41.glProgramUniform2f(programID, uniformLocation(name), x, y);
+        } else {
+            GL20.glUniform2f(uniformLocation(name), x, y);
+        }
     }
 
     public void uniform3f(@NonNull String name, float x, float y, float z) {
-        GL41.glProgramUniform3f(programID, uniformLocation(name), x, y, z);
+        if (dsa) {
+            GL41.glProgramUniform3f(programID, uniformLocation(name), x, y, z);
+        } else {
+            GL20.glUniform3f(uniformLocation(name), x, y, z);
+        }
     }
 
     public void uniform4f(@NonNull String name, float x, float y, float z, float w) {
-        GL41.glProgramUniform4f(programID, uniformLocation(name), x, y, z, w);
+        if (dsa) {
+            GL41.glProgramUniform4f(programID, uniformLocation(name), x, y, z, w);
+        } else {
+            GL20.glUniform4f(uniformLocation(name), x, y, z, w);
+        }
     }
 
     public void uniform1iv(@NonNull String name, @NonNull IntBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform1iv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform1iv(programID, uniformLocation(name), values);
+        } else {
+            GL20.glUniform1iv(uniformLocation(name), values);
+        }
     }
 
     public void uniform1uiv(@NonNull String name, @NonNull IntBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform1uiv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform1uiv(programID, uniformLocation(name), values);
+        } else {
+            GL30.glUniform1uiv(uniformLocation(name), values);
+        }
     }
 
     public void uniform1fv(@NonNull String name, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform1fv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform1fv(programID, uniformLocation(name), values);
+        } else {
+            GL20.glUniform1fv(uniformLocation(name), values);
+        }
     }
 
     public void uniform2fv(@NonNull String name, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform2fv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform2fv(programID, uniformLocation(name), values);
+        } else {
+            GL20.glUniform2fv(uniformLocation(name), values);
+        }
     }
 
     public void uniform3fv(@NonNull String name, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform3fv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform3fv(programID, uniformLocation(name), values);
+        } else {
+            GL20.glUniform3fv(uniformLocation(name), values);
+        }
     }
 
     public void uniform4fv(@NonNull String name, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniform4fv(programID, uniformLocation(name), values);
+        if (dsa) {
+            GL41.glProgramUniform4fv(programID, uniformLocation(name), values);
+        } else {
+            GL20.glUniform4fv(uniformLocation(name), values);
+        }
     }
 
     public void uniformMatrix2f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), transpose, values);
+        if (dsa) {
+            GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), transpose, values);
+        } else {
+            GL20.glUniformMatrix2fv(uniformLocation(name), transpose, values);
+        }
     }
 
     public void uniformMatrix2f(@NonNull String name, @NonNull Matrix2fc value) {
         Preconditions.checkNotNull(value);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(4)));
+            if (dsa) {
+                GL41.glProgramUniformMatrix2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(4)));
+            } else {
+                GL20.glUniformMatrix2fv(uniformLocation(name), false, value.get(stack.mallocFloat(4)));
+            }
         }
     }
 
     public void uniformMatrix3f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), transpose, values);
+        if (dsa) {
+            GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), transpose, values);
+        } else {
+            GL20.glUniformMatrix3fv(uniformLocation(name), transpose, values);
+        }
     }
 
     public void uniformMatrix3f(@NonNull String name, @NonNull Matrix3fc value) {
         Preconditions.checkNotNull(value);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(9)));
+            if (dsa) {
+                GL41.glProgramUniformMatrix3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(9)));
+            } else {
+                GL20.glUniformMatrix3fv(uniformLocation(name), false, value.get(stack.mallocFloat(9)));
+            }
         }
     }
 
     public void uniformMatrix3x2f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), transpose, values);
+        if (dsa) {
+            GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), transpose, values);
+        } else {
+            GL21.glUniformMatrix3x2fv(uniformLocation(name), transpose, values);
+        }
     }
 
     public void uniformMatrix3x2f(@NonNull String name, @NonNull Matrix3x2fc value) {
         Preconditions.checkNotNull(value);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(6)));
+            if (dsa) {
+                GL41.glProgramUniformMatrix3x2fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(6)));
+            } else {
+                GL21.glUniformMatrix3x2fv(uniformLocation(name), false, value.get(stack.mallocFloat(6)));
+            }
         }
     }
 
     public void uniformMatrix4f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), transpose, values);
+        if (dsa) {
+            GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), transpose, values);
+        } else {
+            GL20.glUniformMatrix4fv(uniformLocation(name), transpose, values);
+        }
     }
 
     public void uniformMatrix4f(@NonNull String name, @NonNull Matrix4fc value) {
         Preconditions.checkNotNull(value);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(16)));
+            if (dsa) {
+                GL41.glProgramUniformMatrix4fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(16)));
+            } else {
+                GL20.glUniformMatrix4fv(uniformLocation(name), false, value.get(stack.mallocFloat(16)));
+            }
         }
     }
 
     public void uniformMatrix4x3f(@NonNull String name, boolean transpose, @NonNull FloatBuffer values) {
         Preconditions.checkNotNull(values);
 
-        GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), transpose, values);
+        if (dsa) {
+            GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), transpose, values);
+        } else {
+            GL21.glUniformMatrix4x3fv(uniformLocation(name), transpose, values);
+        }
     }
 
     public void uniformMatrix4x3f(@NonNull String name, @NonNull Matrix4x3fc value) {
         Preconditions.checkNotNull(value);
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
-            GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(12)));
+            if (dsa) {
+                GL41.glProgramUniformMatrix4x3fv(programID, uniformLocation(name), false, value.get(stack.mallocFloat(12)));
+            } else {
+                GL21.glUniformMatrix4x3fv(uniformLocation(name), false, value.get(stack.mallocFloat(12)));
+            }
         }
     }
     //</editor-fold>
 
+    /**
+     * Target-bound path.
+     */
     @ReflectiveInvocation
     private ShaderProgram(@NonNull Shader @NonNull ... shaders) {
+        this(false, shaders);
+    }
+
+    @ReflectiveInvocation
+    private ShaderProgram(boolean dsa, @NonNull Shader @NonNull ... shaders) {
         Preconditions.checkNotNull(shaders);
+
+        this.dsa = dsa;
 
         uniformLocations.defaultReturnValue(UNQUERIED);
         uniformBlockIndices.defaultReturnValue(UNQUERIED);

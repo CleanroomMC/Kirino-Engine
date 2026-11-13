@@ -15,7 +15,7 @@ public final class KirinoGLModContainer extends DummyModContainer {
 
         meta.modId = "kirino_gl";
         meta.name = "Kirino GL";
-        meta.version = "epoch-2.a2";
+        meta.version = "epoch-2.a3";
 
         meta.description = """
                 (WIP) This is a subsystem of Kirino-Engine, providing a set of low-level

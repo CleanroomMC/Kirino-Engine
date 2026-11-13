@@ -204,7 +204,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
         vert = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.vert"));
         frag = shaderAccess.makeShader(new ResourceLocation("kirino:shaders/simpletext_font.frag"));
         shaderAccess.submitToGL(vert, frag);
-        program = shaderAccess.makeProgram(vert, frag);
+        program = shaderAccess.makeProgram(true, vert, frag);
         transformBinding = new UiTransformBinding(program.getProgramID());
 
         Preconditions.checkState(program.uniformLocation("scaledRes") >= 0);
@@ -623,7 +623,7 @@ public class DefaultTextRenderer implements SimpleTextConsumer {
 
         program.use();
         program.uniform2f("scaledRes", resolvedLogicalWidth, resolvedLogicalHeight);
-        transformBinding.bind(context, resolvedLogicalWidth, resolvedLogicalHeight);
+        transformBinding.bind(context, resolvedLogicalWidth, resolvedLogicalHeight, true);
         program.uniform1i("KirinoEngine_UI_textEdgeMode", switch (options.edgeMode()) {
             case SMOOTH -> 0;
             case HARD -> 1;

@@ -128,9 +128,14 @@ public class ShaderRegistry {
 
     @NonNull
     public ShaderProgram newShaderProgram(@NonNull String @NonNull ... shaderRLs) {
+        return newShaderProgram(false, shaderRLs);
+    }
+
+    @NonNull
+    public ShaderProgram newShaderProgram(boolean dsa, @NonNull String @NonNull ... shaderRLs) {
         Preconditions.checkNotNull(shaderRLs);
 
-        return newShaderProgram(Arrays
+        return newShaderProgram(dsa, Arrays
                 .stream(shaderRLs)
                 .map(ResourceLocation::new)
                 .toArray(ResourceLocation[]::new));
@@ -138,9 +143,14 @@ public class ShaderRegistry {
 
     @NonNull
     public ShaderProgram newShaderProgram(net.minecraft.util.@NonNull ResourceLocation @NonNull ... shaderRLs) {
+        return newShaderProgram(false, shaderRLs);
+    }
+
+    @NonNull
+    public ShaderProgram newShaderProgram(boolean dsa, net.minecraft.util.@NonNull ResourceLocation @NonNull ... shaderRLs) {
         Preconditions.checkNotNull(shaderRLs);
 
-        return newShaderProgram(Arrays
+        return newShaderProgram(dsa, Arrays
                 .stream(shaderRLs)
                 .map(rl -> new ResourceLocation(rl.getNamespace(), rl.getPath()))
                 .toArray(ResourceLocation[]::new));
@@ -148,6 +158,11 @@ public class ShaderRegistry {
 
     @NonNull
     public ShaderProgram newShaderProgram(@NonNull ResourceLocation @NonNull ... shaderRLs) {
+        return newShaderProgram(false, shaderRLs);
+    }
+
+    @NonNull
+    public ShaderProgram newShaderProgram(boolean dsa, @NonNull ResourceLocation @NonNull ... shaderRLs) {
         Preconditions.checkNotNull(shaderRLs);
 
         for (ResourceLocation rl : shaderRLs) {
@@ -162,7 +177,7 @@ public class ShaderRegistry {
         for (int i = 0; i < shaders1.length; i++) {
             shaders1[i] = shaders.get(shaderRLs[i]);
         }
-        return MethodHolder.initShaderProgram(shaders1);
+        return MethodHolder.initShaderProgram(dsa, shaders1);
     }
 
     private static final class MethodHolder {
@@ -171,7 +186,7 @@ public class ShaderRegistry {
         static {
             DELEGATE = new ShaderDelegate(
                     ReflectionUtils.getConstructor(Shader.class, String.class, String.class, ShaderType.class),
-                    ReflectionUtils.getConstructor(ShaderProgram.class, Shader[].class));
+                    ReflectionUtils.getConstructor(ShaderProgram.class, boolean.class, Shader[].class));
 
             Preconditions.checkNotNull(DELEGATE.shaderCtor());
             Preconditions.checkNotNull(DELEGATE.shaderProgramCtor());
@@ -189,12 +204,11 @@ public class ShaderRegistry {
         }
 
         /**
-         * @see ShaderProgram#ShaderProgram(Shader...)
+         * @see ShaderProgram#ShaderProgram(boolean, Shader...)
          */
-        @SuppressWarnings("ConfusingArgumentToVarargsMethod")
-        static ShaderProgram initShaderProgram(Shader... shaders) {
+        static ShaderProgram initShaderProgram(boolean dsa, Shader... shaders) {
             try {
-                return (ShaderProgram) DELEGATE.shaderProgramCtor().invokeExact(shaders);
+                return (ShaderProgram) DELEGATE.shaderProgramCtor().invokeExact(dsa, shaders);
             } catch (Throwable e) {
                 throw new RuntimeException(e);
             }
